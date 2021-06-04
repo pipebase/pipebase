@@ -16,7 +16,7 @@ impl<T: Debug + Send + Sync + 'static> Procedure<T, T> for Echo {
 #[cfg(test)]
 mod tests {
     use super::Echo;
-    use crate::processor::{Procedure, Processor};
+    use crate::processor::Processor;
     use std::println as info;
     use std::sync::mpsc::{channel, Sender};
 
@@ -38,7 +38,10 @@ mod tests {
         let f0 = p.start::<Message, Message>(rx0, tx1, Box::new(Echo {}));
         let f1 = populate_message(tx0, Message { m0: 'a', m1: 1 });
         f1.await;
-        f0.await;
+        match f0.await {
+            Ok(_) => (),
+            Err(e) => panic!("{:#?}", e),
+        };
         let message = rx1.recv().unwrap();
         assert_eq!('a', message.m0);
         assert_eq!(1, message.m1);

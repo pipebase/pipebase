@@ -1,8 +1,9 @@
 mod echo;
 
+use crate::error::{join_error, Result};
 use async_trait::async_trait;
+use log::{error, info, warn};
 use std::sync::mpsc::{Receiver, Sender};
-
 #[async_trait]
 pub trait Procedure<T, U>: Send + Sync {
     async fn process(&self, data: T) -> U;
@@ -18,15 +19,22 @@ impl<'a> Processor<'a> {
         rx: Receiver<T>,
         tx: Sender<U>,
         p: Box<dyn Procedure<T, U>>,
-    ) {
+    ) -> Result<()> {
         let join_handler = tokio::spawn(async move {
             for t in rx {
-                // TODO: Error Handling
                 let u: U = p.process(t).await;
-                tx.send(u);
+                match tx.send(u) {
+                    Ok(_) => continue,
+                    Err(err) => {
+                        error!("processer send error {:#?}", err);
+                    }
+                }
             }
         });
         // TODO: Error Handling
-        join_handler.await;
+        match join_handler.await {
+            Ok(_) => Ok(()),
+            Err(err) => Err(join_error(err)),
+        }
     }
 }
