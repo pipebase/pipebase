@@ -1,4 +1,5 @@
 mod echo;
+mod project;
 
 use crate::error::{join_error, Result};
 use async_trait::async_trait;
@@ -31,7 +32,6 @@ impl<'a> Processor<'a> {
                 }
             }
         });
-        // TODO: Error Handling
         match join_handler.await {
             Ok(_) => Ok(()),
             Err(err) => Err(join_error(err)),

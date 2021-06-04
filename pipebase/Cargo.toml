@@ -13,3 +13,4 @@ tokio = { version = "0.2", features = ["full"] }
 csv = "1.0.0"
 serde_yaml = "0.8"
 strum = { version = "0.20", features = ["derive"] }
+pipederive = { path = "../pipederive" }
