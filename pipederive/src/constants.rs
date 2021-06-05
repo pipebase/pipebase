@@ -16,3 +16,5 @@ pub const FILTER: &str = "filter";
 pub const FILTER_PREDICATE: &str = "filter.predicate";
 pub const FILTER_ALIAS: &str = "filter.alias";
 pub const FILTER_ALIAS_DEFAULT: &str = "a";
+
+pub const FIELD_VISIT: &str = "visit";

@@ -44,6 +44,14 @@ pub fn is_meta_with_prefix(prefix_path: &Vec<&str>, i: usize, meta: &Meta) -> bo
     if i == prefix_path.len() - 1 {
         let last_segment = prefix_path[i];
         match meta {
+            Meta::Path(ref path) => {
+                let path = path.get_ident().unwrap().to_string();
+                if path.eq(last_segment) {
+                    // we find the meta
+                    return true;
+                }
+                return false;
+            }
             Meta::NameValue(MetaNameValue { ref path, .. }) => {
                 let path = path.get_ident().unwrap().to_string();
                 if path.eq(last_segment) {
