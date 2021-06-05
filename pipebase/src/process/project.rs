@@ -67,11 +67,11 @@ impl<T: Send + Sync + 'static, U: Project<T> + Send + Sync + 'static> Procedure<
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
 
-    use crate::processor::{
+    use crate::process::{
         project::{Project, Projection},
-        Processor,
+        Process,
     };
     use pipederive::Project;
     use std::sync::mpsc::{channel, Sender};
@@ -108,7 +108,7 @@ mod test {
     async fn test_reverse_processor() {
         let (tx0, rx0) = channel::<Record>();
         let (tx1, rx1) = channel::<ReversedRecord>();
-        let p = Processor { name: "reverse" };
+        let p = Process { name: "reverse" };
         let f0 = p.start::<Record, ReversedRecord>(rx0, tx1, Box::new(Projection {}));
         let f1 = populate_record(tx0, Record { r0: 0, r1: 1 });
         f1.await;

@@ -16,7 +16,7 @@ impl<T: Debug + Send + Sync + 'static> Procedure<T, T> for Echo {
 #[cfg(test)]
 mod tests {
     use super::Echo;
-    use crate::processor::Processor;
+    use crate::process::Process;
     use std::println as info;
     use std::sync::mpsc::{channel, Sender};
 
@@ -34,7 +34,7 @@ mod tests {
     async fn test_echo() {
         let (tx0, rx0) = channel::<Message>();
         let (tx1, rx1) = channel::<Message>();
-        let p = Processor { name: "echo" };
+        let p = Process { name: "echo" };
         let f0 = p.start::<Message, Message>(rx0, tx1, Box::new(Echo {}));
         let f1 = populate_message(tx0, Message { m0: 'a', m1: 1 });
         f1.await;

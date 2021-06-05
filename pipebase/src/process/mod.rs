@@ -1,4 +1,5 @@
 mod echo;
+mod filter;
 mod project;
 
 use crate::error::{join_error, Result};
@@ -10,11 +11,11 @@ pub trait Procedure<T, U>: Send + Sync {
     async fn process(&self, data: T) -> U;
 }
 
-pub struct Processor<'a> {
+pub struct Process<'a> {
     name: &'a str,
 }
 
-impl<'a> Processor<'a> {
+impl<'a> Process<'a> {
     pub async fn start<T: Send + Sync + 'static, U: Send + Sync + 'static>(
         &self,
         rx: Receiver<T>,
