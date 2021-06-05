@@ -1,6 +1,5 @@
 use super::Procedure;
 use async_trait::async_trait;
-use std::fmt::Debug;
 
 pub trait Project<Rhs = Self> {
     fn project(rhs: &Rhs) -> Self;
@@ -96,6 +95,20 @@ mod tests {
         let reversed: ReversedRecord = Project::project(&origin);
         assert_eq!(1, reversed.r0);
         assert_eq!(0, reversed.r1);
+    }
+
+    #[derive(Debug, Project)]
+    #[input(module = "self", schema = "Record")]
+    struct RecordSumPlusOne {
+        #[project(alias = "r", expr = "let mut s = r.r0 + r.r1; s + 1")]
+        pub s: i32,
+    }
+
+    #[test]
+    fn test_sum_plus_one() {
+        let origin = Record { r0: 1, r1: 1 };
+        let sum = RecordSumPlusOne::project(&origin);
+        assert_eq!(3, sum.s);
     }
 
     async fn populate_record(tx: Sender<Record>, r: Record) {

@@ -1,8 +1,11 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, quote_spanned};
-use syn::{spanned::Spanned, Attribute, Data, Field, Fields, FieldsNamed, Generics};
+use syn::{spanned::Spanned, Attribute, Data, Field, Fields, FieldsNamed, Generics, Type};
 
-use crate::constants::{INPUT, INPUT_MODULE, INPUT_SCHEMA, PROJECT, PROJECT_EXPR, PROJECT_FROM};
+use crate::constants::{
+    INPUT, INPUT_MODULE, INPUT_SCHEMA, PROJECT, PROJECT_ALIAS, PROJECT_ALIAS_DEFAULT, PROJECT_EXPR,
+    PROJECT_FROM,
+};
 use crate::utils::{
     resolve_field_path_ident, resolve_type_path_ident, search_attribute_by_meta_prefix,
     search_meta_string_value_by_meta_path,
@@ -57,6 +60,7 @@ fn resolve_fields_named(fields: &FieldsNamed, input_type: &str) -> TokenStream {
 fn resolve_field_named(field: &Field, input_type: &str) -> proc_macro2::TokenStream {
     let ref attributes = field.attrs;
     let ref field_ident = field.ident;
+    let ref field_type = field.ty;
     let ref project_attribute = search_attribute_by_meta_prefix(PROJECT, attributes, true).unwrap();
     let project_from_field_path =
         search_meta_string_value_by_meta_path(PROJECT_FROM, project_attribute, false);
@@ -64,10 +68,18 @@ fn resolve_field_named(field: &Field, input_type: &str) -> proc_macro2::TokenStr
         search_meta_string_value_by_meta_path(PROJECT_EXPR, project_attribute, false);
     match (project_from_field_path, project_expr_closure) {
         (Some(project_field_path), _) => {
-            handle_field_project(field.span(), field_ident, project_field_path.as_str())
+            handle_field_project(field.span(), field_ident, &project_field_path)
         }
         (None, Some(expr_closure)) => {
-            handle_field_expr(field.span(), field_ident, expr_closure.as_str(), input_type)
+            let input_alias = get_project_field_input_alias(project_attribute);
+            handle_field_expr(
+                field.span(),
+                field_ident,
+                field_type,
+                &expr_closure,
+                input_type,
+                &input_alias,
+            )
         }
         (None, None) => panic!("field require one of attributes transform(project, expr)"),
     }
@@ -88,16 +100,28 @@ fn handle_field_project(
 fn handle_field_expr(
     field_span: Span,
     field_ident: &Option<Ident>,
+    field_type: &Type,
     expr: &str,
     input_type: &str,
+    input_alias: &str,
 ) -> proc_macro2::TokenStream {
     let input_type_ident = resolve_type_path_ident(input_type);
-    let expr_closure: proc_macro2::TokenStream = expr.parse().unwrap();
+    let input_alias_ident = Ident::new(input_alias, Span::call_site());
+    let expression: proc_macro2::TokenStream = expr.parse().unwrap();
+    let expression_closure = quote! {
+        |#input_alias_ident: &#input_type_ident| -> #field_type { #expression }
+    };
     quote_spanned! {field_span =>
         #field_ident: {
-            type Input = #input_type_ident;
-            let eval = #expr_closure;
+            let eval = #expression_closure;
             eval(from)
         }
+    }
+}
+
+fn get_project_field_input_alias(attribute: &Attribute) -> String {
+    match search_meta_string_value_by_meta_path(PROJECT_ALIAS, attribute, false) {
+        Some(alias) => alias,
+        None => PROJECT_ALIAS_DEFAULT.to_owned(),
     }
 }
