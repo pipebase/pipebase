@@ -69,7 +69,7 @@ mod tests {
         let p = Process {
             name: "field_visit",
         };
-        let f0 = p.start(rx0, tx1, Box::new(FieldVisit {}));
+        let f0 = p.run(rx0, vec![tx1], Box::new(FieldVisit {}));
         let f1 = populate_records(tx0, Records { records: [1, 2, 3] });
         f1.await;
         f0.await;

@@ -17,19 +17,21 @@ pub struct Process<'a> {
 }
 
 impl<'a> Process<'a> {
-    pub async fn start<T: Send + Sync + 'static, U: Send + Sync + 'static>(
+    pub async fn run<T: Send + Sync + 'static, U: Clone + Send + Sync + 'static>(
         &self,
         rx: Receiver<T>,
-        tx: Sender<U>,
+        txs: Vec<Sender<U>>,
         p: Box<dyn Procedure<T, U>>,
     ) -> Result<()> {
         let join_handler = tokio::spawn(async move {
             for t in rx {
                 let u: U = p.process(t).await;
-                match tx.send(u) {
-                    Ok(_) => continue,
-                    Err(err) => {
-                        error!("processer send error {:#?}", err);
+                for tx in txs.as_slice() {
+                    match tx.send(u.to_owned()) {
+                        Ok(_) => continue,
+                        Err(err) => {
+                            error!("processer send error {:#?}", err);
+                        }
                     }
                 }
             }

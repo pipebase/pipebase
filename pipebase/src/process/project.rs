@@ -80,7 +80,7 @@ mod tests {
         pub r1: i32,
     }
 
-    #[derive(Debug, Project)]
+    #[derive(Clone, Debug, Project)]
     #[input(module = "self", schema = "Record")]
     struct ReversedRecord {
         #[project(from = "r1")]
@@ -122,7 +122,7 @@ mod tests {
         let (tx0, rx0) = channel::<Record>();
         let (tx1, rx1) = channel::<ReversedRecord>();
         let p = Process { name: "reverse" };
-        let f0 = p.start::<Record, ReversedRecord>(rx0, tx1, Box::new(Projection {}));
+        let f0 = p.run::<Record, ReversedRecord>(rx0, vec![tx1], Box::new(Projection {}));
         let f1 = populate_record(tx0, Record { r0: 0, r1: 1 });
         f1.await;
         match f0.await {

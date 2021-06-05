@@ -59,7 +59,7 @@ mod tests {
         let (tx0, rx0) = channel::<Vec<Record>>();
         let (tx1, rx1) = channel::<Vec<Record>>();
         let p = Process { name: "flat_map" };
-        let f0 = p.start::<Vec<Record>, Vec<Record>>(rx0, tx1, Box::new(FilterMap {}));
+        let f0 = p.run::<Vec<Record>, Vec<Record>>(rx0, vec![tx1], Box::new(FilterMap {}));
         let f1 = populate_records(
             tx0,
             vec![

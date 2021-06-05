@@ -20,7 +20,7 @@ mod tests {
     use std::println as info;
     use std::sync::mpsc::{channel, Sender};
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug)]
     struct Message {
         m0: char,
         m1: i32,
@@ -35,7 +35,7 @@ mod tests {
         let (tx0, rx0) = channel::<Message>();
         let (tx1, rx1) = channel::<Message>();
         let p = Process { name: "echo" };
-        let f0 = p.start::<Message, Message>(rx0, tx1, Box::new(Echo {}));
+        let f0 = p.run::<Message, Message>(rx0, vec![tx1], Box::new(Echo {}));
         let f1 = populate_message(tx0, Message { m0: 'a', m1: 1 });
         f1.await;
         match f0.await {
