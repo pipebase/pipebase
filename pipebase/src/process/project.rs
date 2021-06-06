@@ -1,6 +1,6 @@
 use super::Procedure;
+use crate::error::Result;
 use async_trait::async_trait;
-
 pub trait Project<Rhs = Self> {
     fn project(rhs: &Rhs) -> Self;
 }
@@ -60,8 +60,8 @@ pub struct Projection {}
 impl<T: Send + Sync + 'static, U: Project<T> + Send + Sync + 'static> Procedure<T, U>
     for Projection
 {
-    async fn process(&self, data: T) -> U {
-        U::project(&data)
+    async fn process(&self, data: T) -> Result<U> {
+        Ok(U::project(&data))
     }
 }
 
@@ -73,14 +73,15 @@ mod tests {
         Process,
     };
     use pipederive::Project;
-    use std::sync::mpsc::{channel, Sender};
+    use tokio::sync::mpsc::{channel, Sender};
 
+    #[derive(Debug)]
     struct Record {
         pub r0: i32,
         pub r1: i32,
     }
 
-    #[derive(Debug, Project)]
+    #[derive(Clone, Debug, Project)]
     #[input(module = "self", schema = "Record")]
     struct ReversedRecord {
         #[project(from = "r1")]
@@ -111,25 +112,27 @@ mod tests {
         assert_eq!(3, sum.s);
     }
 
-    async fn populate_record(tx: Sender<Record>, r: Record) {
-        tokio::spawn(async move {
-            tx.send(r).unwrap();
-        })
-        .await;
+    async fn populate_record(tx: &mut Sender<Record>, r: Record) {
+        tx.send(r).await.unwrap();
     }
     #[tokio::test]
     async fn test_reverse_processor() {
-        let (tx0, rx0) = channel::<Record>();
-        let (tx1, rx1) = channel::<ReversedRecord>();
-        let p = Process { name: "reverse" };
-        let f0 = p.start::<Record, ReversedRecord>(rx0, tx1, Box::new(Projection {}));
-        let f1 = populate_record(tx0, Record { r0: 0, r1: 1 });
+        let (mut tx0, rx0) = channel::<Record>(1024);
+        let (tx1, mut rx1) = channel::<ReversedRecord>(1024);
+        let f0 = tokio::spawn(async move {
+            let mut p = Process {
+                name: "reverse",
+                rx: rx0,
+                txs: vec![tx1],
+                p: Box::new(Projection {}),
+            };
+            p.run().await
+        });
+        let f1 = populate_record(&mut tx0, Record { r0: 0, r1: 1 });
         f1.await;
-        match f0.await {
-            Ok(()) => (),
-            Err(e) => panic!("{:#?}", e),
-        }
-        let reversed_record = rx1.recv().unwrap();
+        drop(tx0);
+        f0.await;
+        let reversed_record = rx1.recv().await.unwrap();
         assert_eq!(1, reversed_record.r0);
         assert_eq!(0, reversed_record.r1);
     }

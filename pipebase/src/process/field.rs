@@ -1,6 +1,6 @@
-use async_trait::async_trait;
-
 use super::Procedure;
+use crate::error::Result;
+use async_trait::async_trait;
 
 pub struct FieldVisitor<F: Clone> {
     value: Option<F>,
@@ -26,10 +26,10 @@ pub struct FieldVisit {}
 impl<T: FieldAccept<U> + Send + Sync + 'static, U: Clone + Send + Sync + 'static> Procedure<T, U>
     for FieldVisit
 {
-    async fn process(&self, t: T) -> U {
+    async fn process(&self, t: T) -> Result<U> {
         let mut visitor = FieldVisitor::<U> { value: None };
         t.accept(&mut visitor);
-        visitor.get_value().unwrap()
+        Ok(visitor.get_value().unwrap())
     }
 }
 
@@ -56,24 +56,28 @@ mod tests {
         assert_eq!(record, visitor_record)
     }
 
-    use std::sync::mpsc::{channel, Sender};
+    use tokio::sync::mpsc::{channel, Sender};
 
-    async fn populate_records(tx: Sender<Records>, records: Records) {
-        tokio::spawn(async move { tx.send(records).unwrap() }).await;
+    async fn populate_records(tx: &mut Sender<Records>, records: Records) {
+        tx.send(records).await;
     }
 
     #[tokio::test]
     async fn test_procedure() {
-        let (tx0, rx0) = channel::<Records>();
-        let (tx1, rx1) = channel::<[i32; 3]>();
-        let p = Process {
+        let (mut tx0, rx0) = channel::<Records>(1024);
+        let (tx1, mut rx1) = channel::<[i32; 3]>(1024);
+        let mut p = Process {
             name: "field_visit",
+            rx: rx0,
+            txs: vec![tx1],
+            p: Box::new(FieldVisit {}),
         };
-        let f0 = p.start(rx0, tx1, Box::new(FieldVisit {}));
-        let f1 = populate_records(tx0, Records { records: [1, 2, 3] });
+        let f0 = p.run();
+        let f1 = populate_records(&mut tx0, Records { records: [1, 2, 3] });
         f1.await;
+        drop(tx0);
         f0.await;
-        let received_records = rx1.recv().unwrap();
+        let received_records = rx1.recv().await.unwrap();
         assert_eq!([1, 2, 3], received_records)
     }
 }
