@@ -1,5 +1,6 @@
-use crate::error::Result;
 use async_trait::async_trait;
+use std::error::Error;
+use std::result::Result;
 use std::time::{Duration, Instant};
 
 use crate::Poll;
@@ -11,14 +12,14 @@ pub struct Timer {
 
 #[async_trait]
 impl Poll<Instant> for Timer {
-    async fn poll(&mut self) -> Option<Result<Instant>> {
+    async fn poll(&mut self) -> Result<Option<Instant>, Box<dyn Error + Send + Sync>> {
         match self.ticks > 0 {
             true => self.ticks -= 1,
-            false => return None,
+            false => return Ok(None),
         }
         let mut interval = tokio::time::interval(self.interval);
         interval.tick().await;
-        Some(Ok(Instant::now()))
+        Ok(Some(Instant::now()))
     }
 }
 

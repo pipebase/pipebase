@@ -1,19 +1,20 @@
 mod timer;
 
-use crate::error::Result;
 use async_trait::async_trait;
 use log::error;
+use std::error::Error;
+use std::result::Result;
 use tokio::sync::mpsc::Sender;
 
 #[async_trait]
 pub trait Poll<T>: Send + Sync {
-    async fn poll(&mut self) -> Option<Result<T>>;
+    async fn poll(&mut self) -> Result<Option<T>, Box<dyn Error + Send + Sync>>;
 }
 
 pub struct Source<'a, T> {
-    name: &'a str,
-    txs: Vec<Sender<T>>,
-    p: Box<dyn Poll<T>>,
+    pub name: &'a str,
+    pub txs: Vec<Sender<T>>,
+    pub p: Box<dyn Poll<T>>,
 }
 
 impl<'a, T: Clone> Source<'a, T> {
@@ -21,15 +22,15 @@ impl<'a, T: Clone> Source<'a, T> {
         loop {
             let t = self.p.poll().await;
             let t = match t {
-                Some(t) => t,
-                None => break,
-            };
-            let t = match t {
                 Ok(t) => t,
                 Err(e) => {
                     error!("{} poll error {:#?}", self.name, e);
                     continue;
                 }
+            };
+            let t = match t {
+                Some(t) => t,
+                None => break,
             };
             for tx in self.txs.as_mut_slice() {
                 match tx.send(t.clone()).await {
@@ -40,5 +41,6 @@ impl<'a, T: Clone> Source<'a, T> {
                 }
             }
         }
+        println!("source {} exit ...", self.name)
     }
 }
