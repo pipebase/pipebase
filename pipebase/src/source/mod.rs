@@ -12,7 +12,7 @@ pub trait Poll<T>: Send + Sync {
 
 pub struct Source<'a, T> {
     name: &'a str,
-    tx: Sender<T>,
+    txs: Vec<Sender<T>>,
     p: Box<dyn Poll<T>>,
 }
 
@@ -31,10 +31,12 @@ impl<'a, T: Clone> Source<'a, T> {
                     continue;
                 }
             };
-            match self.tx.send(t).await {
-                Ok(_) => continue,
-                Err(err) => {
-                    error!("source send error {:#?}", err.to_string())
+            for tx in self.txs.as_mut_slice() {
+                match tx.send(t.clone()).await {
+                    Ok(_) => continue,
+                    Err(err) => {
+                        error!("source send error {:#?}", err.to_string())
+                    }
                 }
             }
         }

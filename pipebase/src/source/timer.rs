@@ -44,7 +44,7 @@ mod tests {
         let ticks: u128 = 3;
         let mut s: Source<Instant> = Source::<Instant> {
             name: "timer",
-            tx: tx,
+            txs: vec![tx],
             p: Box::new(Timer {
                 interval: Duration::from_secs(1),
                 ticks: ticks,
