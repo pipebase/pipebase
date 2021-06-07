@@ -57,6 +57,7 @@ impl RabbitMQConsumer {
 #[cfg(test)]
 mod tests {
 
+    use ::std::time::Duration;
     use pipebase::Source;
     use std::println as info;
     use tokio::sync::mpsc::channel;
@@ -84,7 +85,7 @@ mod tests {
         let mut s = Source {
             name: "rbmq_consumer",
             txs: vec![tx],
-            p: Box::new(rbmq),
+            poller: Box::new(rbmq),
         };
 
         let jh0 = tokio::spawn(async move {

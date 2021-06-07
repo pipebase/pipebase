@@ -2,12 +2,13 @@ use async_trait::async_trait;
 use std::error::Error;
 use std::result::Result;
 use std::time::{Duration, Instant};
+use tokio::time::Interval;
 
 use crate::Poll;
 
 pub struct Timer {
-    interval: Duration,
-    ticks: u128,
+    pub interval: Interval,
+    pub ticks: u128,
 }
 
 #[async_trait]
@@ -17,9 +18,17 @@ impl Poll<Instant> for Timer {
             true => self.ticks -= 1,
             false => return Ok(None),
         }
-        let mut interval = tokio::time::interval(self.interval);
-        interval.tick().await;
+        self.interval.tick().await;
         Ok(Some(Instant::now()))
+    }
+}
+
+impl Timer {
+    pub fn new(interval: Duration, ticks: u128) -> Timer {
+        Timer {
+            interval: tokio::time::interval(interval),
+            ticks: ticks,
+        }
     }
 }
 
@@ -42,14 +51,11 @@ mod tests {
     #[tokio::test]
     async fn test_timer() {
         let (tx, mut rx) = channel::<Instant>(1024);
-        let ticks: u128 = 3;
+        let ticks: u128 = 10;
         let mut s: Source<Instant> = Source::<Instant> {
             name: "timer",
             txs: vec![tx],
-            p: Box::new(Timer {
-                interval: Duration::from_secs(1),
-                ticks: ticks,
-            }),
+            poller: Box::new(Timer::new(Duration::from_secs(1), ticks)),
         };
         let f0 = s.run();
         let f1 = on_receive(&mut rx, ticks);

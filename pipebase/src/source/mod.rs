@@ -1,10 +1,13 @@
 mod timer;
 
 use async_trait::async_trait;
-use log::error;
+use log::{error, info};
 use std::error::Error;
 use std::result::Result;
+use std::time::Duration;
+use tokio::select;
 use tokio::sync::mpsc::Sender;
+use tokio::time::Interval;
 
 #[async_trait]
 pub trait Poll<T>: Send + Sync {
@@ -14,13 +17,13 @@ pub trait Poll<T>: Send + Sync {
 pub struct Source<'a, T> {
     pub name: &'a str,
     pub txs: Vec<Sender<T>>,
-    pub p: Box<dyn Poll<T>>,
+    pub poller: Box<dyn Poll<T>>,
 }
 
 impl<'a, T: Clone> Source<'a, T> {
     pub async fn run(&mut self) {
         loop {
-            let t = self.p.poll().await;
+            let t = self.poller.poll().await;
             let t = match t {
                 Ok(t) => t,
                 Err(e) => {
@@ -41,6 +44,6 @@ impl<'a, T: Clone> Source<'a, T> {
                 }
             }
         }
-        println!("source {} exit ...", self.name)
+        info!("source {} exit ...", self.name)
     }
 }
