@@ -4,6 +4,7 @@ use std::result::Result;
 use std::time::Duration;
 use tokio::time::Interval;
 
+use crate::FromConfig;
 use crate::Poll;
 
 pub struct TimerConfig {
@@ -11,16 +12,19 @@ pub struct TimerConfig {
     pub ticks: u128,
 }
 pub struct Timer {
-    pub interval: Interval,
-    pub ticks: u128,
+    interval: Interval,
+    ticks: u128,
 }
 
-impl From<TimerConfig> for Timer {
-    fn from(config: TimerConfig) -> Self {
-        Timer {
+#[async_trait]
+impl FromConfig<TimerConfig> for Timer {
+    async fn from_config(
+        config: &TimerConfig,
+    ) -> std::result::Result<Timer, Box<dyn std::error::Error>> {
+        Ok(Timer {
             interval: tokio::time::interval(Duration::from_millis(config.period_in_millis)),
             ticks: config.ticks,
-        }
+        })
     }
 }
 
@@ -38,10 +42,10 @@ impl Poll<()> for Timer {
 
 #[cfg(test)]
 mod tests {
-    use crate::source::timer::TimerConfig;
-
     use super::super::Source;
     use super::Timer;
+    use crate::source::timer::TimerConfig;
+    use crate::FromConfig;
     use tokio::sync::mpsc::{channel, Receiver};
 
     async fn on_receive(rx: &mut Receiver<()>, ticks: u128) {
@@ -64,7 +68,7 @@ mod tests {
         let mut s: Source<()> = Source::<()> {
             name: "timer",
             txs: vec![tx],
-            poller: Box::new(Timer::from(config)),
+            poller: Box::new(Timer::from_config(&config).await.unwrap()),
         };
         let f0 = s.run();
         let f1 = on_receive(&mut rx, ticks);

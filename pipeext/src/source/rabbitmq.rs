@@ -5,12 +5,43 @@ use lapin::{
     options::BasicAckOptions, types::FieldTable, Connection, ConnectionProperties, Consumer,
 };
 use log::{error, info};
+use pipebase::FromConfig;
 use pipebase::Poll;
 use std::error::Error;
 use std::result::Result;
 use tokio_amqp::*;
 pub struct RabbitMQConsumer {
+    queue: String,
+    consumer_tag: String,
+    uri: String,
+    options: BasicConsumeOptions,
+    args: FieldTable,
     channel: Channel,
+}
+
+pub struct RabbitMQConsumerConfig {
+    pub queue: String,
+    pub consumer_tag: String,
+    pub uri: String,
+}
+
+#[async_trait]
+impl FromConfig<RabbitMQConsumerConfig> for RabbitMQConsumer {
+    async fn from_config(config: &RabbitMQConsumerConfig) -> Result<Self, Box<dyn Error>> {
+        let properties = ConnectionProperties::default().with_tokio_executor();
+        info!("start connection ...");
+        let conn = Connection::connect(&config.uri, properties).await?;
+        info!("connected ...");
+        let channel = conn.create_channel().await?;
+        Ok(RabbitMQConsumer {
+            queue: config.queue.to_owned(),
+            consumer_tag: config.consumer_tag.to_owned(),
+            uri: config.uri.to_owned(),
+            options: BasicConsumeOptions::default(),
+            args: FieldTable::default(),
+            channel: channel,
+        })
+    }
 }
 
 #[async_trait]
@@ -19,10 +50,10 @@ impl Poll<Vec<u8>> for RabbitMQConsumer {
         let consumer = match self
             .channel
             .basic_consume(
-                "foo",
-                "foo",
-                BasicConsumeOptions::default(),
-                FieldTable::default(),
+                &self.queue,
+                &self.consumer_tag,
+                self.options.to_owned(),
+                self.args.to_owned(),
             )
             .await
         {
@@ -43,27 +74,16 @@ impl Poll<Vec<u8>> for RabbitMQConsumer {
     }
 }
 
-impl RabbitMQConsumer {
-    pub async fn new() -> Result<RabbitMQConsumer, Box<dyn Error>> {
-        let properties = ConnectionProperties::default().with_tokio_executor();
-        info!("start connection ...");
-        let conn = Connection::connect("amqp://127.0.0.1:5672/%2f", properties).await?;
-        info!("connected ...");
-        let channel = conn.create_channel().await?;
-        Ok(RabbitMQConsumer { channel: channel })
-    }
-}
-
 #[cfg(test)]
 mod tests {
 
-    use ::std::time::Duration;
+    use pipebase::FromConfig;
     use pipebase::Source;
     use std::println as info;
     use tokio::sync::mpsc::channel;
     use tokio::sync::mpsc::Receiver;
 
-    use super::RabbitMQConsumer;
+    use super::{RabbitMQConsumer, RabbitMQConsumerConfig};
 
     async fn on_receive(rx: &mut Receiver<Vec<u8>>) {
         let mut i: i32 = 0;
@@ -81,7 +101,12 @@ mod tests {
     #[tokio::test]
     async fn test_consumer() {
         let (tx, mut rx) = channel::<Vec<u8>>(1024);
-        let rbmq = RabbitMQConsumer::new().await.unwrap();
+        let config = RabbitMQConsumerConfig {
+            queue: "foo".to_owned(),
+            consumer_tag: "foo".to_owned(),
+            uri: "amqp://127.0.0.1:5672/%2f".to_owned(),
+        };
+        let rbmq = RabbitMQConsumer::from_config(&config).await.unwrap();
         let mut s = Source {
             name: "rbmq_consumer",
             txs: vec![tx],
@@ -91,7 +116,7 @@ mod tests {
         let jh0 = tokio::spawn(async move {
             s.run().await;
         });
-        println!("source started ...");
+
         let jh1 = on_receive(&mut rx);
         tokio::join!(jh0, jh1);
     }
