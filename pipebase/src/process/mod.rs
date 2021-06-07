@@ -5,13 +5,14 @@ mod project;
 
 use std::fmt::Debug;
 
-use crate::error::Result;
 use async_trait::async_trait;
 use log::error;
+use std::error::Error;
+use std::result::Result;
 use tokio::sync::mpsc::{Receiver, Sender};
 #[async_trait]
 pub trait Procedure<T, U>: Send + Sync {
-    async fn process(&self, data: T) -> Result<U>;
+    async fn process(&self, data: T) -> Result<U, Box<dyn Error>>;
 }
 
 pub struct Process<'a, T, U> {

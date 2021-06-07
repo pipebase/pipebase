@@ -1,6 +1,7 @@
 use super::Procedure;
-use crate::error::Result;
 use async_trait::async_trait;
+use std::error::Error;
+use std::result::Result;
 
 pub struct FieldVisitor<F: Clone> {
     value: Option<F>,
@@ -26,7 +27,7 @@ pub struct FieldVisit {}
 impl<T: FieldAccept<U> + Send + Sync + 'static, U: Clone + Send + Sync + 'static> Procedure<T, U>
     for FieldVisit
 {
-    async fn process(&self, t: T) -> Result<U> {
+    async fn process(&self, t: T) -> Result<U, Box<dyn Error>> {
         let mut visitor = FieldVisitor::<U> { value: None };
         t.accept(&mut visitor);
         Ok(visitor.get_value().unwrap())

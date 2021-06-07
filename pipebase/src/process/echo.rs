@@ -1,14 +1,15 @@
 use std::fmt::Debug;
 
 use super::Procedure;
-use crate::error::Result;
 use async_trait::async_trait;
 use log::info;
+use std::error::Error;
+use std::result::Result;
 pub struct Echo {}
 
 #[async_trait]
 impl<T: Debug + Send + Sync + 'static> Procedure<T, T> for Echo {
-    async fn process(&self, t: T) -> Result<T> {
+    async fn process(&self, t: T) -> Result<T, Box<dyn Error>> {
         info!("{:#?}", t);
         Ok(t)
     }

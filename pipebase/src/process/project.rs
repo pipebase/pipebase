@@ -1,6 +1,7 @@
 use super::Procedure;
-use crate::error::Result;
 use async_trait::async_trait;
+use std::error::Error;
+use std::result::Result;
 pub trait Project<Rhs = Self> {
     fn project(rhs: &Rhs) -> Self;
 }
@@ -60,7 +61,7 @@ pub struct Projection {}
 impl<T: Send + Sync + 'static, U: Project<T> + Send + Sync + 'static> Procedure<T, U>
     for Projection
 {
-    async fn process(&self, data: T) -> Result<U> {
+    async fn process(&self, data: T) -> Result<U, Box<dyn Error>> {
         Ok(U::project(&data))
     }
 }

@@ -1,6 +1,7 @@
 use super::Procedure;
-use crate::error::Result;
 use async_trait::async_trait;
+use std::error::Error;
+use std::result::Result;
 pub trait Filter<Rhs = Self>: Clone {
     fn filter(rhs: &Rhs) -> Option<Rhs>;
 }
@@ -9,7 +10,7 @@ pub struct FilterMap {}
 
 #[async_trait]
 impl<T: Filter + Clone + Send + Sync + 'static> Procedure<Vec<T>, Vec<T>> for FilterMap {
-    async fn process(&self, data: Vec<T>) -> Result<Vec<T>> {
+    async fn process(&self, data: Vec<T>) -> Result<Vec<T>, Box<dyn Error>> {
         Ok(data
             .iter()
             .filter_map(|item| T::filter(item))

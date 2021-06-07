@@ -4,10 +4,7 @@ use async_trait::async_trait;
 use log::{error, info};
 use std::error::Error;
 use std::result::Result;
-use std::time::Duration;
-use tokio::select;
 use tokio::sync::mpsc::Sender;
-use tokio::time::Interval;
 
 #[async_trait]
 pub trait Poll<T>: Send + Sync {
