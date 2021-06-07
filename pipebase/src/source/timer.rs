@@ -12,14 +12,14 @@ pub struct Timer {
 }
 
 #[async_trait]
-impl Poll<Instant> for Timer {
-    async fn poll(&mut self) -> Result<Option<Instant>, Box<dyn Error + Send + Sync>> {
+impl Poll<()> for Timer {
+    async fn poll(&mut self) -> Result<Option<()>, Box<dyn Error + Send + Sync>> {
         match self.ticks > 0 {
             true => self.ticks -= 1,
             false => return Ok(None),
         }
         self.interval.tick().await;
-        Ok(Some(Instant::now()))
+        Ok(Some(()))
     }
 }
 
@@ -39,20 +39,20 @@ mod tests {
     use std::time::{Duration, Instant};
     use tokio::sync::mpsc::{channel, Receiver};
 
-    async fn on_receive(rx: &mut Receiver<Instant>, ticks: u128) {
-        let mut ticks = ticks;
-        while ticks > 0 {
-            let timestamp = rx.recv().await.unwrap();
-            println!("timestamp: {:#?}", timestamp);
-            ticks -= 1;
+    async fn on_receive(rx: &mut Receiver<()>, ticks: u128) {
+        let mut i = 0;
+        while ticks > i {
+            let tick = rx.recv().await.unwrap();
+            println!("tick: #{:#?}", i);
+            i += 1;
         }
     }
 
     #[tokio::test]
     async fn test_timer() {
-        let (tx, mut rx) = channel::<Instant>(1024);
+        let (tx, mut rx) = channel::<()>(1024);
         let ticks: u128 = 10;
-        let mut s: Source<Instant> = Source::<Instant> {
+        let mut s: Source<()> = Source::<()> {
             name: "timer",
             txs: vec![tx],
             poller: Box::new(Timer::new(Duration::from_secs(1), ticks)),
