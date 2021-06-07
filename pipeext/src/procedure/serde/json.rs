@@ -1,16 +1,9 @@
+use super::{Deser, Ser};
 use async_trait::async_trait;
 use pipebase::Procedure;
 use serde::{de::DeserializeOwned, Serialize};
 use std::error::Error;
 use std::result::Result;
-trait Ser {
-    fn serialize<T: Serialize>(t: &T) -> Result<Vec<u8>, Box<dyn Error>>;
-}
-
-trait Deser {
-    fn deserialize<T: DeserializeOwned>(bytes: &[u8]) -> Result<T, Box<dyn Error>>;
-}
-
 struct JsonSer {}
 
 impl Ser for JsonSer {
