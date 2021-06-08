@@ -99,6 +99,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_consumer() {
         let (tx, mut rx) = channel::<Vec<u8>>(1024);
         let config = RabbitMQConsumerConfig {

@@ -70,7 +70,7 @@ mod tests {
         let mut p = Process {
             name: "field_visit",
             rx: rx0,
-            tx: tx1,
+            tx: Some(tx1),
             p: Box::new(FieldVisit {}),
         };
         let f0 = p.run();

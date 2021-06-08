@@ -18,7 +18,7 @@ pub trait Procedure<T, U>: Send + Sync {
 pub struct Process<'a, T, U> {
     name: &'a str,
     rx: Receiver<T>,
-    tx: Sender<U>,
+    tx: Option<Sender<U>>,
     p: Box<dyn Procedure<T, U>>,
 }
 
@@ -37,8 +37,11 @@ impl<'a, T, U: Clone + Debug> Process<'a, T, U> {
                     continue;
                 }
             };
-
-            match self.tx.send(u.to_owned()).await {
+            let tx = match self.tx {
+                Some(ref tx) => tx,
+                None => continue,
+            };
+            match tx.send(u.to_owned()).await {
                 Ok(_) => continue,
                 Err(err) => {
                     error!("processer send error {:#?}", err);

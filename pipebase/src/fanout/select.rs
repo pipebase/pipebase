@@ -98,6 +98,7 @@ mod tests {
     use super::*;
     use crate::{Source, Timer, TimerConfig};
     use tokio::sync::mpsc::{channel, Receiver};
+    use tokio::task::JoinHandle;
 
     async fn count_tick(rx: &mut Receiver<()>, id: usize) -> usize {
         let mut c: usize = 0;
@@ -132,7 +133,6 @@ mod tests {
         };
         let random_selector_config = RandomConfig { n: 2 };
         let random_selector = Random::from_config(&random_selector_config).await.unwrap();
-        // let random_selector =
         let mut selector = Selector {
             name: "random_select",
             rx: rx0,
