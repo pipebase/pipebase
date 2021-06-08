@@ -61,7 +61,7 @@ mod tests {
         let mut p = Process {
             name: "filter_map",
             rx: rx0,
-            txs: vec![tx1],
+            tx: tx1,
             p: Box::new(FilterMap {}),
         };
         let f0 = p.run();

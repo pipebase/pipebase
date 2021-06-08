@@ -1,5 +1,7 @@
 mod timer;
 
+pub use timer::*;
+
 use async_trait::async_trait;
 use log::{error, info};
 use std::error::Error;
@@ -13,7 +15,7 @@ pub trait Poll<T>: Send + Sync {
 
 pub struct Source<'a, T> {
     pub name: &'a str,
-    pub txs: Vec<Sender<T>>,
+    pub tx: Sender<T>,
     pub poller: Box<dyn Poll<T>>,
 }
 
@@ -32,12 +34,11 @@ impl<'a, T: Clone> Source<'a, T> {
                 Some(t) => t,
                 None => break,
             };
-            for tx in self.txs.as_mut_slice() {
-                match tx.send(t.clone()).await {
-                    Ok(_) => continue,
-                    Err(err) => {
-                        error!("source send error {:#?}", err.to_string())
-                    }
+
+            match self.tx.send(t.clone()).await {
+                Ok(_) => continue,
+                Err(err) => {
+                    error!("source send error {:#?}", err.to_string())
                 }
             }
         }

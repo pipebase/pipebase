@@ -39,7 +39,7 @@ mod tests {
         let mut p = Process {
             name: "echo",
             rx: rx0,
-            txs: vec![tx1],
+            tx: tx1,
             p: Box::new(Echo {}),
         };
         let f0 = p.run();

@@ -67,7 +67,7 @@ mod tests {
         };
         let mut s: Source<()> = Source::<()> {
             name: "timer",
-            txs: vec![tx],
+            tx: tx,
             poller: Box::new(Timer::from_config(&config).await.unwrap()),
         };
         let f0 = s.run();

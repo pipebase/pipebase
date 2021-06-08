@@ -18,7 +18,7 @@ pub trait Procedure<T, U>: Send + Sync {
 pub struct Process<'a, T, U> {
     name: &'a str,
     rx: Receiver<T>,
-    txs: Vec<Sender<U>>,
+    tx: Sender<U>,
     p: Box<dyn Procedure<T, U>>,
 }
 
@@ -37,12 +37,11 @@ impl<'a, T, U: Clone + Debug> Process<'a, T, U> {
                     continue;
                 }
             };
-            for tx in self.txs.as_mut_slice() {
-                match tx.send(u.to_owned()).await {
-                    Ok(_) => continue,
-                    Err(err) => {
-                        error!("processer send error {:#?}", err);
-                    }
+
+            match self.tx.send(u.to_owned()).await {
+                Ok(_) => continue,
+                Err(err) => {
+                    error!("processer send error {:#?}", err);
                 }
             }
         }

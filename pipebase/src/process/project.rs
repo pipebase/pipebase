@@ -124,7 +124,7 @@ mod tests {
             let mut p = Process {
                 name: "reverse",
                 rx: rx0,
-                txs: vec![tx1],
+                tx: tx1,
                 p: Box::new(Projection {}),
             };
             p.run().await
