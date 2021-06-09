@@ -51,4 +51,27 @@ impl<'a, T: Clone> Selector<'a, T> {
         }
         Ok(())
     }
+
+    pub fn add_sender(&mut self, tx: Sender<T>) {
+        self.txs.push(tx);
+    }
+}
+
+#[macro_export]
+macro_rules! selector {
+    (
+        $name:ident, $path:ident, $config:ty, $select:ty, $rx: ident
+    ) => {
+        async move {
+            let config = <$config>::from_file($path).expect("valid config file");
+            let selector = <$select>::from_config(&config).await.unwrap();
+            Selector {
+                name: $name,
+                rx: $rx,
+                txs: vec![],
+                selector: Box::new(selector),
+            }
+        }
+        .await
+    };
 }

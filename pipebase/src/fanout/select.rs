@@ -1,15 +1,19 @@
-use crate::FromConfig;
+use crate::{FromConfig, FromFile};
 use async_trait::async_trait;
-use rand::{prelude::ThreadRng, Rng};
-use std::{sync::Arc, usize};
+use rand::Rng;
+use serde::Deserialize;
+
 pub trait Select: Send + Sync {
     fn select(&mut self) -> Vec<usize>;
     fn get_range(&mut self) -> usize;
 }
 
+#[derive(Deserialize)]
 pub struct RandomConfig {
     pub n: usize,
 }
+
+impl FromFile for RandomConfig {}
 
 pub struct Random {
     n: usize,
@@ -98,6 +102,9 @@ mod tests {
 
     use super::super::Selector;
     use super::*;
+    use crate::connect;
+    use crate::selector;
+    use crate::source;
     use crate::{Source, Timer, TimerConfig};
     use tokio::sync::mpsc::{channel, Receiver};
 
@@ -119,30 +126,17 @@ mod tests {
         let (tx0, rx0) = channel::<()>(1024);
         let (tx1, mut rx1) = channel::<()>(1024);
         let (tx2, mut rx2) = channel::<()>(1024);
-        let selector_txs = vec![tx1, tx2];
-        let timer_tx = tx0;
-        let ticks = 10;
-        let timer_config = TimerConfig {
-            period_in_millis: 1000,
-            ticks: ticks,
-        };
-        let timer = Timer::from_config(&timer_config).await.unwrap();
-        let mut source = Source {
-            name: "timer",
-            tx: timer_tx,
-            poller: Box::new(timer),
-        };
-        let random_selector_config = RandomConfig { n: 2 };
-        let random_selector = Random::from_config(&random_selector_config).await.unwrap();
-        let mut selector = Selector {
-            name: "random_select",
-            rx: rx0,
-            txs: selector_txs,
-            selector: Box::new(random_selector),
-        };
+        let name = "timer";
+        let path = "resources/catalogs/timer.yml";
+        let mut source = source!(name, path, TimerConfig, Timer);
+        let name = "random_select";
+        let path = "resources/catalogs/random_selector.yml";
+        let mut selector = selector!(name, path, RandomConfig, Random, rx0);
+        let mut source = connect!(source, (tx0));
+        let mut selector = connect!(selector, [tx1, tx2]);
         crate::spawn_join!(source, selector);
         let c1 = count_tick(&mut rx1, 0).await;
         let c2 = count_tick(&mut rx2, 1).await;
-        assert_eq!(ticks as usize, c1 + c2);
+        assert_eq!(10, c1 + c2);
     }
 }

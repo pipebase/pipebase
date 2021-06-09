@@ -1,16 +1,22 @@
 use async_trait::async_trait;
+use serde::Deserialize;
 use std::error::Error;
 use std::result::Result;
 use std::time::Duration;
 use tokio::time::Interval;
 
 use crate::FromConfig;
+use crate::FromFile;
 use crate::Poll;
 
+#[derive(Deserialize)]
 pub struct TimerConfig {
     pub period_in_millis: u64,
     pub ticks: u128,
 }
+
+impl FromFile for TimerConfig {}
+
 pub struct Timer {
     interval: Interval,
     ticks: u128,
@@ -67,7 +73,7 @@ mod tests {
         };
         let mut s: Source<()> = Source::<()> {
             name: "timer",
-            tx: tx,
+            txs: vec![tx],
             poller: Box::new(Timer::from_config(&config).await.unwrap()),
         };
         let f0 = s.run();

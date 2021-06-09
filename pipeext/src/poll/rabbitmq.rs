@@ -110,7 +110,7 @@ mod tests {
         let rbmq = RabbitMQConsumer::from_config(&config).await.unwrap();
         let mut s = Source {
             name: "rbmq_consumer",
-            tx: tx,
+            txs: vec![tx],
             poller: Box::new(rbmq),
         };
 

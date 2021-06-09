@@ -6,9 +6,18 @@ mod source;
 pub use fanout::*;
 pub use pipederive::*;
 pub use process::*;
+use serde::{de::DeserializeOwned, Deserialize};
 pub use source::*;
 
 use async_trait::async_trait;
+
+pub trait FromFile: Sized + DeserializeOwned {
+    fn from_file(path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+        let file = std::fs::File::open(path)?;
+        let config = serde_yaml::from_reader::<std::fs::File, Self>(file)?;
+        Ok(config)
+    }
+}
 
 #[async_trait]
 pub trait FromConfig<T>: Sized {
@@ -27,5 +36,29 @@ macro_rules! spawn_join {
                 })
             ),*)
 
+    };
+}
+
+#[macro_export]
+macro_rules! connect {
+    (
+        $pipe:expr, ($( $sender:expr ), *)
+    ) => {
+        {
+            $(
+                $pipe.add_sender($sender);
+            )*
+            $pipe
+        }
+    };
+    (
+        $pipe:expr, [$( $sender:expr ), *]
+    ) => {
+        {
+            $(
+                $pipe.add_sender($sender);
+            )*
+            $pipe
+        }
     };
 }

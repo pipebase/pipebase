@@ -15,7 +15,7 @@ pub trait Poll<T>: Send + Sync {
 
 pub struct Source<'a, T> {
     pub name: &'a str,
-    pub tx: Sender<T>,
+    pub txs: Vec<Sender<T>>,
     pub poller: Box<dyn Poll<T>>,
 }
 
@@ -34,14 +34,37 @@ impl<'a, T: Clone> Source<'a, T> {
                 Some(t) => t,
                 None => break,
             };
-
-            match self.tx.send(t.clone()).await {
-                Ok(_) => continue,
-                Err(err) => {
-                    error!("source send error {:#?}", err.to_string())
+            for tx in self.txs.as_mut_slice() {
+                match tx.send(t.clone()).await {
+                    Ok(_) => continue,
+                    Err(err) => {
+                        error!("source send error {:#?}", err.to_string())
+                    }
                 }
             }
         }
         info!("source {} exit ...", self.name)
     }
+
+    pub fn add_sender(&mut self, tx: Sender<T>) {
+        self.txs.push(tx);
+    }
+}
+
+#[macro_export]
+macro_rules! source {
+    (
+        $name:ident, $path:ident, $config:ty, $poller:ty
+    ) => {
+        async move {
+            let config = <$config>::from_file($path).expect("valid config file");
+            let poller = <$poller>::from_config(&config).await.unwrap();
+            Source {
+                name: $name,
+                txs: vec![],
+                poller: Box::new(poller),
+            }
+        }
+        .await
+    };
 }
