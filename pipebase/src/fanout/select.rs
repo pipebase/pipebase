@@ -93,12 +93,13 @@ impl Select for Broadcast {
 }
 
 #[cfg(test)]
+#[macro_use]
 mod tests {
+
     use super::super::Selector;
     use super::*;
     use crate::{Source, Timer, TimerConfig};
     use tokio::sync::mpsc::{channel, Receiver};
-    use tokio::task::JoinHandle;
 
     async fn count_tick(rx: &mut Receiver<()>, id: usize) -> usize {
         let mut c: usize = 0;
@@ -139,18 +140,7 @@ mod tests {
             txs: selector_txs,
             selector: Box::new(random_selector),
         };
-        let join_src = tokio::spawn(async move {
-            source.run().await;
-        });
-        let join_selector = tokio::spawn(async move {
-            match selector.run().await {
-                Ok(_) => (),
-                Err(e) => {
-                    eprintln!("error from selector {}", e)
-                }
-            }
-        });
-        tokio::join!(join_src, join_selector);
+        crate::spawn_join!(source, selector);
         let c1 = count_tick(&mut rx1, 0).await;
         let c2 = count_tick(&mut rx2, 1).await;
         assert_eq!(ticks as usize, c1 + c2);
