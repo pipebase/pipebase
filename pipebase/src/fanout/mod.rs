@@ -63,7 +63,7 @@ macro_rules! selector {
         $name:expr, $path:expr, $config:ty, $select:ty, $rx: ident, [$( $sender:ident ), *]
     ) => {
         async move {
-            let config = <$config>::from_file($path).expect("valid config file");
+            let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
             let selector = <$select>::from_config(&config).await.unwrap();
             let mut pipe = Selector {
                 name: $name,

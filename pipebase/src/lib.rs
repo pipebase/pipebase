@@ -6,10 +6,11 @@ mod source;
 pub use fanout::*;
 pub use pipederive::*;
 pub use process::*;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::de::DeserializeOwned;
 pub use source::*;
 
 use async_trait::async_trait;
+use log::error;
 
 pub trait FromFile: Sized + DeserializeOwned {
     fn from_file(path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
@@ -32,7 +33,13 @@ macro_rules! spawn_join {
 
             tokio::join!($(
                 tokio::spawn(async move {
-                    $pipe.run().await;
+                    match $pipe.run().await {
+                        Ok(_) => (),
+                        Err(err) => {
+                            log::error!("pipe exit with error {:#?}", err);
+                            ()
+                        }
+                    }
                 })
             ),*)
 

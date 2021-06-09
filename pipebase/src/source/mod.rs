@@ -5,12 +5,15 @@ pub use timer::*;
 use async_trait::async_trait;
 use log::{error, info};
 use std::error::Error;
-use std::result::Result;
 use tokio::sync::mpsc::Sender;
+
+use crate::error::Result;
 
 #[async_trait]
 pub trait Poll<T>: Send + Sync {
-    async fn poll(&mut self) -> Result<Option<T>, Box<dyn Error + Send + Sync>>;
+    async fn poll(
+        &mut self,
+    ) -> std::result::Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>;
 }
 
 pub struct Source<'a, T> {
@@ -20,7 +23,7 @@ pub struct Source<'a, T> {
 }
 
 impl<'a, T: Clone> Source<'a, T> {
-    pub async fn run(&mut self) {
+    pub async fn run(&mut self) -> Result<()> {
         loop {
             let t = self.poller.poll().await;
             let t = match t {
@@ -43,7 +46,8 @@ impl<'a, T: Clone> Source<'a, T> {
                 }
             }
         }
-        info!("source {} exit ...", self.name)
+        info!("source {} exit ...", self.name);
+        Ok(())
     }
 
     pub fn add_sender(&mut self, tx: Sender<T>) {
@@ -57,7 +61,7 @@ macro_rules! source {
         $name:expr, $path:expr, $config:ty, $poller:ty, [$( $sender:ident ), *]
     ) => {
         async move {
-            let config = <$config>::from_file($path).expect("valid config file");
+            let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
             let poller = <$poller>::from_config(&config).await.unwrap();
             let mut pipe = Source {
                 name: $name,

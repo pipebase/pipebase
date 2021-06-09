@@ -50,8 +50,10 @@ impl Poll<()> for Timer {
 mod tests {
     use super::super::Source;
     use super::Timer;
+    use crate::source;
     use crate::source::timer::TimerConfig;
-    use crate::FromConfig;
+    use crate::spawn_join;
+    use crate::{FromConfig, FromFile};
     use tokio::sync::mpsc::{channel, Receiver};
 
     async fn on_receive(rx: &mut Receiver<()>, ticks: u128) {
@@ -66,18 +68,14 @@ mod tests {
     #[tokio::test]
     async fn test_timer() {
         let (tx, mut rx) = channel::<()>(1024);
-        let ticks = 10;
-        let config = TimerConfig {
-            period_in_millis: 1000,
-            ticks: ticks,
-        };
-        let mut s: Source<()> = Source::<()> {
-            name: "timer",
-            txs: vec![tx],
-            poller: Box::new(Timer::from_config(&config).await.unwrap()),
-        };
-        let f0 = s.run();
-        let f1 = on_receive(&mut rx, ticks);
-        tokio::join!(f0, f1);
+        let mut source = source!(
+            "timer",
+            "resources/catalogs/timer.yml",
+            TimerConfig,
+            Timer,
+            [tx]
+        );
+        spawn_join!(source);
+        on_receive(&mut rx, 10).await;
     }
 }

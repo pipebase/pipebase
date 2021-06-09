@@ -1,7 +1,9 @@
+use crate::{FromConfig, FromFile};
+
 use super::Procedure;
 use async_trait::async_trait;
-use std::error::Error;
-use std::result::Result;
+use serde::Deserialize;
+
 pub trait Project<Rhs = Self> {
     fn project(rhs: &Rhs) -> Self;
 }
@@ -55,13 +57,31 @@ impl<T, U: Project<T>> Project<Vec<T>> for Vec<U> {
     }
 }
 
+#[derive(Deserialize)]
+pub struct ProjectionConfig {}
+
+impl FromFile for ProjectionConfig {
+    fn from_file(_path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+        Ok(ProjectionConfig {})
+    }
+}
+
 pub struct Projection {}
+
+#[async_trait]
+impl FromConfig<ProjectionConfig> for Projection {
+    async fn from_config(
+        _config: &ProjectionConfig,
+    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+        Ok(Projection {})
+    }
+}
 
 #[async_trait]
 impl<T: Send + Sync + 'static, U: Project<T> + Send + Sync + 'static> Procedure<T, U>
     for Projection
 {
-    async fn process(&self, data: T) -> Result<U, Box<dyn Error>> {
+    async fn process(&self, data: T) -> std::result::Result<U, Box<dyn std::error::Error>> {
         Ok(U::project(&data))
     }
 }
@@ -70,9 +90,10 @@ impl<T: Send + Sync + 'static, U: Project<T> + Send + Sync + 'static> Procedure<
 mod tests {
 
     use crate::process::{
-        project::{Project, Projection},
+        project::{Project, Projection, ProjectionConfig},
         Process,
     };
+    use crate::{process, spawn_join, FromConfig, FromFile};
     use pipederive::Project;
     use tokio::sync::mpsc::{channel, Sender};
 
@@ -120,19 +141,11 @@ mod tests {
     async fn test_reverse_processor() {
         let (mut tx0, rx0) = channel::<Record>(1024);
         let (tx1, mut rx1) = channel::<ReversedRecord>(1024);
-        let f0 = tokio::spawn(async move {
-            let mut p = Process {
-                name: "reverse",
-                rx: rx0,
-                tx: Some(tx1),
-                p: Box::new(Projection {}),
-            };
-            p.run().await
-        });
+        let mut pipe = process!("reverse", "", ProjectionConfig, Projection, rx0, [tx1]);
         let f1 = populate_record(&mut tx0, Record { r0: 0, r1: 1 });
         f1.await;
         drop(tx0);
-        f0.await;
+        spawn_join!(pipe);
         let reversed_record = rx1.recv().await.unwrap();
         assert_eq!(1, reversed_record.r0);
         assert_eq!(0, reversed_record.r1);
