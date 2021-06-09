@@ -38,27 +38,3 @@ macro_rules! spawn_join {
 
     };
 }
-
-#[macro_export]
-macro_rules! connect {
-    (
-        $pipe:expr, ($( $sender:expr ), *)
-    ) => {
-        {
-            $(
-                $pipe.add_sender($sender);
-            )*
-            $pipe
-        }
-    };
-    (
-        $pipe:expr, [$( $sender:expr ), *]
-    ) => {
-        {
-            $(
-                $pipe.add_sender($sender);
-            )*
-            $pipe
-        }
-    };
-}

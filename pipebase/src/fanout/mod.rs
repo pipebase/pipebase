@@ -60,17 +60,21 @@ impl<'a, T: Clone> Selector<'a, T> {
 #[macro_export]
 macro_rules! selector {
     (
-        $name:ident, $path:ident, $config:ty, $select:ty, $rx: ident
+        $name:expr, $path:expr, $config:ty, $select:ty, $rx: ident, [$( $sender:ident ), *]
     ) => {
         async move {
             let config = <$config>::from_file($path).expect("valid config file");
             let selector = <$select>::from_config(&config).await.unwrap();
-            Selector {
+            let mut pipe = Selector {
                 name: $name,
                 rx: $rx,
                 txs: vec![],
                 selector: Box::new(selector),
-            }
+            };
+            $(
+                pipe.add_sender($sender);
+            )*
+            pipe
         }
         .await
     };

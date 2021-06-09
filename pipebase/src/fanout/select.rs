@@ -102,7 +102,6 @@ mod tests {
 
     use super::super::Selector;
     use super::*;
-    use crate::connect;
     use crate::selector;
     use crate::source;
     use crate::{Source, Timer, TimerConfig};
@@ -126,14 +125,21 @@ mod tests {
         let (tx0, rx0) = channel::<()>(1024);
         let (tx1, mut rx1) = channel::<()>(1024);
         let (tx2, mut rx2) = channel::<()>(1024);
-        let name = "timer";
-        let path = "resources/catalogs/timer.yml";
-        let mut source = source!(name, path, TimerConfig, Timer);
-        let name = "random_select";
-        let path = "resources/catalogs/random_selector.yml";
-        let mut selector = selector!(name, path, RandomConfig, Random, rx0);
-        let mut source = connect!(source, (tx0));
-        let mut selector = connect!(selector, [tx1, tx2]);
+        let mut source = source!(
+            "timer",
+            "resources/catalogs/timer.yml",
+            TimerConfig,
+            Timer,
+            [tx0]
+        );
+        let mut selector = selector!(
+            "random_select",
+            "resources/catalogs/random_selector.yml",
+            RandomConfig,
+            Random,
+            rx0,
+            [tx1, tx2]
+        );
         crate::spawn_join!(source, selector);
         let c1 = count_tick(&mut rx1, 0).await;
         let c2 = count_tick(&mut rx2, 1).await;
