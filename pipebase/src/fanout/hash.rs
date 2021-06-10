@@ -48,20 +48,16 @@ mod tests {
 
     use super::super::HashSelector;
     use super::{DefaultHashSelect, DefaultHashSelectConfig};
+    use crate::HashKey;
     use crate::{channel, hselector, spawn_join, FromConfig, FromFile};
     use std::hash::{Hash, Hasher};
     use tokio::sync::mpsc::{channel, Receiver, Sender};
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, HashKey)]
     struct Record {
+        #[key]
         pub key: String,
         pub value: i32,
-    }
-
-    impl Hash for Record {
-        fn hash<H: Hasher>(&self, state: &mut H) {
-            self.key.hash(state);
-        }
     }
 
     async fn populate_records(tx: &mut Sender<Record>, records: Vec<Record>) {
@@ -88,7 +84,8 @@ mod tests {
         let (mut tx0, rx0) = channel!(Record, 1024);
         let (tx1, mut rx1) = channel!(Record, 1024);
         let (tx2, mut rx2) = channel!(Record, 1024);
-        // abc -> id2, 123 -> id1
+        // 123 -> id1, abc -> id2 if hashkey is "key" only
+        // abc, 1 -> id1, others -> id2 if hashkey is (key, value) combined
         let records = vec![
             Record {
                 key: "abc".to_owned(),
