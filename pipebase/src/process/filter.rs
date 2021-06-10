@@ -1,15 +1,39 @@
+use crate::{FromConfig, FromFile};
+
 use super::Procedure;
-use crate::error::Result;
 use async_trait::async_trait;
+use serde::Deserialize;
+
 pub trait Filter<Rhs = Self>: Clone {
     fn filter(rhs: &Rhs) -> Option<Rhs>;
+}
+
+#[derive(Deserialize)]
+pub struct FilterMapConfig {}
+
+impl FromFile for FilterMapConfig {
+    fn from_file(_path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+        Ok(FilterMapConfig {})
+    }
 }
 
 pub struct FilterMap {}
 
 #[async_trait]
+impl FromConfig<FilterMapConfig> for FilterMap {
+    async fn from_config(
+        _config: &FilterMapConfig,
+    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+        Ok(FilterMap {})
+    }
+}
+
+#[async_trait]
 impl<T: Filter + Clone + Send + Sync + 'static> Procedure<Vec<T>, Vec<T>> for FilterMap {
-    async fn process(&self, data: Vec<T>) -> Result<Vec<T>> {
+    async fn process(
+        &self,
+        data: Vec<T>,
+    ) -> std::result::Result<Vec<T>, Box<dyn std::error::Error>> {
         Ok(data
             .iter()
             .filter_map(|item| T::filter(item))
@@ -19,7 +43,11 @@ impl<T: Filter + Clone + Send + Sync + 'static> Procedure<Vec<T>, Vec<T>> for Fi
 
 #[cfg(test)]
 mod tests {
-    use crate::process::{filter::FilterMap, Process};
+    use crate::process::{
+        filter::{FilterMap, FilterMapConfig},
+        Process,
+    };
+    use crate::{channel, process, spawn_join, FromConfig, FromFile};
     use pipederive::Filter;
 
     use super::Filter;
@@ -55,15 +83,9 @@ mod tests {
     }
     #[tokio::test]
     async fn test_filter_map() {
-        let (mut tx0, rx0) = channel::<Vec<Record>>(1024);
-        let (tx1, mut rx1) = channel::<Vec<Record>>(1024);
-        let mut p = Process {
-            name: "filter_map",
-            rx: rx0,
-            txs: vec![tx1],
-            p: Box::new(FilterMap {}),
-        };
-        let f0 = p.run();
+        let (mut tx0, rx0) = channel!(Vec<Record>, 1024);
+        let (tx1, mut rx1) = channel!(Vec<self::Record>, 1024);
+        let mut pipe = process!("filter_map", "", FilterMapConfig, FilterMap, rx0, [tx1]);
         let f1 = populate_records(
             &mut tx0,
             vec![
@@ -74,7 +96,7 @@ mod tests {
         );
         f1.await;
         drop(tx0);
-        f0.await;
+        spawn_join!(pipe);
         let filtered_records = rx1.recv().await.unwrap();
         assert_eq!(1, filtered_records.len());
         assert_eq!(0, filtered_records[0].r0);

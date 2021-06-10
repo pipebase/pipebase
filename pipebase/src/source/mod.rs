@@ -1,35 +1,40 @@
 mod timer;
 
-use crate::error::Result;
+pub use timer::*;
+
 use async_trait::async_trait;
-use log::error;
+use log::{error, info};
 use tokio::sync::mpsc::Sender;
 
+use crate::error::Result;
+
 #[async_trait]
-pub trait Poll<T>: Send + Sync {
-    async fn poll(&mut self) -> Option<Result<T>>;
+pub trait Poll<T>: Send {
+    async fn poll(
+        &mut self,
+    ) -> std::result::Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>;
 }
 
 pub struct Source<'a, T> {
-    name: &'a str,
-    txs: Vec<Sender<T>>,
-    p: Box<dyn Poll<T>>,
+    pub name: &'a str,
+    pub txs: Vec<Sender<T>>,
+    pub poller: Box<dyn Poll<T>>,
 }
 
 impl<'a, T: Clone> Source<'a, T> {
-    pub async fn run(&mut self) {
+    pub async fn run(&mut self) -> Result<()> {
         loop {
-            let t = self.p.poll().await;
-            let t = match t {
-                Some(t) => t,
-                None => break,
-            };
+            let t = self.poller.poll().await;
             let t = match t {
                 Ok(t) => t,
                 Err(e) => {
                     error!("{} poll error {:#?}", self.name, e);
                     continue;
                 }
+            };
+            let t = match t {
+                Some(t) => t,
+                None => break,
             };
             for tx in self.txs.as_mut_slice() {
                 match tx.send(t.clone()).await {
@@ -40,5 +45,33 @@ impl<'a, T: Clone> Source<'a, T> {
                 }
             }
         }
+        info!("source {} exit ...", self.name);
+        Ok(())
     }
+
+    pub fn add_sender(&mut self, tx: Sender<T>) {
+        self.txs.push(tx);
+    }
+}
+
+#[macro_export]
+macro_rules! source {
+    (
+        $name:expr, $path:expr, $config:ty, $poller:ty, [$( $sender:ident ), *]
+    ) => {
+        async move {
+            let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
+            let poller = <$poller>::from_config(&config).await.unwrap();
+            let mut pipe = Source {
+                name: $name,
+                txs: vec![],
+                poller: Box::new(poller),
+            };
+            $(
+                pipe.add_sender($sender);
+            )*
+            pipe
+        }
+        .await
+    };
 }

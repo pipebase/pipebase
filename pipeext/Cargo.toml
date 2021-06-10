@@ -1,5 +1,5 @@
 [package]
-name = "pipebase"
+name = "pipeext"
 version = "0.1.0"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
@@ -7,11 +7,12 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+pipebase = { path = "../pipebase" }
 async-trait = "0.1.50"
+
+lapin = "1.7.1"
 log = "0.4.14"
+tokio-amqp = "1.0.0"
 tokio = { version = "1.6.1", features = ["full"] }
-rand = "0.8.3"
 serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.8"
-strum = { version = "0.20", features = ["derive"] }
-pipederive = { path = "../pipederive" }
+serde_json = "1.0.64"
