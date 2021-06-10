@@ -45,3 +45,22 @@ macro_rules! spawn_join {
 
     };
 }
+
+#[macro_export]
+macro_rules! channel {
+    (
+        $ty:ty, $size:expr
+    ) => {
+        channel::<$ty>($size)
+    };
+    (
+        $path:path, $size:expr
+    ) => {
+        channel::<$path>($size)
+    };
+    (
+        $expr:expr, $size:expr
+    ) => {
+        channel::<$expr>($size)
+    };
+}

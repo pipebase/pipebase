@@ -56,7 +56,7 @@ mod tests {
 
     use super::super::Process;
     use super::{FieldAccept, FieldVisit, FieldVisitConfig, FieldVisitor};
-    use crate::{process, spawn_join, FromConfig, FromFile};
+    use crate::{channel, process, spawn_join, FromConfig, FromFile};
     use pipederive::FieldAccept;
 
     #[derive(FieldAccept)]
@@ -83,8 +83,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_field_visit_procedure() {
-        let (mut tx0, rx0) = channel::<Records>(1024);
-        let (tx1, mut rx1) = channel::<[i32; 3]>(1024);
+        let (mut tx0, rx0) = channel!(Records, 1024);
+        let (tx1, mut rx1) = channel!([i32; 3], 1024);
         let mut pipe = process!("field_visit", "", FieldVisitConfig, FieldVisit, rx0, [tx1]);
         let f1 = populate_records(&mut tx0, Records { records: [1, 2, 3] });
         f1.await;

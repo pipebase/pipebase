@@ -52,7 +52,7 @@ mod tests {
     use super::Timer;
     use crate::source;
     use crate::source::timer::TimerConfig;
-    use crate::spawn_join;
+    use crate::{channel, spawn_join};
     use crate::{FromConfig, FromFile};
     use tokio::sync::mpsc::{channel, Receiver};
 
@@ -67,7 +67,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_timer() {
-        let (tx, mut rx) = channel::<()>(1024);
+        let (tx, mut rx) = channel!((), 1024);
         let mut source = source!(
             "timer",
             "resources/catalogs/timer.yml",

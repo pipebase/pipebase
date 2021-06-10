@@ -102,8 +102,7 @@ mod tests {
 
     use super::super::Selector;
     use super::*;
-    use crate::selector;
-    use crate::source;
+    use crate::{channel, selector, source};
     use crate::{Source, Timer, TimerConfig};
     use tokio::sync::mpsc::{channel, Receiver};
 
@@ -122,9 +121,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_random_select() {
-        let (tx0, rx0) = channel::<()>(1024);
-        let (tx1, mut rx1) = channel::<()>(1024);
-        let (tx2, mut rx2) = channel::<()>(1024);
+        let (tx0, rx0) = channel!((), 1024);
+        let (tx1, mut rx1) = channel!((), 1024);
+        let (tx2, mut rx2) = channel!((), 1024);
         let mut source = source!(
             "timer",
             "resources/catalogs/timer.yml",

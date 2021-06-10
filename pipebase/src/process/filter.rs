@@ -47,7 +47,7 @@ mod tests {
         filter::{FilterMap, FilterMapConfig},
         Process,
     };
-    use crate::{process, spawn_join, FromConfig, FromFile};
+    use crate::{channel, process, spawn_join, FromConfig, FromFile};
     use pipederive::Filter;
 
     use super::Filter;
@@ -83,8 +83,8 @@ mod tests {
     }
     #[tokio::test]
     async fn test_filter_map() {
-        let (mut tx0, rx0) = channel::<Vec<Record>>(1024);
-        let (tx1, mut rx1) = channel::<Vec<Record>>(1024);
+        let (mut tx0, rx0) = channel!(Vec<Record>, 1024);
+        let (tx1, mut rx1) = channel!(Vec<self::Record>, 1024);
         let mut pipe = process!("filter_map", "", FilterMapConfig, FilterMap, rx0, [tx1]);
         let f1 = populate_records(
             &mut tx0,
