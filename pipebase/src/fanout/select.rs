@@ -70,9 +70,12 @@ impl Select for RoundRobin {
     }
 }
 
+#[derive(Deserialize)]
 pub struct BroadcastConfig {
     pub n: usize,
 }
+
+impl FromFile for BroadcastConfig {}
 
 pub struct Broadcast {
     n: usize,
@@ -143,5 +146,31 @@ mod tests {
         let c1 = count_tick(&mut rx1, 0).await;
         let c2 = count_tick(&mut rx2, 1).await;
         assert_eq!(10, c1 + c2);
+    }
+
+    #[tokio::test]
+    async fn test_broadcast() {
+        let (tx0, rx0) = channel!((), 1024);
+        let (tx1, mut rx1) = channel!((), 1024);
+        let (tx2, mut rx2) = channel!((), 1024);
+        let mut source = source!(
+            "timer",
+            "resources/catalogs/timer.yml",
+            TimerConfig,
+            Timer,
+            [tx0]
+        );
+        let mut selector = selector!(
+            "boradcast_select",
+            "resources/catalogs/broadcast_selector.yml",
+            BroadcastConfig,
+            Broadcast,
+            rx0,
+            [tx1, tx2]
+        );
+        crate::spawn_join!(source, selector);
+        let c1 = count_tick(&mut rx1, 0).await;
+        let c2 = count_tick(&mut rx2, 1).await;
+        assert_eq!(20, c1 + c2);
     }
 }

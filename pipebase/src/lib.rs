@@ -64,3 +64,32 @@ macro_rules! channel {
         channel::<$expr>($size)
     };
 }
+
+#[macro_export]
+macro_rules! spawn_send {
+    (
+        $tx:ident, $t:ident, $jhs:ident
+    ) => {{
+        let jh = tokio::spawn(async move {
+            match $tx.send($t).await {
+                Ok(_) => (),
+                Err(err) => {
+                    error!("selector send error {}", err.to_string());
+                }
+            }
+        });
+        jh
+    }};
+}
+
+#[macro_export]
+macro_rules! wait_join_handle {
+    (
+        $jh:ident
+    ) => {
+        match $jh.await {
+            Ok(_) => (),
+            Err(err) => return Err(join_error(err)),
+        }
+    };
+}

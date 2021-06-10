@@ -6,7 +6,9 @@ use async_trait::async_trait;
 use log::{error, info};
 use tokio::sync::mpsc::Sender;
 
-use crate::error::Result;
+use crate::error::{join_error, Result};
+use crate::{spawn_send, wait_join_handle};
+use std::sync::Arc;
 
 #[async_trait]
 pub trait Poll<T>: Send {
@@ -17,11 +19,11 @@ pub trait Poll<T>: Send {
 
 pub struct Source<'a, T> {
     pub name: &'a str,
-    pub txs: Vec<Sender<T>>,
+    pub txs: Vec<Arc<Sender<T>>>,
     pub poller: Box<dyn Poll<T>>,
 }
 
-impl<'a, T: Clone> Source<'a, T> {
+impl<'a, T: Clone + Send + 'static> Source<'a, T> {
     pub async fn run(&mut self) -> Result<()> {
         loop {
             let t = self.poller.poll().await;
@@ -36,13 +38,13 @@ impl<'a, T: Clone> Source<'a, T> {
                 Some(t) => t,
                 None => break,
             };
-            for tx in self.txs.as_mut_slice() {
-                match tx.send(t.clone()).await {
-                    Ok(_) => continue,
-                    Err(err) => {
-                        error!("source send error {:#?}", err.to_string())
-                    }
-                }
+            let mut jhs = vec![];
+            for tx in self.txs.to_owned() {
+                let t_clone = t.to_owned();
+                jhs.push(spawn_send!(tx, t_clone, jhs));
+            }
+            for jh in jhs {
+                wait_join_handle!(jh)
             }
         }
         info!("source {} exit ...", self.name);
@@ -50,7 +52,7 @@ impl<'a, T: Clone> Source<'a, T> {
     }
 
     pub fn add_sender(&mut self, tx: Sender<T>) {
-        self.txs.push(tx);
+        self.txs.push(Arc::new(tx));
     }
 }
 

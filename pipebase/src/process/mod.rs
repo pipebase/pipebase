@@ -9,7 +9,10 @@ use async_trait::async_trait;
 use log::error;
 use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::error::Result;
+use crate::error::{join_error, Result};
+use crate::{spawn_send, wait_join_handle};
+use std::sync::Arc;
+
 #[async_trait]
 pub trait Procedure<T, U>: Send {
     async fn process(&mut self, data: &T) -> std::result::Result<U, Box<dyn std::error::Error>>;
@@ -18,11 +21,11 @@ pub trait Procedure<T, U>: Send {
 pub struct Process<'a, T, U> {
     name: &'a str,
     rx: Receiver<T>,
-    txs: Vec<Sender<U>>,
+    txs: Vec<Arc<Sender<U>>>,
     procedure: Box<dyn Procedure<T, U>>,
 }
 
-impl<'a, T, U: Clone + Debug> Process<'a, T, U> {
+impl<'a, T, U: Clone + Debug + Send + 'static> Process<'a, T, U> {
     pub async fn run(&mut self) -> Result<()> {
         loop {
             let t = self.rx.recv().await;
@@ -37,20 +40,20 @@ impl<'a, T, U: Clone + Debug> Process<'a, T, U> {
                     continue;
                 }
             };
-            for tx in self.txs.as_mut_slice() {
-                match tx.send(u.to_owned()).await {
-                    Ok(_) => continue,
-                    Err(err) => {
-                        error!("processer send error {:#?}", err);
-                    }
-                }
+            let mut jhs = vec![];
+            for tx in self.txs.to_owned() {
+                let u_clone = u.to_owned();
+                jhs.push(spawn_send!(tx, u_clone, jhs));
+            }
+            for jh in jhs {
+                wait_join_handle!(jh)
             }
         }
         Ok(())
     }
 
     pub fn add_sender(&mut self, tx: Sender<U>) {
-        self.txs.push(tx);
+        self.txs.push(Arc::new(tx));
     }
 }
 

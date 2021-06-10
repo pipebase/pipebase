@@ -80,6 +80,7 @@ mod tests {
     use pipebase::FromConfig;
     use pipebase::Source;
     use std::println as info;
+    use std::sync::Arc;
     use tokio::sync::mpsc::channel;
     use tokio::sync::mpsc::Receiver;
 
@@ -110,7 +111,7 @@ mod tests {
         let rbmq = RabbitMQConsumer::from_config(&config).await.unwrap();
         let mut s = Source {
             name: "rbmq_consumer",
-            txs: vec![tx],
+            txs: vec![Arc::new(tx)],
             poller: Box::new(rbmq),
         };
 
