@@ -27,10 +27,10 @@ impl FromConfig<EchoConfig> for Echo {
 }
 
 #[async_trait]
-impl<T: Debug + Send + Sync + 'static> Procedure<T, T> for Echo {
-    async fn process(&mut self, t: T) -> std::result::Result<T, Box<dyn std::error::Error>> {
+impl<T: Clone + Debug + Sync> Procedure<T, T> for Echo {
+    async fn process(&mut self, t: &T) -> std::result::Result<T, Box<dyn std::error::Error>> {
         info!("{:#?}", t);
-        Ok(t)
+        Ok(t.to_owned())
     }
 }
 

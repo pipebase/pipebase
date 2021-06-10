@@ -11,8 +11,8 @@ use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::error::Result;
 #[async_trait]
-pub trait Procedure<T, U>: Send + Sync {
-    async fn process(&mut self, data: T) -> std::result::Result<U, Box<dyn std::error::Error>>;
+pub trait Procedure<T, U>: Send {
+    async fn process(&mut self, data: &T) -> std::result::Result<U, Box<dyn std::error::Error>>;
 }
 
 pub struct Process<'a, T, U> {
@@ -30,7 +30,7 @@ impl<'a, T, U: Clone + Debug> Process<'a, T, U> {
                 Some(t) => t,
                 None => break,
             };
-            let u = match self.procedure.process(t).await {
+            let u = match self.procedure.process(&t).await {
                 Ok(u) => u,
                 Err(e) => {
                     error!("process {} error {}", self.name, e);
