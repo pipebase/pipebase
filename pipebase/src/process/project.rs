@@ -78,7 +78,7 @@ impl FromConfig<ProjectionConfig> for Projection {
 }
 
 #[async_trait]
-impl<T: Send + Sync + 'static, U: Project<T> + Send + Sync + 'static> Procedure<T, U>
+impl<T: Send + 'static, U: Project<T>> Procedure<T, U>
     for Projection
 {
     async fn process(&self, data: T) -> std::result::Result<U, Box<dyn std::error::Error>> {

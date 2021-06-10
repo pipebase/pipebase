@@ -4,13 +4,12 @@ pub use timer::*;
 
 use async_trait::async_trait;
 use log::{error, info};
-use std::error::Error;
 use tokio::sync::mpsc::Sender;
 
 use crate::error::Result;
 
 #[async_trait]
-pub trait Poll<T>: Send + Sync {
+pub trait Poll<T>: Send {
     async fn poll(
         &mut self,
     ) -> std::result::Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>;
