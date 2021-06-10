@@ -12,14 +12,14 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use crate::error::Result;
 #[async_trait]
 pub trait Procedure<T, U>: Send + Sync {
-    async fn process(&self, data: T) -> std::result::Result<U, Box<dyn std::error::Error>>;
+    async fn process(&mut self, data: T) -> std::result::Result<U, Box<dyn std::error::Error>>;
 }
 
 pub struct Process<'a, T, U> {
     name: &'a str,
     rx: Receiver<T>,
     txs: Vec<Sender<U>>,
-    p: Box<dyn Procedure<T, U>>,
+    procedure: Box<dyn Procedure<T, U>>,
 }
 
 impl<'a, T, U: Clone + Debug> Process<'a, T, U> {
@@ -30,7 +30,7 @@ impl<'a, T, U: Clone + Debug> Process<'a, T, U> {
                 Some(t) => t,
                 None => break,
             };
-            let u = match self.p.process(t).await {
+            let u = match self.procedure.process(t).await {
                 Ok(u) => u,
                 Err(e) => {
                     error!("process {} error {}", self.name, e);
@@ -66,7 +66,7 @@ macro_rules! process {
                 name: $name,
                 rx: $rx,
                 txs: vec![],
-                p: Box::new(procedure),
+                procedure: Box::new(procedure),
             };
             $(
                 pipe.add_sender($sender);

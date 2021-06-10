@@ -28,7 +28,7 @@ impl FromConfig<EchoConfig> for Echo {
 
 #[async_trait]
 impl<T: Debug + Send + Sync + 'static> Procedure<T, T> for Echo {
-    async fn process(&self, t: T) -> std::result::Result<T, Box<dyn std::error::Error>> {
+    async fn process(&mut self, t: T) -> std::result::Result<T, Box<dyn std::error::Error>> {
         info!("{:#?}", t);
         Ok(t)
     }

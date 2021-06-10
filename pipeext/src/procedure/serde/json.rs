@@ -17,7 +17,7 @@ impl Ser for JsonSer {
 
 #[async_trait]
 impl<T: Serialize + Send + Sync + 'static> Procedure<T, Vec<u8>> for JsonSer {
-    async fn process(&self, t: T) -> Result<Vec<u8>, Box<dyn Error>> {
+    async fn process(&mut self, t: T) -> Result<Vec<u8>, Box<dyn Error>> {
         JsonSer::serialize(&t)
     }
 }
@@ -35,7 +35,7 @@ impl Deser for JsonDeser {
 
 #[async_trait]
 impl<T: DeserializeOwned + Send + Sync + 'static> Procedure<Vec<u8>, T> for JsonDeser {
-    async fn process(&self, bytes: Vec<u8>) -> Result<T, Box<dyn Error>> {
+    async fn process(&mut self, bytes: Vec<u8>) -> Result<T, Box<dyn Error>> {
         JsonDeser::deserialize(bytes.as_slice())
     }
 }

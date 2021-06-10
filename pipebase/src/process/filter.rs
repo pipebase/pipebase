@@ -31,7 +31,7 @@ impl FromConfig<FilterMapConfig> for FilterMap {
 #[async_trait]
 impl<T: Filter + Clone + Send + Sync + 'static> Procedure<Vec<T>, Vec<T>> for FilterMap {
     async fn process(
-        &self,
+        &mut self,
         data: Vec<T>,
     ) -> std::result::Result<Vec<T>, Box<dyn std::error::Error>> {
         Ok(data

@@ -44,7 +44,7 @@ impl FromConfig<FieldVisitConfig> for FieldVisit {
 impl<T: FieldAccept<U> + Send + Sync + 'static, U: Clone + Send + Sync + 'static> Procedure<T, U>
     for FieldVisit
 {
-    async fn process(&self, t: T) -> std::result::Result<U, Box<dyn std::error::Error>> {
+    async fn process(&mut self, t: T) -> std::result::Result<U, Box<dyn std::error::Error>> {
         let mut visitor = FieldVisitor::<U> { value: None };
         t.accept(&mut visitor);
         Ok(visitor.get_value().unwrap())
