@@ -47,7 +47,7 @@ mod tests {
         filter::{FilterMap, FilterMapConfig},
         Process,
     };
-    use crate::{channel, process, spawn_join, FromConfig, FromFile};
+    use crate::{channel, process, spawn_join, FromConfig, FromFile, Pipe};
     use pipederive::Filter;
 
     use super::Filter;

@@ -54,7 +54,7 @@ mod tests {
 
     use super::super::Process;
     use super::{FieldAccept, FieldVisit, FieldVisitConfig, FieldVisitor};
-    use crate::{channel, process, spawn_join, FromConfig, FromFile};
+    use crate::{channel, process, spawn_join, FromConfig, FromFile, Pipe};
     use pipederive::FieldAccept;
 
     #[derive(FieldAccept)]

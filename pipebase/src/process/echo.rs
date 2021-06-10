@@ -38,7 +38,7 @@ impl<T: Clone + Debug + Sync> Procedure<T, T> for Echo {
 mod tests {
     use super::{Echo, EchoConfig, FromConfig, FromFile};
     use crate::process::Process;
-    use crate::{channel, process, spawn_join};
+    use crate::{channel, process, spawn_join, Pipe};
     use std::println as info;
     use tokio::sync::mpsc::{channel, Sender};
 

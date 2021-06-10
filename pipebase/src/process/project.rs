@@ -91,7 +91,7 @@ mod tests {
         project::{Project, Projection, ProjectionConfig},
         Process,
     };
-    use crate::{channel, process, spawn_join, FromConfig, FromFile};
+    use crate::{channel, process, spawn_join, FromConfig, FromFile, Pipe};
     use pipederive::Project;
     use tokio::sync::mpsc::{channel, Sender};
 

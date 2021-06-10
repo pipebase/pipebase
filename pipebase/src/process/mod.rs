@@ -9,8 +9,8 @@ use async_trait::async_trait;
 use log::error;
 use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::error::{join_error, Result};
-use crate::{spawn_send, wait_join_handle};
+use crate::error::Result;
+use crate::Pipe;
 use std::sync::Arc;
 
 #[async_trait]
@@ -25,8 +25,9 @@ pub struct Process<'a, T, U> {
     procedure: Box<dyn Procedure<T, U>>,
 }
 
-impl<'a, T, U: Clone + Debug + Send + 'static> Process<'a, T, U> {
-    pub async fn run(&mut self) -> Result<()> {
+#[async_trait]
+impl<'a, T: Send + Sync, U: Clone + Debug + Send + 'static> Pipe<U> for Process<'a, T, U> {
+    async fn run(&mut self) -> Result<()> {
         loop {
             let t = self.rx.recv().await;
             let t = match t {
@@ -42,17 +43,17 @@ impl<'a, T, U: Clone + Debug + Send + 'static> Process<'a, T, U> {
             };
             let mut jhs = vec![];
             for tx in self.txs.to_owned() {
-                let u_clone = u.to_owned();
-                jhs.push(spawn_send!(tx, u_clone, jhs));
+                let u_clone: U = u.to_owned();
+                jhs.push(Self::spawn_send(tx, u_clone));
             }
-            for jh in jhs {
-                wait_join_handle!(jh)
+            match Self::wait_join_handles(jhs).await {
+                _ => (),
             }
         }
         Ok(())
     }
 
-    pub fn add_sender(&mut self, tx: Sender<U>) {
+    fn add_sender(&mut self, tx: Sender<U>) {
         self.txs.push(Arc::new(tx));
     }
 }

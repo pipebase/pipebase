@@ -105,7 +105,7 @@ mod tests {
 
     use super::super::Selector;
     use super::*;
-    use crate::{channel, selector, source};
+    use crate::{channel, selector, source, Pipe};
     use crate::{Source, Timer, TimerConfig};
     use tokio::sync::mpsc::{channel, Receiver};
 

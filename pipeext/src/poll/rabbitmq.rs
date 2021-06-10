@@ -78,7 +78,7 @@ impl Poll<Vec<u8>> for RabbitMQConsumer {
 mod tests {
 
     use pipebase::FromConfig;
-    use pipebase::Source;
+    use pipebase::{Pipe, Source};
     use std::println as info;
     use std::sync::Arc;
     use tokio::sync::mpsc::channel;

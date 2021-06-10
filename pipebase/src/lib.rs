@@ -11,6 +11,11 @@ pub use source::*;
 
 use async_trait::async_trait;
 use log::error;
+use std::sync::Arc;
+use tokio::sync::mpsc::Sender;
+use tokio::task::JoinHandle;
+
+use error::Result;
 
 pub trait FromFile: Sized + DeserializeOwned {
     fn from_file(path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
@@ -23,6 +28,35 @@ pub trait FromFile: Sized + DeserializeOwned {
 #[async_trait]
 pub trait FromConfig<T>: Sized {
     async fn from_config(config: &T) -> std::result::Result<Self, Box<dyn std::error::Error>>;
+}
+
+#[async_trait]
+pub trait Pipe<T: Send + 'static> {
+    async fn run(&mut self) -> Result<()>;
+
+    fn add_sender(&mut self, tx: Sender<T>);
+
+    fn spawn_send(tx: Arc<Sender<T>>, t: T) -> JoinHandle<()> {
+        tokio::spawn(async move {
+            match tx.send(t).await {
+                Ok(()) => (),
+                Err(err) => {
+                    error!("selector send error {}", err.to_string());
+                }
+            }
+        })
+    }
+
+    async fn wait_join_handles(join_handles: Vec<JoinHandle<()>>) {
+        for jh in join_handles {
+            match jh.await {
+                Ok(()) => (),
+                Err(err) => {
+                    error!("join error in pipe err: {:#?}", err)
+                }
+            }
+        }
+    }
 }
 
 #[macro_export]
@@ -62,34 +96,5 @@ macro_rules! channel {
         $expr:expr, $size:expr
     ) => {
         channel::<$expr>($size)
-    };
-}
-
-#[macro_export]
-macro_rules! spawn_send {
-    (
-        $tx:ident, $t:ident, $jhs:ident
-    ) => {{
-        let jh = tokio::spawn(async move {
-            match $tx.send($t).await {
-                Ok(_) => (),
-                Err(err) => {
-                    error!("selector send error {}", err.to_string());
-                }
-            }
-        });
-        jh
-    }};
-}
-
-#[macro_export]
-macro_rules! wait_join_handle {
-    (
-        $jh:ident
-    ) => {
-        match $jh.await {
-            Ok(_) => (),
-            Err(err) => return Err(join_error(err)),
-        }
     };
 }

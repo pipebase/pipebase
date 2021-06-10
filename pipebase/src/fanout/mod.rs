@@ -3,14 +3,14 @@ mod select;
 
 use std::hash::Hash;
 
-use crate::{spawn_send, wait_join_handle};
+use crate::Pipe;
+use async_trait::async_trait;
 use hash::HashSelect;
-use log::error;
 use select::Select;
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::error::{join_error, select_range_error, Result};
+use crate::error::{select_range_error, Result};
 pub struct HashSelector<'a, T: Hash> {
     name: &'a str,
     rx: Receiver<T>,
@@ -18,8 +18,9 @@ pub struct HashSelector<'a, T: Hash> {
     selector: Box<dyn HashSelect<T>>,
 }
 
-impl<'a, T: Clone + Hash + Send + 'static> HashSelector<'a, T> {
-    pub async fn run(&mut self) -> Result<()> {
+#[async_trait]
+impl<'a, T: Clone + Hash + Send + 'static> Pipe<T> for HashSelector<'a, T> {
+    async fn run(&mut self) -> Result<()> {
         let selector_range = self.selector.get_range();
         let sender_range = self.txs.len();
         match selector_range == sender_range {
@@ -41,16 +42,16 @@ impl<'a, T: Clone + Hash + Send + 'static> HashSelector<'a, T> {
             for i in self.selector.select(&t) {
                 let tx = self.txs.get(i).unwrap().to_owned();
                 let t_clone = t.to_owned();
-                jhs.push(spawn_send!(tx, t_clone, jhs));
+                jhs.push(Self::spawn_send(tx, t_clone));
             }
-            for jh in jhs {
-                wait_join_handle!(jh)
+            match Self::wait_join_handles(jhs).await {
+                _ => (),
             }
         }
         Ok(())
     }
 
-    pub fn add_sender(&mut self, tx: Sender<T>) {
+    fn add_sender(&mut self, tx: Sender<T>) {
         self.txs.push(Arc::new(tx));
     }
 }
@@ -62,8 +63,9 @@ pub struct Selector<'a, T> {
     selector: Box<dyn Select>,
 }
 
-impl<'a, T: Clone + Send + 'static> Selector<'a, T> {
-    pub async fn run(&mut self) -> Result<()> {
+#[async_trait]
+impl<'a, T: Clone + Send + 'static> Pipe<T> for Selector<'a, T> {
+    async fn run(&mut self) -> Result<()> {
         let selector_range = self.selector.get_range();
         let sender_range = self.txs.len();
         match selector_range == sender_range {
@@ -85,16 +87,16 @@ impl<'a, T: Clone + Send + 'static> Selector<'a, T> {
             for i in self.selector.select() {
                 let tx = self.txs.get(i).unwrap().to_owned();
                 let t_clone = t.to_owned();
-                jhs.push(spawn_send!(tx, t_clone, jhs));
+                jhs.push(Self::spawn_send(tx, t_clone));
             }
-            for jh in jhs {
-                wait_join_handle!(jh)
+            match Self::wait_join_handles(jhs).await {
+                _ => (),
             }
         }
         Ok(())
     }
 
-    pub fn add_sender(&mut self, tx: Sender<T>) {
+    fn add_sender(&mut self, tx: Sender<T>) {
         self.txs.push(Arc::new(tx));
     }
 }
