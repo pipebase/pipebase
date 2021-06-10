@@ -49,7 +49,7 @@ mod tests {
     use super::super::HashSelector;
     use super::{DefaultHashSelect, DefaultHashSelectConfig};
     use crate::HashKey;
-    use crate::{channel, hselector, spawn_join, FromConfig, FromFile};
+    use crate::{channel, hselector, spawn_join, FromConfig, FromFile, Pipe};
     use std::hash::{Hash, Hasher};
     use tokio::sync::mpsc::{channel, Receiver, Sender};
 

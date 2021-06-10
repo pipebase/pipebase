@@ -41,10 +41,8 @@ impl FromConfig<FieldVisitConfig> for FieldVisit {
 }
 
 #[async_trait]
-impl<T: FieldAccept<U> + Send + Sync + 'static, U: Clone + Send + Sync + 'static> Procedure<T, U>
-    for FieldVisit
-{
-    async fn process(&mut self, t: T) -> std::result::Result<U, Box<dyn std::error::Error>> {
+impl<T: FieldAccept<U> + Sync, U: Clone> Procedure<T, U> for FieldVisit {
+    async fn process(&mut self, t: &T) -> std::result::Result<U, Box<dyn std::error::Error>> {
         let mut visitor = FieldVisitor::<U> { value: None };
         t.accept(&mut visitor);
         Ok(visitor.get_value().unwrap())
@@ -56,7 +54,7 @@ mod tests {
 
     use super::super::Process;
     use super::{FieldAccept, FieldVisit, FieldVisitConfig, FieldVisitor};
-    use crate::{channel, process, spawn_join, FromConfig, FromFile};
+    use crate::{channel, process, spawn_join, FromConfig, FromFile, Pipe};
     use pipederive::FieldAccept;
 
     #[derive(FieldAccept)]

@@ -10,47 +10,51 @@ use log::error;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::error::Result;
+use crate::Pipe;
+use std::sync::Arc;
+
 #[async_trait]
-pub trait Procedure<T, U>: Send + Sync {
-    async fn process(&mut self, data: T) -> std::result::Result<U, Box<dyn std::error::Error>>;
+pub trait Procedure<T, U>: Send {
+    async fn process(&mut self, data: &T) -> std::result::Result<U, Box<dyn std::error::Error>>;
 }
 
 pub struct Process<'a, T, U> {
     name: &'a str,
     rx: Receiver<T>,
-    txs: Vec<Sender<U>>,
+    txs: Vec<Arc<Sender<U>>>,
     procedure: Box<dyn Procedure<T, U>>,
 }
 
-impl<'a, T, U: Clone + Debug> Process<'a, T, U> {
-    pub async fn run(&mut self) -> Result<()> {
+#[async_trait]
+impl<'a, T: Send + Sync, U: Clone + Debug + Send + 'static> Pipe<U> for Process<'a, T, U> {
+    async fn run(&mut self) -> Result<()> {
         loop {
             let t = self.rx.recv().await;
             let t = match t {
                 Some(t) => t,
                 None => break,
             };
-            let u = match self.procedure.process(t).await {
+            let u = match self.procedure.process(&t).await {
                 Ok(u) => u,
                 Err(e) => {
                     error!("process {} error {}", self.name, e);
                     continue;
                 }
             };
-            for tx in self.txs.as_mut_slice() {
-                match tx.send(u.to_owned()).await {
-                    Ok(_) => continue,
-                    Err(err) => {
-                        error!("processer send error {:#?}", err);
-                    }
-                }
+            let mut jhs = vec![];
+            for tx in self.txs.to_owned() {
+                let u_clone: U = u.to_owned();
+                jhs.push(Self::spawn_send(tx, u_clone));
+            }
+            match Self::wait_join_handles(jhs).await {
+                _ => (),
             }
         }
         Ok(())
     }
 
-    pub fn add_sender(&mut self, tx: Sender<U>) {
-        self.txs.push(tx);
+    fn add_sender(&mut self, tx: Sender<U>) {
+        self.txs.push(Arc::new(tx));
     }
 }
 

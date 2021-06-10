@@ -27,10 +27,10 @@ impl FromConfig<EchoConfig> for Echo {
 }
 
 #[async_trait]
-impl<T: Debug + Send + Sync + 'static> Procedure<T, T> for Echo {
-    async fn process(&mut self, t: T) -> std::result::Result<T, Box<dyn std::error::Error>> {
+impl<T: Clone + Debug + Sync> Procedure<T, T> for Echo {
+    async fn process(&mut self, t: &T) -> std::result::Result<T, Box<dyn std::error::Error>> {
         info!("{:#?}", t);
-        Ok(t)
+        Ok(t.to_owned())
     }
 }
 
@@ -38,7 +38,7 @@ impl<T: Debug + Send + Sync + 'static> Procedure<T, T> for Echo {
 mod tests {
     use super::{Echo, EchoConfig, FromConfig, FromFile};
     use crate::process::Process;
-    use crate::{channel, process, spawn_join};
+    use crate::{channel, process, spawn_join, Pipe};
     use std::println as info;
     use tokio::sync::mpsc::{channel, Sender};
 

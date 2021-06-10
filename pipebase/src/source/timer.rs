@@ -52,7 +52,7 @@ mod tests {
     use super::Timer;
     use crate::source;
     use crate::source::timer::TimerConfig;
-    use crate::{channel, spawn_join};
+    use crate::{channel, spawn_join, Pipe};
     use crate::{FromConfig, FromFile};
     use tokio::sync::mpsc::{channel, Receiver};
 

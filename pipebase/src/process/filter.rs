@@ -29,10 +29,10 @@ impl FromConfig<FilterMapConfig> for FilterMap {
 }
 
 #[async_trait]
-impl<T: Filter + Clone + Send + Sync + 'static> Procedure<Vec<T>, Vec<T>> for FilterMap {
+impl<T: Filter + Clone + Sync> Procedure<Vec<T>, Vec<T>> for FilterMap {
     async fn process(
         &mut self,
-        data: Vec<T>,
+        data: &Vec<T>,
     ) -> std::result::Result<Vec<T>, Box<dyn std::error::Error>> {
         Ok(data
             .iter()
@@ -47,7 +47,7 @@ mod tests {
         filter::{FilterMap, FilterMapConfig},
         Process,
     };
-    use crate::{channel, process, spawn_join, FromConfig, FromFile};
+    use crate::{channel, process, spawn_join, FromConfig, FromFile, Pipe};
     use pipederive::Filter;
 
     use super::Filter;
