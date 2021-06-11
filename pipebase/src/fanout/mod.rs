@@ -23,7 +23,7 @@ pub struct HashSelector<'a, T: Hash> {
 
 #[async_trait]
 impl<'a, T: Clone + Hash + Send + 'static> Pipe<T> for HashSelector<'a, T> {
-    async fn run(&mut self) -> Result<Arc<RwLock<Context>>> {
+    async fn run(&mut self) -> Result<()> {
         let selector_range = self.selector.get_range();
         let sender_range = self.txs.len();
         match selector_range == sender_range {
@@ -56,7 +56,8 @@ impl<'a, T: Clone + Hash + Send + 'static> Pipe<T> for HashSelector<'a, T> {
             Self::inc_success_run(self.context.clone()).await;
         }
         Self::set_state(self.context.clone(), State::Done).await;
-        Ok(self.get_context())
+        Self::inc_success_run(self.context.clone()).await;
+        Ok(())
     }
 
     fn add_sender(&mut self, tx: Sender<T>) {
@@ -78,7 +79,7 @@ pub struct Selector<'a, T> {
 
 #[async_trait]
 impl<'a, T: Clone + Send + 'static> Pipe<T> for Selector<'a, T> {
-    async fn run(&mut self) -> Result<Arc<RwLock<Context>>> {
+    async fn run(&mut self) -> Result<()> {
         let selector_range = self.selector.get_range();
         let sender_range = self.txs.len();
         match selector_range == sender_range {
@@ -111,7 +112,8 @@ impl<'a, T: Clone + Send + 'static> Pipe<T> for Selector<'a, T> {
             Self::inc_success_run(self.context.clone()).await;
         }
         Self::set_state(self.context.clone(), State::Done).await;
-        Ok(self.get_context())
+        Self::inc_success_run(self.context.clone()).await;
+        Ok(())
     }
 
     fn add_sender(&mut self, tx: Sender<T>) {

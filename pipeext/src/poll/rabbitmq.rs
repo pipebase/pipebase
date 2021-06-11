@@ -4,7 +4,7 @@ use lapin::Channel;
 use lapin::{
     options::BasicAckOptions, types::FieldTable, Connection, ConnectionProperties, Consumer,
 };
-use log::{error, info};
+use log::info;
 use pipebase::Poll;
 use pipebase::{FromConfig, FromFile};
 use serde::Deserialize;

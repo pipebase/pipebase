@@ -153,7 +153,6 @@ mod tests {
         assert_eq!(1, reversed_record.r0);
         assert_eq!(0, reversed_record.r1);
         let ctx = context.read().await;
-        // total run is always one more since last goodbye message
-        (*ctx).validate(State::Done, 2, 1);
+        (*ctx).validate(State::Done, 2, 2);
     }
 }

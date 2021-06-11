@@ -36,7 +36,7 @@ pub trait FromConfig<T>: Sized {
 
 #[async_trait]
 pub trait Pipe<T: Send + 'static> {
-    async fn run(&mut self) -> Result<Arc<RwLock<Context>>>;
+    async fn run(&mut self) -> Result<()>;
 
     fn add_sender(&mut self, tx: Sender<T>);
 

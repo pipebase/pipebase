@@ -28,7 +28,7 @@ pub struct Source<'a, T> {
 
 #[async_trait]
 impl<'a, T: Clone + Send + 'static> Pipe<T> for Source<'a, T> {
-    async fn run(&mut self) -> Result<Arc<RwLock<Context>>> {
+    async fn run(&mut self) -> Result<()> {
         loop {
             Self::inc_total_run(self.context.clone()).await;
             Self::set_state(self.context.clone(), State::Poll).await;
@@ -56,8 +56,9 @@ impl<'a, T: Clone + Send + 'static> Pipe<T> for Source<'a, T> {
             Self::inc_success_run(self.context.clone()).await;
         }
         Self::set_state(self.context.clone(), State::Done).await;
+        Self::inc_success_run(self.context.clone()).await;
         info!("source {} exit ...", self.name);
-        Ok(self.get_context())
+        Ok(())
     }
 
     fn add_sender(&mut self, tx: Sender<T>) {
