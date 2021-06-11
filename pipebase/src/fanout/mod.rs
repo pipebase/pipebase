@@ -9,18 +9,21 @@ use hash::HashSelect;
 use select::Select;
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::RwLock;
 
+use crate::context::{Context, State};
 use crate::error::{select_range_error, Result};
 pub struct HashSelector<'a, T: Hash> {
-    name: &'a str,
-    rx: Receiver<T>,
-    txs: Vec<Arc<Sender<T>>>,
-    selector: Box<dyn HashSelect<T>>,
+    pub name: &'a str,
+    pub rx: Receiver<T>,
+    pub txs: Vec<Arc<Sender<T>>>,
+    pub selector: Box<dyn HashSelect<T>>,
+    pub context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
 impl<'a, T: Clone + Hash + Send + 'static> Pipe<T> for HashSelector<'a, T> {
-    async fn run(&mut self) -> Result<()> {
+    async fn run(&mut self) -> Result<Arc<RwLock<Context>>> {
         let selector_range = self.selector.get_range();
         let sender_range = self.txs.len();
         match selector_range == sender_range {
@@ -33,11 +36,14 @@ impl<'a, T: Clone + Hash + Send + 'static> Pipe<T> for HashSelector<'a, T> {
             _ => (),
         }
         loop {
+            Self::inc_total_run(self.context.clone()).await;
+            Self::set_state(self.context.clone(), State::Receive).await;
             let t = self.rx.recv().await;
             let t = match t {
                 Some(t) => t,
                 None => break,
             };
+            Self::set_state(self.context.clone(), State::Send).await;
             let mut jhs = vec![];
             for i in self.selector.select(&t) {
                 let tx = self.txs.get(i).unwrap().to_owned();
@@ -47,25 +53,32 @@ impl<'a, T: Clone + Hash + Send + 'static> Pipe<T> for HashSelector<'a, T> {
             match Self::wait_join_handles(jhs).await {
                 _ => (),
             }
+            Self::inc_success_run(self.context.clone()).await;
         }
-        Ok(())
+        Self::set_state(self.context.clone(), State::Done).await;
+        Ok(self.get_context())
     }
 
     fn add_sender(&mut self, tx: Sender<T>) {
         self.txs.push(Arc::new(tx));
     }
+
+    fn get_context(&self) -> Arc<RwLock<Context>> {
+        self.context.clone()
+    }
 }
 
 pub struct Selector<'a, T> {
-    name: &'a str,
-    rx: Receiver<T>,
-    txs: Vec<Arc<Sender<T>>>,
-    selector: Box<dyn Select>,
+    pub name: &'a str,
+    pub rx: Receiver<T>,
+    pub txs: Vec<Arc<Sender<T>>>,
+    pub selector: Box<dyn Select>,
+    pub context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
 impl<'a, T: Clone + Send + 'static> Pipe<T> for Selector<'a, T> {
-    async fn run(&mut self) -> Result<()> {
+    async fn run(&mut self) -> Result<Arc<RwLock<Context>>> {
         let selector_range = self.selector.get_range();
         let sender_range = self.txs.len();
         match selector_range == sender_range {
@@ -78,11 +91,14 @@ impl<'a, T: Clone + Send + 'static> Pipe<T> for Selector<'a, T> {
             _ => (),
         }
         loop {
+            Self::inc_total_run(self.context.clone()).await;
+            Self::set_state(self.context.clone(), State::Receive).await;
             let t = self.rx.recv().await;
             let t = match t {
                 Some(t) => t,
                 None => break,
             };
+            Self::set_state(self.context.clone(), State::Send).await;
             let mut jhs = vec![];
             for i in self.selector.select() {
                 let tx = self.txs.get(i).unwrap().to_owned();
@@ -92,12 +108,18 @@ impl<'a, T: Clone + Send + 'static> Pipe<T> for Selector<'a, T> {
             match Self::wait_join_handles(jhs).await {
                 _ => (),
             }
+            Self::inc_success_run(self.context.clone()).await;
         }
-        Ok(())
+        Self::set_state(self.context.clone(), State::Done).await;
+        Ok(self.get_context())
     }
 
     fn add_sender(&mut self, tx: Sender<T>) {
         self.txs.push(Arc::new(tx));
+    }
+
+    fn get_context(&self) -> Arc<RwLock<Context>> {
+        self.context.clone()
     }
 }
 
@@ -114,6 +136,7 @@ macro_rules! selector {
                 rx: $rx,
                 txs: vec![],
                 selector: Box::new(selector),
+                context: Default::default()
             };
             $(
                 pipe.add_sender($sender);
@@ -137,6 +160,7 @@ macro_rules! hselector {
                 rx: $rx,
                 txs: vec![],
                 selector: Box::new(selector),
+                context: Default::default()
             };
             $(
                 pipe.add_sender($sender);

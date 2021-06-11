@@ -1,8 +1,11 @@
+mod context;
 mod error;
 mod fanout;
 mod process;
 mod source;
 
+use context::Context;
+use context::State;
 pub use fanout::*;
 pub use pipederive::*;
 pub use process::*;
@@ -13,6 +16,7 @@ use async_trait::async_trait;
 use log::error;
 use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
+use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
 
 use error::Result;
@@ -32,7 +36,7 @@ pub trait FromConfig<T>: Sized {
 
 #[async_trait]
 pub trait Pipe<T: Send + 'static> {
-    async fn run(&mut self) -> Result<()>;
+    async fn run(&mut self) -> Result<Arc<RwLock<Context>>>;
 
     fn add_sender(&mut self, tx: Sender<T>);
 
@@ -57,6 +61,23 @@ pub trait Pipe<T: Send + 'static> {
             }
         }
     }
+
+    async fn set_state(context: Arc<RwLock<Context>>, state: State) {
+        let mut ctx = context.write().await;
+        ctx.set_state(state)
+    }
+
+    async fn inc_total_run(context: Arc<RwLock<Context>>) {
+        let mut ctx = context.write().await;
+        ctx.inc_total_run()
+    }
+
+    async fn inc_success_run(context: Arc<RwLock<Context>>) {
+        let mut ctx = context.write().await;
+        ctx.inc_success_run()
+    }
+
+    fn get_context(&self) -> Arc<RwLock<Context>>;
 }
 
 #[macro_export]
@@ -68,10 +89,10 @@ macro_rules! spawn_join {
             tokio::join!($(
                 tokio::spawn(async move {
                     match $pipe.run().await {
-                        Ok(_) => (),
+                        Ok(context) => Ok(context),
                         Err(err) => {
                             log::error!("pipe exit with error {:#?}", err);
-                            ()
+                            Err(err)
                         }
                     }
                 })

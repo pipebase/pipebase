@@ -87,11 +87,15 @@ impl<T: Sync, U: Project<T>> Procedure<T, U> for Projection {
 #[cfg(test)]
 mod tests {
 
-    use crate::process::{
-        project::{Project, Projection, ProjectionConfig},
-        Process,
-    };
+    use crate::error::Result;
     use crate::{channel, process, spawn_join, FromConfig, FromFile, Pipe};
+    use crate::{
+        context::State,
+        process::{
+            project::{Project, Projection, ProjectionConfig},
+            Process,
+        },
+    };
     use pipederive::Project;
     use tokio::sync::mpsc::{channel, Sender};
 
@@ -140,6 +144,7 @@ mod tests {
         let (mut tx0, rx0) = channel!(Record, 1024);
         let (tx1, mut rx1) = channel!(self::ReversedRecord, 1024);
         let mut pipe = process!("reverse", "", ProjectionConfig, Projection, rx0, [tx1]);
+        let context = pipe.get_context();
         let f1 = populate_record(&mut tx0, Record { r0: 0, r1: 1 });
         f1.await;
         drop(tx0);
@@ -147,5 +152,8 @@ mod tests {
         let reversed_record = rx1.recv().await.unwrap();
         assert_eq!(1, reversed_record.r0);
         assert_eq!(0, reversed_record.r1);
+        let ctx = context.read().await;
+        // total run is always one more since last goodbye message
+        (*ctx).validate(State::Done, 2, 1);
     }
 }

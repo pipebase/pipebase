@@ -5,13 +5,15 @@ pub use timer::*;
 use async_trait::async_trait;
 use log::{error, info};
 use tokio::sync::mpsc::Sender;
+use tokio::sync::RwLock;
 
+use crate::context::{Context, State};
 use crate::error::Result;
 use crate::Pipe;
 use std::sync::Arc;
 
 #[async_trait]
-pub trait Poll<T>: Send {
+pub trait Poll<T>: Send + Sync {
     async fn poll(
         &mut self,
     ) -> std::result::Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>;
@@ -21,12 +23,15 @@ pub struct Source<'a, T> {
     pub name: &'a str,
     pub txs: Vec<Arc<Sender<T>>>,
     pub poller: Box<dyn Poll<T>>,
+    pub context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
 impl<'a, T: Clone + Send + 'static> Pipe<T> for Source<'a, T> {
-    async fn run(&mut self) -> Result<()> {
+    async fn run(&mut self) -> Result<Arc<RwLock<Context>>> {
         loop {
+            Self::inc_total_run(self.context.clone()).await;
+            Self::set_state(self.context.clone(), State::Poll).await;
             let t = self.poller.poll().await;
             let t = match t {
                 Ok(t) => t,
@@ -39,6 +44,7 @@ impl<'a, T: Clone + Send + 'static> Pipe<T> for Source<'a, T> {
                 Some(t) => t,
                 None => break,
             };
+            Self::set_state(self.context.clone(), State::Send).await;
             let mut jhs = vec![];
             for tx in self.txs.to_owned() {
                 let t_clone = t.to_owned();
@@ -47,13 +53,19 @@ impl<'a, T: Clone + Send + 'static> Pipe<T> for Source<'a, T> {
             match Self::wait_join_handles(jhs).await {
                 _ => (),
             }
+            Self::inc_success_run(self.context.clone()).await;
         }
+        Self::set_state(self.context.clone(), State::Done).await;
         info!("source {} exit ...", self.name);
-        Ok(())
+        Ok(self.get_context())
     }
 
     fn add_sender(&mut self, tx: Sender<T>) {
         self.txs.push(Arc::new(tx));
+    }
+
+    fn get_context(&self) -> Arc<RwLock<Context>> {
+        self.context.clone()
     }
 }
 
@@ -69,6 +81,7 @@ macro_rules! source {
                 name: $name,
                 txs: vec![],
                 poller: Box::new(poller),
+                context: Default::default()
             };
             $(
                 pipe.add_sender($sender);

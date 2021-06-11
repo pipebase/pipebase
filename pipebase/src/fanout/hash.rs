@@ -4,7 +4,7 @@ use serde::Deserialize;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
-pub trait HashSelect<T: Hash>: Send {
+pub trait HashSelect<T: Hash>: Send + Sync {
     fn select(&mut self, t: &T) -> Vec<usize>;
     fn get_range(&mut self) -> usize;
 }

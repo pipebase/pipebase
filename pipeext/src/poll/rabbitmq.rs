@@ -113,6 +113,7 @@ mod tests {
             name: "rbmq_consumer",
             txs: vec![Arc::new(tx)],
             poller: Box::new(rbmq),
+            context: Default::default(),
         };
 
         let jh0 = tokio::spawn(async move {

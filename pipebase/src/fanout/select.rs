@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use rand::Rng;
 use serde::Deserialize;
 
-pub trait Select: Send {
+pub trait Select: Send + Sync {
     fn select(&mut self) -> Vec<usize>;
     fn get_range(&mut self) -> usize;
 }
