@@ -1,14 +1,8 @@
-use crate::ConfigInto;
-use crate::{FromConfig, FromFile};
+use crate::{ConfigInto, FromConfig, FromFile, HashSelect};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::collections::hash_map::DefaultHasher;
-use std::hash::Hash;
-use std::hash::Hasher;
-pub trait HashSelect<T: Hash, U>: Send + Sync + FromConfig<U> {
-    fn select(&mut self, t: &T) -> Vec<usize>;
-    fn get_range(&mut self) -> usize;
-}
+use std::hash::{Hash, Hasher};
 
 #[derive(Deserialize)]
 pub struct DefaultHashSelectConfig {
@@ -50,10 +44,9 @@ impl<T: Hash> HashSelect<T, DefaultHashSelectConfig> for DefaultHashSelect {
 #[cfg(test)]
 mod tests {
 
-    use super::super::HashSelector;
     use super::DefaultHashSelectConfig;
     use crate::HashKey;
-    use crate::{channel, hselector, spawn_join, FromFile, Pipe};
+    use crate::{channel, hselector, spawn_join, FromFile, HashSelector, Pipe};
     use std::hash::{Hash, Hasher};
     use tokio::sync::mpsc::{channel, Receiver, Sender};
 

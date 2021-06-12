@@ -1,4 +1,4 @@
-use super::Procedure;
+use super::Map;
 use crate::{ConfigInto, FromConfig, FromFile};
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -44,8 +44,8 @@ impl FromConfig<FieldVisitConfig> for FieldVisit {
 }
 
 #[async_trait]
-impl<T: FieldAccept<U> + Sync, U: Clone> Procedure<T, U, FieldVisitConfig> for FieldVisit {
-    async fn process(&mut self, t: &T) -> std::result::Result<U, Box<dyn std::error::Error>> {
+impl<T: FieldAccept<U> + Sync, U: Clone> Map<T, U, FieldVisitConfig> for FieldVisit {
+    async fn map(&mut self, t: &T) -> std::result::Result<U, Box<dyn std::error::Error>> {
         let mut visitor = FieldVisitor::<U> { value: None };
         t.accept(&mut visitor);
         Ok(visitor.get_value().unwrap())
@@ -55,10 +55,11 @@ impl<T: FieldAccept<U> + Sync, U: Clone> Procedure<T, U, FieldVisitConfig> for F
 #[cfg(test)]
 mod tests {
 
-    use super::super::Process;
-    use super::{FieldAccept, FieldVisitConfig, FieldVisitor};
-    use crate::{channel, process, spawn_join, FromFile, Pipe};
-    use pipederive::FieldAccept;
+    use crate::{
+        channel, mapper, spawn_join, FieldAccept, FieldVisitConfig, FieldVisitor, FromFile, Mapper,
+        Pipe,
+    };
+    // use pipederive::FieldAccept;
 
     #[derive(FieldAccept)]
     struct Records {
@@ -86,7 +87,7 @@ mod tests {
     async fn test_field_visit_procedure() {
         let (mut tx0, rx0) = channel!(Records, 1024);
         let (tx1, mut rx1) = channel!([i32; 3], 1024);
-        let mut pipe = process!("field_visit", "", FieldVisitConfig, rx0, [tx1]);
+        let mut pipe = mapper!("field_visit", "", FieldVisitConfig, rx0, [tx1]);
         let f1 = populate_records(&mut tx0, Records { records: [1, 2, 3] });
         f1.await;
         drop(tx0);

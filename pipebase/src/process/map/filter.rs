@@ -1,6 +1,6 @@
 use crate::{ConfigInto, FromConfig, FromFile};
 
-use super::Procedure;
+use super::Map;
 use async_trait::async_trait;
 use serde::Deserialize;
 
@@ -32,8 +32,8 @@ impl FromConfig<FilterMapConfig> for FilterMap {
 }
 
 #[async_trait]
-impl<T: Filter + Clone + Sync> Procedure<Vec<T>, Vec<T>, FilterMapConfig> for FilterMap {
-    async fn process(
+impl<T: Filter + Clone + Sync> Map<Vec<T>, Vec<T>, FilterMapConfig> for FilterMap {
+    async fn map(
         &mut self,
         data: &Vec<T>,
     ) -> std::result::Result<Vec<T>, Box<dyn std::error::Error>> {
@@ -46,8 +46,7 @@ impl<T: Filter + Clone + Sync> Procedure<Vec<T>, Vec<T>, FilterMapConfig> for Fi
 
 #[cfg(test)]
 mod tests {
-    use crate::process::{filter::FilterMapConfig, Process};
-    use crate::{channel, process, spawn_join, FromFile, Pipe};
+    use crate::{channel, mapper, spawn_join, FilterMapConfig, FromFile, Mapper, Pipe};
     use pipederive::Filter;
 
     use super::Filter;
@@ -85,7 +84,7 @@ mod tests {
     async fn test_filter_map() {
         let (mut tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<self::Record>, 1024);
-        let mut pipe = process!("filter_map", "", FilterMapConfig, rx0, [tx1]);
+        let mut pipe = mapper!("filter_map", "", FilterMapConfig, rx0, [tx1]);
         let f1 = populate_records(
             &mut tx0,
             vec![

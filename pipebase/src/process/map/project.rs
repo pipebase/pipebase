@@ -1,6 +1,6 @@
 use crate::{ConfigInto, FromConfig, FromFile};
 
-use super::Procedure;
+use super::Map;
 use async_trait::async_trait;
 use serde::Deserialize;
 
@@ -81,8 +81,8 @@ impl FromConfig<ProjectionConfig> for Projection {
 }
 
 #[async_trait]
-impl<T: Sync, U: Project<T>> Procedure<T, U, ProjectionConfig> for Projection {
-    async fn process(&mut self, data: &T) -> std::result::Result<U, Box<dyn std::error::Error>> {
+impl<T: Sync, U: Project<T>> Map<T, U, ProjectionConfig> for Projection {
+    async fn map(&mut self, data: &T) -> std::result::Result<U, Box<dyn std::error::Error>> {
         Ok(U::project(&data))
     }
 }
@@ -90,15 +90,9 @@ impl<T: Sync, U: Project<T>> Procedure<T, U, ProjectionConfig> for Projection {
 #[cfg(test)]
 mod tests {
 
-    use crate::{channel, process, spawn_join, FromFile, Pipe};
     use crate::{
-        context::State,
-        process::{
-            project::{Project, ProjectionConfig},
-            Process,
-        },
+        channel, mapper, spawn_join, FromFile, Mapper, Pipe, Project, ProjectionConfig, State,
     };
-    use pipederive::Project;
     use tokio::sync::mpsc::{channel, Sender};
 
     #[derive(Debug)]
@@ -145,7 +139,7 @@ mod tests {
     async fn test_reverse_processor() {
         let (mut tx0, rx0) = channel!(Record, 1024);
         let (tx1, mut rx1) = channel!(self::ReversedRecord, 1024);
-        let mut pipe = process!("reverse", "", ProjectionConfig, rx0, [tx1]);
+        let mut pipe = mapper!("reverse", "", ProjectionConfig, rx0, [tx1]);
         let context = pipe.get_context();
         let f1 = populate_record(&mut tx0, Record { r0: 0, r1: 1 });
         f1.await;
