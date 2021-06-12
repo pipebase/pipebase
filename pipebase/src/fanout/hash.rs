@@ -52,7 +52,7 @@ mod tests {
 
     #[derive(Clone, Debug, HashKey)]
     struct Record {
-        #[key]
+        #[hkey]
         pub key: String,
         pub value: i32,
     }

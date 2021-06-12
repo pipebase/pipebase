@@ -2,6 +2,7 @@ mod constants;
 mod field;
 mod filter;
 mod hashkey;
+mod orderkey;
 mod project;
 mod utils;
 
@@ -38,12 +39,22 @@ pub fn derive_field_accept(_tokens: proc_macro::TokenStream) -> proc_macro::Toke
     proc_macro::TokenStream::from(expanded)
 }
 
-#[proc_macro_derive(HashKey, attributes(key))]
+#[proc_macro_derive(HashKey, attributes(hkey))]
 pub fn derive_hashkey(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ref tokens = parse_macro_input!(_tokens as DeriveInput);
     let ref ident = tokens.ident;
     let ref data = tokens.data;
     let ref generics = tokens.generics;
     let expanded = hashkey::impl_hashkey(ident, data, generics);
+    proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(OrderKey, attributes(okey))]
+pub fn derive_orderkey(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ref tokens = parse_macro_input!(_tokens as DeriveInput);
+    let ref ident = tokens.ident;
+    let ref data = tokens.data;
+    let ref generics = tokens.generics;
+    let expanded = orderkey::impl_orderkey(ident, data, generics);
     proc_macro::TokenStream::from(expanded)
 }

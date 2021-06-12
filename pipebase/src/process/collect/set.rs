@@ -58,34 +58,17 @@ impl<T: Clone + Send + Sync + Ord> Collect<T, SetCollectorConfig> for SetCollect
 #[cfg(test)]
 mod tests {
     use crate::{
-        channel, collector, context::State, spawn_join, Collector, FromFile, Pipe,
+        channel, collector, context::State, spawn_join, Collector, FromFile, OrderKey, Pipe,
         SetCollectorConfig,
     };
     use std::cmp::Ordering;
     use tokio::sync::mpsc::{channel, Receiver, Sender};
 
-    #[derive(Clone, Debug, Eq)]
+    #[derive(Clone, Debug, Eq, OrderKey)]
     struct Record {
+        #[okey]
         pub key: String,
         pub val: i32,
-    }
-
-    impl Ord for Record {
-        fn cmp(&self, other: &Self) -> Ordering {
-            self.key.cmp(&other.key)
-        }
-    }
-
-    impl PartialOrd for Record {
-        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-            Some(self.cmp(other))
-        }
-    }
-
-    impl PartialEq for Record {
-        fn eq(&self, other: &Self) -> bool {
-            self.key == other.key
-        }
     }
 
     async fn populate_record(tx: Sender<Record>, records: Vec<Record>) {
@@ -105,7 +88,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_bag_collector() {
+    async fn test_set_collector() {
         let (tx0, rx0) = channel!(Record, 10);
         let (tx1, mut rx1) = channel!(Vec<Record>, 10);
         let mut pipe = collector!(

@@ -15,4 +15,6 @@ pub const FILTER_ALIAS_DEFAULT: &str = "a";
 
 pub const FIELD_VISIT: &str = "visit";
 
-pub const HASH_KEY: &str = "key";
+pub const HASH_KEY: &str = "hkey";
+
+pub const ORD_KEY: &str = "okey";
