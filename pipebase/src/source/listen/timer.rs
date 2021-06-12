@@ -1,27 +1,12 @@
 use async_trait::async_trait;
 use log::error;
 use serde::Deserialize;
-use std::error::Error;
-use std::result::Result;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
-use tokio::time::Interval;
 
-use crate::ConfigInto;
-use crate::FromConfig;
-use crate::FromFile;
-use crate::{spawn_send, wait_join_handles};
-use crate::{Listen, Poll};
-
-#[derive(Deserialize)]
-pub struct TimePollerConfig {
-    pub period_in_millis: u64,
-    pub ticks: u128,
-}
-
-impl FromFile for TimePollerConfig {}
+use crate::{spawn_send, wait_join_handles, ConfigInto, FromConfig, FromFile, Listen};
 
 #[derive(Deserialize)]
 pub struct TimeListenerConfig {
@@ -33,38 +18,6 @@ impl FromFile for TimeListenerConfig {}
 
 #[async_trait]
 impl ConfigInto<TimeListener> for TimeListenerConfig {}
-
-#[async_trait]
-impl ConfigInto<TimePoller> for TimePollerConfig {}
-
-pub struct TimePoller {
-    pub interval: Interval,
-    pub ticks: u128,
-}
-
-#[async_trait]
-impl FromConfig<TimePollerConfig> for TimePoller {
-    async fn from_config(
-        config: &TimePollerConfig,
-    ) -> std::result::Result<TimePoller, Box<dyn std::error::Error>> {
-        Ok(TimePoller {
-            interval: tokio::time::interval(Duration::from_millis(config.period_in_millis)),
-            ticks: config.ticks,
-        })
-    }
-}
-
-#[async_trait]
-impl Poll<(), TimePollerConfig> for TimePoller {
-    async fn poll(&mut self) -> Result<Option<()>, Box<dyn Error + Send + Sync>> {
-        match self.ticks > 0 {
-            true => self.ticks -= 1,
-            false => return Ok(None),
-        }
-        self.interval.tick().await;
-        Ok(Some(()))
-    }
-}
 
 pub struct TimeListener {
     pub ticks: u128,
@@ -110,11 +63,8 @@ impl Listen<(), TimeListenerConfig> for TimeListener {
 
 #[cfg(test)]
 mod tests {
-    use super::super::{Listener, Poller};
-    use crate::poller;
-    use crate::source::timer::TimePollerConfig;
     use crate::FromFile;
-    use crate::{channel, listener, spawn_join, Pipe, TimeListenerConfig};
+    use crate::{channel, listener, spawn_join, Listener, Pipe, TimeListenerConfig};
     use tokio::sync::mpsc::{channel, Receiver};
 
     async fn on_receive(rx: &mut Receiver<()>, ticks: u128) {
@@ -124,19 +74,6 @@ mod tests {
             println!("tick: #{:#?}", i);
             i += 1;
         }
-    }
-
-    #[tokio::test]
-    async fn test_time_poller() {
-        let (tx, mut rx) = channel!((), 1024);
-        let mut source = poller!(
-            "timer",
-            "resources/catalogs/timer.yml",
-            TimePollerConfig,
-            [tx]
-        );
-        spawn_join!(source);
-        on_receive(&mut rx, 10).await;
     }
 
     #[tokio::test]
