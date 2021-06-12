@@ -1,4 +1,4 @@
-use crate::{ConfigInto, FromConfig, FromFile, HashSelect};
+use crate::{ConfigInto, FromConfig, FromFile, Select};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::collections::hash_map::DefaultHasher;
@@ -27,7 +27,7 @@ impl FromConfig<DefaultHashSelectConfig> for DefaultHashSelect {
     }
 }
 
-impl<T: Hash> HashSelect<T, DefaultHashSelectConfig> for DefaultHashSelect {
+impl<T: Hash> Select<T, DefaultHashSelectConfig> for DefaultHashSelect {
     fn select(&mut self, t: &T) -> Vec<usize> {
         let mut hasher = DefaultHasher::new();
         t.hash(&mut hasher);
@@ -46,7 +46,7 @@ mod tests {
 
     use super::DefaultHashSelectConfig;
     use crate::HashKey;
-    use crate::{channel, hselector, spawn_join, FromFile, HashSelector, Pipe};
+    use crate::{channel, selector, spawn_join, FromFile, Pipe, Selector};
     use std::hash::{Hash, Hasher};
     use tokio::sync::mpsc::{channel, Receiver, Sender};
 
@@ -104,7 +104,7 @@ mod tests {
         let f0 = populate_records(&mut tx0, records);
         let f1 = receive_records(&mut rx1, 1);
         let f2 = receive_records(&mut rx2, 2);
-        let mut pipe = hselector!(
+        let mut pipe = selector!(
             "hash_select",
             "resources/catalogs/default_hash_selector.yml",
             DefaultHashSelectConfig,

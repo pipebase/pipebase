@@ -26,8 +26,8 @@ impl FromConfig<RoundRobinConfig> for RoundRobin {
     }
 }
 
-impl Select<RoundRobinConfig> for RoundRobin {
-    fn select(&mut self) -> Vec<usize> {
+impl<T> Select<T, RoundRobinConfig> for RoundRobin {
+    fn select(&mut self, t: &T) -> Vec<usize> {
         let i = self.i;
         let selected = vec![i];
         self.i = (i + 1) % self.n;
