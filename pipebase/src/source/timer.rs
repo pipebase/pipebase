@@ -87,7 +87,7 @@ impl FromConfig<TimeListenerConfig> for TimeListener {
 
 #[async_trait]
 impl Listen<(), TimeListenerConfig> for TimeListener {
-    async fn run(&mut self) {
+    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error>> {
         let mut ticks = self.ticks;
         let mut interval = tokio::time::interval(Duration::from_millis(self.period_in_millis));
         while ticks > 0 {
@@ -100,6 +100,7 @@ impl Listen<(), TimeListenerConfig> for TimeListener {
             wait_join_handles!(jhs);
             ticks -= 1;
         }
+        Ok(())
     }
 
     async fn add_sender(&mut self, sender: Arc<Sender<()>>) {
