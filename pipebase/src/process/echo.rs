@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::{ConfigInto, FromConfig, FromFile};
 
-use super::Procedure;
+use super::Map;
 use async_trait::async_trait;
 use log::info;
 use serde::Deserialize;
@@ -31,8 +31,8 @@ impl FromConfig<EchoConfig> for Echo {
 }
 
 #[async_trait]
-impl<T: Clone + Debug + Sync> Procedure<T, T, EchoConfig> for Echo {
-    async fn process(&mut self, t: &T) -> std::result::Result<T, Box<dyn std::error::Error>> {
+impl<T: Clone + Debug + Sync> Map<T, T, EchoConfig> for Echo {
+    async fn map(&mut self, t: &T) -> std::result::Result<T, Box<dyn std::error::Error>> {
         info!("{:#?}", t);
         Ok(t.to_owned())
     }
@@ -40,9 +40,7 @@ impl<T: Clone + Debug + Sync> Procedure<T, T, EchoConfig> for Echo {
 
 #[cfg(test)]
 mod tests {
-    use super::{EchoConfig, FromFile};
-    use crate::process::Process;
-    use crate::{channel, process, spawn_join, Pipe};
+    use crate::{channel, mapper, spawn_join, EchoConfig, FromFile, Mapper, Pipe};
     use std::println as info;
     use tokio::sync::mpsc::{channel, Sender};
 
@@ -60,7 +58,7 @@ mod tests {
     async fn test_echo() {
         let (mut tx0, rx0) = channel!(Message, 1024);
         let (tx1, mut rx1) = channel!(Message, 1024);
-        let mut p = process!("echo", "", EchoConfig, rx0, [tx1]);
+        let mut p = mapper!("echo", "", EchoConfig, rx0, [tx1]);
         let f1 = populate_message(&mut tx0, Message { m0: 'a', m1: 1 });
         f1.await;
         drop(tx0);

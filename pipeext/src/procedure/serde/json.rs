@@ -1,6 +1,6 @@
 use super::{Deser, Ser};
 use async_trait::async_trait;
-use pipebase::{ConfigInto, FromConfig, FromFile, Procedure};
+use pipebase::{ConfigInto, FromConfig, FromFile, Map};
 use serde::Deserialize;
 use serde::{de::DeserializeOwned, Serialize};
 use std::error::Error;
@@ -39,8 +39,8 @@ impl Ser for JsonSer {
 }
 
 #[async_trait]
-impl<T: Serialize + Sync> Procedure<T, Vec<u8>, JsonSerConfig> for JsonSer {
-    async fn process(&mut self, t: &T) -> Result<Vec<u8>, Box<dyn Error>> {
+impl<T: Serialize + Sync> Map<T, Vec<u8>, JsonSerConfig> for JsonSer {
+    async fn map(&mut self, t: &T) -> Result<Vec<u8>, Box<dyn Error>> {
         JsonSer::serialize(t)
     }
 }
@@ -78,8 +78,8 @@ impl Deser for JsonDeser {
 }
 
 #[async_trait]
-impl<T: DeserializeOwned + Sync> Procedure<Vec<u8>, T, JsonDeserConfig> for JsonDeser {
-    async fn process(&mut self, bytes: &Vec<u8>) -> Result<T, Box<dyn Error>> {
+impl<T: DeserializeOwned + Sync> Map<Vec<u8>, T, JsonDeserConfig> for JsonDeser {
+    async fn map(&mut self, bytes: &Vec<u8>) -> Result<T, Box<dyn Error>> {
         JsonDeser::deserialize(bytes.as_slice())
     }
 }

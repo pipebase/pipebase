@@ -3,6 +3,11 @@ mod field;
 mod filter;
 mod project;
 
+pub use echo::*;
+pub use field::*;
+pub use filter::*;
+pub use project::*;
+
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
@@ -17,16 +22,16 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 #[async_trait]
-pub trait Procedure<T, U, C>: Send + Sync + FromConfig<C> {
-    async fn process(&mut self, data: &T) -> std::result::Result<U, Box<dyn std::error::Error>>;
+pub trait Map<T, U, C>: Send + Sync + FromConfig<C> {
+    async fn map(&mut self, data: &T) -> std::result::Result<U, Box<dyn std::error::Error>>;
 }
 
-pub struct Process<'a, T, U, P: Procedure<T, U, C>, C: ConfigInto<P>> {
+pub struct Mapper<'a, T, U, M: Map<T, U, C>, C: ConfigInto<M>> {
     pub name: &'a str,
     pub rx: Receiver<T>,
     pub txs: Vec<Arc<Sender<U>>>,
     pub config: C,
-    pub procedure: PhantomData<P>,
+    pub mapper: PhantomData<M>,
     pub context: Arc<RwLock<Context>>,
 }
 
@@ -35,12 +40,12 @@ impl<
         'a,
         T: Send + Sync,
         U: Clone + Debug + Send + 'static,
-        P: Procedure<T, U, C>,
-        C: ConfigInto<P> + Send + Sync,
-    > Pipe<U> for Process<'a, T, U, P, C>
+        M: Map<T, U, C>,
+        C: ConfigInto<M> + Send + Sync,
+    > Pipe<U> for Mapper<'a, T, U, M, C>
 {
     async fn run(&mut self) -> Result<()> {
-        let mut procedure = self.config.config_into().await.unwrap();
+        let mut mapper = self.config.config_into().await.unwrap();
         loop {
             Self::inc_total_run(self.context.clone()).await;
             Self::set_state(self.context.clone(), State::Receive).await;
@@ -50,7 +55,7 @@ impl<
                 None => break,
             };
             Self::set_state(self.context.clone(), State::Process).await;
-            let u = match procedure.process(&t).await {
+            let u = match mapper.map(&t).await {
                 Ok(u) => u,
                 Err(e) => {
                     error!("process {} error {}", self.name, e);
@@ -83,18 +88,18 @@ impl<
 }
 
 #[macro_export]
-macro_rules! process {
+macro_rules! mapper {
     (
         $name:expr, $path:expr, $config:ty, $rx: ident, [$( $sender:ident ), *]
     ) => {
         async move {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Process {
+            let mut pipe = Mapper {
                 name: $name,
                 rx: $rx,
                 txs: vec![],
                 config: config,
-                procedure: std::marker::PhantomData,
+                mapper: std::marker::PhantomData,
                 context: Default::default()
             };
             $(
