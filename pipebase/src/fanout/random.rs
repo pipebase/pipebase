@@ -26,8 +26,8 @@ impl FromConfig<RandomConfig> for Random {
     }
 }
 
-impl Select<RandomConfig> for Random {
-    fn select(&mut self) -> Vec<usize> {
+impl<T> Select<T, RandomConfig> for Random {
+    fn select(&mut self, _t: &T) -> Vec<usize> {
         let mut rng = rand::thread_rng();
         let i = rng.gen_range(0..self.n);
         vec![i]

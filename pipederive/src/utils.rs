@@ -1,6 +1,7 @@
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::{Attribute, Lit, Meta, MetaList, MetaNameValue, NestedMeta};
+use syn::{Data, Field, Fields, FieldsNamed};
 
 // traversal tree with full path
 pub fn search_meta_value_by_meta_path(full_path: &Vec<&str>, i: usize, meta: &Meta) -> Option<Lit> {
@@ -203,4 +204,26 @@ pub fn resolve_field_path_ident(field_path: &str) -> proc_macro2::TokenStream {
 
 pub fn resolve_field_ident(field: &str) -> Ident {
     Ident::new(field, Span::call_site())
+}
+
+pub fn resolve_first_field(data: &Data, predicate: &dyn Fn(&Field) -> bool) -> Field {
+    let data_struct = match *data {
+        Data::Struct(ref data_struct) => data_struct,
+        Data::Enum(_) | Data::Union(_) => unimplemented!(),
+    };
+    let field = match data_struct.fields {
+        Fields::Named(ref fields) => find_first_field(fields, predicate),
+        Fields::Unnamed(_) | Fields::Unit => unimplemented!(),
+    };
+    match field {
+        Some(field) => field.to_owned(),
+        None => panic!("no field to visit"),
+    }
+}
+
+pub fn find_first_field<'a>(
+    fields: &'a FieldsNamed,
+    predicate: &dyn Fn(&Field) -> bool,
+) -> Option<&'a Field> {
+    fields.named.iter().filter(|&field| predicate(field)).next()
 }

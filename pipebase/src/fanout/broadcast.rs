@@ -25,8 +25,8 @@ impl FromConfig<BroadcastConfig> for Broadcast {
     }
 }
 
-impl Select<BroadcastConfig> for Broadcast {
-    fn select(&mut self) -> Vec<usize> {
+impl<T> Select<T, BroadcastConfig> for Broadcast {
+    fn select(&mut self, _t: &T) -> Vec<usize> {
         (0..self.n).collect()
     }
     fn get_range(&mut self) -> usize {

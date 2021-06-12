@@ -4,16 +4,17 @@ mod fanout;
 mod process;
 mod source;
 
-use context::Context;
-use context::State;
 pub use fanout::*;
 pub use pipederive::*;
 pub use process::*;
-use serde::de::DeserializeOwned;
 pub use source::*;
+
+use context::Context;
+use context::State;
 
 use async_trait::async_trait;
 use log::error;
+use serde::de::DeserializeOwned;
 use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::RwLock;
