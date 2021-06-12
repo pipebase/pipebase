@@ -16,7 +16,7 @@ use tokio::sync::mpsc::channel;
 
 #[async_trait]
 pub trait Listen<T, C>: Send + Sync + FromConfig<C> {
-    async fn run(&mut self);
+    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error>>;
     async fn add_sender(&mut self, sender: Arc<Sender<T>>);
 }
 
