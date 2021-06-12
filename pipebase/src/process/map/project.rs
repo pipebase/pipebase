@@ -90,15 +90,9 @@ impl<T: Sync, U: Project<T>> Map<T, U, ProjectionConfig> for Projection {
 #[cfg(test)]
 mod tests {
 
-    use crate::{channel, mapper, spawn_join, FromFile, Pipe};
     use crate::{
-        context::State,
-        process::{
-            project::{Project, ProjectionConfig},
-            Mapper,
-        },
+        channel, mapper, spawn_join, FromFile, Mapper, Pipe, Project, ProjectionConfig, State,
     };
-    use pipederive::Project;
     use tokio::sync::mpsc::{channel, Sender};
 
     #[derive(Debug)]
