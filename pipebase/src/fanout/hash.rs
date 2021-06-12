@@ -1,10 +1,11 @@
+use crate::ConfigInto;
 use crate::{FromConfig, FromFile};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
-pub trait HashSelect<T: Hash>: Send + Sync {
+pub trait HashSelect<T: Hash, U>: Send + Sync + FromConfig<U> {
     fn select(&mut self, t: &T) -> Vec<usize>;
     fn get_range(&mut self) -> usize;
 }
@@ -15,6 +16,9 @@ pub struct DefaultHashSelectConfig {
 }
 
 impl FromFile for DefaultHashSelectConfig {}
+
+#[async_trait]
+impl ConfigInto<DefaultHashSelect> for DefaultHashSelectConfig {}
 
 pub struct DefaultHashSelect {
     pub n: usize,
@@ -29,7 +33,7 @@ impl FromConfig<DefaultHashSelectConfig> for DefaultHashSelect {
     }
 }
 
-impl<T: Hash> HashSelect<T> for DefaultHashSelect {
+impl<T: Hash> HashSelect<T, DefaultHashSelectConfig> for DefaultHashSelect {
     fn select(&mut self, t: &T) -> Vec<usize> {
         let mut hasher = DefaultHasher::new();
         t.hash(&mut hasher);
@@ -47,9 +51,9 @@ impl<T: Hash> HashSelect<T> for DefaultHashSelect {
 mod tests {
 
     use super::super::HashSelector;
-    use super::{DefaultHashSelect, DefaultHashSelectConfig};
+    use super::DefaultHashSelectConfig;
     use crate::HashKey;
-    use crate::{channel, hselector, spawn_join, FromConfig, FromFile, Pipe};
+    use crate::{channel, hselector, spawn_join, FromFile, Pipe};
     use std::hash::{Hash, Hasher};
     use tokio::sync::mpsc::{channel, Receiver, Sender};
 
@@ -111,7 +115,6 @@ mod tests {
             "hash_select",
             "resources/catalogs/default_hash_selector.yml",
             DefaultHashSelectConfig,
-            DefaultHashSelect,
             rx0,
             [tx1, tx2]
         );

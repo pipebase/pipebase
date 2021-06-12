@@ -1,5 +1,5 @@
 use super::Procedure;
-use crate::{FromConfig, FromFile};
+use crate::{ConfigInto, FromConfig, FromFile};
 use async_trait::async_trait;
 use serde::Deserialize;
 
@@ -30,6 +30,9 @@ impl FromFile for FieldVisitConfig {
     }
 }
 
+#[async_trait]
+impl ConfigInto<FieldVisit> for FieldVisitConfig {}
+
 pub struct FieldVisit {}
 #[async_trait]
 impl FromConfig<FieldVisitConfig> for FieldVisit {
@@ -41,7 +44,7 @@ impl FromConfig<FieldVisitConfig> for FieldVisit {
 }
 
 #[async_trait]
-impl<T: FieldAccept<U> + Sync, U: Clone> Procedure<T, U> for FieldVisit {
+impl<T: FieldAccept<U> + Sync, U: Clone> Procedure<T, U, FieldVisitConfig> for FieldVisit {
     async fn process(&mut self, t: &T) -> std::result::Result<U, Box<dyn std::error::Error>> {
         let mut visitor = FieldVisitor::<U> { value: None };
         t.accept(&mut visitor);
@@ -53,8 +56,8 @@ impl<T: FieldAccept<U> + Sync, U: Clone> Procedure<T, U> for FieldVisit {
 mod tests {
 
     use super::super::Process;
-    use super::{FieldAccept, FieldVisit, FieldVisitConfig, FieldVisitor};
-    use crate::{channel, process, spawn_join, FromConfig, FromFile, Pipe};
+    use super::{FieldAccept, FieldVisitConfig, FieldVisitor};
+    use crate::{channel, process, spawn_join, FromFile, Pipe};
     use pipederive::FieldAccept;
 
     #[derive(FieldAccept)]
@@ -83,7 +86,7 @@ mod tests {
     async fn test_field_visit_procedure() {
         let (mut tx0, rx0) = channel!(Records, 1024);
         let (tx1, mut rx1) = channel!([i32; 3], 1024);
-        let mut pipe = process!("field_visit", "", FieldVisitConfig, FieldVisit, rx0, [tx1]);
+        let mut pipe = process!("field_visit", "", FieldVisitConfig, rx0, [tx1]);
         let f1 = populate_records(&mut tx0, Records { records: [1, 2, 3] });
         f1.await;
         drop(tx0);

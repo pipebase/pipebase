@@ -2,8 +2,9 @@ mod hash;
 mod select;
 
 use std::hash::Hash;
+use std::marker::PhantomData;
 
-use crate::Pipe;
+use crate::{ConfigInto, Pipe};
 use async_trait::async_trait;
 use hash::HashSelect;
 use select::Select;
@@ -13,18 +14,22 @@ use tokio::sync::RwLock;
 
 use crate::context::{Context, State};
 use crate::error::{select_range_error, Result};
-pub struct HashSelector<'a, T: Hash> {
+pub struct HashSelector<'a, T: Hash, S: HashSelect<T, C>, C: ConfigInto<S>> {
     pub name: &'a str,
     pub rx: Receiver<T>,
     pub txs: Vec<Arc<Sender<T>>>,
-    pub selector: Box<dyn HashSelect<T>>,
+    pub config: C,
+    pub selector: PhantomData<S>,
     pub context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, T: Clone + Hash + Send + 'static> Pipe<T> for HashSelector<'a, T> {
+impl<'a, T: Clone + Hash + Send + 'static, S: HashSelect<T, C>, C: ConfigInto<S> + Send + Sync>
+    Pipe<T> for HashSelector<'a, T, S, C>
+{
     async fn run(&mut self) -> Result<()> {
-        let selector_range = self.selector.get_range();
+        let mut selector = self.config.config_into().await.unwrap();
+        let selector_range = selector.get_range();
         let sender_range = self.txs.len();
         match selector_range == sender_range {
             false => {
@@ -45,7 +50,7 @@ impl<'a, T: Clone + Hash + Send + 'static> Pipe<T> for HashSelector<'a, T> {
             };
             Self::set_state(self.context.clone(), State::Send).await;
             let mut jhs = vec![];
-            for i in self.selector.select(&t) {
+            for i in selector.select(&t) {
                 let tx = self.txs.get(i).unwrap().to_owned();
                 let t_clone = t.to_owned();
                 jhs.push(Self::spawn_send(tx, t_clone));
@@ -69,18 +74,22 @@ impl<'a, T: Clone + Hash + Send + 'static> Pipe<T> for HashSelector<'a, T> {
     }
 }
 
-pub struct Selector<'a, T> {
+pub struct Selector<'a, T, S: Select<C>, C: ConfigInto<S>> {
     pub name: &'a str,
     pub rx: Receiver<T>,
     pub txs: Vec<Arc<Sender<T>>>,
-    pub selector: Box<dyn Select>,
+    pub config: C,
+    pub selector: PhantomData<S>,
     pub context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, T: Clone + Send + 'static> Pipe<T> for Selector<'a, T> {
+impl<'a, T: Clone + Send + 'static, S: Select<C>, C: ConfigInto<S> + Send + Sync> Pipe<T>
+    for Selector<'a, T, S, C>
+{
     async fn run(&mut self) -> Result<()> {
-        let selector_range = self.selector.get_range();
+        let mut selector = self.config.config_into().await.unwrap();
+        let selector_range = selector.get_range();
         let sender_range = self.txs.len();
         match selector_range == sender_range {
             false => {
@@ -101,7 +110,7 @@ impl<'a, T: Clone + Send + 'static> Pipe<T> for Selector<'a, T> {
             };
             Self::set_state(self.context.clone(), State::Send).await;
             let mut jhs = vec![];
-            for i in self.selector.select() {
+            for i in selector.select() {
                 let tx = self.txs.get(i).unwrap().to_owned();
                 let t_clone = t.to_owned();
                 jhs.push(Self::spawn_send(tx, t_clone));
@@ -128,16 +137,16 @@ impl<'a, T: Clone + Send + 'static> Pipe<T> for Selector<'a, T> {
 #[macro_export]
 macro_rules! selector {
     (
-        $name:expr, $path:expr, $config:ty, $select:ty, $rx: ident, [$( $sender:ident ), *]
+        $name:expr, $path:expr, $config:ty, $rx: ident, [$( $sender:ident ), *]
     ) => {
         async move {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
-            let selector = <$select>::from_config(&config).await.unwrap();
             let mut pipe = Selector {
                 name: $name,
                 rx: $rx,
                 txs: vec![],
-                selector: Box::new(selector),
+                config: config,
+                selector: std::marker::PhantomData,
                 context: Default::default()
             };
             $(
@@ -152,16 +161,16 @@ macro_rules! selector {
 #[macro_export]
 macro_rules! hselector {
     (
-        $name:expr, $path:expr, $config:ty, $select:ty, $rx: ident, [$( $sender:ident ), *]
+        $name:expr, $path:expr, $config:ty, $rx: ident, [$( $sender:ident ), *]
     ) => {
         async move {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
-            let selector = <$select>::from_config(&config).await.unwrap();
             let mut pipe = HashSelector {
                 name: $name,
                 rx: $rx,
                 txs: vec![],
-                selector: Box::new(selector),
+                config: config,
+                selector: std::marker::PhantomData,
                 context: Default::default()
             };
             $(

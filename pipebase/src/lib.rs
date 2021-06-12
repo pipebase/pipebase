@@ -35,6 +35,13 @@ pub trait FromConfig<T>: Sized {
 }
 
 #[async_trait]
+pub trait ConfigInto<T: FromConfig<Self>>: Sized {
+    async fn config_into(&self) -> std::result::Result<T, Box<dyn std::error::Error>> {
+        T::from_config(self).await
+    }
+}
+
+#[async_trait]
 pub trait Pipe<T: Send + 'static> {
     async fn run(&mut self) -> Result<()>;
 
@@ -117,5 +124,37 @@ macro_rules! channel {
         $expr:expr, $size:expr
     ) => {
         channel::<$expr>($size)
+    };
+}
+
+#[macro_export]
+macro_rules! spawn_send {
+    (
+        $tx:expr, $t:expr
+    ) => {{
+        tokio::spawn(async move {
+            match $tx.send($t).await {
+                Ok(()) => (),
+                Err(err) => {
+                    error!("send error {}", err.to_string());
+                }
+            }
+        })
+    }};
+}
+
+#[macro_export]
+macro_rules! wait_join_handles {
+    (
+        $jhs:expr
+    ) => {
+        for jh in $jhs {
+            match jh.await {
+                Ok(()) => (),
+                Err(err) => {
+                    error!("join error in pipe err: {:#?}", err)
+                }
+            }
+        }
     };
 }

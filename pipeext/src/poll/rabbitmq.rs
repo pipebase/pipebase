@@ -5,6 +5,7 @@ use lapin::{
     options::BasicAckOptions, types::FieldTable, Connection, ConnectionProperties, Consumer,
 };
 use log::info;
+use pipebase::ConfigInto;
 use pipebase::Poll;
 use pipebase::{FromConfig, FromFile};
 use serde::Deserialize;
@@ -30,6 +31,9 @@ pub struct RabbitMQConsumerConfig {
 impl FromFile for RabbitMQConsumerConfig {}
 
 #[async_trait]
+impl ConfigInto<RabbitMQConsumer> for RabbitMQConsumerConfig {}
+
+#[async_trait]
 impl FromConfig<RabbitMQConsumerConfig> for RabbitMQConsumer {
     async fn from_config(config: &RabbitMQConsumerConfig) -> Result<Self, Box<dyn Error>> {
         let properties = ConnectionProperties::default().with_tokio_executor();
@@ -49,7 +53,7 @@ impl FromConfig<RabbitMQConsumerConfig> for RabbitMQConsumer {
 }
 
 #[async_trait]
-impl Poll<Vec<u8>> for RabbitMQConsumer {
+impl Poll<Vec<u8>, RabbitMQConsumerConfig> for RabbitMQConsumer {
     async fn poll(&mut self) -> Result<Option<Vec<u8>>, Box<dyn Error + Send + Sync>> {
         let consumer = match self.create_consumer().await {
             Ok(consumer) => consumer,
@@ -85,11 +89,11 @@ impl RabbitMQConsumer {
 #[cfg(test)]
 mod tests {
 
-    use pipebase::{source, FromConfig, FromFile, Pipe, Source};
+    use pipebase::{poller, FromFile, Pipe, Poller};
     use tokio::sync::mpsc::channel;
     use tokio::sync::mpsc::Receiver;
 
-    use super::{RabbitMQConsumer, RabbitMQConsumerConfig};
+    use super::RabbitMQConsumerConfig;
 
     async fn on_receive(rx: &mut Receiver<Vec<u8>>) {
         let mut i: i32 = 0;
@@ -108,11 +112,10 @@ mod tests {
     #[ignore]
     async fn test_consumer() {
         let (tx, mut rx) = channel::<Vec<u8>>(1024);
-        let mut s = source!(
+        let mut s = poller!(
             "rbmq_consumer",
             "resources/catalogs/rabbitmq_consumer.yml",
             RabbitMQConsumerConfig,
-            RabbitMQConsumer,
             [tx]
         );
         let jh0 = tokio::spawn(async move {

@@ -1,4 +1,4 @@
-use crate::{FromConfig, FromFile};
+use crate::{ConfigInto, FromConfig, FromFile};
 
 use super::Procedure;
 use async_trait::async_trait;
@@ -17,6 +17,9 @@ impl FromFile for FilterMapConfig {
     }
 }
 
+#[async_trait]
+impl ConfigInto<FilterMap> for FilterMapConfig {}
+
 pub struct FilterMap {}
 
 #[async_trait]
@@ -29,7 +32,7 @@ impl FromConfig<FilterMapConfig> for FilterMap {
 }
 
 #[async_trait]
-impl<T: Filter + Clone + Sync> Procedure<Vec<T>, Vec<T>> for FilterMap {
+impl<T: Filter + Clone + Sync> Procedure<Vec<T>, Vec<T>, FilterMapConfig> for FilterMap {
     async fn process(
         &mut self,
         data: &Vec<T>,
@@ -43,11 +46,8 @@ impl<T: Filter + Clone + Sync> Procedure<Vec<T>, Vec<T>> for FilterMap {
 
 #[cfg(test)]
 mod tests {
-    use crate::process::{
-        filter::{FilterMap, FilterMapConfig},
-        Process,
-    };
-    use crate::{channel, process, spawn_join, FromConfig, FromFile, Pipe};
+    use crate::process::{filter::FilterMapConfig, Process};
+    use crate::{channel, process, spawn_join, FromFile, Pipe};
     use pipederive::Filter;
 
     use super::Filter;
@@ -85,7 +85,7 @@ mod tests {
     async fn test_filter_map() {
         let (mut tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<self::Record>, 1024);
-        let mut pipe = process!("filter_map", "", FilterMapConfig, FilterMap, rx0, [tx1]);
+        let mut pipe = process!("filter_map", "", FilterMapConfig, rx0, [tx1]);
         let f1 = populate_records(
             &mut tx0,
             vec![

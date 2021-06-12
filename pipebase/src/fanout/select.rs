@@ -1,9 +1,9 @@
-use crate::{FromConfig, FromFile};
+use crate::{ConfigInto, FromConfig, FromFile};
 use async_trait::async_trait;
 use rand::Rng;
 use serde::Deserialize;
 
-pub trait Select: Send + Sync {
+pub trait Select<T>: Send + Sync + FromConfig<T> {
     fn select(&mut self) -> Vec<usize>;
     fn get_range(&mut self) -> usize;
 }
@@ -14,6 +14,9 @@ pub struct RandomConfig {
 }
 
 impl FromFile for RandomConfig {}
+
+#[async_trait]
+impl ConfigInto<Random> for RandomConfig {}
 
 pub struct Random {
     n: usize,
@@ -28,7 +31,7 @@ impl FromConfig<RandomConfig> for Random {
     }
 }
 
-impl Select for Random {
+impl Select<RandomConfig> for Random {
     fn select(&mut self) -> Vec<usize> {
         let mut rng = rand::thread_rng();
         let i = rng.gen_range(0..self.n);
@@ -40,9 +43,15 @@ impl Select for Random {
     }
 }
 
+#[derive(Deserialize)]
 pub struct RoundRobinConfig {
     pub n: usize,
 }
+
+impl FromFile for RoundRobinConfig {}
+
+#[async_trait]
+impl ConfigInto<RoundRobin> for RoundRobinConfig {}
 
 pub struct RoundRobin {
     pub i: usize,
@@ -58,7 +67,7 @@ impl FromConfig<RoundRobinConfig> for RoundRobin {
     }
 }
 
-impl Select for RoundRobin {
+impl Select<RoundRobinConfig> for RoundRobin {
     fn select(&mut self) -> Vec<usize> {
         let i = self.i;
         let selected = vec![i];
@@ -77,6 +86,9 @@ pub struct BroadcastConfig {
 
 impl FromFile for BroadcastConfig {}
 
+#[async_trait]
+impl ConfigInto<Broadcast> for BroadcastConfig {}
+
 pub struct Broadcast {
     n: usize,
 }
@@ -90,7 +102,7 @@ impl FromConfig<BroadcastConfig> for Broadcast {
     }
 }
 
-impl Select for Broadcast {
+impl Select<BroadcastConfig> for Broadcast {
     fn select(&mut self) -> Vec<usize> {
         (0..self.n).collect()
     }
@@ -105,8 +117,8 @@ mod tests {
 
     use super::super::Selector;
     use super::*;
-    use crate::{channel, selector, source, Pipe};
-    use crate::{Source, Timer, TimerConfig};
+    use crate::{channel, poller, selector, Pipe};
+    use crate::{Poller, TimePollerConfig};
     use tokio::sync::mpsc::{channel, Receiver};
 
     async fn count_tick(rx: &mut Receiver<()>, id: usize) -> usize {
@@ -127,18 +139,16 @@ mod tests {
         let (tx0, rx0) = channel!((), 1024);
         let (tx1, mut rx1) = channel!((), 1024);
         let (tx2, mut rx2) = channel!((), 1024);
-        let mut source = source!(
+        let mut source = poller!(
             "timer",
             "resources/catalogs/timer.yml",
-            TimerConfig,
-            Timer,
+            TimePollerConfig,
             [tx0]
         );
         let mut selector = selector!(
             "random_select",
             "resources/catalogs/random_selector.yml",
             RandomConfig,
-            Random,
             rx0,
             [tx1, tx2]
         );
@@ -153,18 +163,16 @@ mod tests {
         let (tx0, rx0) = channel!((), 1024);
         let (tx1, mut rx1) = channel!((), 1024);
         let (tx2, mut rx2) = channel!((), 1024);
-        let mut source = source!(
+        let mut source = poller!(
             "timer",
             "resources/catalogs/timer.yml",
-            TimerConfig,
-            Timer,
+            TimePollerConfig,
             [tx0]
         );
         let mut selector = selector!(
             "boradcast_select",
             "resources/catalogs/broadcast_selector.yml",
             BroadcastConfig,
-            Broadcast,
             rx0,
             [tx1, tx2]
         );
