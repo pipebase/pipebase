@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use std::collections::BTreeSet;
 use std::time::Duration;
 use tokio::time::Interval;
 
@@ -6,36 +7,41 @@ use crate::{Collect, ConfigInto, FromConfig, FromFile};
 use async_trait::async_trait;
 
 #[derive(Deserialize)]
-pub struct BagCollectorConfig {
+pub struct SetCollectorConfig {
     pub flush_period_in_millis: u64,
 }
 
-impl FromFile for BagCollectorConfig {}
+impl FromFile for SetCollectorConfig {}
 
 #[async_trait]
-impl<T> ConfigInto<BagCollector<T>> for BagCollectorConfig {}
+impl<T: Ord> ConfigInto<SetCollector<T>> for SetCollectorConfig {}
 
-pub struct BagCollector<T> {
+pub struct SetCollector<T: Ord> {
     pub flush_period_in_millis: u64,
+    pub set: BTreeSet<T>,
     pub buffer: Vec<T>,
 }
 
 #[async_trait]
-impl<T> FromConfig<BagCollectorConfig> for BagCollector<T> {
+impl<T: Ord> FromConfig<SetCollectorConfig> for SetCollector<T> {
     async fn from_config(
-        config: &BagCollectorConfig,
+        config: &SetCollectorConfig,
     ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
-        Ok(BagCollector {
+        Ok(SetCollector {
             flush_period_in_millis: config.flush_period_in_millis,
+            set: BTreeSet::new(),
             buffer: vec![],
         })
     }
 }
 
 #[async_trait]
-impl<T: Clone + Send + Sync> Collect<T, BagCollectorConfig> for BagCollector<T> {
+impl<T: Clone + Send + Sync + Ord> Collect<T, SetCollectorConfig> for SetCollector<T> {
     async fn collect(&mut self, t: &T) {
-        self.buffer.push(t.to_owned())
+        match self.set.insert(t.to_owned()) {
+            true => self.buffer.push(t.to_owned()),
+            false => (),
+        }
     }
 
     async fn flush(&mut self) -> Vec<T> {
@@ -52,15 +58,34 @@ impl<T: Clone + Send + Sync> Collect<T, BagCollectorConfig> for BagCollector<T> 
 #[cfg(test)]
 mod tests {
     use crate::{
-        channel, collector, context::State, spawn_join, BagCollectorConfig, Collector, FromFile,
-        Pipe,
+        channel, collector, context::State, spawn_join, Collector, FromFile, Pipe,
+        SetCollectorConfig,
     };
+    use std::cmp::Ordering;
     use tokio::sync::mpsc::{channel, Receiver, Sender};
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Eq)]
     struct Record {
         pub key: String,
         pub val: i32,
+    }
+
+    impl Ord for Record {
+        fn cmp(&self, other: &Self) -> Ordering {
+            self.key.cmp(&other.key)
+        }
+    }
+
+    impl PartialOrd for Record {
+        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    impl PartialEq for Record {
+        fn eq(&self, other: &Self) -> bool {
+            self.key == other.key
+        }
     }
 
     async fn populate_record(tx: Sender<Record>, records: Vec<Record>) {
@@ -85,8 +110,8 @@ mod tests {
         let (tx1, mut rx1) = channel!(Vec<Record>, 10);
         let mut pipe = collector!(
             "bag",
-            "resources/catalogs/bag_collector.yml",
-            BagCollectorConfig,
+            "resources/catalogs/set_collector.yml",
+            SetCollectorConfig,
             rx0,
             [tx1]
         );
@@ -95,7 +120,7 @@ mod tests {
             tx0,
             vec![
                 Record {
-                    key: "0".to_owned(),
+                    key: "1".to_owned(),
                     val: 0,
                 },
                 Record {
@@ -103,7 +128,7 @@ mod tests {
                     val: 1,
                 },
                 Record {
-                    key: "2".to_owned(),
+                    key: "1".to_owned(),
                     val: 2,
                 },
             ],
@@ -111,10 +136,8 @@ mod tests {
         ph.await;
         spawn_join!(pipe);
         let records = receive_records(&mut rx1).await;
-        assert_eq!(3, records.len());
+        assert_eq!(1, records.len());
         assert_eq!(0, records.get(0).unwrap().val);
-        assert_eq!(1, records.get(1).unwrap().val);
-        assert_eq!(2, records.get(2).unwrap().val);
         let context = context.read().await;
         assert_eq!(State::Done, context.get_state());
     }

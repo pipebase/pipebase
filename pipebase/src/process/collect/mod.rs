@@ -1,11 +1,14 @@
 mod bag;
+mod set;
 pub use bag::*;
+pub use set::*;
 
 use std::marker::PhantomData;
 
 use crate::{
-    context::Context, error::join_error, spawn_send, wait_join_handles, ConfigInto, FromConfig,
-    Pipe, Result,
+    context::{Context, State},
+    error::join_error,
+    spawn_send, wait_join_handles, ConfigInto, FromConfig, Pipe, Result,
 };
 
 use async_trait::async_trait;
@@ -68,15 +71,19 @@ impl<
         let collector_clone = collector.to_owned();
         let txs = self.txs.to_owned();
         let is_end_clone = is_end.to_owned();
+        let context = self.get_context();
         let join_flush = tokio::spawn(async move {
             let mut interval = {
                 let c = collector_clone.lock().await;
                 c.get_flush_interval()
             };
             loop {
+                Self::set_state(context.clone(), State::Receive).await;
+                Self::inc_total_run(context.clone()).await;
                 interval.tick().await;
                 let mut c = collector_clone.lock().await;
                 let data = c.flush().await;
+                Self::set_state(context.clone(), State::Send).await;
                 let mut jhs = vec![];
                 for tx in txs.as_slice() {
                     let tx_clone = tx.to_owned();
@@ -84,11 +91,13 @@ impl<
                     jhs.push(spawn_send!(tx_clone, data_clone));
                 }
                 wait_join_handles!(jhs);
+                Self::inc_success_run(context.clone()).await;
                 let is_end = { *(is_end_clone.lock().await) };
                 if is_end {
                     break;
                 }
             }
+            Self::set_state(context.clone(), State::Done).await;
         });
         let join_all = tokio::spawn(async move { tokio::join!(join_event, join_flush) });
         match join_all.await {
