@@ -97,7 +97,12 @@ mod tests {
             [tx]
         );
         drop(rx);
+        let start_millis = std::time::SystemTime::now();
+        // start timer run 10 ticks each 1 second interval
         spawn_join!(listener);
-        // listener should exit as well
+        let now_millis = std::time::SystemTime::now();
+        // listener should exit asap
+        let duration = now_millis.duration_since(start_millis).unwrap();
+        assert!(duration.as_secs() < 3)
     }
 }

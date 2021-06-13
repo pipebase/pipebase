@@ -85,7 +85,12 @@ mod tests {
             [tx]
         );
         drop(rx);
+        let start_millis = std::time::SystemTime::now();
         spawn_join!(source);
         // poller should exit since receiver gone
+        let now_millis = std::time::SystemTime::now();
+        // poller should exit asap
+        let duration = now_millis.duration_since(start_millis).unwrap();
+        assert!(duration.as_secs() < 3)
     }
 }
