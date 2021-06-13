@@ -5,8 +5,6 @@ use lapin::{
     options::BasicAckOptions, types::FieldTable, Connection, ConnectionProperties, Consumer,
 };
 use log::{error, info};
-use pipebase::spawn_send;
-use pipebase::wait_join_handles;
 use pipebase::ConfigInto;
 use pipebase::Listen;
 use pipebase::{FromConfig, FromFile};
@@ -24,7 +22,7 @@ pub struct RabbitMQConsumer {
     options: BasicConsumeOptions,
     args: FieldTable,
     channel: Channel,
-    senders: Vec<Arc<Sender<Vec<u8>>>>,
+    sender: Option<Arc<Sender<Vec<u8>>>>,
 }
 
 #[derive(Deserialize)]
@@ -54,7 +52,7 @@ impl FromConfig<RabbitMQConsumerConfig> for RabbitMQConsumer {
             options: BasicConsumeOptions::default(),
             args: FieldTable::default(),
             channel: channel,
-            senders: vec![],
+            sender: None,
         })
     }
 }
@@ -77,19 +75,16 @@ impl Listen<Vec<u8>, RabbitMQConsumerConfig> for RabbitMQConsumer {
                 }
                 Err(err) => return Err(err.into()),
             };
-            let mut jhs = vec![];
-            for sender in self.senders.as_slice() {
-                let tx = sender.to_owned();
-                let data = data.to_owned();
-                jhs.push(spawn_send!(tx, data));
+            match Self::send_data(self.sender.to_owned(), data).await {
+                true => (),
+                false => break,
             }
-            wait_join_handles!(jhs)
         }
         Ok(())
     }
 
-    async fn add_sender(&mut self, sender: Arc<Sender<Vec<u8>>>) {
-        self.senders.push(sender)
+    async fn set_sender(&mut self, sender: Arc<Sender<Vec<u8>>>) {
+        self.sender = Some(sender)
     }
 }
 

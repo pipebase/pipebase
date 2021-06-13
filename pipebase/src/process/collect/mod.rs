@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 use crate::{
     context::{Context, State},
     error::join_error,
-    spawn_send, wait_join_handles, ConfigInto, FromConfig, Pipe, Result,
+    ConfigInto, FromConfig, Pipe, Result,
 };
 
 use async_trait::async_trait;
@@ -69,7 +69,7 @@ impl<
             }
         });
         let collector_clone = collector.to_owned();
-        let txs = self.txs.to_owned();
+        let mut txs = self.txs.to_owned();
         let is_end_clone = is_end.to_owned();
         let context = self.get_context();
         let join_flush = tokio::spawn(async move {
@@ -80,6 +80,11 @@ impl<
             loop {
                 Self::set_state(context.clone(), State::Receive).await;
                 Self::inc_total_run(context.clone()).await;
+                // if all receiver dropped, sender drop as well
+                match txs.is_empty() {
+                    true => break,
+                    false => (),
+                }
                 interval.tick().await;
                 let mut c = collector_clone.lock().await;
                 let data = c.flush().await;
@@ -88,9 +93,13 @@ impl<
                 for tx in txs.as_slice() {
                     let tx_clone = tx.to_owned();
                     let data_clone = data.to_owned();
-                    jhs.push(spawn_send!(tx_clone, data_clone));
+                    jhs.push(Self::spawn_send(tx_clone, data_clone));
                 }
-                wait_join_handles!(jhs);
+                let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
+                txs = Self::filter_sender_by_dropped_receiver_idx(
+                    txs.to_owned(),
+                    dropped_receiver_idxs,
+                );
                 Self::inc_success_run(context.clone()).await;
                 let is_end = { *(is_end_clone.lock().await) };
                 if is_end {

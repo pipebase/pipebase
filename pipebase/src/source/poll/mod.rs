@@ -37,6 +37,11 @@ impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Syn
         loop {
             Self::inc_total_run(self.context.clone()).await;
             Self::set_state(self.context.clone(), State::Poll).await;
+            // if all receiver dropped, sender drop as well
+            match self.txs.is_empty() {
+                true => break,
+                false => (),
+            }
             let t = poller.poll().await;
             let t = match t {
                 Ok(t) => t,
@@ -55,9 +60,11 @@ impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Syn
                 let t_clone = t.to_owned();
                 jhs.push(Self::spawn_send(tx, t_clone));
             }
-            match Self::wait_join_handles(jhs).await {
-                _ => (),
-            }
+            let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
+            self.txs = Self::filter_sender_by_dropped_receiver_idx(
+                self.txs.to_owned(),
+                dropped_receiver_idxs,
+            );
             Self::inc_success_run(self.context.clone()).await;
         }
         Self::set_state(self.context.clone(), State::Done).await;

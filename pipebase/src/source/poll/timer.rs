@@ -74,4 +74,18 @@ mod tests {
         spawn_join!(source);
         on_receive(&mut rx, 10).await;
     }
+
+    #[tokio::test]
+    async fn test_receiver_drop() {
+        let (tx, rx) = channel!((), 1024);
+        let mut source = poller!(
+            "timer",
+            "resources/catalogs/timer.yml",
+            TimePollerConfig,
+            [tx]
+        );
+        drop(rx);
+        spawn_join!(source);
+        // poller should exit since receiver gone
+    }
 }

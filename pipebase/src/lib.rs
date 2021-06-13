@@ -15,7 +15,9 @@ use context::State;
 use async_trait::async_trait;
 use log::error;
 use serde::de::DeserializeOwned;
+use std::collections::HashSet;
 use std::sync::Arc;
+use tokio::sync::mpsc::error::SendError;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
@@ -48,26 +50,57 @@ pub trait Pipe<T: Send + 'static> {
 
     fn add_sender(&mut self, tx: Sender<T>);
 
-    fn spawn_send(tx: Arc<Sender<T>>, t: T) -> JoinHandle<()> {
+    fn spawn_send(tx: Arc<Sender<T>>, t: T) -> JoinHandle<core::result::Result<(), SendError<T>>> {
         tokio::spawn(async move {
             match tx.send(t).await {
-                Ok(()) => (),
+                Ok(()) => Ok(()),
                 Err(err) => {
                     error!("selector send error {}", err.to_string());
+                    Err(err)
                 }
             }
         })
     }
 
-    async fn wait_join_handles(join_handles: Vec<JoinHandle<()>>) {
+    async fn wait_join_handles(
+        join_handles: Vec<JoinHandle<core::result::Result<(), SendError<T>>>>,
+    ) -> HashSet<usize> {
+        let mut i: usize = 0;
+        let mut dropped_receiver_idxs = HashSet::new();
         for jh in join_handles {
-            match jh.await {
-                Ok(()) => (),
+            let result = match jh.await {
+                Ok(res) => res,
                 Err(err) => {
-                    error!("join error in pipe err: {:#?}", err)
+                    error!("join error in pipe err: {:#?}", err);
+                    i += 1;
+                    continue;
+                }
+            };
+            match result {
+                Ok(()) => (),
+                Err(e) => {
+                    dropped_receiver_idxs.insert(i);
                 }
             }
+            i += 1;
         }
+        dropped_receiver_idxs
+    }
+
+    fn filter_sender_by_dropped_receiver_idx(
+        senders: Vec<Arc<Sender<T>>>,
+        dropped_receiver_idxs: HashSet<usize>,
+    ) -> Vec<Arc<Sender<T>>> {
+        let mut healthy_senders: Vec<Arc<Sender<T>>> = vec![];
+        let mut i: usize = 0;
+        let len = senders.len();
+        while i < len {
+            if !dropped_receiver_idxs.contains(&i) {
+                healthy_senders.push(senders.get(i).unwrap().to_owned());
+            }
+            i += 1;
+        }
+        healthy_senders
     }
 
     async fn set_state(context: Arc<RwLock<Context>>, state: State) {
@@ -125,37 +158,5 @@ macro_rules! channel {
         $expr:expr, $size:expr
     ) => {
         channel::<$expr>($size)
-    };
-}
-
-#[macro_export]
-macro_rules! spawn_send {
-    (
-        $tx:expr, $t:expr
-    ) => {{
-        tokio::spawn(async move {
-            match $tx.send($t).await {
-                Ok(()) => (),
-                Err(err) => {
-                    error!("send error {}", err.to_string());
-                }
-            }
-        })
-    }};
-}
-
-#[macro_export]
-macro_rules! wait_join_handles {
-    (
-        $jhs:expr
-    ) => {
-        for jh in $jhs {
-            match jh.await {
-                Ok(()) => (),
-                Err(err) => {
-                    error!("join error in pipe err: {:#?}", err)
-                }
-            }
-        }
     };
 }
