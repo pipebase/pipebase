@@ -6,7 +6,7 @@ use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 
-use crate::{spawn_send, wait_join_handles, ConfigInto, FromConfig, FromFile, Listen};
+use crate::{ConfigInto, FromConfig, FromFile, Listen};
 
 #[derive(Deserialize)]
 pub struct TimeListenerConfig {
@@ -22,7 +22,7 @@ impl ConfigInto<TimeListener> for TimeListenerConfig {}
 pub struct TimeListener {
     pub ticks: u128,
     pub period_in_millis: u64,
-    pub senders: Vec<Arc<Sender<()>>>,
+    pub sender: Option<Arc<Sender<()>>>,
 }
 
 #[async_trait]
@@ -33,7 +33,7 @@ impl FromConfig<TimeListenerConfig> for TimeListener {
         Ok(TimeListener {
             ticks: config.ticks,
             period_in_millis: config.period_in_millis,
-            senders: vec![],
+            sender: None,
         })
     }
 }
@@ -45,19 +45,17 @@ impl Listen<(), TimeListenerConfig> for TimeListener {
         let mut interval = tokio::time::interval(Duration::from_millis(self.period_in_millis));
         while ticks > 0 {
             interval.tick().await;
-            let mut jhs: Vec<JoinHandle<()>> = vec![];
-            for sender in self.senders.as_slice() {
-                let tx = sender.clone();
-                jhs.push(spawn_send!(tx, ()));
+            match Self::send_data(self.sender.to_owned(), ()).await {
+                true => (),
+                false => break,
             }
-            wait_join_handles!(jhs);
             ticks -= 1;
         }
         Ok(())
     }
 
-    async fn add_sender(&mut self, sender: Arc<Sender<()>>) {
-        self.senders.push(sender);
+    async fn set_sender(&mut self, sender: Arc<Sender<()>>) {
+        self.sender = Some(sender);
     }
 }
 
@@ -87,5 +85,24 @@ mod tests {
         );
         spawn_join!(listener);
         on_receive(&mut rx, 10).await;
+    }
+
+    #[tokio::test]
+    async fn test_receiver_drop() {
+        let (tx, rx) = channel!((), 1024);
+        let mut listener = listener!(
+            "timer",
+            "resources/catalogs/timer.yml",
+            TimeListenerConfig,
+            [tx]
+        );
+        drop(rx);
+        let start_millis = std::time::SystemTime::now();
+        // start timer run 10 ticks each 1 second interval
+        spawn_join!(listener);
+        let now_millis = std::time::SystemTime::now();
+        // listener should exit asap
+        let duration = now_millis.duration_since(start_millis).unwrap();
+        assert!(duration.as_secs() < 3)
     }
 }

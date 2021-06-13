@@ -1,5 +1,5 @@
 use crate::constants::ORD_KEY;
-use crate::utils::{resolve_first_field, search_attribute_by_meta_prefix};
+use crate::utils::{get_any_attribute_by_meta_prefix, resolve_first_field};
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{Data, Field, Generics};
@@ -30,5 +30,5 @@ pub fn impl_orderkey(ident: &Ident, data: &Data, generics: &Generics) -> TokenSt
 }
 
 fn is_ord_key_field(field: &Field) -> bool {
-    search_attribute_by_meta_prefix(ORD_KEY, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(ORD_KEY, &field.attrs, false).is_some()
 }

@@ -15,12 +15,23 @@ use std::sync::Arc;
 use tokio::sync::mpsc::channel;
 
 #[async_trait]
-pub trait Listen<T, C>: Send + Sync + FromConfig<C> {
+pub trait Listen<T: Send + 'static, C>: Send + Sync + FromConfig<C> {
     async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error>>;
-    async fn add_sender(&mut self, sender: Arc<Sender<T>>);
+    async fn set_sender(&mut self, sender: Arc<Sender<T>>);
+    // send data and return true if succeed
+    async fn send_data(sender: Option<Arc<Sender<T>>>, t: T) -> bool {
+        let sender = match sender {
+            Some(sender) => sender,
+            None => return false,
+        };
+        match sender.send(t).await {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
 }
 
-pub struct Listener<'a, T, L: Listen<T, C>, C: ConfigInto<L>> {
+pub struct Listener<'a, T: Send + 'static, L: Listen<T, C>, C: ConfigInto<L>> {
     pub name: &'a str,
     pub txs: Vec<Arc<Sender<T>>>,
     pub config: C,
@@ -38,19 +49,30 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
         let mut listener = self.config.config_into().await.unwrap();
         // start listener
         let join_listener = tokio::spawn(async move {
-            listener.add_sender(tx.into()).await;
+            listener.set_sender(tx.into()).await;
             listener.run().await;
         });
         // start event loop
-        let txs = self.txs.to_owned();
+        let mut txs = self.txs.to_owned();
         let context = self.context.clone();
         let join_loop = tokio::spawn(async move {
             loop {
                 Self::inc_total_run(context.clone()).await;
                 Self::set_state(context.clone(), State::Receive).await;
+                // if all receiver dropped, sender drop as well
+                match txs.is_empty() {
+                    true => {
+                        Self::inc_success_run(context.clone()).await;
+                        break;
+                    }
+                    false => (),
+                }
                 let t = match rx.recv().await {
                     Some(t) => t,
-                    None => break,
+                    None => {
+                        Self::inc_success_run(context.clone()).await;
+                        break;
+                    }
                 };
                 Self::set_state(context.clone(), State::Send).await;
                 let mut jhs = vec![];
@@ -58,13 +80,14 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
                     let u_clone: T = t.to_owned();
                     jhs.push(Self::spawn_send(tx.clone(), u_clone));
                 }
-                match Self::wait_join_handles(jhs).await {
-                    _ => (),
-                }
+                let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
+                txs = Self::filter_sender_by_dropped_receiver_idx(
+                    txs.to_owned(),
+                    dropped_receiver_idxs,
+                );
                 Self::inc_success_run(context.clone()).await;
             }
             Self::set_state(context.clone(), State::Done).await;
-            Self::inc_success_run(context.clone()).await;
         });
         // join listener and loop
         match tokio::spawn(async move { tokio::join!(join_listener, join_loop) }).await {

@@ -53,10 +53,21 @@ impl<'a, T: Clone + Send + 'static, S: Select<T, C>, C: ConfigInto<S> + Send + S
         loop {
             Self::inc_total_run(self.context.clone()).await;
             Self::set_state(self.context.clone(), State::Receive).await;
+            // if all receiver dropped, sender drop as well
+            match self.txs.is_empty() {
+                true => {
+                    Self::inc_success_run(self.context.clone()).await;
+                    break;
+                }
+                false => (),
+            }
             let t = self.rx.recv().await;
             let t = match t {
                 Some(t) => t,
-                None => break,
+                None => {
+                    Self::inc_success_run(self.context.clone()).await;
+                    break;
+                }
             };
             Self::set_state(self.context.clone(), State::Send).await;
             let mut jhs = vec![];
@@ -65,13 +76,14 @@ impl<'a, T: Clone + Send + 'static, S: Select<T, C>, C: ConfigInto<S> + Send + S
                 let t_clone = t.to_owned();
                 jhs.push(Self::spawn_send(tx, t_clone));
             }
-            match Self::wait_join_handles(jhs).await {
-                _ => (),
-            }
+            let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
+            self.txs = Self::filter_sender_by_dropped_receiver_idx(
+                self.txs.to_owned(),
+                dropped_receiver_idxs,
+            );
             Self::inc_success_run(self.context.clone()).await;
         }
         Self::set_state(self.context.clone(), State::Done).await;
-        Self::inc_success_run(self.context.clone()).await;
         Ok(())
     }
 

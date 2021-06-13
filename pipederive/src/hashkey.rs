@@ -2,7 +2,7 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{spanned::Spanned, Data, Field, Fields, FieldsNamed, Generics};
 
-use crate::{constants::HASH_KEY, utils::search_attribute_by_meta_prefix};
+use crate::{constants::HASH_KEY, utils::get_any_attribute_by_meta_prefix};
 
 pub fn impl_hashkey(ident: &Ident, data: &Data, generics: &Generics) -> TokenStream {
     let fields = resolve_field_visit(data);
@@ -42,7 +42,7 @@ fn find_hashkey_fields(fields: &FieldsNamed) -> Vec<Field> {
 }
 
 fn hashkey_field(field: &Field) -> Option<Field> {
-    match search_attribute_by_meta_prefix(HASH_KEY, &field.attrs, false) {
+    match get_any_attribute_by_meta_prefix(HASH_KEY, &field.attrs, false) {
         Some(_) => Some(field.to_owned()),
         None => None,
     }
