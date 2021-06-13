@@ -4,7 +4,7 @@ use syn::{Attribute, Lit, Meta, MetaList, MetaNameValue, NestedMeta};
 use syn::{Data, Field, Fields, FieldsNamed};
 
 // traversal tree with full path
-pub fn search_meta_value_by_meta_path(full_path: &Vec<&str>, i: usize, meta: &Meta) -> Option<Lit> {
+pub fn find_meta_value_by_meta_path(full_path: &Vec<&str>, i: usize, meta: &Meta) -> Option<Lit> {
     // reach last segment of full path
     if i == full_path.len() - 1 {
         if let Meta::NameValue(MetaNameValue {
@@ -30,7 +30,7 @@ pub fn search_meta_value_by_meta_path(full_path: &Vec<&str>, i: usize, meta: &Me
         let ref nested_metas = meta_list.nested;
         for nested_meta in nested_metas.into_iter() {
             if let NestedMeta::Meta(ref nested) = nested_meta {
-                match search_meta_value_by_meta_path(full_path, i + 1, nested) {
+                match find_meta_value_by_meta_path(full_path, i + 1, nested) {
                     Some(lit) => return Some(lit),
                     None => continue,
                 }
@@ -105,7 +105,7 @@ pub fn parse_lit_as_number(lit: &Lit) -> Option<String> {
     return None;
 }
 
-pub fn search_attribute_by_meta_prefix(
+pub fn get_any_attribute_by_meta_prefix(
     prefix: &str,
     attributes: &Vec<Attribute>,
     is_required: bool,
@@ -122,14 +122,28 @@ pub fn search_attribute_by_meta_prefix(
     return None;
 }
 
-pub fn search_meta_string_value_by_meta_path(
+pub fn get_all_attributes_by_meta_prefix(
+    prefix: &str,
+    attributes: &Vec<Attribute>,
+) -> Vec<Attribute> {
+    let prefix_path = prefix.split(".").collect::<Vec<&str>>();
+    let mut hits: Vec<Attribute> = vec![];
+    for attribute in attributes {
+        if is_meta_with_prefix(&prefix_path, 0, &attribute.parse_meta().unwrap()) {
+            hits.push(attribute.clone());
+        }
+    }
+    hits
+}
+
+pub fn get_meta_string_value_by_meta_path(
     full_path: &str,
     attribute: &Attribute,
     is_required: bool,
 ) -> Option<String> {
     let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
     if let Some(ref lit) =
-        search_meta_value_by_meta_path(full_path_vec, 0, &attribute.parse_meta().unwrap())
+        find_meta_value_by_meta_path(full_path_vec, 0, &attribute.parse_meta().unwrap())
     {
         if let Some(value) = parse_lit_as_string(lit) {
             return Some(value);
@@ -144,14 +158,14 @@ pub fn search_meta_string_value_by_meta_path(
     None
 }
 
-pub fn search_meta_number_value_by_meta_path(
+pub fn get_meta_number_value_by_meta_path(
     full_path: &str,
     attribute: &Attribute,
     is_required: bool,
 ) -> Option<String> {
     let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
     if let Some(ref lit) =
-        search_meta_value_by_meta_path(full_path_vec, 0, &attribute.parse_meta().unwrap())
+        find_meta_value_by_meta_path(full_path_vec, 0, &attribute.parse_meta().unwrap())
     {
         if let Some(value) = parse_lit_as_number(lit) {
             return Some(value);
@@ -166,23 +180,23 @@ pub fn search_meta_number_value_by_meta_path(
     None
 }
 
-pub fn get_schema_type_ident(
+pub fn resolve_type_ident(
     attribute: &Attribute,
     module_meta_path: &str,
-    schema_meta_path: &str,
+    type_meta_path: &str,
 ) -> proc_macro2::TokenStream {
-    let type_path = get_schema_type_path_name(attribute, module_meta_path, schema_meta_path);
+    let type_path = resolve_type_path(attribute, module_meta_path, type_meta_path);
     resolve_type_path_ident(type_path.as_str())
 }
 
-pub fn get_schema_type_path_name(
+pub fn resolve_type_path(
     attribute: &Attribute,
     module_meta_path: &str,
-    schema_meta_path: &str,
+    type_meta_path: &str,
 ) -> String {
-    let module = search_meta_string_value_by_meta_path(module_meta_path, attribute, true).unwrap();
-    let schema = search_meta_string_value_by_meta_path(schema_meta_path, attribute, true).unwrap();
-    let type_path = format!("{}::{}", module, schema);
+    let module = get_meta_string_value_by_meta_path(module_meta_path, attribute, true).unwrap();
+    let ty = get_meta_string_value_by_meta_path(type_meta_path, attribute, true).unwrap();
+    let type_path = format!("{}::{}", module, ty);
     type_path
 }
 

@@ -4,7 +4,7 @@ use syn::{Data, Field, Generics};
 
 use crate::{
     constants::FIELD_VISIT,
-    utils::{resolve_first_field, search_attribute_by_meta_prefix},
+    utils::{get_any_attribute_by_meta_prefix, resolve_first_field},
 };
 
 pub fn impl_field_visit(ident: &Ident, data: &Data, generics: &Generics) -> TokenStream {
@@ -22,5 +22,5 @@ pub fn impl_field_visit(ident: &Ident, data: &Data, generics: &Generics) -> Toke
 }
 
 fn is_visit_field(field: &Field) -> bool {
-    search_attribute_by_meta_prefix(FIELD_VISIT, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(FIELD_VISIT, &field.attrs, false).is_some()
 }
