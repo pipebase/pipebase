@@ -55,13 +55,19 @@ impl<'a, T: Clone + Send + 'static, S: Select<T, C>, C: ConfigInto<S> + Send + S
             Self::set_state(self.context.clone(), State::Receive).await;
             // if all receiver dropped, sender drop as well
             match self.txs.is_empty() {
-                true => break,
+                true => {
+                    Self::inc_success_run(self.context.clone()).await;
+                    break;
+                }
                 false => (),
             }
             let t = self.rx.recv().await;
             let t = match t {
                 Some(t) => t,
-                None => break,
+                None => {
+                    Self::inc_success_run(self.context.clone()).await;
+                    break;
+                }
             };
             Self::set_state(self.context.clone(), State::Send).await;
             let mut jhs = vec![];
@@ -78,7 +84,6 @@ impl<'a, T: Clone + Send + 'static, S: Select<T, C>, C: ConfigInto<S> + Send + S
             Self::inc_success_run(self.context.clone()).await;
         }
         Self::set_state(self.context.clone(), State::Done).await;
-        Self::inc_success_run(self.context.clone()).await;
         Ok(())
     }
 

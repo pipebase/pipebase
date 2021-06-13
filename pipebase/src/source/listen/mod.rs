@@ -61,12 +61,18 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
                 Self::set_state(context.clone(), State::Receive).await;
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
-                    true => break,
+                    true => {
+                        Self::inc_success_run(context.clone()).await;
+                        break;
+                    }
                     false => (),
                 }
                 let t = match rx.recv().await {
                     Some(t) => t,
-                    None => break,
+                    None => {
+                        Self::inc_success_run(context.clone()).await;
+                        break;
+                    }
                 };
                 Self::set_state(context.clone(), State::Send).await;
                 let mut jhs = vec![];
@@ -82,7 +88,6 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
                 Self::inc_success_run(context.clone()).await;
             }
             Self::set_state(context.clone(), State::Done).await;
-            Self::inc_success_run(context.clone()).await;
         });
         // join listener and loop
         match tokio::spawn(async move { tokio::join!(join_listener, join_loop) }).await {

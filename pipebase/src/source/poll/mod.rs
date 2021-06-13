@@ -39,7 +39,10 @@ impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Syn
             Self::set_state(self.context.clone(), State::Poll).await;
             // if all receiver dropped, sender drop as well
             match self.txs.is_empty() {
-                true => break,
+                true => {
+                    Self::inc_success_run(self.context.clone()).await;
+                    break;
+                }
                 false => (),
             }
             let t = poller.poll().await;
@@ -47,12 +50,15 @@ impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Syn
                 Ok(t) => t,
                 Err(e) => {
                     error!("{} poll error {:#?}", self.name, e);
-                    continue;
+                    break;
                 }
             };
             let t = match t {
                 Some(t) => t,
-                None => break,
+                None => {
+                    Self::inc_success_run(self.context.clone()).await;
+                    break;
+                }
             };
             Self::set_state(self.context.clone(), State::Send).await;
             let mut jhs = vec![];
@@ -68,7 +74,6 @@ impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Syn
             Self::inc_success_run(self.context.clone()).await;
         }
         Self::set_state(self.context.clone(), State::Done).await;
-        Self::inc_success_run(self.context.clone()).await;
         info!("source {} exit ...", self.name);
         Ok(())
     }

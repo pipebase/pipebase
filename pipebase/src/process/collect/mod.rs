@@ -82,7 +82,10 @@ impl<
                 Self::inc_total_run(context.clone()).await;
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
-                    true => break,
+                    true => {
+                        Self::inc_success_run(context.clone()).await;
+                        break;
+                    }
                     false => (),
                 }
                 interval.tick().await;
