@@ -1,3 +1,4 @@
+mod bootstrap;
 mod context;
 mod error;
 mod fanout;
@@ -5,6 +6,7 @@ mod process;
 mod sink;
 mod source;
 
+pub use bootstrap::*;
 pub use fanout::*;
 pub use pipederive::*;
 pub use process::*;
