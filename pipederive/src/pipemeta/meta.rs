@@ -10,7 +10,7 @@ use syn::Attribute;
 
 use crate::constants::{
     PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_KIND, PIPE_NAME, PIPE_OUTPUT_MODULE, PIPE_OUTPUT_TYPE,
-    PIPE_PARENT,
+    PIPE_UPSTREAM,
 };
 use crate::utils::get_meta_string_value_by_meta_path;
 
@@ -58,7 +58,7 @@ pub struct PipeMeta {
     pub name: String,
     pub kind: String,
     pub config_meta: PipeConfigMeta,
-    pub output_meta: PipeOutputMeta,
+    pub output_meta: Option<PipeOutputMeta>,
     pub upstream_name: Option<String>,
     pub upstream_meta: Weak<RefCell<PipeMeta>>,
     pub downstream_metas: Vec<Rc<RefCell<PipeMeta>>>,
@@ -81,7 +81,7 @@ impl PipeMeta {
         self.config_meta.to_owned()
     }
 
-    pub fn get_output_meta(&self) -> PipeOutputMeta {
+    pub fn get_output_meta(&self) -> Option<PipeOutputMeta> {
         self.output_meta.to_owned()
     }
 
@@ -111,7 +111,7 @@ impl PipeMeta {
             kind: Self::parse_kind(attribute),
             config_meta: Self::parse_config_meta(attribute),
             output_meta: Self::parse_output_meta(attribute),
-            upstream_name: Self::parse_parent_name(attribute),
+            upstream_name: Self::parse_upstream_name(attribute),
             upstream_meta: Weak::new(),
             downstream_metas: vec![],
         }
@@ -125,8 +125,8 @@ impl PipeMeta {
         get_meta_string_value_by_meta_path(PIPE_KIND, attribute, true).unwrap()
     }
 
-    fn parse_parent_name(attribute: &Attribute) -> Option<String> {
-        get_meta_string_value_by_meta_path(PIPE_PARENT, attribute, false)
+    fn parse_upstream_name(attribute: &Attribute) -> Option<String> {
+        get_meta_string_value_by_meta_path(PIPE_UPSTREAM, attribute, false)
     }
 
     fn parse_config_meta(attribute: &Attribute) -> PipeConfigMeta {
@@ -135,13 +135,16 @@ impl PipeMeta {
         PipeConfigMeta { ty: ty, path: path }
     }
 
-    fn parse_output_meta(attribute: &Attribute) -> PipeOutputMeta {
-        let ty = get_meta_string_value_by_meta_path(PIPE_OUTPUT_TYPE, attribute, true).unwrap();
+    fn parse_output_meta(attribute: &Attribute) -> Option<PipeOutputMeta> {
+        let ty = match get_meta_string_value_by_meta_path(PIPE_OUTPUT_TYPE, attribute, false) {
+            Some(ty) => ty,
+            None => return None,
+        };
         let module = get_meta_string_value_by_meta_path(PIPE_OUTPUT_MODULE, attribute, false);
-        PipeOutputMeta {
+        Some(PipeOutputMeta {
             ty: ty,
             module: module,
-        }
+        })
     }
 }
 
@@ -184,7 +187,7 @@ impl PipeMetas {
         }
     }
 
-    fn visit<T: VisitPipeMeta>(&self) -> Vec<T> {
+    fn visit_pipe_meta<T: VisitPipeMeta>(&self) -> Vec<T> {
         let mut exprs: Vec<T> = vec![];
         for pipe_meta in self.pipe_metas.values() {
             let mut expr = T::default();
@@ -194,12 +197,29 @@ impl PipeMetas {
         exprs
     }
 
-    pub fn generate_exprs<T: VisitPipeMeta + Expr>(&self) -> Vec<String> {
-        self.visit::<T>()
+    // generate expr per pipe meta
+    pub fn generate_pipe_meta_exprs<T: VisitPipeMeta + Expr>(&self) -> Vec<String> {
+        self.visit_pipe_meta::<T>()
             .iter()
             .map(|e| e.get_expr())
             .filter(|e| e.is_some())
             .map(|e| e.unwrap())
             .collect()
+    }
+
+    fn visit_pipe_metas<T: VisitPipeMeta>(&self) -> T {
+        let mut expr = T::default();
+        for pipe_meta in self.pipe_metas.values() {
+            pipe_meta.deref().borrow().accept(&mut expr)
+        }
+        expr
+    }
+
+    // generate expr based on all pipe metas
+    pub fn generate_pipe_metas_expr<T: VisitPipeMeta + Expr>(&self) -> Vec<String> {
+        match self.visit_pipe_metas::<T>().get_expr() {
+            Some(expr) => vec![expr],
+            None => vec![],
+        }
     }
 }

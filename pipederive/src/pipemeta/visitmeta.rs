@@ -1,5 +1,6 @@
 use super::meta::PipeMeta;
-use crate::constants::{CHANNEL_MACRO, PIPE_CHANNEL_DEFAULT_BUFFER};
+use crate::constants::{CHANNEL_MACRO, PIPE_CHANNEL_DEFAULT_BUFFER, SPAWN_JOIN_MACRO};
+use core::panic;
 use std::borrow::Borrow;
 use std::cell::{Ref, RefCell};
 use std::ops::Deref;
@@ -10,8 +11,12 @@ pub trait VisitPipeMeta: Default {
 }
 
 pub trait Expr {
-    fn get_lhs(&self) -> Option<String>;
-    fn get_rhs(&self) -> Option<String>;
+    fn get_lhs(&self) -> Option<String> {
+        None
+    }
+    fn get_rhs(&self) -> Option<String> {
+        None
+    }
     fn get_expr(&self) -> Option<String> {
         match (self.get_lhs(), self.get_rhs()) {
             (Some(lhs), Some(rhs)) => Some(format!("let {} = {}", lhs, rhs)),
@@ -34,8 +39,16 @@ impl VisitPipeMeta for ChannelExpr {
             Some(upstream_meta) => upstream_meta,
             None => return,
         };
-        let parent_output_meta = upstream_meta.deref().borrow().get_output_meta();
-        let channel_ty = parent_output_meta.get_path();
+        // if pipe has upstream, then upstream pipe must have output
+        let upstream_output_meta = match upstream_meta.deref().borrow().get_output_meta() {
+            Some(parent_output_meta) => parent_output_meta,
+            None => panic!(
+                "upstream pipe {} for {} has no output",
+                upstream_meta.deref().borrow().get_name(),
+                meta.deref().borrow().get_name()
+            ),
+        };
+        let channel_ty = upstream_output_meta.get_path();
         let src_pipe_name = upstream_meta.deref().borrow().get_name();
         let dst_pipe_name = meta.get_name();
         let tx_name = Self::gen_sender_name(&src_pipe_name, &dst_pipe_name);
@@ -148,7 +161,21 @@ impl PipeExpr {
 }
 
 #[derive(Default)]
-pub struct SpawnJoinPipeExpr {
-    // pub pipe_names: Vec<String>
+pub struct SpawnJoinExpr {
+    pub pipe_names: Vec<String>,
     pub expr: Option<String>,
+}
+
+impl VisitPipeMeta for SpawnJoinExpr {
+    fn visit(&mut self, meta: &PipeMeta) {
+        self.pipe_names.push(meta.get_name())
+    }
+}
+
+impl Expr for SpawnJoinExpr {
+    fn get_expr(&self) -> Option<String> {
+        let pipe_names = self.pipe_names.join(", ");
+        let expr = format!("{}({})", SPAWN_JOIN_MACRO, pipe_names);
+        Some(expr)
+    }
 }

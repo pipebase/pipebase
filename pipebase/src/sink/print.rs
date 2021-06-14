@@ -51,7 +51,7 @@ mod tests {
             TimeListenerConfig,
             [tx]
         );
-        let mut printer = sink!("printer", "", PrinterConfig, rx);
+        let mut printer = sink!("printer", "", PrinterConfig, rx, []);
         spawn_join!(listener, printer);
     }
 }

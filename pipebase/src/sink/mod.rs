@@ -100,7 +100,24 @@ macro_rules! sink {
         async move {
             let config = <$config>::from_file($path)
                 .expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Sink {
+            let pipe = Sink {
+                name: $name,
+                rx: std::sync::Arc::new(tokio::sync::Mutex::new($rx)),
+                config: config,
+                exporter: std::marker::PhantomData,
+                context: Default::default(),
+            };
+            pipe
+        }
+        .await
+    };
+    (
+        $name:expr, $path:expr, $config:ty, $rx: ident, []
+    ) => {
+        async move {
+            let config = <$config>::from_file($path)
+                .expect(&format!("invalid config file location {}", $path));
+            let pipe = Sink {
                 name: $name,
                 rx: std::sync::Arc::new(tokio::sync::Mutex::new($rx)),
                 config: config,

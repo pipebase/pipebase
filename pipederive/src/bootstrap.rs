@@ -1,4 +1,4 @@
-use crate::pipemeta::{ChannelExpr, PipeExpr, PipeMetas};
+use crate::pipemeta::{ChannelExpr, PipeExpr, PipeMetas, SpawnJoinExpr};
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{Attribute, Generics};
@@ -9,38 +9,46 @@ pub fn impl_bootstrap(
     generics: &Generics,
 ) -> TokenStream {
     let exprs = resolve_all_exprs(attributes);
-    let concated_exprs = exprs.join(";\n");
+    let joined_exprs = join_all_exprs(&exprs, ";\n");
     let expr_tokens = parse_exprs(&exprs);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
         impl #impl_generics Bootstrap for #ident #type_generics #where_clause {
             fn print() {
-                let exprs = #concated_exprs;
+                let exprs = #joined_exprs;
                 println!("{}", exprs)
             }
 
-            fn run() {
+            fn bootstrap() {
                 // #expr_tokens
             }
         }
     }
 }
 
+fn join_all_exprs(exprs: &Vec<String>, sep: &str) -> String {
+    exprs.join(sep)
+}
+
 fn resolve_all_exprs(attributes: &Vec<Attribute>) -> Vec<String> {
     let mut all_exprs: Vec<String> = vec![];
-    all_exprs.extend(resolve_channel_exprs(attributes));
-    all_exprs.extend(resolve_pipe_exprs(attributes));
+    let metas = PipeMetas::parse(attributes);
+    all_exprs.extend(resolve_channel_exprs(&metas));
+    all_exprs.extend(resolve_pipe_exprs(&metas));
+    all_exprs.extend(resolve_spawn_join_expr(&metas));
     all_exprs
 }
 
-fn resolve_channel_exprs(attributes: &Vec<Attribute>) -> Vec<String> {
-    let metas = PipeMetas::parse(attributes);
-    metas.generate_exprs::<ChannelExpr>()
+fn resolve_channel_exprs(metas: &PipeMetas) -> Vec<String> {
+    metas.generate_pipe_meta_exprs::<ChannelExpr>()
 }
 
-fn resolve_pipe_exprs(attributes: &Vec<Attribute>) -> Vec<String> {
-    let metas = PipeMetas::parse(attributes);
-    metas.generate_exprs::<PipeExpr>()
+fn resolve_pipe_exprs(metas: &PipeMetas) -> Vec<String> {
+    metas.generate_pipe_meta_exprs::<PipeExpr>()
+}
+
+fn resolve_spawn_join_expr(metas: &PipeMetas) -> Vec<String> {
+    metas.generate_pipe_metas_expr::<SpawnJoinExpr>()
 }
 
 fn parse_exprs(exprs: &Vec<String>) -> TokenStream {
