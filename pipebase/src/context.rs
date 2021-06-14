@@ -15,6 +15,8 @@ pub enum State {
     Process,
     #[strum(to_string = "send")]
     Send,
+    #[strum(to_string = "export")]
+    Export,
     #[strum(to_string = "done")]
     Done,
 }

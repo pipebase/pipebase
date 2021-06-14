@@ -2,11 +2,13 @@ mod context;
 mod error;
 mod fanout;
 mod process;
+mod sink;
 mod source;
 
 pub use fanout::*;
 pub use pipederive::*;
 pub use process::*;
+pub use sink::*;
 pub use source::*;
 
 use context::Context;
@@ -48,7 +50,7 @@ pub trait ConfigInto<T: FromConfig<Self>>: Sized {
 pub trait Pipe<T: Send + 'static> {
     async fn run(&mut self) -> Result<()>;
 
-    fn add_sender(&mut self, tx: Sender<T>);
+    fn add_sender(&mut self, _tx: Sender<T>) {}
 
     fn spawn_send(tx: Arc<Sender<T>>, t: T) -> JoinHandle<core::result::Result<(), SendError<T>>> {
         tokio::spawn(async move {

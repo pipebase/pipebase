@@ -59,7 +59,7 @@ impl FromConfig<RabbitMQConsumerConfig> for RabbitMQConsumer {
 
 #[async_trait]
 impl Listen<Vec<u8>, RabbitMQConsumerConfig> for RabbitMQConsumer {
-    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
         info!("creating consumer ...");
         let consumer = match self.create_consumer().await {
             Ok(consumer) => consumer,

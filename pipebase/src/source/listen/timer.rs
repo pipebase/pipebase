@@ -1,10 +1,9 @@
 use async_trait::async_trait;
-use log::error;
 use serde::Deserialize;
+use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
-use tokio::task::JoinHandle;
 
 use crate::{ConfigInto, FromConfig, FromFile, Listen};
 
@@ -19,10 +18,21 @@ impl FromFile for TimeListenerConfig {}
 #[async_trait]
 impl ConfigInto<TimeListener> for TimeListenerConfig {}
 
+#[derive(Clone, Debug)]
+pub struct TimeListenerTick {
+    pub tick: u128,
+}
+
+impl Display for TimeListenerTick {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{\n  tick: {}\n}}", self.tick)
+    }
+}
+
 pub struct TimeListener {
     pub ticks: u128,
     pub period_in_millis: u64,
-    pub sender: Option<Arc<Sender<()>>>,
+    pub sender: Option<Arc<Sender<TimeListenerTick>>>,
 }
 
 #[async_trait]
@@ -39,13 +49,16 @@ impl FromConfig<TimeListenerConfig> for TimeListener {
 }
 
 #[async_trait]
-impl Listen<(), TimeListenerConfig> for TimeListener {
-    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error>> {
+impl Listen<TimeListenerTick, TimeListenerConfig> for TimeListener {
+    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut ticks = self.ticks;
         let mut interval = tokio::time::interval(Duration::from_millis(self.period_in_millis));
         while ticks > 0 {
             interval.tick().await;
-            match Self::send_data(self.sender.to_owned(), ()).await {
+            let tick = TimeListenerTick {
+                tick: self.ticks - ticks,
+            };
+            match Self::send_data(self.sender.to_owned(), tick).await {
                 true => (),
                 false => break,
             }
@@ -54,7 +67,7 @@ impl Listen<(), TimeListenerConfig> for TimeListener {
         Ok(())
     }
 
-    async fn set_sender(&mut self, sender: Arc<Sender<()>>) {
+    async fn set_sender(&mut self, sender: Arc<Sender<TimeListenerTick>>) {
         self.sender = Some(sender);
     }
 }
@@ -62,10 +75,12 @@ impl Listen<(), TimeListenerConfig> for TimeListener {
 #[cfg(test)]
 mod tests {
     use crate::FromFile;
-    use crate::{channel, listener, spawn_join, Listener, Pipe, TimeListenerConfig};
+    use crate::{
+        channel, listener, spawn_join, Listener, Pipe, TimeListenerConfig, TimeListenerTick,
+    };
     use tokio::sync::mpsc::{channel, Receiver};
 
-    async fn on_receive(rx: &mut Receiver<()>, ticks: u128) {
+    async fn on_receive(rx: &mut Receiver<TimeListenerTick>, ticks: u128) {
         let mut i = 0;
         while ticks > i {
             rx.recv().await.unwrap();
@@ -76,7 +91,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_time_listener() {
-        let (tx, mut rx) = channel!((), 1024);
+        let (tx, mut rx) = channel!(TimeListenerTick, 1024);
         let mut listener = listener!(
             "timer",
             "resources/catalogs/timer.yml",
@@ -89,7 +104,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_receiver_drop() {
-        let (tx, rx) = channel!((), 1024);
+        let (tx, rx) = channel!(TimeListenerTick, 1024);
         let mut listener = listener!(
             "timer",
             "resources/catalogs/timer.yml",
