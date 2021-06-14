@@ -39,16 +39,16 @@ mod tests {
 
     use super::*;
     use crate::{channel, poller, selector, Pipe};
-    use crate::{Poller, Selector, TimePollerConfig};
+    use crate::{Poller, Selector, TimePollerConfig, TimePollerTick};
     use tokio::sync::mpsc::{channel, Receiver};
 
-    async fn count_tick(rx: &mut Receiver<()>, id: usize) -> usize {
+    async fn count_tick(rx: &mut Receiver<TimePollerTick>, id: usize) -> usize {
         let mut c: usize = 0;
         loop {
             match rx.recv().await {
-                Some(()) => {
+                Some(tick) => {
                     c += 1;
-                    println!("id: {}, ticks: {}", id, c);
+                    println!("id: {}, {}th tick, ticks: {}", id, tick.tick, c);
                 }
                 None => return c,
             }
@@ -56,9 +56,9 @@ mod tests {
     }
     #[tokio::test]
     async fn test_broadcast() {
-        let (tx0, rx0) = channel!((), 1024);
-        let (tx1, mut rx1) = channel!((), 1024);
-        let (tx2, mut rx2) = channel!((), 1024);
+        let (tx0, rx0) = channel!(TimePollerTick, 1024);
+        let (tx1, mut rx1) = channel!(TimePollerTick, 1024);
+        let (tx2, mut rx2) = channel!(TimePollerTick, 1024);
         let mut source = poller!(
             "timer",
             "resources/catalogs/timer.yml",

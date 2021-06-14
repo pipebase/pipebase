@@ -16,7 +16,7 @@ use tokio::sync::mpsc::channel;
 
 #[async_trait]
 pub trait Listen<T: Send + 'static, C>: Send + Sync + FromConfig<C> {
-    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error>>;
+    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>;
     async fn set_sender(&mut self, sender: Arc<Sender<T>>);
     // send data and return true if succeed
     async fn send_data(sender: Option<Arc<Sender<T>>>, t: T) -> bool {
