@@ -58,7 +58,7 @@ mod tests {
     async fn test_echo() {
         let (mut tx0, rx0) = channel!(Message, 1024);
         let (tx1, mut rx1) = channel!(Message, 1024);
-        let mut p = mapper!("echo", "", EchoConfig, rx0, [tx1]);
+        let mut p = mapper!("echo", EchoConfig, rx0, [tx1]);
         let f1 = populate_message(&mut tx0, Message { m0: 'a', m1: 1 });
         f1.await;
         drop(tx0);

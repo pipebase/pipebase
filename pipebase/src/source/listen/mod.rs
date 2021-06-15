@@ -133,4 +133,14 @@ macro_rules! listener {
     ) => {
         listener!($name, $path, $config, [$( $tx ), *])
     };
+    (
+        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
+    ) => {
+        listener!($name, "", $config, [$( $tx ), *])
+    };
+    (
+        $name:expr, $config:ty, $rx:expr
+    ) => {
+        listener!($name, "", $config, [$( $tx ), *])
+    };
 }

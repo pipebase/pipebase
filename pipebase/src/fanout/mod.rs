@@ -117,4 +117,9 @@ macro_rules! selector {
             pipe
         }
     };
+    (
+        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
+    ) => {
+        selector!($name, "", $config, $rx, [$( $tx ), *])
+    };
 }

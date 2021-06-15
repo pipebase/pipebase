@@ -147,4 +147,9 @@ macro_rules! collector {
             pipe
         }
     };
+    (
+        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
+    ) => {
+        collector!($name, "", $config, $rx, [$( $tx ), *])
+    };
 }

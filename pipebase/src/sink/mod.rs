@@ -109,8 +109,18 @@ macro_rules! sink {
         pipe
     }};
     (
+        $name:expr, $config:ty, $rx:expr
+    ) => {
+        sink!($name, "", $config, $rx)
+    };
+    (
         $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
         sink!($name, $path, $config, $rx)
+    };
+    (
+        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
+    ) => {
+        sink!($name, "", $config, $rx)
     };
 }
