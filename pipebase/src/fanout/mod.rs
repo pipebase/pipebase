@@ -99,9 +99,9 @@ impl<'a, T: Clone + Send + 'static, S: Select<T, C>, C: ConfigInto<S> + Send + S
 #[macro_export]
 macro_rules! selector {
     (
-        $name:expr, $path:expr, $config:ty, $rx: ident, [$( $sender:ident ), *]
+        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
-        async move {
+        {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
             let mut pipe = Selector {
                 name: $name,
@@ -112,10 +112,9 @@ macro_rules! selector {
                 context: Default::default()
             };
             $(
-                pipe.add_sender($sender);
+                pipe.add_sender($tx);
             )*
             pipe
         }
-        .await
     };
 }

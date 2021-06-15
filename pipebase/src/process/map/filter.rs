@@ -75,7 +75,7 @@ mod tests {
         }
     }
 
-    use tokio::sync::mpsc::{channel, Sender};
+    use tokio::sync::mpsc::Sender;
 
     async fn populate_records(tx: &mut Sender<Vec<Record>>, records: Vec<Record>) {
         tx.send(records).await;

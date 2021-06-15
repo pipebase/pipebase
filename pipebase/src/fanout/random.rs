@@ -43,7 +43,7 @@ mod tests {
     use super::*;
     use crate::{channel, poller, selector, Pipe};
     use crate::{Poller, Selector, TimePollerConfig, TimePollerTick};
-    use tokio::sync::mpsc::{channel, Receiver};
+    use tokio::sync::mpsc::Receiver;
 
     async fn count_tick(rx: &mut Receiver<TimePollerTick>, id: usize) -> usize {
         let mut c: usize = 0;

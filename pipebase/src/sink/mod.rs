@@ -95,20 +95,22 @@ impl<'a, T: Send + Sync + 'static, E: Export<T, C> + 'static, C: ConfigInto<E> +
 #[macro_export]
 macro_rules! sink {
     (
-        $name:expr, $path:expr, $config:ty, $rx: ident
+        $name:expr, $path:expr, $config:ty, $rx:expr
+    ) => {{
+        let config =
+            <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
+        let pipe = Sink {
+            name: $name,
+            rx: std::sync::Arc::new(tokio::sync::Mutex::new($rx)),
+            config: config,
+            exporter: std::marker::PhantomData,
+            context: Default::default(),
+        };
+        pipe
+    }};
+    (
+        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
-        async move {
-            let config = <$config>::from_file($path)
-                .expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Sink {
-                name: $name,
-                rx: std::sync::Arc::new(tokio::sync::Mutex::new($rx)),
-                config: config,
-                exporter: std::marker::PhantomData,
-                context: Default::default(),
-            };
-            pipe
-        }
-        .await
+        sink!($name, $path, $config, $rx)
     };
 }

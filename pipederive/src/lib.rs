@@ -1,8 +1,10 @@
+mod bootstrap;
 mod constants;
 mod field;
 mod filter;
 mod hashkey;
 mod orderkey;
+mod pipemeta;
 mod project;
 mod utils;
 
@@ -56,5 +58,15 @@ pub fn derive_orderkey(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStr
     let ref data = tokens.data;
     let ref generics = tokens.generics;
     let expanded = orderkey::impl_orderkey(ident, data, generics);
+    proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(Bootstrap, attributes(pipe))]
+pub fn derive_bootstrap(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ref tokens = parse_macro_input!(_tokens as DeriveInput);
+    let ref ident = tokens.ident;
+    let ref attributes = tokens.attrs;
+    let ref generics = tokens.generics;
+    let expanded = bootstrap::impl_bootstrap(ident, attributes, generics);
     proc_macro::TokenStream::from(expanded)
 }

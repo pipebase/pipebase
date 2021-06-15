@@ -12,7 +12,6 @@ use crate::{
 };
 
 use async_trait::async_trait;
-use log::error;
 use std::sync::Arc;
 use tokio::{
     sync::{
@@ -130,9 +129,9 @@ impl<
 #[macro_export]
 macro_rules! collector {
     (
-        $name:expr, $path:expr, $config:ty, $rx: ident, [$( $sender:ident ), *]
+        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
-        async move {
+        {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
             let mut pipe = Collector {
                 name: $name,
@@ -143,10 +142,9 @@ macro_rules! collector {
                 context: Default::default()
             };
             $(
-                pipe.add_sender($sender);
+                pipe.add_sender($tx);
             )*
             pipe
         }
-        .await
     };
 }

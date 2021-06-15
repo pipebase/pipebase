@@ -1,3 +1,4 @@
+mod bootstrap;
 mod context;
 mod error;
 mod fanout;
@@ -5,6 +6,7 @@ mod process;
 mod sink;
 mod source;
 
+pub use bootstrap::*;
 pub use fanout::*;
 pub use pipederive::*;
 pub use process::*;
@@ -74,13 +76,15 @@ pub trait Pipe<T: Send + 'static> {
                 Ok(res) => res,
                 Err(err) => {
                     error!("join error in pipe err: {:#?}", err);
+                    dropped_receiver_idxs.insert(i);
                     i += 1;
                     continue;
                 }
             };
             match result {
                 Ok(()) => (),
-                Err(e) => {
+                Err(err) => {
+                    error!("send error {}", err);
                     dropped_receiver_idxs.insert(i);
                 }
             }
@@ -148,17 +152,20 @@ macro_rules! spawn_join {
 macro_rules! channel {
     (
         $ty:ty, $size:expr
-    ) => {
+    ) => {{
+        use tokio::sync::mpsc::channel;
         channel::<$ty>($size)
-    };
+    }};
     (
         $path:path, $size:expr
-    ) => {
+    ) => {{
+        use tokio::sync::mpsc::channel;
         channel::<$path>($size)
-    };
+    }};
     (
         $expr:expr, $size:expr
-    ) => {
+    ) => {{
+        use tokio::sync::mpsc::channel;
         channel::<$expr>($size)
-    };
+    }};
 }
