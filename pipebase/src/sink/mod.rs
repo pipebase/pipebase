@@ -23,7 +23,7 @@ pub trait Export<T: Send + Sync + 'static, C>: Send + Sync + FromConfig<C> {
     ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }
 
-pub struct Sink<'a, T: Send + Sync + 'static, E: Export<T, C>, C: ConfigInto<E>> {
+pub struct Exporter<'a, T: Send + Sync + 'static, E: Export<T, C>, C: ConfigInto<E>> {
     pub name: &'a str,
     pub rx: Arc<Mutex<Receiver<T>>>,
     pub config: C,
@@ -33,7 +33,7 @@ pub struct Sink<'a, T: Send + Sync + 'static, E: Export<T, C>, C: ConfigInto<E>>
 
 #[async_trait]
 impl<'a, T: Send + Sync + 'static, E: Export<T, C> + 'static, C: ConfigInto<E> + Send + Sync>
-    Pipe<()> for Sink<'a, T, E, C>
+    Pipe<()> for Exporter<'a, T, E, C>
 {
     async fn run(&mut self) -> Result<()> {
         let mut exporter = self.config.config_into().await.unwrap();
@@ -93,13 +93,13 @@ impl<'a, T: Send + Sync + 'static, E: Export<T, C> + 'static, C: ConfigInto<E> +
 }
 
 #[macro_export]
-macro_rules! sink {
+macro_rules! exporter {
     (
         $name:expr, $path:expr, $config:ty, $rx:expr
     ) => {{
         let config =
             <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
-        let pipe = Sink {
+        let pipe = Exporter {
             name: $name,
             rx: std::sync::Arc::new(tokio::sync::Mutex::new($rx)),
             config: config,
@@ -111,16 +111,16 @@ macro_rules! sink {
     (
         $name:expr, $config:ty, $rx:expr
     ) => {
-        sink!($name, "", $config, $rx)
+        exporter!($name, "", $config, $rx)
     };
     (
         $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
-        sink!($name, $path, $config, $rx)
+        exporter!($name, $path, $config, $rx)
     };
     (
         $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
-        sink!($name, "", $config, $rx)
+        exporter!($name, "", $config, $rx)
     };
 }
