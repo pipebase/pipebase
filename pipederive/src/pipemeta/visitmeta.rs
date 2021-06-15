@@ -25,6 +25,9 @@ pub trait Expr {
             (None, None) => None,
         }
     }
+    fn as_mut(ident: &str) -> String {
+        format!("mut {}", ident)
+    }
 }
 
 #[derive(Default)]
@@ -101,30 +104,23 @@ impl VisitPipeMeta for PipeExpr {
             downstream_pipe_names.push(name)
         }
         let senders_expr = Self::gen_senders_expr(&name, downstream_pipe_names);
-        let rhs = match upstream_pipe_meta {
+        let receiver_expr = match upstream_pipe_meta {
             Some(upstream_pipe_meta) => {
-                let src = (*upstream_pipe_meta).borrow().get_name();
-                let receiver_expr = Self::gen_recevier_expr(&src, &name);
-                format!(
-                    r#"{}("{}", "{}", {}, {}, {})"#,
-                    Self::kind_macro(&kind),
-                    name,
-                    config_path,
-                    config_ty,
-                    receiver_expr,
-                    senders_expr
-                )
+                let src = upstream_pipe_meta.deref().borrow().get_name();
+                Self::gen_recevier_expr(&src, &name)
             }
-            None => format!(
-                r#"{}("{}", "{}", {}, {})"#,
-                Self::kind_macro(&kind),
-                name,
-                config_path,
-                config_ty,
-                senders_expr
-            ),
+            None => "dummy".to_owned(),
         };
-        self.lhs = Some(name);
+        let rhs = format!(
+            r#"{}("{}", "{}", {}, {}, {})"#,
+            Self::kind_macro(&kind),
+            name,
+            config_path,
+            config_ty,
+            receiver_expr,
+            senders_expr
+        );
+        self.lhs = Some(Self::as_mut(&name));
         self.rhs = Some(rhs);
     }
 }

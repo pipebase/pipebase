@@ -1,5 +1,5 @@
 use super::Expr;
-use super::{ChannelExpr, PipeExpr, VisitPipeMeta};
+use super::VisitPipeMeta;
 
 use std::borrow::BorrowMut;
 use std::cell::RefCell;

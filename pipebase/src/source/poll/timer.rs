@@ -91,6 +91,7 @@ mod tests {
             "timer",
             "resources/catalogs/timer.yml",
             TimePollerConfig,
+            dummy, // dummy receiver ignored
             [tx]
         );
         spawn_join!(source);

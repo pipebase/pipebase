@@ -111,7 +111,7 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
 #[macro_export]
 macro_rules! listener {
     (
-        $name:expr, $path:expr, $config:ty, [$( $sender:ident ), *]
+        $name:expr, $path:expr, $config:ty, [$( $tx:expr ), *]
     ) => {
         async move {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
@@ -123,10 +123,15 @@ macro_rules! listener {
                 context: Default::default()
             };
             $(
-                pipe.add_sender($sender);
+                pipe.add_sender($tx);
             )*
             pipe
         }
         .await
+    };
+    (
+        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
+    ) => {
+        listener!($name, $path, $config, [$( $tx ), *])
     };
 }
