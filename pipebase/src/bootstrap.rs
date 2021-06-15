@@ -30,7 +30,7 @@ mod tests {
     )]
     #[pipe(
         name = "printer",
-        kind = "sink",
+        kind = "exporter",
         upstream = "timer",
         config(ty = "PrinterConfig")
     )]

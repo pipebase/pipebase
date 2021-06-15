@@ -40,7 +40,6 @@ impl<T: Send + Sync + Display + 'static> Export<T, PrinterConfig> for Printer {
 mod tests {
 
     use crate::*;
-    use tokio::sync::mpsc::channel;
 
     #[tokio::test]
     async fn test_printer() {
@@ -51,7 +50,7 @@ mod tests {
             TimeListenerConfig,
             [tx]
         );
-        let mut printer = sink!("printer", "", PrinterConfig, rx, []);
+        let mut printer = exporter!("printer", "", PrinterConfig, rx, []);
         spawn_join!(listener, printer);
     }
 }
