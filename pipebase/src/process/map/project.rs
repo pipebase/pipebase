@@ -93,7 +93,7 @@ mod tests {
     use crate::{
         channel, mapper, spawn_join, FromFile, Mapper, Pipe, Project, ProjectionConfig, State,
     };
-    use tokio::sync::mpsc::{channel, Sender};
+    use tokio::sync::mpsc::Sender;
 
     #[derive(Debug)]
     struct Record {

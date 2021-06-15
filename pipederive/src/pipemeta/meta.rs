@@ -10,7 +10,7 @@ use syn::Attribute;
 
 use crate::constants::{
     PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_KIND, PIPE_NAME, PIPE_OUTPUT_MODULE, PIPE_OUTPUT_TYPE,
-    PIPE_UPSTREAM,
+    PIPE_UPSTREAM, PIPE_CONFIG_EMPTY_PATH
 };
 use crate::utils::get_meta_string_value_by_meta_path;
 
@@ -18,7 +18,7 @@ use crate::utils::get_meta_string_value_by_meta_path;
 #[derive(Clone)]
 pub struct PipeConfigMeta {
     pub ty: String,
-    pub path: String,
+    pub path: Option<String>,
 }
 
 impl PipeConfigMeta {
@@ -27,7 +27,10 @@ impl PipeConfigMeta {
     }
 
     pub fn get_path(&self) -> String {
-        self.path.to_owned()
+        match self.path.to_owned() {
+            Some(path) => path,
+            None => PIPE_CONFIG_EMPTY_PATH.to_owned()
+        }
     }
 }
 
@@ -47,7 +50,7 @@ impl PipeOutputMeta {
     pub fn get_path(&self) -> String {
         let module = match self.get_module() {
             Some(module) => module,
-            None => self.get_ty(),
+            None => return self.get_ty(),
         };
         format!("{}::{}", module, self.get_ty())
     }
@@ -131,7 +134,7 @@ impl PipeMeta {
 
     fn parse_config_meta(attribute: &Attribute) -> PipeConfigMeta {
         let ty = get_meta_string_value_by_meta_path(PIPE_CONFIG_TYPE, attribute, true).unwrap();
-        let path = get_meta_string_value_by_meta_path(PIPE_CONFIG_PATH, attribute, true).unwrap();
+        let path = get_meta_string_value_by_meta_path(PIPE_CONFIG_PATH, attribute, false);
         PipeConfigMeta { ty: ty, path: path }
     }
 

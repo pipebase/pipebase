@@ -113,7 +113,7 @@ macro_rules! listener {
     (
         $name:expr, $path:expr, $config:ty, [$( $tx:expr ), *]
     ) => {
-        async move {
+        {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
             let mut pipe = Listener {
                 name: $name,
@@ -127,7 +127,6 @@ macro_rules! listener {
             )*
             pipe
         }
-        .await
     };
     (
         $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]

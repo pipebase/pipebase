@@ -8,9 +8,17 @@ pub fn impl_bootstrap(
     attributes: &Vec<Attribute>,
     generics: &Generics,
 ) -> TokenStream {
-    let exprs = resolve_all_exprs(attributes);
-    let joined_exprs = join_all_exprs(&exprs, ";\n");
-    let expr_tokens = parse_exprs(&exprs);
+    // generate all exprs for print
+    let metas = PipeMetas::parse(&attributes);
+    let all_exprs = resolve_all_exprs(&metas);
+    let joined_exprs = join_all_exprs(&all_exprs, ";\n");
+    // generate exprs and tokens
+    let channel_exprs = resolve_channel_exprs(&metas);
+    let pipe_exprs = resolve_pipe_exprs(&metas);
+    let spawn_join_exprs = resolve_spawn_join_expr(&metas);
+    let channel_expr_tokens = parse_exprs(&channel_exprs);
+    let pipe_expr_tokens = parse_exprs(&pipe_exprs);
+    let spawn_join_expr_tokens = parse_exprs(&spawn_join_exprs);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
         impl #impl_generics Bootstrap for #ident #type_generics #where_clause {
@@ -19,8 +27,16 @@ pub fn impl_bootstrap(
                 println!("{}", exprs)
             }
 
-            fn bootstrap() {
-                // #expr_tokens
+            fn bootstrap(&self) -> Pin<Box<dyn Future<Output = ()> + Send + Sync>> {
+                #channel_expr_tokens
+                ;
+                #pipe_expr_tokens
+                ;
+                let run = async move {
+                    #spawn_join_expr_tokens
+                    ;
+                };
+                Box::pin(run)
             }
         }
     }
@@ -30,9 +46,8 @@ fn join_all_exprs(exprs: &Vec<String>, sep: &str) -> String {
     exprs.join(sep)
 }
 
-fn resolve_all_exprs(attributes: &Vec<Attribute>) -> Vec<String> {
+fn resolve_all_exprs(metas: &PipeMetas) -> Vec<String> {
     let mut all_exprs: Vec<String> = vec![];
-    let metas = PipeMetas::parse(attributes);
     all_exprs.extend(resolve_channel_exprs(&metas));
     all_exprs.extend(resolve_pipe_exprs(&metas));
     all_exprs.extend(resolve_spawn_join_expr(&metas));

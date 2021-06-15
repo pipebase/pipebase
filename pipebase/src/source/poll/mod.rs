@@ -92,7 +92,7 @@ macro_rules! poller {
     (
         $name:expr, $path:expr, $config:ty, [$( $tx:expr ), *]
     ) => {
-        async move {
+        {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
             let mut pipe = Poller {
                 name: $name,
@@ -106,7 +106,6 @@ macro_rules! poller {
             )*
             pipe
         }
-        .await
     };
     (
         $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]

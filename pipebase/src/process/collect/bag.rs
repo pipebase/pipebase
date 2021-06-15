@@ -55,7 +55,7 @@ mod tests {
         channel, collector, context::State, spawn_join, BagCollectorConfig, Collector, FromFile,
         Pipe,
     };
-    use tokio::sync::mpsc::{channel, Receiver, Sender};
+    use tokio::sync::mpsc::{Receiver, Sender};
 
     #[derive(Clone, Debug)]
     struct Record {

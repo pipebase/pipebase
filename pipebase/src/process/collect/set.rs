@@ -62,7 +62,7 @@ mod tests {
         SetCollectorConfig,
     };
     use std::cmp::Ordering;
-    use tokio::sync::mpsc::{channel, Receiver, Sender};
+    use tokio::sync::mpsc::{Receiver, Sender};
 
     #[derive(Clone, Debug, Eq, OrderKey)]
     struct Record {

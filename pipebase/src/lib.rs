@@ -76,13 +76,15 @@ pub trait Pipe<T: Send + 'static> {
                 Ok(res) => res,
                 Err(err) => {
                     error!("join error in pipe err: {:#?}", err);
+                    dropped_receiver_idxs.insert(i);
                     i += 1;
                     continue;
                 }
             };
             match result {
                 Ok(()) => (),
-                Err(e) => {
+                Err(err) => {
+                    error!("send error {}", err);
                     dropped_receiver_idxs.insert(i);
                 }
             }
@@ -151,16 +153,25 @@ macro_rules! channel {
     (
         $ty:ty, $size:expr
     ) => {
-        channel::<$ty>($size)
+        {
+            use tokio::sync::mpsc::channel;
+            channel::<$ty>($size)
+        }
     };
     (
         $path:path, $size:expr
     ) => {
-        channel::<$path>($size)
+        {
+            use tokio::sync::mpsc::channel;
+            channel::<$path>($size)
+        }
     };
     (
         $expr:expr, $size:expr
     ) => {
-        channel::<$expr>($size)
+        {
+            use tokio::sync::mpsc::channel;
+            channel::<$expr>($size)
+        }
     };
 }

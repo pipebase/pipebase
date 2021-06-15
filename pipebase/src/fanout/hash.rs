@@ -48,7 +48,7 @@ mod tests {
     use crate::HashKey;
     use crate::{channel, selector, spawn_join, FromFile, Pipe, Selector};
     use std::hash::{Hash, Hasher};
-    use tokio::sync::mpsc::{channel, Receiver, Sender};
+    use tokio::sync::mpsc::{Receiver, Sender};
 
     #[derive(Clone, Debug, HashKey)]
     struct Record {

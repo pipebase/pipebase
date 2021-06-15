@@ -59,7 +59,6 @@ mod tests {
         channel, mapper, spawn_join, FieldAccept, FieldVisitConfig, FieldVisitor, FromFile, Mapper,
         Pipe,
     };
-    // use pipederive::FieldAccept;
 
     #[derive(FieldAccept)]
     struct Records {
@@ -77,7 +76,7 @@ mod tests {
         assert_eq!(record, visitor_record)
     }
 
-    use tokio::sync::mpsc::{channel, Sender};
+    use tokio::sync::mpsc::Sender;
 
     async fn populate_records(tx: &mut Sender<Records>, records: Records) {
         tx.send(records).await;

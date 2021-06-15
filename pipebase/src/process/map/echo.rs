@@ -41,8 +41,8 @@ impl<T: Clone + Debug + Sync> Map<T, T, EchoConfig> for Echo {
 #[cfg(test)]
 mod tests {
     use crate::{channel, mapper, spawn_join, EchoConfig, FromFile, Mapper, Pipe};
-    use std::println as info;
-    use tokio::sync::mpsc::{channel, Sender};
+    // use std::println as info;
+    use tokio::sync::mpsc::Sender;
 
     #[derive(Clone, Debug)]
     struct Message {
