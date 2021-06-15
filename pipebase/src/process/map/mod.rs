@@ -120,4 +120,9 @@ macro_rules! mapper {
             pipe
         }
     };
+    (
+        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
+    ) => {
+        mapper!($name, "", $config, $rx, [$( $tx ), *])
+    };
 }

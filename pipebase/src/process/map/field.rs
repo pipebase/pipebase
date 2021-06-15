@@ -86,7 +86,7 @@ mod tests {
     async fn test_field_visit_procedure() {
         let (mut tx0, rx0) = channel!(Records, 1024);
         let (tx1, mut rx1) = channel!([i32; 3], 1024);
-        let mut pipe = mapper!("field_visit", "", FieldVisitConfig, rx0, [tx1]);
+        let mut pipe = mapper!("field_visit", FieldVisitConfig, rx0, [tx1]);
         let f1 = populate_records(&mut tx0, Records { records: [1, 2, 3] });
         f1.await;
         drop(tx0);

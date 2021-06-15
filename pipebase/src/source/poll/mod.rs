@@ -111,5 +111,15 @@ macro_rules! poller {
         $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
         poller!($name, $path, $config, [$( $tx ), *])
-    }
+    };
+    (
+        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
+    ) => {
+        poller!($name, "", $config, [$( $tx ), *])
+    };
+    (
+        $name:expr, $config:ty, [$( $tx:expr ), *]
+    ) => {
+        poller!($name, "", $config, [$( $tx ), *])
+    };
 }
