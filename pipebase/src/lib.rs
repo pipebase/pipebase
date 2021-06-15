@@ -152,26 +152,20 @@ macro_rules! spawn_join {
 macro_rules! channel {
     (
         $ty:ty, $size:expr
-    ) => {
-        {
-            use tokio::sync::mpsc::channel;
-            channel::<$ty>($size)
-        }
-    };
+    ) => {{
+        use tokio::sync::mpsc::channel;
+        channel::<$ty>($size)
+    }};
     (
         $path:path, $size:expr
-    ) => {
-        {
-            use tokio::sync::mpsc::channel;
-            channel::<$path>($size)
-        }
-    };
+    ) => {{
+        use tokio::sync::mpsc::channel;
+        channel::<$path>($size)
+    }};
     (
         $expr:expr, $size:expr
-    ) => {
-        {
-            use tokio::sync::mpsc::channel;
-            channel::<$expr>($size)
-        }
-    };
+    ) => {{
+        use tokio::sync::mpsc::channel;
+        channel::<$expr>($size)
+    }};
 }

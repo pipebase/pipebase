@@ -9,8 +9,8 @@ use std::rc::{Rc, Weak};
 use syn::Attribute;
 
 use crate::constants::{
-    PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_KIND, PIPE_NAME, PIPE_OUTPUT_MODULE, PIPE_OUTPUT_TYPE,
-    PIPE_UPSTREAM, PIPE_CONFIG_EMPTY_PATH
+    PIPE_CONFIG_EMPTY_PATH, PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_KIND, PIPE_NAME,
+    PIPE_OUTPUT_MODULE, PIPE_OUTPUT_TYPE, PIPE_UPSTREAM,
 };
 use crate::utils::get_meta_string_value_by_meta_path;
 
@@ -29,7 +29,7 @@ impl PipeConfigMeta {
     pub fn get_path(&self) -> String {
         match self.path.to_owned() {
             Some(path) => path,
-            None => PIPE_CONFIG_EMPTY_PATH.to_owned()
+            None => PIPE_CONFIG_EMPTY_PATH.to_owned(),
         }
     }
 }
@@ -188,6 +188,14 @@ impl PipeMetas {
         PipeMetas {
             pipe_metas: pipe_metas,
         }
+    }
+
+    pub fn list_pipe_name(&self) -> Vec<String> {
+        let mut pipe_names: Vec<String> = vec![];
+        for name in self.pipe_metas.keys() {
+            pipe_names.push(name.to_owned())
+        }
+        pipe_names
     }
 
     fn visit_pipe_meta<T: VisitPipeMeta>(&self) -> Vec<T> {
