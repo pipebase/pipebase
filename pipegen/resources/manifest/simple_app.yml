@@ -1,0 +1,27 @@
+name: simple_pipe
+pipes:
+  - name: timer
+    kind: Listener
+    config:
+      ty: TimerConfig
+      path: catalogs/timer.yml
+    output_ty_name: TimerTick
+structures:
+  - name: Record
+    fields:
+      - name: key
+        ty: String
+        is_optional: false
+        is_scalar: false
+      - name: value
+        ty: Integer
+        is_optional: false
+        is_scalar: false
+  - name: Records
+    fields:
+      - name: items
+        ty:
+          Structure:
+            name: Record
+        is_optional: false
+        is_scalar: true
