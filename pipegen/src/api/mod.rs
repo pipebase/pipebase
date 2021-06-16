@@ -1,12 +1,15 @@
 mod app;
 mod constants;
+mod data;
+mod meta;
 mod pipe;
-mod schema;
 mod utils;
 
 pub trait Entity {
     fn get_name(&self) -> String;
-    fn list_dependency(&self) -> Vec<String>;
+    fn list_dependency(&self) -> Vec<String> {
+        vec![]
+    }
     fn to_literal(&self, indent: usize) -> String;
 }
 

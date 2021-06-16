@@ -1,5 +1,4 @@
 use crate::api::pipe::Pipe;
-use crate::api::schema::Structure;
 use crate::error::*;
 use serde::Deserialize;
 
@@ -7,7 +6,6 @@ use serde::Deserialize;
 pub struct App {
     pub name: String,
     pub pipes: Vec<Pipe>,
-    pub structures: Vec<Structure>,
 }
 
 impl App {
