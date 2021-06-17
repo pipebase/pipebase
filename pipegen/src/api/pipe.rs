@@ -90,12 +90,20 @@ impl Pipe {
         match self.output_data_type.to_owned() {
             Some(output_data) => {
                 let indent_lit = indent_literal(indent);
-                // let output_mod_lit = format!(r#"module = {}"#, self.name);
-                let output_ty_lit = format!(r#"ty = "{}""#, output_data.to_literal(0));
+                let module = self.get_module_name();
+                let output_ty_lit = format!(
+                    r#"module = "{}", ty = "{}""#,
+                    module,
+                    output_data.to_literal(0)
+                );
                 Some(format!("{}output({})", indent_lit, output_ty_lit))
             }
             None => None,
         }
+    }
+
+    fn get_module_name(&self) -> String {
+        self.name.to_owned()
     }
 }
 

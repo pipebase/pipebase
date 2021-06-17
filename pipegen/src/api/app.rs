@@ -1,8 +1,11 @@
 use crate::api::pipe::Pipe;
-use crate::api::EntityAccept;
+use crate::api::utils::indent_literal;
 use crate::error::*;
-use crate::operation::{Generate, PipeGenerator};
+use crate::operation::{Generate, ObjectGenerator, PipeGenerator};
 use serde::Deserialize;
+
+use super::Entity;
+use super::Object;
 
 #[derive(Deserialize, Debug)]
 pub struct App {
@@ -27,18 +30,49 @@ impl App {
         println!("{}", self.generate())
     }
 
-    pub fn generate(&self) -> String {
-        let mut pipe_metas_lits: Vec<String> = vec![];
-        // generate pipe metas
-        for pipe in self.pipes.as_slice() {
-            let mut pipe_metas_generator = PipeGenerator {
-                indent: 2,
-                pipe: None,
-            };
-            pipe.accept(&mut pipe_metas_generator);
-            pipe_metas_lits.push(pipe_metas_generator.generate().unwrap())
+    fn generate_lits<T, G: Generate<T>>(items: &Vec<T>, indent: usize) -> String {
+        let mut lits: Vec<String> = vec![];
+        for item in items.as_slice() {
+            match G::do_generate(item, indent) {
+                Some(lit) => lits.push(lit),
+                None => continue,
+            }
         }
-        pipe_metas_lits.join("\n")
+        lits.join("\n")
+    }
+
+    fn generate_objects(pipe: &Pipe, indent: usize) -> Option<String> {
+        let objects = match pipe.objects {
+            Some(ref objects) => objects,
+            None => return None,
+        };
+        let objects_lit = Self::generate_lits::<Object, ObjectGenerator>(objects, indent + 1);
+        let name = pipe.get_name();
+        let indent_lit = indent_literal(indent);
+        Some(format!(
+            "{}mod {} {{\n{}\n{}}}",
+            indent_lit, name, objects_lit, indent_lit
+        ))
+    }
+
+    fn generate_all_objects(&self, indent: usize) -> String {
+        let mut all_objects_lits: Vec<String> = vec![];
+        for pipe in self.pipes.as_slice() {
+            match Self::generate_objects(pipe, indent) {
+                Some(object_lit) => all_objects_lits.push(object_lit),
+                None => continue,
+            }
+        }
+        all_objects_lits.join("\n\n")
+    }
+
+    pub fn generate(&self) -> String {
+        let pipe_metas = Self::generate_lits::<Pipe, PipeGenerator>(&(self.pipes), 1);
+        let all_objects = self.generate_all_objects(1);
+        format!(
+            "mod {} {{\n{}\n\n{}\n}}",
+            self.name, all_objects, pipe_metas
+        )
     }
 
     pub fn validate(&self) {}

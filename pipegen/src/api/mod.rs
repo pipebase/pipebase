@@ -5,6 +5,7 @@ mod meta;
 mod pipe;
 mod utils;
 
+pub use data::*;
 pub use pipe::*;
 
 pub trait Entity {
