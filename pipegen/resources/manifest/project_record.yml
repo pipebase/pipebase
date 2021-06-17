@@ -5,7 +5,7 @@ pipes:
     config:
       ty: ProjectionConfig
     output:
-      base_ty: 
+      data_ty: 
         Object:
           ty: Record
     objects:
@@ -17,13 +17,10 @@ pipes:
                 name: input
                 value:
                   - String:
-                      name: pipe
-                      value: upstream
-                  - String:
                       name: ty
                       value: Record 
         fields:
           - name: key
-            base_ty: String
+            data_ty: String
           - name: value
-            base_ty: Integer
+            data_ty: Integer

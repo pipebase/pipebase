@@ -1,9 +1,9 @@
 use crate::api::utils::indent_literal;
-use crate::api::{BaseType, Entity, EntityAccept, VisitEntity};
+use crate::api::{DataType, Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
 use strum::{Display, EnumString};
 
-use super::data::{DataType, Object};
+use super::data::{DataField, Object};
 
 #[derive(Clone, Display, EnumString, PartialEq, Debug, Deserialize)]
 pub enum PipeKind {
@@ -44,7 +44,7 @@ pub struct Pipe {
     // upstream pipe name
     pub upstream: Option<String>,
     // output data type
-    pub output: Option<DataType>,
+    pub output: Option<DataField>,
     pub objects: Option<Vec<Object>>,
 }
 
@@ -93,27 +93,12 @@ impl Pipe {
             Some(ref output_data_type) => output_data_type,
             None => return None,
         };
-        let module_lit = match output_data_type.get_base_type() {
-            BaseType::Object { .. } => Some(format!(r#"module = "{}""#, self.get_module_name())),
-            _ => None,
-        };
-        let output_ty_lit = match module_lit {
-            Some(module_lit) => format!(
-                r#"{}, ty = "{}""#,
-                module_lit,
-                output_data_type.to_literal(0)
-            ),
-            None => format!(r#"ty = "{}""#, output_data_type.to_literal(0)),
-        };
+        let output_ty_lit = format!(r#"ty = "{}""#, output_data_type.to_literal(0));
         Some(format!(
             "{}output({})",
             indent_literal(indent),
             output_ty_lit
         ))
-    }
-
-    fn get_module_name(&self) -> String {
-        self.name.to_owned()
     }
 }
 

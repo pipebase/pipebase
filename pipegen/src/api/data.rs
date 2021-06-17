@@ -3,75 +3,81 @@ use std::usize;
 use crate::api::utils::indent_literal;
 use crate::api::{Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
-use strum::{Display, EnumString};
 
 use super::meta::{attributes_to_literal, Attribute};
 
-#[derive(Clone, Display, EnumString, Debug, Deserialize)]
-pub enum BaseType {
-    #[strum(to_string = "bool")]
+#[derive(Clone, Debug, Deserialize)]
+pub enum DataType {
     Boolean,
-    #[strum(to_string = "char")]
     Character,
-    #[strum(to_string = "String")]
     String,
-    #[strum(to_string = "i8")]
     Byte,
-    #[strum(to_string = "u8")]
     UnsignedByte,
-    #[strum(to_string = "i16")]
     Short,
-    #[strum(to_string = "u16")]
     UnsignedShort,
-    #[strum(to_string = "i32")]
     Integer,
-    #[strum(to_string = "u32")]
     UnsignedInteger,
-    #[strum(to_string = "isize")]
     Size,
-    #[strum(to_string = "usize")]
     UnsignedSize,
-    #[strum(to_string = "i64")]
     Long,
-    #[strum(to_string = "u64")]
     UnsignedLong,
-    #[strum(to_string = "i128")]
     LongLong,
-    #[strum(to_string = "u128")]
     UnsignedLongLong,
-    #[strum(to_string = "f32")]
     Float,
-    #[strum(to_string = "f64")]
     Double,
-    #[strum(to_string = "object")]
     Object { ty: String },
+    Vec { data_ty: Box<DataType> },
+    Array { data_ty: Box<DataType>, size: usize },
+}
+
+fn data_ty_to_literal(ty: &DataType) -> String {
+    match ty {
+        DataType::Boolean => "bool".to_owned(),
+        DataType::Character => "char".to_owned(),
+        DataType::String => "String".to_owned(),
+        DataType::Byte => "i8".to_owned(),
+        DataType::UnsignedByte => "u8".to_owned(),
+        DataType::Short => "i16".to_owned(),
+        DataType::UnsignedShort => "u16".to_owned(),
+        DataType::Integer => "i32".to_owned(),
+        DataType::UnsignedInteger => "u32".to_owned(),
+        DataType::Size => "isize".to_owned(),
+        DataType::UnsignedSize => "usize".to_owned(),
+        DataType::Long => "i64".to_owned(),
+        DataType::UnsignedLong => "u64".to_owned(),
+        DataType::LongLong => "i128".to_owned(),
+        DataType::UnsignedLongLong => "u128".to_owned(),
+        DataType::Float => "f32".to_owned(),
+        DataType::Double => "f64".to_owned(),
+        DataType::Object { ty } => ty.to_owned(),
+        DataType::Vec { data_ty } => {
+            let data_ty_lit = data_ty_to_literal(data_ty);
+            format!("Vec<{}>", data_ty_lit)
+        }
+        DataType::Array { data_ty, size } => {
+            let data_ty_lit = data_ty_to_literal(data_ty);
+            format!("[{}; {}]", data_ty_lit, size)
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct DataType {
-    // named data type - object's field
-    // snake case validation
+pub struct DataField {
+    // either named or unamed data field
     pub name: Option<String>,
-    pub base_ty: BaseType,
+    pub data_ty: DataType,
     pub attributes: Option<Vec<Attribute>>,
+    pub is_boxed: Option<bool>,
     pub is_optional: Option<bool>,
-    pub is_scalar: Option<bool>,
-    pub size: Option<usize>,
 }
 
-impl DataType {
+impl DataField {
     pub fn get_data_type_literal(&self, indent: usize) -> String {
-        let ty_lit = match &self.base_ty {
-            BaseType::Object { ty } => ty.to_owned(),
-            ty => ty.to_string(),
-        };
-        let ty_lit = match self.is_scalar {
-            Some(is_scalar) => match is_scalar {
-                true => ty_lit,
-                false => match self.size {
-                    Some(size) => format!("[{}; {}]", ty_lit, size),
-                    None => format!("Vec<{}>", ty_lit),
-                },
+        let ty_lit = data_ty_to_literal(&self.data_ty);
+        let ty_lit = match self.is_boxed {
+            Some(is_boxed) => match is_boxed {
+                true => format!("Box<{}>", ty_lit),
+                false => ty_lit,
             },
             None => ty_lit,
         };
@@ -94,19 +100,22 @@ impl DataType {
         attributes_to_literal(&attributes, indent)
     }
 
-    pub fn get_base_type(&self) -> BaseType {
-        self.base_ty.to_owned()
+    pub fn get_data_type(&self) -> DataType {
+        self.data_ty.to_owned()
     }
 }
 
-impl Entity for DataType {
+impl Entity for DataField {
     fn get_name(&self) -> String {
-        self.name.to_owned().unwrap()
+        match self.name {
+            Some(ref name) => name.to_owned(),
+            None => String::new(),
+        }
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        match self.base_ty.to_owned() {
-            BaseType::Object { ty } => vec![ty],
+        match self.data_ty.to_owned() {
+            DataType::Object { ty } => vec![ty],
             _ => vec![],
         }
     }
@@ -133,7 +142,7 @@ impl Entity for DataType {
     }
 }
 
-impl<V: VisitEntity<DataType>> EntityAccept<V> for DataType {}
+impl<V: VisitEntity<DataField>> EntityAccept<V> for DataField {}
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Object {
@@ -141,7 +150,7 @@ pub struct Object {
     pub ty: String,
     pub traits: Option<Vec<String>>,
     pub attributes: Option<Vec<Attribute>>,
-    pub fields: Vec<DataType>,
+    pub fields: Vec<DataField>,
 }
 
 impl Object {

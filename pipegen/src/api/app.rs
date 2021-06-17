@@ -46,13 +46,8 @@ impl App {
             Some(ref objects) => objects,
             None => return None,
         };
-        let objects_lit = Self::generate_lits::<Object, ObjectGenerator>(objects, indent + 1);
-        let name = pipe.get_name();
-        let indent_lit = indent_literal(indent);
-        Some(format!(
-            "{}mod {} {{\n{}\n{}}}",
-            indent_lit, name, objects_lit, indent_lit
-        ))
+        let objects_lit = Self::generate_lits::<Object, ObjectGenerator>(objects, indent);
+        Some(objects_lit)
     }
 
     fn generate_all_objects(&self, indent: usize) -> String {
@@ -83,9 +78,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_simple_app() {
-        // let manifest_path = "resources/manifest/print_timer_tick.yml";
-        // let manifest_path = "resources/manifest/simple_app.yml";
+    fn test_simple_app() {
+        let manifest_path = "resources/manifest/simple_app.yml";
+        let app = App::parse(manifest_path).unwrap();
+        app.print()
+    }
+
+    #[test]
+    fn test_print_timer_tick() {
+        let manifest_path = "resources/manifest/print_timer_tick.yml";
+        let app = App::parse(manifest_path).unwrap();
+        app.print()
+    }
+
+    #[test]
+    fn test_project() {
         let manifest_path = "resources/manifest/project_record.yml";
         let app = App::parse(manifest_path).unwrap();
         app.print()

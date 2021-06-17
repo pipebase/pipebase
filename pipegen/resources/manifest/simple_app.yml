@@ -1,19 +1,27 @@
 name: simple_pipe
 pipes:
-  - name: timer
+  - name: receive_records
     kind: Listener
     config:
-      ty: TimerConfig
-      path: catalogs/timer.yml
+      ty: ReceiverConfig
+      path: catalogs/receiver.yml
     output: 
-      base_ty: 
-        Object:
-          ty: Record
+      data_ty:
+        Vec:
+          data_ty: 
+            Object:
+              ty: Record
     objects:
       - ty: Record
         fields:
           - name: key
-            base_ty: String
+            data_ty: String
           - name: value
-            base_ty: Integer
+            data_ty: Integer
+            is_optional: true
+          - name: array_int
+            data_ty:
+              Array:
+                data_ty: Integer
+                size: 3
 
