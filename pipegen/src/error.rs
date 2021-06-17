@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
 use std::{error, result};
 
@@ -25,6 +26,7 @@ impl Debug for Error {
 }
 #[derive(Debug)]
 pub enum ErrorImpl {
+    Api(String),
     IO(std::io::Error),
     Yaml(serde_yaml::Error),
 }
@@ -34,12 +36,13 @@ impl ErrorImpl {
         match self {
             ErrorImpl::IO(err) => Some(err),
             ErrorImpl::Yaml(err) => Some(err),
-            // _ => None,
+            _ => None,
         }
     }
 
     fn display(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            ErrorImpl::Api(msg) => Display::fmt(msg, f),
             ErrorImpl::IO(err) => Display::fmt(err, f),
             ErrorImpl::Yaml(err) => Display::fmt(err, f),
         }
@@ -47,10 +50,19 @@ impl ErrorImpl {
 
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            ErrorImpl::Api(msg) => f.debug_tuple("Api").field(msg).finish(),
             ErrorImpl::IO(err) => f.debug_tuple("Io").field(err).finish(),
             ErrorImpl::Yaml(err) => f.debug_tuple("Yaml").field(err).finish(),
         }
     }
+}
+
+pub fn api_error(errors: HashMap<String, String>) -> Error {
+    let mut buffer: Vec<String> = vec![];
+    for (location, detail) in errors {
+        buffer.push(format!("{} at {}", detail, location))
+    }
+    Error(Box::new(ErrorImpl::Api(format!("{}", buffer.join(",\n")))))
 }
 
 pub fn io_error(err: std::io::Error) -> Error {

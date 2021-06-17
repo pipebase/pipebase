@@ -1,5 +1,6 @@
 use crate::api::{Entity, EntityAccept, Object, Pipe, VisitEntity};
 pub trait Generate<T> {
+    fn generate(&self) -> Option<String>;
     fn do_generate(t: &T, indent: usize) -> Option<String>;
 }
 
@@ -14,7 +15,7 @@ impl VisitEntity<Pipe> for PipeGenerator {
     }
 }
 
-impl PipeGenerator {
+impl Generate<Pipe> for PipeGenerator {
     fn generate(&self) -> Option<String> {
         let pipe = match self.pipe.to_owned() {
             Some(p) => p,
@@ -22,9 +23,7 @@ impl PipeGenerator {
         };
         Some(pipe.to_literal(self.indent))
     }
-}
 
-impl Generate<Pipe> for PipeGenerator {
     fn do_generate(pipe: &Pipe, indent: usize) -> Option<String> {
         let mut pipe_generator = PipeGenerator {
             indent: indent,
@@ -46,7 +45,7 @@ impl VisitEntity<Object> for ObjectGenerator {
     }
 }
 
-impl ObjectGenerator {
+impl Generate<Object> for ObjectGenerator {
     fn generate(&self) -> Option<String> {
         let object = match self.object.to_owned() {
             Some(o) => o,
@@ -54,9 +53,7 @@ impl ObjectGenerator {
         };
         Some(object.to_literal(self.indent))
     }
-}
 
-impl Generate<Object> for ObjectGenerator {
     fn do_generate(object: &Object, indent: usize) -> Option<String> {
         let mut generator = ObjectGenerator {
             indent: indent,

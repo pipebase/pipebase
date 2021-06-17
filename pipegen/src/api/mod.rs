@@ -5,11 +5,12 @@ mod meta;
 mod pipe;
 mod utils;
 
+pub use constants::*;
 pub use data::*;
 pub use pipe::*;
 
 pub trait Entity {
-    fn get_name(&self) -> String;
+    fn get_id(&self) -> String;
     fn list_dependency(&self) -> Vec<String> {
         vec![]
     }

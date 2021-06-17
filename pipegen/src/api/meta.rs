@@ -40,7 +40,7 @@ impl Attribute {
 }
 
 impl Entity for Attribute {
-    fn get_name(&self) -> String {
+    fn get_id(&self) -> String {
         match self.meta.to_owned() {
             Meta::Path { name } => name,
             Meta::String { name, .. } => name,

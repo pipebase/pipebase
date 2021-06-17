@@ -103,7 +103,7 @@ impl Pipe {
 }
 
 impl Entity for Pipe {
-    fn get_name(&self) -> String {
+    fn get_id(&self) -> String {
         self.name.to_owned()
     }
 

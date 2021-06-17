@@ -142,7 +142,7 @@ impl DataField {
 }
 
 impl Entity for DataField {
-    fn get_name(&self) -> String {
+    fn get_id(&self) -> String {
         match self.name {
             Some(ref name) => name.to_owned(),
             None => String::new(),
@@ -210,7 +210,7 @@ impl Object {
 }
 
 impl Entity for Object {
-    fn get_name(&self) -> String {
+    fn get_id(&self) -> String {
         self.ty.to_owned()
     }
 

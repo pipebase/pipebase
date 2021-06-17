@@ -1,0 +1,6 @@
+name: bad_pipe_name
+pipes:
+  - name: Badpipe
+    kind: Mapper
+    config:
+      ty: ProjectionConfig

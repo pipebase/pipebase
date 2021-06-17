@@ -1,11 +1,8 @@
-use crate::api::pipe::Pipe;
-use crate::api::utils::indent_literal;
-use crate::error::*;
-use crate::operation::{Generate, ObjectGenerator, PipeGenerator};
-use serde::Deserialize;
-
-use super::Entity;
 use super::Object;
+use crate::api::pipe::Pipe;
+use crate::error::*;
+use crate::operation::{Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate};
+use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct App {
@@ -70,7 +67,13 @@ impl App {
         )
     }
 
-    pub fn validate(&self) {}
+    fn validate_entity<T, V: Validate<T>>(items: &Vec<T>, location: &str) -> Result<()> {
+        V::do_validate(items, location)
+    }
+
+    pub fn validate(&self) -> Result<()> {
+        Self::validate_entity::<Pipe, PipeIdValidator>(&self.pipes, "pipes")
+    }
 }
 
 #[cfg(test)]
@@ -81,6 +84,7 @@ mod tests {
     fn test_complex_object() {
         let manifest_path = "resources/manifest/complex_object.yml";
         let app = App::parse(manifest_path).unwrap();
+        app.validate().expect("expect valid");
         app.print()
     }
 
@@ -88,6 +92,7 @@ mod tests {
     fn test_print_timer_tick() {
         let manifest_path = "resources/manifest/print_timer_tick.yml";
         let app = App::parse(manifest_path).unwrap();
+        app.validate().expect("expect valid");
         app.print()
     }
 
@@ -95,6 +100,15 @@ mod tests {
     fn test_project() {
         let manifest_path = "resources/manifest/project_record.yml";
         let app = App::parse(manifest_path).unwrap();
+        app.validate().expect("expect valid");
         app.print()
+    }
+
+    #[test]
+    fn pipe_name_bad_case() {
+        let manifest_path = "resources/manifest/pipe_name_bad_case.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
     }
 }
