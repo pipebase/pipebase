@@ -44,7 +44,7 @@ pub enum BaseType {
     #[strum(to_string = "f64")]
     Double,
     #[strum(to_string = "object")]
-    Object { name: String },
+    Object { ty: String },
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -61,8 +61,8 @@ pub struct DataType {
 
 impl DataType {
     pub fn get_data_type_literal(&self, indent: usize) -> String {
-        let ty_lit = match self.base_ty.to_owned() {
-            BaseType::Object { name } => name,
+        let ty_lit = match &self.base_ty {
+            BaseType::Object { ty } => ty.to_owned(),
             ty => ty.to_string(),
         };
         let ty_lit = match self.is_scalar {
@@ -106,7 +106,7 @@ impl Entity for DataType {
 
     fn list_dependency(&self) -> Vec<String> {
         match self.base_ty.to_owned() {
-            BaseType::Object { name } => vec![name],
+            BaseType::Object { ty } => vec![ty],
             _ => vec![],
         }
     }
@@ -138,15 +138,15 @@ impl<V: VisitEntity<DataType>> EntityAccept<V> for DataType {}
 #[derive(Debug, Deserialize, Clone)]
 pub struct Object {
     // TODO: (Camel Case Validation)
-    pub name: String,
-    pub trait_derives: Option<Vec<String>>,
+    pub ty: String,
+    pub traits: Option<Vec<String>>,
     pub attributes: Option<Vec<Attribute>>,
     pub fields: Vec<DataType>,
 }
 
 impl Object {
     pub fn get_trait_derives_literal(&self, indent: usize) -> Option<String> {
-        let trait_derives = match self.trait_derives.to_owned() {
+        let trait_derives = match self.traits.to_owned() {
             Some(trait_derives) => trait_derives,
             None => return None,
         };
@@ -166,7 +166,7 @@ impl Object {
 
 impl Entity for Object {
     fn get_name(&self) -> String {
-        self.name.to_owned()
+        self.ty.to_owned()
     }
 
     fn list_dependency(&self) -> Vec<String> {
@@ -186,7 +186,7 @@ impl Entity for Object {
         let indent_lit = indent_literal(indent);
         let struct_lit = format!(
             "{}pub struct {} {{\n{}\n{}}}",
-            indent_lit, self.name, field_lits, indent_lit
+            indent_lit, &self.ty, field_lits, indent_lit
         );
         // derive -> attribute -> struct
         let annotation = match self.get_trait_derives_literal(indent) {

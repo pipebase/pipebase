@@ -6,9 +6,9 @@ use strum::{Display, EnumString};
 #[derive(Clone, Display, EnumString, PartialEq, Debug, Deserialize)]
 pub enum Meta {
     Path { name: String },
-    NameStringValue { name: String, value: String },
-    NameIntegerValue { name: String, value: i32 },
-    NameListMeta { name: String, value: Vec<Meta> },
+    String { name: String, value: String },
+    Integer { name: String, value: i32 },
+    List { name: String, value: Vec<Meta> },
 }
 
 #[derive(Clone, Deserialize, Debug)]
@@ -21,13 +21,11 @@ impl Attribute {
         let indent_lit = indent_literal(indent);
         let (name, value) = match meta.to_owned() {
             Meta::Path { name } => return format!("{}{}", indent_lit, name),
-            Meta::NameStringValue { name, value } => {
+            Meta::String { name, value } => {
                 return format!(r#"{}{} = "{}""#, indent_lit, name, value)
             }
-            Meta::NameIntegerValue { name, value } => {
-                return format!("{}{} = {}", indent_lit, name, value)
-            }
-            Meta::NameListMeta { name, value } => (name, value),
+            Meta::Integer { name, value } => return format!("{}{} = {}", indent_lit, name, value),
+            Meta::List { name, value } => (name, value),
         };
         let mut nested_metas_lits: Vec<String> = vec![];
         for nested_meta in value.as_slice() {
@@ -45,9 +43,9 @@ impl Entity for Attribute {
     fn get_name(&self) -> String {
         match self.meta.to_owned() {
             Meta::Path { name } => name,
-            Meta::NameStringValue { name, value } => name,
-            Meta::NameIntegerValue { name, value } => name,
-            Meta::NameListMeta { name, value } => name,
+            Meta::String { name, .. } => name,
+            Meta::Integer { name, .. } => name,
+            Meta::List { name, .. } => name,
         }
     }
 

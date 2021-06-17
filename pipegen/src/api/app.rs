@@ -85,9 +85,9 @@ mod tests {
     #[test]
     fn parse_simple_app() {
         // let manifest_path = "resources/manifest/print_timer_tick.yml";
-        let manifest_path = "resources/manifest/simple_app.yml";
+        // let manifest_path = "resources/manifest/simple_app.yml";
+        let manifest_path = "resources/manifest/project_record.yml";
         let app = App::parse(manifest_path).unwrap();
-        // println!("{:#?}", app)
         app.print()
     }
 }

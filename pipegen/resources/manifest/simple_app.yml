@@ -8,9 +8,9 @@ pipes:
     output: 
       base_ty: 
         Object:
-          name: record
+          ty: Record
     objects:
-      - name: record
+      - ty: Record
         fields:
           - name: key
             base_ty: String
