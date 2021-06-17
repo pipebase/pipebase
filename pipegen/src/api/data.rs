@@ -109,12 +109,17 @@ impl Entity for DataType {
 
     // get named field literal
     fn to_literal(&self, indent: usize) -> String {
+        // if no name data type, return type literal only
+        let name = match self.name.to_owned() {
+            Some(name) => name,
+            None => return self.get_data_type_literal(indent),
+        };
         let indent_lit = indent_literal(indent);
         let attributes_lit = self.get_attributes_literal(indent).join("\n");
         let literal = format!(
             "{}pub {}: {}",
             indent_lit,
-            self.name.to_owned().unwrap(),
+            name,
             self.get_data_type_literal(0)
         );
         match attributes_lit.is_empty() {
@@ -126,7 +131,7 @@ impl Entity for DataType {
 
 impl<V: VisitEntity<DataType>> EntityAccept<V> for DataType {}
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Object {
     // TODO: (Camel Case Validation)
     pub name: String,

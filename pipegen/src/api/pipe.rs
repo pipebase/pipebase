@@ -21,7 +21,7 @@ pub enum PipeKind {
     Exporter,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct PipeConfig {
     pub config_type: String,
     pub path: Option<String>,
@@ -36,7 +36,7 @@ impl PipeConfig {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Pipe {
     pub name: String,
     pub kind: PipeKind,
@@ -91,7 +91,7 @@ impl Pipe {
             Some(output_data) => {
                 let indent_lit = indent_literal(indent);
                 // let output_mod_lit = format!(r#"module = {}"#, self.name);
-                let output_ty_lit = format!(r#"ty = "{}""#, output_data.get_data_type_literal(0));
+                let output_ty_lit = format!(r#"ty = "{}""#, output_data.to_literal(0));
                 Some(format!("{}output({})", indent_lit, output_ty_lit))
             }
             None => None,
