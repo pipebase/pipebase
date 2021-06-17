@@ -52,7 +52,7 @@ pub struct DataType {
     // named data type - object's field
     // snake case validation
     pub name: Option<String>,
-    pub base_type: BaseType,
+    pub base_ty: BaseType,
     pub attributes: Option<Vec<Attribute>>,
     pub is_optional: Option<bool>,
     pub is_scalar: Option<bool>,
@@ -61,7 +61,7 @@ pub struct DataType {
 
 impl DataType {
     pub fn get_data_type_literal(&self, indent: usize) -> String {
-        let ty_lit = match self.base_type.to_owned() {
+        let ty_lit = match self.base_ty.to_owned() {
             BaseType::Object { name } => name,
             ty => ty.to_string(),
         };
@@ -93,6 +93,10 @@ impl DataType {
         };
         attributes_to_literal(&attributes, indent)
     }
+
+    pub fn get_base_type(&self) -> BaseType {
+        self.base_ty.to_owned()
+    }
 }
 
 impl Entity for DataType {
@@ -101,7 +105,7 @@ impl Entity for DataType {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        match self.base_type.to_owned() {
+        match self.base_ty.to_owned() {
             BaseType::Object { name } => vec![name],
             _ => vec![],
         }

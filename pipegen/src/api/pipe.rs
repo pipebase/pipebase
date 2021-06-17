@@ -1,5 +1,5 @@
 use crate::api::utils::indent_literal;
-use crate::api::{Entity, EntityAccept, VisitEntity};
+use crate::api::{BaseType, Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
 use strum::{Display, EnumString};
 
@@ -23,7 +23,7 @@ pub enum PipeKind {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct PipeConfig {
-    pub config_type: String,
+    pub ty: String,
     pub path: Option<String>,
 }
 
@@ -32,7 +32,7 @@ impl PipeConfig {
         self.path.to_owned()
     }
     pub fn get_config_type(&self) -> String {
-        self.config_type.to_owned()
+        self.ty.to_owned()
     }
 }
 
@@ -40,9 +40,11 @@ impl PipeConfig {
 pub struct Pipe {
     pub name: String,
     pub kind: PipeKind,
-    pub pipe_config: PipeConfig,
-    pub upstream_pipe_name: Option<String>,
-    pub output_data_type: Option<DataType>,
+    pub config: PipeConfig,
+    // upstream pipe name
+    pub upstream: Option<String>,
+    // output data type
+    pub output: Option<DataType>,
     pub objects: Option<Vec<Object>>,
 }
 
@@ -59,8 +61,8 @@ impl Pipe {
 
     pub fn get_config_literal(&self, indent: usize) -> String {
         let indent_lit = indent_literal(indent);
-        let config_ty_meta_lit = format!(r#"ty = "{}""#, self.pipe_config.get_config_type());
-        let config_meta_lit = match self.pipe_config.get_path() {
+        let config_ty_meta_lit = format!(r#"ty = "{}""#, self.config.get_config_type());
+        let config_meta_lit = match self.config.get_path() {
             Some(path) => {
                 let config_path_lit = format!(r#"path = "{}""#, path);
                 format!(
@@ -74,8 +76,8 @@ impl Pipe {
     }
 
     pub fn get_upstream_literal(&self, indent: usize) -> Option<String> {
-        match self.upstream_pipe_name.to_owned() {
-            Some(upstream_pipe_name) => {
+        match self.upstream {
+            Some(ref upstream_pipe_name) => {
                 let indent_lit = indent_literal(indent);
                 Some(format!(
                     r#"{}upstream = "{}""#,
@@ -87,19 +89,27 @@ impl Pipe {
     }
 
     pub fn get_output_data_type_literal(&self, indent: usize) -> Option<String> {
-        match self.output_data_type.to_owned() {
-            Some(output_data) => {
-                let indent_lit = indent_literal(indent);
-                let module = self.get_module_name();
-                let output_ty_lit = format!(
-                    r#"module = "{}", ty = "{}""#,
-                    module,
-                    output_data.to_literal(0)
-                );
-                Some(format!("{}output({})", indent_lit, output_ty_lit))
-            }
-            None => None,
-        }
+        let output_data_type = match self.output {
+            Some(ref output_data_type) => output_data_type,
+            None => return None,
+        };
+        let module_lit = match output_data_type.get_base_type() {
+            BaseType::Object { .. } => Some(format!(r#"module = "{}""#, self.get_module_name())),
+            _ => None,
+        };
+        let output_ty_lit = match module_lit {
+            Some(module_lit) => format!(
+                r#"{}, ty = "{}""#,
+                module_lit,
+                output_data_type.to_literal(0)
+            ),
+            None => format!(r#"ty = "{}""#, output_data_type.to_literal(0)),
+        };
+        Some(format!(
+            "{}output({})",
+            indent_literal(indent),
+            output_ty_lit
+        ))
     }
 
     fn get_module_name(&self) -> String {
@@ -113,7 +123,7 @@ impl Entity for Pipe {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        match self.upstream_pipe_name.to_owned() {
+        match self.upstream.to_owned() {
             Some(pipe_name) => vec![pipe_name],
             None => vec![],
         }

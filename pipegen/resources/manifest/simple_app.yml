@@ -2,18 +2,18 @@ name: simple_pipe
 pipes:
   - name: timer
     kind: Listener
-    pipe_config:
-      config_type: TimerConfig
+    config:
+      ty: TimerConfig
       path: catalogs/timer.yml
-    output_data_type: 
-      base_type: 
+    output: 
+      base_ty: 
         Object:
-          name: Record
+          name: record
     objects:
-      - name: Record
+      - name: record
         fields:
           - name: key
-            base_type: String
+            base_ty: String
           - name: value
-            base_type: Integer
+            base_ty: Integer
 

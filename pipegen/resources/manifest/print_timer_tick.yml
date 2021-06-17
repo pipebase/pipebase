@@ -1,0 +1,14 @@
+name: print_timer_tick
+pipes:
+  - name: timer
+    kind: Poller
+    config:
+      ty: TimerConfig
+      path: resource/catalogs/timer_config.yml
+    output:
+      base_ty: UnsignedLongLong
+  - name: printer
+    kind: Exporter
+    config:
+      ty: PrinterConfig
+    upstream: timer
