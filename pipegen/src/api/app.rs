@@ -78,8 +78,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_simple_app() {
-        let manifest_path = "resources/manifest/simple_app.yml";
+    fn test_complex_object() {
+        let manifest_path = "resources/manifest/complex_object.yml";
         let app = App::parse(manifest_path).unwrap();
         app.print()
     }

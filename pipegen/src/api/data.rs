@@ -25,9 +25,26 @@ pub enum DataType {
     UnsignedLongLong,
     Float,
     Double,
-    Object { ty: String },
-    Vec { data_ty: Box<DataType> },
-    Array { data_ty: Box<DataType>, size: usize },
+    Object {
+        ty: String,
+    },
+    Vec {
+        data_ty: Box<DataType>,
+    },
+    Array {
+        data_ty: Box<DataType>,
+        size: usize,
+    },
+    Tuple {
+        data_tys: Vec<DataType>,
+    },
+    HashMap {
+        key_data_ty: Box<DataType>,
+        value_data_ty: Box<DataType>,
+    },
+    HashSet {
+        data_ty: Box<DataType>,
+    },
 }
 
 fn data_ty_to_literal(ty: &DataType) -> String {
@@ -57,6 +74,25 @@ fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::Array { data_ty, size } => {
             let data_ty_lit = data_ty_to_literal(data_ty);
             format!("[{}; {}]", data_ty_lit, size)
+        }
+        DataType::Tuple { data_tys } => {
+            let data_tys: Vec<String> = data_tys
+                .iter()
+                .map(|data_ty| data_ty_to_literal(data_ty))
+                .collect();
+            format!("({})", data_tys.join(", "))
+        }
+        DataType::HashMap {
+            key_data_ty,
+            value_data_ty,
+        } => {
+            let key_data_ty = data_ty_to_literal(key_data_ty);
+            let value_data_ty = data_ty_to_literal(value_data_ty);
+            format!("HashMap<{}, {}>", key_data_ty, value_data_ty)
+        }
+        DataType::HashSet { data_ty } => {
+            let data_ty_lit = data_ty_to_literal(data_ty);
+            format!("HashSet<{}>", data_ty_lit)
         }
     }
 }

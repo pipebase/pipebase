@@ -16,7 +16,7 @@ pipes:
         fields:
           - name: key
             data_ty: String
-          - name: value
+          - name: optional_value
             data_ty: Integer
             is_optional: true
           - name: array_int
@@ -24,4 +24,17 @@ pipes:
               Array:
                 data_ty: Integer
                 size: 3
+          - name: tuple_record
+            data_ty:
+              Tuple:
+                data_tys: [String, Integer]
+          - name: hashmap_record
+            data_ty:
+              HashMap:
+                key_data_ty: String
+                value_data_ty: Integer
+          - name: hashset_record
+            data_ty:
+              HashSet:
+                data_ty: String
 
