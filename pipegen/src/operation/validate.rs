@@ -1,10 +1,11 @@
+use crate::api::DataField;
 use crate::api::Object;
 use crate::error;
 use crate::error::Result;
 use crate::{
     api::{
-        Entity, Pipe, VisitEntity, OBJECT_ENTITY_ID_FIELD, PIPE_ENTITY_DEPENDENCY_FIELD,
-        PIPE_ENTITY_ID_FIELD,
+        Entity, Pipe, VisitEntity, DATA_FIELD_ENTITY_ID_FIELD, OBJECT_ENTITY_ID_FIELD,
+        PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD,
     },
     error::api_error,
 };
@@ -39,7 +40,7 @@ impl Validate<Pipe> for PipeIdValidator {
 
     fn validate(&mut self) {
         // snake case validation
-        let errors = validate_ids_case(
+        let errors = validate_ids(
             &self.ids,
             &self.location,
             PIPE_ENTITY_ID_FIELD,
@@ -287,7 +288,7 @@ impl Validate<Object> for ObjectIdValidator {
 
     fn validate(&mut self) {
         // camel case validation
-        let errors = validate_ids_case(
+        let errors = validate_ids(
             &self.ids,
             &self.location,
             OBJECT_ENTITY_ID_FIELD,
@@ -323,7 +324,75 @@ impl Validate<Object> for ObjectIdValidator {
     }
 }
 
-fn validate_ids_case(
+#[derive(Default)]
+pub struct DataFieldValidator {
+    pub location: String,
+    pub ids: Vec<String>,
+    pub errors: HashMap<String, String>,
+}
+
+impl VisitEntity<DataField> for DataFieldValidator {
+    fn visit(&mut self, field: &DataField) {
+        self.ids.push(field.get_id())
+    }
+}
+
+impl Validate<DataField> for DataFieldValidator {
+    fn get_errors(&self) -> Option<HashMap<String, String>> {
+        if self.errors.is_empty() {
+            return None;
+        }
+        Some(self.errors.to_owned())
+    }
+
+    fn validate(&mut self) {
+        let errors = validate_ids(
+            &self.ids,
+            &self.location,
+            DATA_FIELD_ENTITY_ID_FIELD,
+            "empty",
+            &is_non_empty,
+        );
+        if !errors.is_empty() {
+            self.errors = errors;
+            return;
+        }
+        let errors = validate_ids(
+            &self.ids,
+            &self.location,
+            DATA_FIELD_ENTITY_ID_FIELD,
+            "use snake_case",
+            &is_snake_lower_case,
+        );
+        if !errors.is_empty() {
+            self.errors = errors;
+            return;
+        }
+        self.errors = validate_ids_uniqueness(
+            &self.ids,
+            &self.location,
+            DATA_FIELD_ENTITY_ID_FIELD,
+            "duplicate",
+        );
+    }
+
+    fn do_validate(fields: &Vec<DataField>, location: &str) -> Result<()> {
+        let mut validator = DataFieldValidator {
+            location: location.to_owned(),
+            ..Default::default()
+        };
+        for field in fields {
+            validator.visit(field)
+        }
+        validator.validate();
+        match validator.get_errors() {
+            Some(errors) => Err(api_error(errors)),
+            None => Ok(()),
+        }
+    }
+}
+
+fn validate_ids(
     ids: &Vec<String>,
     location: &str,
     id_field: &str,
@@ -359,6 +428,10 @@ fn validate_ids_uniqueness(
         id_set.insert(id.to_owned());
     }
     errors
+}
+
+fn is_non_empty(s: &str) -> bool {
+    !s.is_empty()
 }
 
 fn is_snake_lower_case(s: &str) -> bool {
@@ -465,6 +538,22 @@ mod tests {
     #[test]
     fn test_duplicate_object_ty_pipe() {
         let manifest_path = "resources/manifest/duplicate_object_ty_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_unnamed_data_field_pipe() {
+        let manifest_path = "resources/manifest/unnamed_data_field_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_duplicate_data_field_name_pipe() {
+        let manifest_path = "resources/manifest/duplicate_data_field_name_pipe.yml";
         let app = App::parse(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)

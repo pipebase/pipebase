@@ -1,6 +1,8 @@
 use super::Object;
 use crate::api::pipe::Pipe;
+use crate::api::DataField;
 use crate::error::*;
+use crate::operation::DataFieldValidator;
 use crate::operation::ObjectIdValidator;
 use crate::operation::PipeDependencyValidator;
 use crate::operation::PipeGraphValidator;
@@ -69,15 +71,28 @@ impl App {
         V::do_validate(items, location)
     }
 
-    pub fn validate(&self) -> Result<()> {
+    fn validate_pipes(&self) -> Result<()> {
         Self::validate_entity::<Pipe, PipeIdValidator>(&self.pipes, "pipes")?;
         Self::validate_entity::<Pipe, PipeDependencyValidator>(&self.pipes, "pipes")?;
-        Self::validate_entity::<Pipe, PipeGraphValidator>(&self.pipes, "pipes")?;
-        match self.objects {
-            Some(ref objects) => {
-                Self::validate_entity::<Object, ObjectIdValidator>(objects, "objects")
-            }
-            None => Ok(()),
+        Self::validate_entity::<Pipe, PipeGraphValidator>(&self.pipes, "pipes")
+    }
+
+    fn validate_objects(&self) -> Result<()> {
+        let objects = match self.objects {
+            Some(ref objects) => objects,
+            None => return Ok(()),
+        };
+        Self::validate_entity::<Object, ObjectIdValidator>(objects, "objects")?;
+        for i in 0..objects.len() {
+            let object = objects.get(i).unwrap();
+            let location = format!("objects[{}].fields", i);
+            Self::validate_entity::<DataField, DataFieldValidator>(&object.fields, &location)?;
         }
+        Ok(())
+    }
+
+    pub fn validate(&self) -> Result<()> {
+        self.validate_pipes()?;
+        self.validate_objects()
     }
 }
