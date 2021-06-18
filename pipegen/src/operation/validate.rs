@@ -40,7 +40,7 @@ impl Validate<Pipe> for PipeIdValidator {
 
     fn validate(&mut self) {
         // snake case validation
-        let errors = validate_ids(
+        let errors = validate_ids_with_predicate(
             &self.ids,
             &self.location,
             PIPE_ENTITY_ID_FIELD,
@@ -81,7 +81,6 @@ impl Validate<Pipe> for PipeIdValidator {
 pub struct PipeDependencyValidator {
     pub location: String,
     pub ids: Vec<String>,
-    pub id_set: HashSet<String>,
     pub is_source: HashMap<String, bool>,
     // dependency pipe id -> other pipe ids
     pub deps: HashMap<String, Vec<String>>,
@@ -92,7 +91,6 @@ impl VisitEntity<Pipe> for PipeDependencyValidator {
     fn visit(&mut self, pipe: &Pipe) {
         let ref id = pipe.get_id();
         self.ids.push(id.to_owned());
-        self.id_set.insert(id.to_owned());
         self.is_source.insert(id.to_owned(), pipe.is_source());
         if !self.deps.contains_key(id) {
             self.deps.insert(id.to_owned(), vec![]);
@@ -134,7 +132,7 @@ impl PipeDependencyValidator {
             false => (),
         };
         for dep in deps {
-            match self.id_set.contains(dep) {
+            match self.deps.contains_key(dep) {
                 true => (),
                 false => {
                     self.errors
@@ -154,10 +152,6 @@ impl Validate<Pipe> for PipeDependencyValidator {
     }
 
     fn validate(&mut self) {
-        let mut pipe_id_set: HashSet<String> = HashSet::new();
-        for id in self.ids.as_slice() {
-            pipe_id_set.insert(id.to_owned());
-        }
         let mut i: usize = 0;
         for id in self.ids.to_owned() {
             let location = format!("{}[{}].{}", self.location, i, PIPE_ENTITY_DEPENDENCY_FIELD);
@@ -234,7 +228,7 @@ impl Validate<Pipe> for PipeGraphValidator {
             assert_eq!(false, old.unwrap());
             let dsts = match self.graph.get(src) {
                 Some(dsts) => dsts,
-                None => continue, // sink (ex: exporter) pipe does not have downstream
+                None => continue, // sink (ex: exporter) pipe has no downstream
             };
             for dst in dsts {
                 // all pipe has at most one in edge
@@ -288,7 +282,7 @@ impl Validate<Object> for ObjectIdValidator {
 
     fn validate(&mut self) {
         // camel case validation
-        let errors = validate_ids(
+        let errors = validate_ids_with_predicate(
             &self.ids,
             &self.location,
             OBJECT_ENTITY_ID_FIELD,
@@ -325,6 +319,62 @@ impl Validate<Object> for ObjectIdValidator {
 }
 
 #[derive(Default)]
+pub struct ObjectDependencyValidator {
+    pub location: String,
+    pub deps: HashMap<String, Vec<String>>,
+    pub ids: Vec<String>,
+    pub errors: HashMap<String, String>,
+}
+
+impl VisitEntity<Object> for ObjectDependencyValidator {
+    fn visit(&mut self, object: &Object) {
+        let ref id = object.get_id();
+        let dep = object.list_dependency();
+        self.ids.push(id.to_owned());
+        self.deps.insert(id.to_owned(), dep);
+    }
+}
+
+impl Validate<Object> for ObjectDependencyValidator {
+    fn get_errors(&self) -> Option<HashMap<String, String>> {
+        if self.errors.is_empty() {
+            return None;
+        }
+        Some(self.errors.to_owned())
+    }
+
+    fn validate(&mut self) {
+        for i in 0..self.ids.len() {
+            let id = self.ids.get(i).unwrap();
+            let mut j: usize = 0;
+            for dep in self.deps.get(id).unwrap() {
+                if !self.deps.contains_key(dep) {
+                    let location = format!("{}[{}].fields[{}]", self.location, i, j);
+                    self.errors
+                        .insert(location, "object dependency not found".to_owned());
+                }
+                j += 1;
+            }
+        }
+    }
+
+    fn do_validate(objects: &Vec<Object>, location: &str) -> Result<()> {
+        let mut validator = ObjectDependencyValidator {
+            location: location.to_owned(),
+            ..Default::default()
+        };
+        for object in objects {
+            validator.visit(object)
+        }
+        validator.validate();
+        match validator.get_errors() {
+            Some(errors) => Err(api_error(errors)),
+            None => Ok(()),
+        }
+    }
+}
+
+#[derive(Default)]
 pub struct DataFieldValidator {
     pub location: String,
     pub ids: Vec<String>,
@@ -346,7 +396,7 @@ impl Validate<DataField> for DataFieldValidator {
     }
 
     fn validate(&mut self) {
-        let errors = validate_ids(
+        let errors = validate_ids_with_predicate(
             &self.ids,
             &self.location,
             DATA_FIELD_ENTITY_ID_FIELD,
@@ -357,7 +407,7 @@ impl Validate<DataField> for DataFieldValidator {
             self.errors = errors;
             return;
         }
-        let errors = validate_ids(
+        let errors = validate_ids_with_predicate(
             &self.ids,
             &self.location,
             DATA_FIELD_ENTITY_ID_FIELD,
@@ -392,7 +442,7 @@ impl Validate<DataField> for DataFieldValidator {
     }
 }
 
-fn validate_ids(
+fn validate_ids_with_predicate(
     ids: &Vec<String>,
     location: &str,
     id_field: &str,
@@ -554,6 +604,14 @@ mod tests {
     #[test]
     fn test_duplicate_data_field_name_pipe() {
         let manifest_path = "resources/manifest/duplicate_data_field_name_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_non_exists_object_pipe() {
+        let manifest_path = "resources/manifest/non_exists_object_pipe.yml";
         let app = App::parse(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)

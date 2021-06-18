@@ -3,6 +3,7 @@ use crate::api::pipe::Pipe;
 use crate::api::DataField;
 use crate::error::*;
 use crate::operation::DataFieldValidator;
+use crate::operation::ObjectDependencyValidator;
 use crate::operation::ObjectIdValidator;
 use crate::operation::PipeDependencyValidator;
 use crate::operation::PipeGraphValidator;
@@ -88,6 +89,7 @@ impl App {
             let location = format!("objects[{}].fields", i);
             Self::validate_entity::<DataField, DataFieldValidator>(&object.fields, &location)?;
         }
+        Self::validate_entity::<Object, ObjectDependencyValidator>(objects, "objects")?;
         Ok(())
     }
 
