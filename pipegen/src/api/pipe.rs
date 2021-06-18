@@ -45,7 +45,6 @@ pub struct Pipe {
     pub upstream: Option<String>,
     // output data type
     pub output: Option<DataField>,
-    pub objects: Option<Vec<Object>>,
 }
 
 impl Pipe {

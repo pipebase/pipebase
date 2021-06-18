@@ -8,6 +8,7 @@ use serde::Deserialize;
 pub struct App {
     pub name: String,
     pub pipes: Vec<Pipe>,
+    pub objects: Option<Vec<Object>>,
 }
 
 impl App {
@@ -35,11 +36,11 @@ impl App {
                 None => continue,
             }
         }
-        lits.join("\n")
+        lits.join("\n\n")
     }
 
-    fn generate_objects(pipe: &Pipe, indent: usize) -> Option<String> {
-        let objects = match pipe.objects {
+    fn generate_objects(&self, indent: usize) -> Option<String> {
+        let objects = match self.objects {
             Some(ref objects) => objects,
             None => return None,
         };
@@ -47,24 +48,14 @@ impl App {
         Some(objects_lit)
     }
 
-    fn generate_all_objects(&self, indent: usize) -> String {
-        let mut all_objects_lits: Vec<String> = vec![];
-        for pipe in self.pipes.as_slice() {
-            match Self::generate_objects(pipe, indent) {
-                Some(object_lit) => all_objects_lits.push(object_lit),
-                None => continue,
-            }
-        }
-        all_objects_lits.join("\n\n")
-    }
-
     pub fn generate(&self) -> String {
-        let pipe_metas = Self::generate_lits::<Pipe, PipeGenerator>(&(self.pipes), 1);
-        let all_objects = self.generate_all_objects(1);
-        format!(
-            "mod {} {{\n{}\n\n{}\n}}",
-            self.name, all_objects, pipe_metas
-        )
+        let mut sections: Vec<String> = vec![];
+        match self.generate_objects(1) {
+            Some(objects_lit) => sections.push(objects_lit),
+            None => (),
+        };
+        sections.push(Self::generate_lits::<Pipe, PipeGenerator>(&(self.pipes), 1));
+        format!("mod {} {{\n{}\n}}", self.name, sections.join("\n\n"))
     }
 
     fn validate_entity<T, V: Validate<T>>(items: &Vec<T>, location: &str) -> Result<()> {
