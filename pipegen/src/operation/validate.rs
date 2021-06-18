@@ -88,6 +88,7 @@ impl Validate<Pipe> for PipeIdValidator {
 pub struct PipeDependencyValidator {
     pub location: String,
     pub ids: Vec<String>,
+    pub id_set: HashSet<String>,
     pub is_source: HashMap<String, bool>,
     // dependency pipe id -> other pipe ids
     pub deps: HashMap<String, Vec<String>>,
@@ -98,6 +99,7 @@ impl VisitEntity<Pipe> for PipeDependencyValidator {
     fn visit(&mut self, pipe: &Pipe) {
         let ref id = pipe.get_id();
         self.ids.push(id.to_owned());
+        self.id_set.insert(id.to_owned());
         self.is_source.insert(id.to_owned(), pipe.is_source());
         if !self.deps.contains_key(id) {
             self.deps.insert(id.to_owned(), vec![]);
@@ -106,6 +108,47 @@ impl VisitEntity<Pipe> for PipeDependencyValidator {
             .get_mut(id)
             .unwrap()
             .extend(pipe.list_dependency());
+    }
+}
+
+impl PipeDependencyValidator {
+    pub fn is_source_pipe(&self, id: &str) -> bool {
+        self.is_source.get(id).unwrap().to_owned()
+    }
+
+    pub fn validate_source_pipe(&mut self, id: &str, location: &str) {
+        match self.deps.get(id).unwrap().is_empty() {
+            true => (),
+            false => {
+                self.errors.insert(
+                    location.to_owned(),
+                    format!("found invalid upstream for source pipe"),
+                );
+            }
+        }
+    }
+
+    pub fn validate_downstream_pipe(&mut self, id: &str, location: &str) {
+        let deps = self.deps.get(id).unwrap();
+        match deps.is_empty() {
+            true => {
+                self.errors.insert(
+                    location.to_owned(),
+                    format!("no upstream found for downstream pipe"),
+                );
+                return;
+            }
+            false => (),
+        };
+        for dep in deps {
+            match self.id_set.contains(dep) {
+                true => (),
+                false => {
+                    self.errors
+                        .insert(location.to_owned(), format!("upstream does not exists"));
+                }
+            }
+        }
     }
 }
 
@@ -123,38 +166,11 @@ impl Validate<Pipe> for PipeDependencyValidator {
             pipe_id_set.insert(id.to_owned());
         }
         let mut i: usize = 0;
-        for id in self.ids.as_slice() {
+        for id in self.ids.to_owned() {
             let location = format!("{}[{}].{}", self.location, i, PIPE_ENTITY_DEPENDENCY_FIELD);
-            match self.is_source.get(id).unwrap() {
-                true => match self.deps.get(id).unwrap().is_empty() {
-                    true => (),
-                    false => {
-                        self.errors
-                            .insert(location, format!("found invalid upstream for source pipe"));
-                    }
-                },
-                false => {
-                    let deps = self.deps.get(id).unwrap();
-                    match deps.is_empty() {
-                        true => {
-                            self.errors
-                                .insert(location, format!("no upstream found for downstream pipe"));
-                        }
-                        false => {
-                            for dep in deps {
-                                match pipe_id_set.contains(dep) {
-                                    true => (),
-                                    false => {
-                                        self.errors.insert(
-                                            location.to_owned(),
-                                            format!("upstream does not exists"),
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            match self.is_source_pipe(&id) {
+                true => self.validate_source_pipe(&id, &location),
+                false => self.validate_downstream_pipe(&id, &location),
             };
             i += 1;
         }
