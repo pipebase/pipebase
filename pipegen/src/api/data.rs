@@ -135,10 +135,6 @@ impl DataField {
         };
         Some(metas_to_literal(&metas, indent))
     }
-
-    pub fn get_data_type(&self) -> DataType {
-        self.data_ty.to_owned()
-    }
 }
 
 impl Entity for DataField {

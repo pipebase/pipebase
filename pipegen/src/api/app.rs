@@ -1,6 +1,7 @@
 use super::Object;
 use crate::api::pipe::Pipe;
 use crate::error::*;
+use crate::operation::ObjectIdValidator;
 use crate::operation::PipeDependencyValidator;
 use crate::operation::PipeGraphValidator;
 use crate::operation::{Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate};
@@ -71,6 +72,12 @@ impl App {
     pub fn validate(&self) -> Result<()> {
         Self::validate_entity::<Pipe, PipeIdValidator>(&self.pipes, "pipes")?;
         Self::validate_entity::<Pipe, PipeDependencyValidator>(&self.pipes, "pipes")?;
-        Self::validate_entity::<Pipe, PipeGraphValidator>(&self.pipes, "pipes")
+        Self::validate_entity::<Pipe, PipeGraphValidator>(&self.pipes, "pipes")?;
+        match self.objects {
+            Some(ref objects) => {
+                Self::validate_entity::<Object, ObjectIdValidator>(objects, "objects")
+            }
+            None => Ok(()),
+        }
     }
 }

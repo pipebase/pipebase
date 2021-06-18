@@ -1,3 +1,5 @@
+use crate::api::Object;
+use crate::error;
 use crate::error::Result;
 use crate::{
     api::{
@@ -7,7 +9,6 @@ use crate::{
     error::api_error,
 };
 use std::collections::{HashMap, HashSet};
-use std::ops::Deref;
 
 pub trait Validate<T> {
     fn validate(&mut self);
@@ -37,34 +38,25 @@ impl Validate<Pipe> for PipeIdValidator {
     }
 
     fn validate(&mut self) {
-        let mut invalid = false;
-        let mut i = 0;
         // snake case validation
-        for id in self.ids.as_slice() {
-            if !is_snake_case(id, false) {
-                let location = format!("{}[{}].{}", self.location, i, PIPE_ENTITY_ID_FIELD);
-                self.errors.insert(
-                    location,
-                    format!("use snake_case for {}", PIPE_ENTITY_ID_FIELD),
-                );
-                invalid = true;
-            }
-            i += 1;
-        }
-        if invalid {
+        let errors = validate_ids_case(
+            &self.ids,
+            &self.location,
+            PIPE_ENTITY_ID_FIELD,
+            "use snake_case",
+            &is_snake_lower_case,
+        );
+        if !errors.is_empty() {
+            self.errors = errors;
             return;
         }
-        i = 0;
-        // duplicated id validation
-        let set: HashSet<String> = HashSet::new();
-        for id in self.ids.as_slice() {
-            if set.contains(id) {
-                let location = format!("{}[{}].{}", self.location, i, PIPE_ENTITY_ID_FIELD);
-                self.errors
-                    .insert(location, format!("duplicated {}", PIPE_ENTITY_ID_FIELD));
-            }
-            i += 1;
-        }
+        let errors = validate_ids_uniqueness(
+            &self.ids,
+            &self.location,
+            PIPE_ENTITY_ID_FIELD,
+            "duplicated",
+        );
+        self.errors = errors;
     }
 
     fn do_validate(pipes: &Vec<Pipe>, location: &str) -> Result<()> {
@@ -272,6 +264,107 @@ impl Validate<Pipe> for PipeGraphValidator {
     }
 }
 
+#[derive(Default)]
+pub struct ObjectIdValidator {
+    pub location: String,
+    pub ids: Vec<String>,
+    pub errors: HashMap<String, String>,
+}
+
+impl VisitEntity<Object> for ObjectIdValidator {
+    fn visit(&mut self, object: &Object) {
+        self.ids.push(object.get_id())
+    }
+}
+
+impl Validate<Object> for ObjectIdValidator {
+    fn get_errors(&self) -> Option<HashMap<String, String>> {
+        if self.errors.is_empty() {
+            return None;
+        }
+        Some(self.errors.to_owned())
+    }
+
+    fn validate(&mut self) {
+        // camel case validation
+        let errors = validate_ids_case(
+            &self.ids,
+            &self.location,
+            OBJECT_ENTITY_ID_FIELD,
+            "use CamelCase",
+            &is_camel_case,
+        );
+        if !errors.is_empty() {
+            self.errors = errors;
+            return;
+        }
+        let errors = validate_ids_uniqueness(
+            &self.ids,
+            &self.location,
+            OBJECT_ENTITY_ID_FIELD,
+            "duplicated",
+        );
+        self.errors = errors;
+    }
+
+    fn do_validate(objects: &Vec<Object>, location: &str) -> Result<()> {
+        let mut validator = ObjectIdValidator {
+            location: location.to_owned(),
+            ..Default::default()
+        };
+        for object in objects {
+            validator.visit(object)
+        }
+        validator.validate();
+        match validator.get_errors() {
+            Some(errors) => Err(api_error(errors)),
+            None => Ok(()),
+        }
+    }
+}
+
+fn validate_ids_case(
+    ids: &Vec<String>,
+    location: &str,
+    id_field: &str,
+    error_msg: &str,
+    predicate: &dyn Fn(&str) -> bool,
+) -> HashMap<String, String> {
+    let mut errors: HashMap<String, String> = HashMap::new();
+    for i in 0..ids.len() {
+        let id = ids.get(i).unwrap();
+        if !predicate(id) {
+            let location = format!("{}[{}].{}", location, i, id_field);
+            errors.insert(location, error_msg.to_owned());
+        }
+    }
+    errors
+}
+
+fn validate_ids_uniqueness(
+    ids: &Vec<String>,
+    location: &str,
+    id_field: &str,
+    error_msg: &str,
+) -> HashMap<String, String> {
+    let mut errors: HashMap<String, String> = HashMap::new();
+    let mut id_set: HashSet<String> = HashSet::new();
+    for i in 0..ids.len() {
+        let id = ids.get(i).unwrap();
+        if id_set.contains(id) {
+            let location = format!("{}[{}].{}", location, i, id_field);
+            errors.insert(location, error_msg.to_owned());
+            continue;
+        }
+        id_set.insert(id.to_owned());
+    }
+    errors
+}
+
+fn is_snake_lower_case(s: &str) -> bool {
+    is_snake_case(s, false)
+}
+
 fn is_snake_case(s: &str, uppercase: bool) -> bool {
     // no leading underscore
     let mut underscore = true;
@@ -330,6 +423,14 @@ mod tests {
     }
 
     #[test]
+    fn test_duplicate_name_pipe() {
+        let manifest_path = "resources/manifest/duplicate_name_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
     fn test_invalid_source_dependency_pipe() {
         let manifest_path = "resources/manifest/invalid_source_dependency_pipe.yml";
         let app = App::parse(manifest_path).unwrap();
@@ -348,6 +449,22 @@ mod tests {
     #[test]
     fn test_cycle_dependency_pipe() {
         let manifest_path = "resources/manifest/cycle_dependency_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_bad_object_ty_case_pipe() {
+        let manifest_path = "resources/manifest/bad_object_ty_case_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_duplicate_object_ty_pipe() {
+        let manifest_path = "resources/manifest/duplicate_object_ty_pipe.yml";
         let app = App::parse(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)

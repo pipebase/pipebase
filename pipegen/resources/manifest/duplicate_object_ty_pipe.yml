@@ -1,0 +1,7 @@
+name: duplicate_object_ty_pipe
+pipes: []
+objects:
+  - ty: Foo
+    fields: []
+  - ty: Foo
+    fields: []
