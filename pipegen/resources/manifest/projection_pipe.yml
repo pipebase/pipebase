@@ -16,14 +16,12 @@ pipes:
 objects:
   - ty: Record
     traits: ["Project", "Clone"]
-    attributes:
-      - meta:
-          List:
-            name: input
-            value:
-              - String:
-                  name: ty
-                  value: Record 
+    metas:
+      - Value:
+          name: input
+          meta:
+            Str:
+              value: Record 
     fields:
       - name: key
         data_ty: String

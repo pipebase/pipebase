@@ -99,11 +99,10 @@ impl Pipe {
             Some(ref output_data_type) => output_data_type,
             None => return None,
         };
-        let output_ty_lit = format!(r#"ty = "{}""#, output_data_type.to_literal(0));
         Some(format!(
-            "{}output({})",
+            r#"{}output = "{}""#,
             indent_literal(indent),
-            output_ty_lit
+            output_data_type.to_literal(0)
         ))
     }
 }

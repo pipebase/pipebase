@@ -1,4 +1,4 @@
-name: simple_pipe
+name: complext_object_pipe
 pipes:
   - name: receive_records
     kind: Listener

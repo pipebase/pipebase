@@ -299,3 +299,41 @@ fn is_camel_case(s: &str) -> bool {
     }
     true
 }
+
+#[cfg(test)]
+mod tests {
+
+    use crate::api::App;
+
+    #[test]
+    fn test_bad_name_case_pipe() {
+        let manifest_path = "resources/manifest/bad_name_case_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_invalid_source_dependency_pipe() {
+        let manifest_path = "resources/manifest/invalid_source_dependency_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_non_exists_upstream_pipe() {
+        let manifest_path = "resources/manifest/non_exists_upstream_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_cycle_dependency_pipe() {
+        let manifest_path = "resources/manifest/cycle_dependency_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+}

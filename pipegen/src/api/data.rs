@@ -4,7 +4,7 @@ use crate::api::utils::indent_literal;
 use crate::api::{Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
 
-use super::meta::{attributes_to_literal, Attribute};
+use super::meta::{metas_to_literal, Meta};
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum DataType {
@@ -102,7 +102,7 @@ pub struct DataField {
     // either named or unamed data field
     pub name: Option<String>,
     pub data_ty: DataType,
-    pub attributes: Option<Vec<Attribute>>,
+    pub metas: Option<Vec<Meta>>,
     pub is_boxed: Option<bool>,
     pub is_optional: Option<bool>,
 }
@@ -128,12 +128,12 @@ impl DataField {
         format!("{}{}", indent_lit, ty_lit)
     }
 
-    pub fn get_attributes_literal(&self, indent: usize) -> Vec<String> {
-        let attributes = match self.attributes.to_owned() {
-            Some(attributes) => attributes,
-            None => return vec![],
+    pub fn get_metas_literal(&self, indent: usize) -> Option<String> {
+        let metas = match self.metas.to_owned() {
+            Some(metas) => metas,
+            None => return None,
         };
-        attributes_to_literal(&attributes, indent)
+        Some(metas_to_literal(&metas, indent))
     }
 
     pub fn get_data_type(&self) -> DataType {
@@ -164,16 +164,16 @@ impl Entity for DataField {
             None => return self.get_data_type_literal(indent),
         };
         let indent_lit = indent_literal(indent);
-        let attributes_lit = self.get_attributes_literal(indent).join("\n");
+        let metas_lit = self.get_metas_literal(indent);
         let literal = format!(
             "{}pub {}: {}",
             indent_lit,
             name,
             self.get_data_type_literal(0)
         );
-        match attributes_lit.is_empty() {
-            true => literal,
-            false => format!("{}\n{}", attributes_lit, literal),
+        match metas_lit {
+            None => literal,
+            Some(metas_lit) => format!("{}\n{}", metas_lit, literal),
         }
     }
 }
@@ -185,7 +185,7 @@ pub struct Object {
     // TODO: (Camel Case Validation)
     pub ty: String,
     pub traits: Option<Vec<String>>,
-    pub attributes: Option<Vec<Attribute>>,
+    pub metas: Option<Vec<Meta>>,
     pub fields: Vec<DataField>,
 }
 
@@ -200,12 +200,12 @@ impl Object {
         Some(format!("{}#[derive({})]", indent_lit, trait_derives_lit))
     }
 
-    pub fn get_attributes_literal(&self, indent: usize) -> Vec<String> {
-        let attributes = match self.attributes.to_owned() {
-            Some(attributes) => attributes,
-            None => return vec![],
+    pub fn get_metas_literal(&self, indent: usize) -> Option<String> {
+        let metas = match self.metas.to_owned() {
+            Some(metas) => metas,
+            None => return None,
         };
-        attributes_to_literal(&attributes, indent)
+        Some(metas_to_literal(&metas, indent))
     }
 }
 
@@ -234,14 +234,14 @@ impl Entity for Object {
             indent_lit, &self.ty, field_lits, indent_lit
         );
         // derive -> attribute -> struct
-        let annotation = match self.get_trait_derives_literal(indent) {
+        let mut annotation = match self.get_trait_derives_literal(indent) {
             Some(trait_derives_literal) => trait_derives_literal,
             None => return struct_lit,
         };
-        let attributes_lit = self.get_attributes_literal(indent).join("\n");
-        let annotation = match attributes_lit.is_empty() {
-            true => annotation,
-            false => format!("{}\n{}", annotation, attributes_lit),
+        let metas_lit = self.get_metas_literal(indent);
+        annotation = match metas_lit {
+            None => annotation,
+            Some(metas_lit) => format!("{}\n{}", annotation, metas_lit),
         };
         format!("{}\n{}", annotation, struct_lit)
     }

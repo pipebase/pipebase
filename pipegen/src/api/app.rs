@@ -30,7 +30,7 @@ impl App {
         println!("{}", self.generate())
     }
 
-    fn generate_lits<T, G: Generate<T>>(items: &Vec<T>, indent: usize) -> String {
+    fn generate_lits<T, G: Generate<T>>(items: &Vec<T>, indent: usize, join_sep: &str) -> String {
         let mut lits: Vec<String> = vec![];
         for item in items.as_slice() {
             match G::do_generate(item, indent) {
@@ -38,7 +38,7 @@ impl App {
                 None => continue,
             }
         }
-        lits.join("\n\n")
+        lits.join(join_sep)
     }
 
     fn generate_objects(&self, indent: usize) -> Option<String> {
@@ -46,7 +46,7 @@ impl App {
             Some(ref objects) => objects,
             None => return None,
         };
-        let objects_lit = Self::generate_lits::<Object, ObjectGenerator>(objects, indent);
+        let objects_lit = Self::generate_lits::<Object, ObjectGenerator>(objects, indent, "\n\n");
         Some(objects_lit)
     }
 
@@ -56,7 +56,11 @@ impl App {
             Some(objects_lit) => sections.push(objects_lit),
             None => (),
         };
-        sections.push(Self::generate_lits::<Pipe, PipeGenerator>(&(self.pipes), 1));
+        sections.push(Self::generate_lits::<Pipe, PipeGenerator>(
+            &(self.pipes),
+            1,
+            "\n",
+        ));
         format!("mod {} {{\n{}\n}}", self.name, sections.join("\n\n"))
     }
 
@@ -68,66 +72,5 @@ impl App {
         Self::validate_entity::<Pipe, PipeIdValidator>(&self.pipes, "pipes")?;
         Self::validate_entity::<Pipe, PipeDependencyValidator>(&self.pipes, "pipes")?;
         Self::validate_entity::<Pipe, PipeGraphValidator>(&self.pipes, "pipes")
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_complex_object() {
-        let manifest_path = "resources/manifest/complex_object.yml";
-        let app = App::parse(manifest_path).unwrap();
-        app.validate().expect("expect valid");
-        app.print()
-    }
-
-    #[test]
-    fn test_print_timer_tick() {
-        let manifest_path = "resources/manifest/print_timer_tick.yml";
-        let app = App::parse(manifest_path).unwrap();
-        app.validate().expect("expect valid");
-        app.print()
-    }
-
-    #[test]
-    fn test_project() {
-        let manifest_path = "resources/manifest/project_record.yml";
-        let app = App::parse(manifest_path).unwrap();
-        app.validate().expect("expect valid");
-        app.print()
-    }
-
-    #[test]
-    fn pipe_name_bad_case() {
-        let manifest_path = "resources/manifest/pipe_name_bad_case.yml";
-        let app = App::parse(manifest_path).unwrap();
-        let e = app.validate().expect_err("expect invalid");
-        println!("{}", e)
-    }
-
-    #[test]
-    fn pipe_invalid_source_dependency() {
-        let manifest_path = "resources/manifest/pipe_invalid_source_dependency.yml";
-        let app = App::parse(manifest_path).unwrap();
-        let e = app.validate().expect_err("expect invalid");
-        println!("{}", e)
-    }
-
-    #[test]
-    fn pipe_non_exists_upstream() {
-        let manifest_path = "resources/manifest/pipe_non_exists_upstream.yml";
-        let app = App::parse(manifest_path).unwrap();
-        let e = app.validate().expect_err("expect invalid");
-        println!("{}", e)
-    }
-
-    #[test]
-    fn pipe_cycle() {
-        let manifest_path = "resources/manifest/pipe_cycle.yml";
-        let app = App::parse(manifest_path).unwrap();
-        let e = app.validate().expect_err("expect invalid");
-        println!("{}", e)
     }
 }

@@ -63,3 +63,32 @@ impl Generate<Object> for ObjectGenerator {
         generator.generate()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::api::App;
+
+    #[test]
+    fn test_complex_object_pipe() {
+        let manifest_path = "resources/manifest/complex_object_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        app.validate().expect("expect valid");
+        app.print()
+    }
+
+    #[test]
+    fn test_print_timer_tick_pipe() {
+        let manifest_path = "resources/manifest/print_timer_tick_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        app.validate().expect("expect valid");
+        app.print()
+    }
+
+    #[test]
+    fn test_projection_pipe() {
+        let manifest_path = "resources/manifest/projection_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        app.validate().expect("expect valid");
+        app.print()
+    }
+}
