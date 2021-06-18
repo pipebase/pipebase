@@ -1,6 +1,8 @@
 use super::Object;
 use crate::api::pipe::Pipe;
 use crate::error::*;
+use crate::operation::PipeDependencyValidator;
+use crate::operation::PipeGraphValidator;
 use crate::operation::{Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate};
 use serde::Deserialize;
 
@@ -63,7 +65,9 @@ impl App {
     }
 
     pub fn validate(&self) -> Result<()> {
-        Self::validate_entity::<Pipe, PipeIdValidator>(&self.pipes, "pipes")
+        Self::validate_entity::<Pipe, PipeIdValidator>(&self.pipes, "pipes")?;
+        Self::validate_entity::<Pipe, PipeDependencyValidator>(&self.pipes, "pipes")?;
+        Self::validate_entity::<Pipe, PipeGraphValidator>(&self.pipes, "pipes")
     }
 }
 
@@ -98,6 +102,30 @@ mod tests {
     #[test]
     fn pipe_name_bad_case() {
         let manifest_path = "resources/manifest/pipe_name_bad_case.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn pipe_invalid_source_dependency() {
+        let manifest_path = "resources/manifest/pipe_invalid_source_dependency.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn pipe_non_exists_upstream() {
+        let manifest_path = "resources/manifest/pipe_non_exists_upstream.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn pipe_cycle() {
+        let manifest_path = "resources/manifest/pipe_cycle.yml";
         let app = App::parse(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)

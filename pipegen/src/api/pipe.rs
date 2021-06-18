@@ -48,17 +48,24 @@ pub struct Pipe {
 }
 
 impl Pipe {
-    pub fn get_name_literal(&self, indent: usize) -> String {
+    pub fn is_source(&self) -> bool {
+        match &self.kind {
+            PipeKind::Listener | PipeKind::Poller => true,
+            _ => false,
+        }
+    }
+
+    pub fn get_name_meta_literal(&self, indent: usize) -> String {
         let indent_lit = indent_literal(indent);
         format!(r#"{}name = "{}""#, indent_lit, self.name)
     }
 
-    pub fn get_kind_literal(&self, indent: usize) -> String {
+    pub fn get_kind_meta_literal(&self, indent: usize) -> String {
         let indent_lit = indent_literal(indent);
         format!(r#"{}kind = "{}""#, indent_lit, self.kind)
     }
 
-    pub fn get_config_literal(&self, indent: usize) -> String {
+    pub fn get_config_meta_literal(&self, indent: usize) -> String {
         let indent_lit = indent_literal(indent);
         let config_ty_meta_lit = format!(r#"ty = "{}""#, self.config.get_config_type());
         let config_meta_lit = match self.config.get_path() {
@@ -74,7 +81,7 @@ impl Pipe {
         config_meta_lit
     }
 
-    pub fn get_upstream_literal(&self, indent: usize) -> Option<String> {
+    pub fn get_upstream_meta_literal(&self, indent: usize) -> Option<String> {
         match self.upstream {
             Some(ref upstream_pipe_name) => {
                 let indent_lit = indent_literal(indent);
@@ -87,7 +94,7 @@ impl Pipe {
         }
     }
 
-    pub fn get_output_data_type_literal(&self, indent: usize) -> Option<String> {
+    pub fn get_output_data_type_meta_literal(&self, indent: usize) -> Option<String> {
         let output_data_type = match self.output {
             Some(ref output_data_type) => output_data_type,
             None => return None,
@@ -116,14 +123,14 @@ impl Entity for Pipe {
     // to pipe meta
     fn to_literal(&self, indent: usize) -> String {
         let mut meta_lits = vec![];
-        meta_lits.push(self.get_name_literal(indent + 1));
-        meta_lits.push(self.get_kind_literal(indent + 1));
-        meta_lits.push(self.get_config_literal(indent + 1));
-        match self.get_upstream_literal(indent + 1) {
+        meta_lits.push(self.get_name_meta_literal(indent + 1));
+        meta_lits.push(self.get_kind_meta_literal(indent + 1));
+        meta_lits.push(self.get_config_meta_literal(indent + 1));
+        match self.get_upstream_meta_literal(indent + 1) {
             Some(upstream_literal) => meta_lits.push(upstream_literal),
             None => (),
         };
-        match self.get_output_data_type_literal(indent + 1) {
+        match self.get_output_data_type_meta_literal(indent + 1) {
             Some(output_ty_literal) => meta_lits.push(output_ty_literal),
             None => (),
         };

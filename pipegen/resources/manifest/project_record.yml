@@ -1,9 +1,14 @@
 name: project_record
 pipes:
+  - name: record_source
+    kind: Listener
+    config:
+      ty: ServerConfig
   - name: project_record
     kind: Mapper
     config:
       ty: ProjectionConfig
+    upstream: record_source
     output:
       data_ty: 
         Object:

@@ -1,6 +1,6 @@
 name: bad_pipe_name
 pipes:
-  - name: Badpipe
-    kind: Mapper
+  - name: BadpipeName
+    kind: Poller
     config:
-      ty: ProjectionConfig
+      ty: SomeConfig

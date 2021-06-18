@@ -1,0 +1,16 @@
+name: pipe_bad_dependency
+pipes:
+  - name: source_has_no_upstream
+    kind: Poller
+    config:
+      ty: PollerConfig
+    output:
+      data_ty: Integer
+  - name: source_has_upstream
+    kind: Poller
+    upstream: source_has_no_upstream
+    config:
+      ty: PollerConfig
+    output:
+      data_ty: Integer
+
