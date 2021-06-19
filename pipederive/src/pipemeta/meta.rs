@@ -8,9 +8,10 @@ use std::ops::Deref;
 use std::rc::{Rc, Weak};
 use syn::Attribute;
 
+use crate::constants::PIPE_UPSTREAM_NAME_SEP;
 use crate::constants::{
-    PIPE_CONFIG_EMPTY_PATH, PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_KIND, PIPE_NAME,
-    PIPE_OUTPUT_MODULE, PIPE_OUTPUT_TYPE, PIPE_UPSTREAM,
+    PIPE_CONFIG_EMPTY_PATH, PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_KIND, PIPE_NAME, PIPE_OUTPUT,
+    PIPE_UPSTREAM,
 };
 use crate::utils::get_meta_string_value_by_meta_path;
 
@@ -34,37 +35,15 @@ impl PipeConfigMeta {
     }
 }
 
-#[derive(Clone)]
-pub struct PipeOutputMeta {
-    pub module: Option<String>,
-    pub ty: String,
-}
-
-impl PipeOutputMeta {
-    pub fn get_module(&self) -> Option<String> {
-        self.module.to_owned()
-    }
-    pub fn get_ty(&self) -> String {
-        self.ty.to_owned()
-    }
-    pub fn get_path(&self) -> String {
-        let module = match self.get_module() {
-            Some(module) => module,
-            None => return self.get_ty(),
-        };
-        format!("{}::{}", module, self.get_ty())
-    }
-}
-
 /// Pipe metadata
 pub struct PipeMeta {
     pub name: String,
     pub kind: String,
     pub config_meta: PipeConfigMeta,
-    pub output_meta: Option<PipeOutputMeta>,
-    pub upstream_name: Option<String>,
-    pub upstream_meta: Weak<RefCell<PipeMeta>>,
-    pub downstream_metas: Vec<Rc<RefCell<PipeMeta>>>,
+    pub output_meta: Option<String>,
+    pub upstream_names: Vec<String>,
+    pub upstream_output_meta: Option<String>,
+    pub downstream_names: Vec<String>,
 }
 
 impl PipeMeta {
@@ -84,28 +63,43 @@ impl PipeMeta {
         self.config_meta.to_owned()
     }
 
-    pub fn get_output_meta(&self) -> Option<PipeOutputMeta> {
+    pub fn get_output_meta(&self) -> Option<String> {
         self.output_meta.to_owned()
     }
 
-    pub fn get_upstream_meta(&self) -> Option<Rc<RefCell<PipeMeta>>> {
-        self.upstream_meta.upgrade()
+    pub fn get_upstream_output_meta(&self) -> Option<String> {
+        self.upstream_output_meta.to_owned()
     }
 
-    pub fn get_upstream_name(&self) -> Option<String> {
-        self.upstream_name.to_owned()
+    pub fn get_upstream_names(&self) -> Vec<String> {
+        self.upstream_names.to_owned()
     }
 
-    pub fn set_upstream_meta(&mut self, upstream_meta: Rc<RefCell<PipeMeta>>) {
-        *self.upstream_meta.borrow_mut() = Rc::downgrade(&upstream_meta)
+    pub fn set_upstream_output_meta(&mut self, upstream_output_meta: Option<String>) {
+        let upstream_output_meta = match upstream_output_meta {
+            Some(upstream_output_meta) => upstream_output_meta,
+            None => panic!("output meta not found in upstream pipe"),
+        };
+        // upstream pipes should have identical output meta
+        match self.upstream_output_meta {
+            Some(ref local_upstream_output_meta) => {
+                if !local_upstream_output_meta.eq(&upstream_output_meta) {
+                    panic!(
+                        "upstream output conflict, found {} != {}",
+                        local_upstream_output_meta, upstream_output_meta
+                    )
+                }
+            }
+            None => self.upstream_output_meta = Some(upstream_output_meta),
+        }
     }
 
-    pub fn add_downstream_meta(&mut self, downstream_meta: Rc<RefCell<PipeMeta>>) {
-        self.downstream_metas.push(downstream_meta)
+    pub fn add_downstream_name(&mut self, downstream_name: &str) {
+        self.downstream_names.push(downstream_name.to_owned())
     }
 
-    pub fn get_downstream_metas(&self) -> Vec<Rc<RefCell<PipeMeta>>> {
-        self.downstream_metas.to_owned()
+    pub fn get_downstream_names(&self) -> Vec<String> {
+        self.downstream_names.to_owned()
     }
 
     pub fn parse(attribute: &Attribute) -> Self {
@@ -114,9 +108,9 @@ impl PipeMeta {
             kind: Self::parse_kind(attribute),
             config_meta: Self::parse_config_meta(attribute),
             output_meta: Self::parse_output_meta(attribute),
-            upstream_name: Self::parse_upstream_name(attribute),
-            upstream_meta: Weak::new(),
-            downstream_metas: vec![],
+            upstream_names: Self::parse_upstream_names(attribute),
+            upstream_output_meta: None,
+            downstream_names: vec![],
         }
     }
 
@@ -128,8 +122,19 @@ impl PipeMeta {
         get_meta_string_value_by_meta_path(PIPE_KIND, attribute, true).unwrap()
     }
 
-    fn parse_upstream_name(attribute: &Attribute) -> Option<String> {
-        get_meta_string_value_by_meta_path(PIPE_UPSTREAM, attribute, false)
+    fn parse_upstream_names(attribute: &Attribute) -> Vec<String> {
+        match get_meta_string_value_by_meta_path(PIPE_UPSTREAM, attribute, false) {
+            Some(mut upstream_names) => {
+                // clean whitespace
+                upstream_names.retain(|c| !c.is_whitespace());
+                // split into vector of upstreams
+                upstream_names
+                    .split(PIPE_UPSTREAM_NAME_SEP)
+                    .map(|n| n.to_owned())
+                    .collect()
+            }
+            None => vec![],
+        }
     }
 
     fn parse_config_meta(attribute: &Attribute) -> PipeConfigMeta {
@@ -138,16 +143,11 @@ impl PipeMeta {
         PipeConfigMeta { ty: ty, path: path }
     }
 
-    fn parse_output_meta(attribute: &Attribute) -> Option<PipeOutputMeta> {
-        let ty = match get_meta_string_value_by_meta_path(PIPE_OUTPUT_TYPE, attribute, false) {
-            Some(ty) => ty,
-            None => return None,
-        };
-        let module = get_meta_string_value_by_meta_path(PIPE_OUTPUT_MODULE, attribute, false);
-        Some(PipeOutputMeta {
-            ty: ty,
-            module: module,
-        })
+    fn parse_output_meta(attribute: &Attribute) -> Option<String> {
+        match get_meta_string_value_by_meta_path(PIPE_OUTPUT, attribute, false) {
+            Some(ty) => Some(ty),
+            None => None,
+        }
     }
 }
 
@@ -168,22 +168,24 @@ impl PipeMetas {
         }
         for pipe_name in pipe_names.as_slice() {
             let pipe_meta = pipe_metas.get(pipe_name).unwrap().to_owned();
-            let upstream_name = pipe_meta.to_owned().deref().borrow().get_upstream_name();
-            let upstream_name = match upstream_name {
-                Some(upstream_name) => upstream_name,
-                None => continue,
-            };
-            // connect upstream and downstream pipe
-            let upstream_pipe_meta = pipe_metas.get(&upstream_name).unwrap().to_owned();
-            upstream_pipe_meta
-                .deref()
-                .borrow_mut()
-                .add_downstream_meta(pipe_meta.to_owned());
-            pipe_meta
-                .to_owned()
-                .deref()
-                .borrow_mut()
-                .set_upstream_meta(upstream_pipe_meta.to_owned())
+            let upstream_names = pipe_meta.to_owned().deref().borrow().get_upstream_names();
+            for upstream_name in upstream_names.as_slice() {
+                // upstream pipe register downstream pipe name
+                let upstream_pipe_meta = match pipe_metas.get(upstream_name) {
+                    Some(upstream_pipe_meta) => upstream_pipe_meta.to_owned(),
+                    None => panic!("upstream {} not found", upstream_name),
+                };
+                upstream_pipe_meta
+                    .deref()
+                    .borrow_mut()
+                    .add_downstream_name(pipe_name);
+                // downstream pipe collect upstream pipe output type and check identical
+                let upstream_output_meta = upstream_pipe_meta.deref().borrow().get_output_meta();
+                pipe_meta
+                    .deref()
+                    .borrow_mut()
+                    .set_upstream_output_meta(upstream_output_meta)
+            }
         }
         PipeMetas {
             pipe_metas: pipe_metas,

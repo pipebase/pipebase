@@ -3,6 +3,7 @@ mod set;
 pub use bag::*;
 pub use set::*;
 
+use std::iter::FromIterator;
 use std::marker::PhantomData;
 
 use crate::{
@@ -22,18 +23,25 @@ use tokio::{
 };
 
 #[async_trait]
-pub trait Collect<T: Clone, C>: Send + Sync + FromConfig<C> {
+pub trait Collect<T: Clone, U: FromIterator<T> + Clone, C>: Send + Sync + FromConfig<C> {
     async fn collect(&mut self, t: &T);
-    async fn flush(&mut self) -> Vec<T>;
+    async fn flush(&mut self) -> U;
     fn get_flush_interval(&self) -> Interval;
 }
 
-pub struct Collector<'a, T: Clone, U: Collect<T, C>, C: ConfigInto<U>> {
+pub struct Collector<
+    'a,
+    T: Clone,
+    U: FromIterator<T> + Clone,
+    V: Collect<T, U, C>,
+    C: ConfigInto<V>,
+> {
     pub name: &'a str,
     pub rx: Arc<Mutex<Receiver<T>>>,
-    pub txs: Vec<Arc<Sender<Vec<T>>>>,
+    pub txs: Vec<Arc<Sender<U>>>,
     pub config: C,
-    pub collector: PhantomData<U>,
+    pub collector: PhantomData<V>,
+    pub collection: PhantomData<U>,
     pub context: Arc<RwLock<Context>>,
 }
 
@@ -41,12 +49,13 @@ pub struct Collector<'a, T: Clone, U: Collect<T, C>, C: ConfigInto<U>> {
 impl<
         'a,
         T: Clone + Send + Sync + 'static,
-        U: Collect<T, C> + 'static,
-        C: ConfigInto<U> + Send + Sync,
-    > Pipe<Vec<T>> for Collector<'a, T, U, C>
+        U: FromIterator<T> + Clone + Send + 'static,
+        V: Collect<T, U, C> + 'static,
+        C: ConfigInto<V> + Send + Sync,
+    > Pipe<U> for Collector<'a, T, U, V, C>
 {
     async fn run(&mut self) -> Result<()> {
-        let collector: Arc<Mutex<U>> =
+        let collector: Arc<Mutex<V>> =
             Arc::new(Mutex::new(self.config.config_into().await.unwrap()));
         let rx = self.rx.to_owned();
         let collector_clone = collector.to_owned();
@@ -117,7 +126,7 @@ impl<
         }
     }
 
-    fn add_sender(&mut self, tx: Sender<Vec<T>>) {
+    fn add_sender(&mut self, tx: Sender<U>) {
         self.txs.push(tx.into())
     }
 
@@ -139,6 +148,7 @@ macro_rules! collector {
                 txs: vec![],
                 config: config,
                 collector: std::marker::PhantomData,
+                collection: std::marker::PhantomData,
                 context: Default::default()
             };
             $(

@@ -23,15 +23,21 @@ mod tests {
 
     #[derive(Bootstrap)]
     #[pipe(
-        name = "timer",
-        kind = "listener",
-        config(ty = "TimeListenerConfig", path = "resources/catalogs/timer.yml"),
-        output(ty = "TimeListenerTick")
+        name = "timer1",
+        kind = "poller",
+        config(ty = "TimerConfig", path = "resources/catalogs/timer.yml"),
+        output = "u128"
+    )]
+    #[pipe(
+        name = "timer2",
+        kind = "poller",
+        config(ty = "TimerConfig", path = "resources/catalogs/timer.yml"),
+        output = "u128"
     )]
     #[pipe(
         name = "printer",
         kind = "exporter",
-        upstream = "timer",
+        upstream = "timer1, timer2",
         config(ty = "PrinterConfig")
     )]
     struct App {
@@ -58,15 +64,15 @@ mod tests {
             pipe_contexts: HashMap::new(),
         };
         app.bootstrap().await;
-        let timer_context = app.get_pipe_context("timer").unwrap();
+        let timer_context = app.get_pipe_context("timer1").unwrap();
         let timer_context = timer_context.deref().read().await;
         let printer_context = app.get_pipe_context("printer").unwrap();
         let printer_context = printer_context.deref().read().await;
         assert_eq!(State::Done, timer_context.get_state());
         assert_eq!(State::Done, printer_context.get_state());
         assert_eq!(11, timer_context.get_total_run());
-        assert_eq!(11, printer_context.get_total_run());
+        assert_eq!(21, printer_context.get_total_run());
         assert_eq!(11, timer_context.get_success_run());
-        assert_eq!(11, printer_context.get_success_run());
+        assert_eq!(21, printer_context.get_success_run());
     }
 }

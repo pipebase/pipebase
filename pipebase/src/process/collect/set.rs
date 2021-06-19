@@ -18,7 +18,6 @@ impl<T: Ord> ConfigInto<SetCollector<T>> for SetCollectorConfig {}
 
 pub struct SetCollector<T: Ord> {
     pub flush_period_in_millis: u64,
-    pub set: BTreeSet<T>,
     pub buffer: Vec<T>,
 }
 
@@ -29,25 +28,22 @@ impl<T: Ord> FromConfig<SetCollectorConfig> for SetCollector<T> {
     ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
         Ok(SetCollector {
             flush_period_in_millis: config.flush_period_in_millis,
-            set: BTreeSet::new(),
-            buffer: vec![],
+            buffer: Vec::new(),
         })
     }
 }
 
 #[async_trait]
-impl<T: Clone + Send + Sync + Ord> Collect<T, SetCollectorConfig> for SetCollector<T> {
+impl<T: Clone + Send + Sync + Ord> Collect<T, BTreeSet<T>, SetCollectorConfig> for SetCollector<T> {
     async fn collect(&mut self, t: &T) {
-        match self.set.insert(t.to_owned()) {
-            true => self.buffer.push(t.to_owned()),
-            false => (),
-        }
+        self.buffer.push(t.to_owned());
     }
 
-    async fn flush(&mut self) -> Vec<T> {
-        let buffer = self.buffer.to_owned();
+    async fn flush(&mut self) -> BTreeSet<T> {
+        let buffer_clone = self.buffer.to_owned();
         self.buffer.clear();
-        buffer
+        let set: BTreeSet<T> = buffer_clone.into_iter().collect();
+        set
     }
 
     fn get_flush_interval(&self) -> Interval {
@@ -61,7 +57,10 @@ mod tests {
         channel, collector, context::State, spawn_join, Collector, FromFile, OrderKey, Pipe,
         SetCollectorConfig,
     };
-    use std::cmp::Ordering;
+    use std::{
+        cmp::Ordering,
+        collections::{BTreeMap, BTreeSet},
+    };
     use tokio::sync::mpsc::{Receiver, Sender};
 
     #[derive(Clone, Debug, Eq, OrderKey)]
@@ -77,8 +76,8 @@ mod tests {
         }
     }
 
-    async fn receive_records(rx: &mut Receiver<Vec<Record>>) -> Vec<Record> {
-        let mut all_records: Vec<Record> = vec![];
+    async fn receive_records(rx: &mut Receiver<BTreeSet<Record>>) -> Vec<Record> {
+        let mut all_records: Vec<Record> = Vec::new();
         loop {
             match rx.recv().await {
                 Some(records) => all_records.extend(records),
@@ -90,7 +89,7 @@ mod tests {
     #[tokio::test]
     async fn test_set_collector() {
         let (tx0, rx0) = channel!(Record, 10);
-        let (tx1, mut rx1) = channel!(Vec<Record>, 10);
+        let (tx1, mut rx1) = channel!(BTreeSet<Record>, 10);
         let mut pipe = collector!(
             "bag",
             "resources/catalogs/set_collector.yml",

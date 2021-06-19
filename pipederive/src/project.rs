@@ -3,12 +3,11 @@ use quote::{quote, quote_spanned};
 use syn::{spanned::Spanned, Attribute, Data, Field, Fields, FieldsNamed, Generics, Type};
 
 use crate::constants::{
-    INPUT, INPUT_MODULE, INPUT_TYPE, PROJECT, PROJECT_ALIAS, PROJECT_ALIAS_DEFAULT, PROJECT_EXPR,
-    PROJECT_FROM,
+    PROJECT, PROJECT_ALIAS, PROJECT_ALIAS_DEFAULT, PROJECT_EXPR, PROJECT_FROM, PROJECT_INPUT,
 };
 use crate::utils::{
-    get_any_attribute_by_meta_prefix, get_meta_string_value_by_meta_path, resolve_field_path_ident,
-    resolve_type_ident,
+    get_any_attribute_by_meta_prefix, get_meta_string_value_by_meta_path, get_type_token,
+    resolve_field_path_token,
 };
 
 pub fn impl_project(
@@ -17,14 +16,14 @@ pub fn impl_project(
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
-    let ref input_attribute = get_any_attribute_by_meta_prefix(INPUT, attributes, true).unwrap();
-    let input_type_ident = resolve_type_ident(input_attribute, INPUT_MODULE, INPUT_TYPE);
+    let ref input_attribute = get_any_attribute_by_meta_prefix(PROJECT, attributes, true).unwrap();
+    let input_type_token = get_type_token(input_attribute, PROJECT_INPUT);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
-    let resolved_data = resolve_data(data, &input_type_ident);
+    let resolved_data = resolve_data(data, &input_type_token);
     let expanded = quote! {
       // Project trait
-      impl #impl_generics Project<#input_type_ident> for #ident #type_generics #where_clause {
-        fn project(from: &#input_type_ident) -> #ident {
+      impl #impl_generics Project<#input_type_token> for #ident #type_generics #where_clause {
+        fn project(from: &#input_type_token) -> #ident {
             #ident{#resolved_data}
         }
       }
@@ -32,21 +31,21 @@ pub fn impl_project(
     expanded
 }
 
-fn resolve_data(data: &Data, input_type_ident: &TokenStream) -> TokenStream {
+fn resolve_data(data: &Data, input_type_token: &TokenStream) -> TokenStream {
     match *data {
         Data::Struct(ref data) => match data.fields {
-            Fields::Named(ref fields) => resolve_fields_named(fields, input_type_ident),
+            Fields::Named(ref fields) => resolve_fields_named(fields, input_type_token),
             Fields::Unnamed(_) | Fields::Unit => unimplemented!(),
         },
         Data::Enum(_) | Data::Union(_) => unimplemented!(),
     }
 }
 
-fn resolve_fields_named(fields: &FieldsNamed, input_type_ident: &TokenStream) -> TokenStream {
+fn resolve_fields_named(fields: &FieldsNamed, input_type_token: &TokenStream) -> TokenStream {
     let resolved_fields = fields
         .named
         .iter()
-        .map(|f| resolve_field_named(f, input_type_ident));
+        .map(|f| resolve_field_named(f, input_type_token));
     quote! {
         #(#resolved_fields),*
     }
@@ -86,7 +85,7 @@ fn handle_field_project(
     field_ident: &Option<Ident>,
     field_path: &str,
 ) -> TokenStream {
-    let field_path_ident = resolve_field_path_ident(field_path);
+    let field_path_ident = resolve_field_path_token(field_path);
     quote_spanned! {field_span =>
          #field_ident: Project::project(&from.#field_path_ident)
     }
