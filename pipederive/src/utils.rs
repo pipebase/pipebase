@@ -1,4 +1,4 @@
-use proc_macro2::{Ident, Span};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{Attribute, Lit, Meta, MetaList, MetaNameValue, NestedMeta};
 use syn::{Data, Field, Fields, FieldsNamed};
@@ -179,28 +179,24 @@ pub fn get_meta_number_value_by_meta_path(
     None
 }
 
-pub fn resolve_type_ident(attribute: &Attribute, type_meta_path: &str) -> proc_macro2::TokenStream {
-    let type_path = get_meta_string_value_by_meta_path(type_meta_path, attribute, true).unwrap();
-    resolve_type_path_ident(type_path.as_str())
+pub fn get_type_token(attribute: &Attribute, type_meta_path: &str) -> TokenStream {
+    let type_literal = get_meta_string_value_by_meta_path(type_meta_path, attribute, true).unwrap();
+    resolve_type_token(&type_literal)
 }
 
-/// Resolve type path ident
-pub fn resolve_type_path_ident(type_path: &str) -> proc_macro2::TokenStream {
-    let field_idents = type_path.split("::").map(resolve_field_ident);
-    quote! {
-        #(#field_idents)::*
-    }
+pub fn resolve_type_token(type_literal: &str) -> proc_macro2::TokenStream {
+    type_literal.parse().unwrap()
 }
 
 /// Resolve dotted field ident
-pub fn resolve_field_path_ident(field_path: &str) -> proc_macro2::TokenStream {
-    let field_idents = field_path.split(".").map(resolve_field_ident);
+pub fn resolve_field_path_token(field_path: &str) -> TokenStream {
+    let field_idents = field_path.split(".").map(resolve_ident);
     quote! {
         #(#field_idents).*
     }
 }
 
-pub fn resolve_field_ident(field: &str) -> Ident {
+pub fn resolve_ident(field: &str) -> Ident {
     Ident::new(field, Span::call_site())
 }
 
