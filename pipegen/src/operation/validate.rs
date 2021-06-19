@@ -1,7 +1,6 @@
 use crate::api::DataField;
 use crate::api::EntityAccept;
 use crate::api::Object;
-use crate::error;
 use crate::error::Result;
 use crate::{
     api::{
@@ -11,6 +10,8 @@ use crate::{
     error::api_error,
 };
 use std::collections::{HashMap, HashSet};
+
+use super::utils::Graph;
 
 pub trait Validate<T> {
     fn validate(&mut self);
@@ -132,6 +133,7 @@ impl PipeDependencyValidator {
             }
             false => (),
         };
+        let mut visited_deps: HashSet<String> = HashSet::new();
         for dep in deps {
             match self.deps.contains_key(dep) {
                 true => (),
@@ -139,6 +141,10 @@ impl PipeDependencyValidator {
                     self.errors
                         .insert(location.to_owned(), format!("upstream does not exists"));
                 }
+            }
+            if !visited_deps.insert(dep.to_owned()) {
+                self.errors
+                    .insert(location.to_owned(), format!("duplicated upstream"));
             }
         }
     }
@@ -183,10 +189,7 @@ impl Validate<Pipe> for PipeDependencyValidator {
 #[derive(Default)]
 pub struct PipeGraphValidator {
     pub location: String,
-    pub graph: HashMap<String, Vec<String>>,
-    pub sources: Vec<String>,
-    pub in_edge_count: HashMap<String, usize>,
-    pub visited: HashMap<String, bool>,
+    pub graph: Graph,
     pub positions: HashMap<String, usize>,
     pub errors: HashMap<String, String>,
 }
@@ -195,19 +198,11 @@ impl VisitEntity<Pipe> for PipeGraphValidator {
     fn visit(&mut self, pipe: &Pipe) {
         let ref id = pipe.get_id();
         self.positions.insert(id.to_owned(), self.positions.len());
-        self.visited.insert(id.to_owned(), false);
+        self.graph.add_vertex_if_not_exists(id);
         let deps = pipe.list_dependency();
-        if deps.len() == 0 {
-            // it's source pipe - listener / poller
-            self.sources.push(id.to_owned());
-            return;
-        }
-        self.in_edge_count.insert(id.to_owned(), deps.len());
-        for upstream_id in deps.as_slice() {
-            if !self.graph.contains_key(upstream_id) {
-                self.graph.insert(upstream_id.to_owned(), vec![]);
-            }
-            self.graph.get_mut(upstream_id).unwrap().push(id.to_owned())
+        for dep in &deps {
+            self.graph.add_vertex_if_not_exists(dep);
+            self.graph.add_edge(dep, id);
         }
     }
 }
@@ -221,28 +216,10 @@ impl Validate<Pipe> for PipeGraphValidator {
     }
 
     fn validate(&mut self) {
-        // topology sort
-        while !self.sources.is_empty() {
-            let ref src = self.sources.pop().unwrap();
-            let old = self.visited.insert(src.to_owned(), true);
-            assert_eq!(false, old.unwrap());
-            let dsts = match self.graph.get(src) {
-                Some(dsts) => dsts,
-                None => continue, // sink (ex: exporter) pipe has no downstream
-            };
-            for dst in dsts {
-                let count = self.in_edge_count.get_mut(dst).unwrap();
-                *count -= 1;
-                if *count == 0 {
-                    self.sources.push(dst.to_owned())
-                }
-            }
-        }
-        for (id, visited) in &self.visited {
-            if !visited {
-                let location = format!("{}[{}]", self.location, self.positions.get(id).unwrap());
-                self.errors.insert(location, "cycle detected".to_owned());
-            }
+        let cycle_vertex = self.graph.find_cycle();
+        for id in &cycle_vertex {
+            let location = format!("{}[{}]", self.location, self.positions.get(id).unwrap());
+            self.errors.insert(location, "cycle detected".to_owned());
         }
     }
 
@@ -355,7 +332,10 @@ impl Validate<Object> for ObjectDependencyValidator {
                     let location = format!("{}[{}].fields[{}]", self.location, i, j);
                     self.errors
                         .insert(location, "object dependency not found".to_owned());
+                    j += 1;
+                    continue;
                 }
+                // other check ...
                 j += 1;
             }
         }
@@ -578,6 +558,14 @@ mod tests {
     #[test]
     fn test_non_exists_upstream_pipe() {
         let manifest_path = "resources/manifest/non_exists_upstream_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_duplicated_upstream_pipe() {
+        let manifest_path = "resources/manifest/duplicated_upstream_pipe.yml";
         let app = App::parse(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
