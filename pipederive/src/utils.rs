@@ -69,7 +69,6 @@ pub fn is_meta_with_prefix(prefix_path: &Vec<&str>, i: usize, meta: &Meta) -> bo
                 }
                 return false;
             }
-            _ => return false,
         }
     }
     if let Meta::List(ref meta_list) = meta {

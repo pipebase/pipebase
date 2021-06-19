@@ -26,6 +26,9 @@ pub trait Expr {
     fn as_mut(ident: &str) -> String {
         format!("mut {}", ident)
     }
+    fn to_owned(ident: &str) -> String {
+        format!("{}.to_owned()", ident)
+    }
 }
 
 #[derive(Default)]
@@ -36,23 +39,13 @@ pub struct ChannelExpr {
 
 impl VisitPipeMeta for ChannelExpr {
     fn visit(&mut self, meta: &PipeMeta) {
-        let upstream_meta = match meta.get_upstream_meta() {
-            Some(upstream_meta) => upstream_meta,
+        let channel_ty = match meta.get_upstream_output_meta() {
+            Some(upstream_output_meta) => upstream_output_meta,
             None => return,
         };
-        // if pipe has upstream, then upstream pipe must have output
-        let channel_ty = match upstream_meta.deref().borrow().get_output_meta() {
-            Some(parent_output_meta) => parent_output_meta,
-            None => panic!(
-                "upstream pipe {} for {} has no output",
-                upstream_meta.deref().borrow().get_name(),
-                meta.deref().borrow().get_name()
-            ),
-        };
-        let src_pipe_name = upstream_meta.deref().borrow().get_name();
-        let dst_pipe_name = meta.get_name();
-        let tx_name = Self::gen_sender_name(&src_pipe_name, &dst_pipe_name);
-        let rx_name = Self::gen_receiver_name(&src_pipe_name, &dst_pipe_name);
+        let pipe_name = meta.get_name();
+        let tx_name = Self::gen_sender_name(&pipe_name);
+        let rx_name = Self::gen_receiver_name(&pipe_name);
         self.lhs = Some(format!("({}, {})", tx_name, rx_name));
         self.rhs = Some(format!(
             "{}({}, {})",
@@ -71,12 +64,12 @@ impl Expr for ChannelExpr {
 }
 
 impl ChannelExpr {
-    pub fn gen_sender_name(src_pipe_name: &str, dst_pipe_name: &str) -> String {
-        format!("tx_{}_{}", src_pipe_name, dst_pipe_name)
+    pub fn gen_sender_name(pipe_name: &str) -> String {
+        format!("tx_{}", pipe_name)
     }
 
-    pub fn gen_receiver_name(src_pipe_name: &str, dst_pipe_name: &str) -> String {
-        format!("rx_{}_{}", src_pipe_name, dst_pipe_name)
+    pub fn gen_receiver_name(pipe_name: &str) -> String {
+        format!("rx_{}", pipe_name)
     }
 }
 
@@ -93,19 +86,11 @@ impl VisitPipeMeta for PipeExpr {
         let config_meta = meta.get_config_meta();
         let config_ty = config_meta.get_ty();
         let config_path = config_meta.get_path();
-        let upstream_pipe_meta = meta.get_upstream_meta();
-        let downstream_pipe_metas = meta.get_downstream_metas();
-        let mut downstream_pipe_names: Vec<String> = vec![];
-        for downstream_pipe_meta in downstream_pipe_metas {
-            let name = downstream_pipe_meta.deref().borrow().get_name();
-            downstream_pipe_names.push(name)
-        }
-        let senders_expr = Self::gen_senders_expr(&name, downstream_pipe_names);
-        let receiver_expr = match upstream_pipe_meta {
-            Some(upstream_pipe_meta) => {
-                let src = upstream_pipe_meta.deref().borrow().get_name();
-                Self::gen_recevier_expr(&src, &name)
-            }
+        let upstream_output_meta = meta.get_upstream_output_meta();
+        let downstream_pipe_names = meta.get_downstream_names();
+        let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
+        let receiver_expr = match upstream_output_meta {
+            Some(_) => Self::gen_recevier_expr(&name),
             None => "dummy".to_owned(),
         };
         let rhs = format!(
@@ -136,20 +121,16 @@ impl PipeExpr {
         format!("{}!", kind)
     }
 
-    fn gen_recevier_expr(src_pipe_name: &str, dst_pipe_name: &str) -> String {
-        ChannelExpr::gen_receiver_name(src_pipe_name, dst_pipe_name)
+    fn gen_recevier_expr(pipe_name: &str) -> String {
+        ChannelExpr::gen_receiver_name(pipe_name)
     }
 
-    fn gen_senders_expr(src_pipe_name: &str, dst_pipe_names: Vec<String>) -> String {
+    fn gen_senders_expr(pipe_names: Vec<String>) -> String {
         let mut sender_exprs: Vec<String> = vec![];
-        for dst_pipe_name in dst_pipe_names {
-            sender_exprs.push(Self::gen_sender_expr(src_pipe_name, &dst_pipe_name))
+        for pipe_name in pipe_names.as_slice() {
+            sender_exprs.push(ChannelExpr::gen_sender_name(pipe_name))
         }
         format!("[{}]", sender_exprs.join(", "))
-    }
-
-    fn gen_sender_expr(src_pipe_name: &str, dst_pipe_name: &str) -> String {
-        ChannelExpr::gen_sender_name(src_pipe_name, dst_pipe_name)
     }
 }
 
