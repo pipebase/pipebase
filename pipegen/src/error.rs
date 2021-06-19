@@ -1,7 +1,8 @@
+use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
 use std::{error, result};
 
-/// An error that happened when run the pipe
+/// An error that happened when generate the pipe
 pub struct Error(Box<ErrorImpl>);
 
 pub type Result<T> = result::Result<T, Error>;
@@ -25,48 +26,49 @@ impl Debug for Error {
 }
 #[derive(Debug)]
 pub enum ErrorImpl {
-    SelectRange(String),
+    Api(String),
     IO(std::io::Error),
-    Join(tokio::task::JoinError),
+    Yaml(serde_yaml::Error),
 }
 
 impl ErrorImpl {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             ErrorImpl::IO(err) => Some(err),
-            ErrorImpl::Join(err) => Some(err),
+            ErrorImpl::Yaml(err) => Some(err),
             _ => None,
         }
     }
 
     fn display(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ErrorImpl::SelectRange(msg) => Display::fmt(msg, f),
+            ErrorImpl::Api(msg) => Display::fmt(msg, f),
             ErrorImpl::IO(err) => Display::fmt(err, f),
-            ErrorImpl::Join(err) => Display::fmt(err, f),
+            ErrorImpl::Yaml(err) => Display::fmt(err, f),
         }
     }
 
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ErrorImpl::SelectRange(msg) => f.debug_tuple("SelectRange").field(msg).finish(),
+            ErrorImpl::Api(msg) => f.debug_tuple("Api").field(msg).finish(),
             ErrorImpl::IO(err) => f.debug_tuple("Io").field(err).finish(),
-            ErrorImpl::Join(err) => f.debug_tuple("Join").field(err).finish(),
+            ErrorImpl::Yaml(err) => f.debug_tuple("Yaml").field(err).finish(),
         }
     }
 }
 
-pub fn select_range_error(msg: &str) -> Error {
-    Error(Box::new(ErrorImpl::SelectRange(format!(
-        "[Select Range Error] {}",
-        msg
-    ))))
+pub fn api_error(errors: HashMap<String, String>) -> Error {
+    let mut buffer: Vec<String> = vec![];
+    for (location, detail) in errors {
+        buffer.push(format!("{} at {}", detail, location))
+    }
+    Error(Box::new(ErrorImpl::Api(format!("{}", buffer.join(",\n")))))
 }
 
 pub fn io_error(err: std::io::Error) -> Error {
     Error(Box::new(ErrorImpl::IO(err)))
 }
 
-pub fn join_error(err: tokio::task::JoinError) -> Error {
-    Error(Box::new(ErrorImpl::Join(err)))
+pub fn yaml_error(err: serde_yaml::Error) -> Error {
+    Error(Box::new(ErrorImpl::Yaml(err)))
 }

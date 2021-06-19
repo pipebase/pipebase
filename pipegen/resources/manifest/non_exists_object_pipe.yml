@@ -1,0 +1,15 @@
+name: non_exists_object_pipe
+pipes: []
+objects:
+  - ty: Foo
+    fields: []
+  - ty: Bar
+    fields: 
+      - name: foo
+        data_ty:
+          Object:
+            ty: Foo # reference to Foo at position 0
+      - name: buz
+        data_ty:
+          Object:
+            ty: Buz # non-exists

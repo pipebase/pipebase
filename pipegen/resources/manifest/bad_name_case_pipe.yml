@@ -1,0 +1,6 @@
+name: bad_pipe_name
+pipes:
+  - name: BadpipeName
+    kind: Poller
+    config:
+      ty: SomeConfig

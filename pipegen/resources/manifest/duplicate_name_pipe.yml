@@ -1,0 +1,20 @@
+name: duplicate_name_pipe
+pipes:
+  - name: a_source
+    kind: Poller
+    config:
+      ty: PollerConfig
+    output:
+      data_ty: Integer
+  - name: process_a
+    kind: Mapper
+    upstream: a_source
+    config:
+      ty: MapperConfig
+    output:
+      data_ty: Integer
+  - name: process_a
+    kind: Collector
+    upstream: a_source
+    config:
+      ty: CollectorConfig

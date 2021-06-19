@@ -1,0 +1,32 @@
+name: project_record
+pipes:
+  - name: record_source
+    kind: Listener
+    config:
+      ty: ServerConfig
+  - name: project_record
+    kind: Mapper
+    config:
+      ty: ProjectionConfig
+    upstreams: [ "record_source" ]
+    output:
+      data_ty: 
+        Object:
+          ty: Record
+objects:
+  - ty: Record
+    traits: ["Project", "Clone"]
+    metas:
+      - List:
+          name: project
+          metas:
+            - Value:
+                name: input
+                meta:
+                  Str:
+                    value: Record 
+    fields:
+      - name: key
+        data_ty: String
+      - name: value
+        data_ty: Integer

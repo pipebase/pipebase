@@ -1,0 +1,5 @@
+name: bad_object_ty_case_pipe
+pipes: []
+objects:
+  - ty: an_object
+    fields: []

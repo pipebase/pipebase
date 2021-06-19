@@ -1,0 +1,6 @@
+name: unnamed_data_field
+pipes: []
+objects:
+  - ty: Foo
+    fields:
+      - data_ty: Integer
