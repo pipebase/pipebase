@@ -1,4 +1,5 @@
 use crate::api::DataField;
+use crate::api::EntityAccept;
 use crate::api::Object;
 use crate::error;
 use crate::error::Result;
@@ -67,7 +68,7 @@ impl Validate<Pipe> for PipeIdValidator {
             errors: HashMap::new(),
         };
         for pipe in pipes {
-            validator.visit(pipe)
+            pipe.accept(&mut validator);
         }
         validator.validate();
         match validator.get_errors() {
@@ -169,7 +170,7 @@ impl Validate<Pipe> for PipeDependencyValidator {
             ..Default::default()
         };
         for pipe in pipes {
-            validator.visit(pipe);
+            pipe.accept(&mut validator);
         }
         validator.validate();
         match validator.get_errors() {
@@ -251,7 +252,7 @@ impl Validate<Pipe> for PipeGraphValidator {
             ..Default::default()
         };
         for pipe in pipes {
-            validator.visit(pipe)
+            pipe.accept(&mut validator);
         }
         validator.validate();
         match validator.get_errors() {
@@ -310,7 +311,7 @@ impl Validate<Object> for ObjectIdValidator {
             ..Default::default()
         };
         for object in objects {
-            validator.visit(object)
+            object.accept(&mut validator);
         }
         validator.validate();
         match validator.get_errors() {
@@ -366,7 +367,7 @@ impl Validate<Object> for ObjectDependencyValidator {
             ..Default::default()
         };
         for object in objects {
-            validator.visit(object)
+            object.accept(&mut validator);
         }
         validator.validate();
         match validator.get_errors() {
@@ -434,7 +435,7 @@ impl Validate<DataField> for DataFieldValidator {
             ..Default::default()
         };
         for field in fields {
-            validator.visit(field)
+            field.accept(&mut validator);
         }
         validator.validate();
         match validator.get_errors() {
