@@ -3,8 +3,7 @@ use quote::{quote, quote_spanned};
 use syn::{spanned::Spanned, Attribute, Data, Field, Fields, FieldsNamed, Generics, Type};
 
 use crate::constants::{
-    INPUT, INPUT_MODULE, INPUT_TYPE, PROJECT, PROJECT_ALIAS, PROJECT_ALIAS_DEFAULT, PROJECT_EXPR,
-    PROJECT_FROM,
+    PROJECT, PROJECT_ALIAS, PROJECT_ALIAS_DEFAULT, PROJECT_EXPR, PROJECT_FROM, PROJECT_INPUT,
 };
 use crate::utils::{
     get_any_attribute_by_meta_prefix, get_meta_string_value_by_meta_path, resolve_field_path_ident,
@@ -17,8 +16,8 @@ pub fn impl_project(
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
-    let ref input_attribute = get_any_attribute_by_meta_prefix(INPUT, attributes, true).unwrap();
-    let input_type_ident = resolve_type_ident(input_attribute, INPUT_MODULE, INPUT_TYPE);
+    let ref input_attribute = get_any_attribute_by_meta_prefix(PROJECT, attributes, true).unwrap();
+    let input_type_ident = resolve_type_ident(input_attribute, PROJECT_INPUT);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     let resolved_data = resolve_data(data, &input_type_ident);
     let expanded = quote! {

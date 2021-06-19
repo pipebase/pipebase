@@ -180,24 +180,9 @@ pub fn get_meta_number_value_by_meta_path(
     None
 }
 
-pub fn resolve_type_ident(
-    attribute: &Attribute,
-    module_meta_path: &str,
-    type_meta_path: &str,
-) -> proc_macro2::TokenStream {
-    let type_path = resolve_type_path(attribute, module_meta_path, type_meta_path);
+pub fn resolve_type_ident(attribute: &Attribute, type_meta_path: &str) -> proc_macro2::TokenStream {
+    let type_path = get_meta_string_value_by_meta_path(type_meta_path, attribute, true).unwrap();
     resolve_type_path_ident(type_path.as_str())
-}
-
-pub fn resolve_type_path(
-    attribute: &Attribute,
-    module_meta_path: &str,
-    type_meta_path: &str,
-) -> String {
-    let module = get_meta_string_value_by_meta_path(module_meta_path, attribute, true).unwrap();
-    let ty = get_meta_string_value_by_meta_path(type_meta_path, attribute, true).unwrap();
-    let type_path = format!("{}::{}", module, ty);
-    type_path
 }
 
 /// Resolve type path ident

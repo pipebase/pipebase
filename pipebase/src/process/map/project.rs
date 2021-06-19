@@ -102,7 +102,7 @@ mod tests {
     }
 
     #[derive(Clone, Debug, Project)]
-    #[input(module = "self", ty = "Record")]
+    #[project(input = "self::Record")]
     struct ReversedRecord {
         #[project(from = "r1")]
         pub r0: i32,
@@ -119,7 +119,7 @@ mod tests {
     }
 
     #[derive(Debug, Project)]
-    #[input(module = "self", ty = "Record")]
+    #[project(input = "Record")]
     struct RecordSumPlusOne {
         #[project(alias = "r", expr = "let mut s = r.r0 + r.r1; s + 1")]
         pub s: i32,

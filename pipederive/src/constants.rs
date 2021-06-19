@@ -1,8 +1,5 @@
-pub const INPUT: &str = "input";
-pub const INPUT_MODULE: &str = "input.module";
-pub const INPUT_TYPE: &str = "input.ty";
-
 pub const PROJECT: &str = "project";
+pub const PROJECT_INPUT: &str = "project.input";
 pub const PROJECT_FROM: &str = "project.from";
 pub const PROJECT_EXPR: &str = "project.expr";
 pub const PROJECT_ALIAS: &str = "project.alias";
