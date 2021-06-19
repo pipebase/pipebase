@@ -43,14 +43,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_printer() {
-        let (tx, rx) = channel!(TimeListenerTick, 10);
-        let mut listener = listener!(
-            "timer",
-            "resources/catalogs/timer.yml",
-            TimeListenerConfig,
-            [tx]
-        );
+        let (tx, rx) = channel!(u128, 10);
+        let mut timer = poller!("timer", "resources/catalogs/timer.yml", TimerConfig, [tx]);
         let mut printer = exporter!("printer", "", PrinterConfig, rx, []);
-        spawn_join!(listener, printer);
+        spawn_join!(timer, printer);
     }
 }
