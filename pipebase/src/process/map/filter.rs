@@ -1,3 +1,5 @@
+use std::iter::{FromIterator, IntoIterator};
+
 use crate::{ConfigInto, FromConfig, FromFile};
 
 use super::Map;
@@ -32,15 +34,18 @@ impl FromConfig<FilterMapConfig> for FilterMap {
 }
 
 #[async_trait]
-impl<T: Filter + Clone + Sync> Map<Vec<T>, Vec<T>, FilterMapConfig> for FilterMap {
-    async fn map(
-        &mut self,
-        data: &Vec<T>,
-    ) -> std::result::Result<Vec<T>, Box<dyn std::error::Error>> {
+impl<
+        T: Filter + Clone + Sync,
+        U: IntoIterator<Item = T> + Sync + Clone,
+        V: FromIterator<T> + Send,
+    > Map<U, V, FilterMapConfig> for FilterMap
+{
+    async fn map(&mut self, data: &U) -> std::result::Result<V, Box<dyn std::error::Error>> {
         Ok(data
-            .iter()
-            .filter_map(|item| T::filter(item))
-            .collect::<Vec<T>>())
+            .to_owned()
+            .into_iter()
+            .filter_map(|item| T::filter(&item))
+            .collect::<V>())
     }
 }
 
