@@ -128,7 +128,8 @@ impl PipeExpr {
     fn gen_senders_expr(pipe_names: Vec<String>) -> String {
         let mut sender_exprs: Vec<String> = vec![];
         for pipe_name in pipe_names.as_slice() {
-            sender_exprs.push(ChannelExpr::gen_sender_name(pipe_name))
+            let sender_exp = ChannelExpr::gen_sender_name(pipe_name);
+            sender_exprs.push(Self::to_owned(&sender_exp))
         }
         format!("[{}]", sender_exprs.join(", "))
     }

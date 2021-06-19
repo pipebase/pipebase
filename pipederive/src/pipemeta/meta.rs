@@ -83,7 +83,12 @@ impl PipeMeta {
         // upstream pipes should have identical output meta
         match self.upstream_output_meta {
             Some(ref local_upstream_output_meta) => {
-                assert!(local_upstream_output_meta.eq(&upstream_output_meta))
+                if !local_upstream_output_meta.eq(&upstream_output_meta) {
+                    panic!(
+                        "upstream output conflict, found {} != {}",
+                        local_upstream_output_meta, upstream_output_meta
+                    )
+                }
             }
             None => self.upstream_output_meta = Some(upstream_output_meta),
         }
@@ -119,10 +124,15 @@ impl PipeMeta {
 
     fn parse_upstream_names(attribute: &Attribute) -> Vec<String> {
         match get_meta_string_value_by_meta_path(PIPE_UPSTREAM, attribute, false) {
-            Some(upstream_names) => upstream_names
-                .split(PIPE_UPSTREAM_NAME_SEP)
-                .map(|n| n.to_owned())
-                .collect(),
+            Some(mut upstream_names) => {
+                // clean whitespace
+                upstream_names.retain(|c| !c.is_whitespace());
+                // split into vector of upstreams
+                upstream_names
+                    .split(PIPE_UPSTREAM_NAME_SEP)
+                    .map(|n| n.to_owned())
+                    .collect()
+            }
             None => vec![],
         }
     }
@@ -161,7 +171,10 @@ impl PipeMetas {
             let upstream_names = pipe_meta.to_owned().deref().borrow().get_upstream_names();
             for upstream_name in upstream_names.as_slice() {
                 // upstream pipe register downstream pipe name
-                let upstream_pipe_meta = pipe_metas.get(upstream_name).unwrap().to_owned();
+                let upstream_pipe_meta = match pipe_metas.get(upstream_name) {
+                    Some(upstream_pipe_meta) => upstream_pipe_meta.to_owned(),
+                    None => panic!("upstream {} not found", upstream_name),
+                };
                 upstream_pipe_meta
                     .deref()
                     .borrow_mut()
