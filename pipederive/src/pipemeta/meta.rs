@@ -1,11 +1,10 @@
 use super::Expr;
 use super::VisitPipeMeta;
 
-use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Deref;
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 use syn::Attribute;
 
 use crate::constants::PIPE_UPSTREAM_NAME_SEP;
@@ -124,13 +123,16 @@ impl PipeMeta {
 
     fn parse_upstream_names(attribute: &Attribute) -> Vec<String> {
         match get_meta_string_value_by_meta_path(PIPE_UPSTREAM, attribute, false) {
-            Some(mut upstream_names) => {
-                // clean whitespace
-                upstream_names.retain(|c| !c.is_whitespace());
+            Some(upstream_names) => {
                 // split into vector of upstreams
                 upstream_names
                     .split(PIPE_UPSTREAM_NAME_SEP)
-                    .map(|n| n.to_owned())
+                    .map(|n| {
+                        let mut n = n.to_owned();
+                        // clean whitespace after split
+                        n.retain(|c| !c.is_whitespace());
+                        n
+                    })
                     .collect()
             }
             None => vec![],

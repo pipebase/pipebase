@@ -1,8 +1,5 @@
 use super::meta::PipeMeta;
 use crate::constants::{CHANNEL_MACRO, PIPE_CHANNEL_DEFAULT_BUFFER, SPAWN_JOIN_MACRO};
-use core::panic;
-use std::borrow::Borrow;
-use std::ops::Deref;
 
 pub trait VisitPipeMeta: Default {
     fn visit(&mut self, meta: &PipeMeta);
