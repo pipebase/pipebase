@@ -8,7 +8,7 @@ pipes:
     kind: Mapper
     config:
       ty: ProjectionConfig
-    upstream: record_source
+    upstreams: [ "record_source" ]
     output:
       data_ty: 
         Object:
@@ -17,11 +17,14 @@ objects:
   - ty: Record
     traits: ["Project", "Clone"]
     metas:
-      - Value:
-          name: input
-          meta:
-            Str:
-              value: Record 
+      - List:
+          name: project
+          metas:
+            - Value:
+                name: input
+                meta:
+                  Str:
+                    value: Record 
     fields:
       - name: key
         data_ty: String

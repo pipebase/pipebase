@@ -8,7 +8,7 @@ pipes:
       data_ty: Integer
   - name: source_has_upstream
     kind: Poller
-    upstream: source_has_no_upstream
+    upstreams: [ "source_has_no_upstream" ]
     config:
       ty: PollerConfig
     output:

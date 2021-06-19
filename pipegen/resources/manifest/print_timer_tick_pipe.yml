@@ -1,14 +1,21 @@
 name: print_timer_tick
 pipes:
-  - name: timer
+  - name: timer1
     kind: Poller
     config:
       ty: TimerConfig
-      path: resource/catalogs/timer_config.yml
+      path: resource/catalogs/timer.yml
+    output:
+      data_ty: UnsignedLongLong
+  - name: timer2
+    kind: Poller
+    config:
+      ty: TimerConfig
+      path: resource/catalogs/timer.yml
     output:
       data_ty: UnsignedLongLong
   - name: printer
     kind: Exporter
     config:
       ty: PrinterConfig
-    upstream: timer
+    upstreams: [ "timer1", "timer2" ]

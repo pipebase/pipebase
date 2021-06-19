@@ -8,21 +8,21 @@ pipes:
       data_ty: Integer
   - name: mapper_a
     kind: Mapper
-    upstream: mapper_c
+    upstreams: [ "mapper_c" ]
     config:
       ty: MapperConfig
     output:
       data_ty: Integer
   - name: mapper_b
     kind: Mapper
-    upstream: mapper_a
+    upstreams: [ "mapper_a" ]
     config:
       ty: MapperConfig
     output:
       data_ty: Integer
   - name: mapper_c
     kind: Mapper
-    upstream: mapper_b
+    upstreams: [ "mapper_b" ]
     config:
       ty: MapperConfig
     output:

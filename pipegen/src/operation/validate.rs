@@ -181,11 +181,10 @@ impl Validate<Pipe> for PipeDependencyValidator {
 
 #[derive(Default)]
 pub struct PipeGraphValidator {
-    // all pipe has at most one upstream pipe
-    // in-edge count <= 1
     pub location: String,
     pub graph: HashMap<String, Vec<String>>,
     pub sources: Vec<String>,
+    pub in_edge_count: HashMap<String, usize>,
     pub visited: HashMap<String, bool>,
     pub positions: HashMap<String, usize>,
     pub errors: HashMap<String, String>,
@@ -199,10 +198,10 @@ impl VisitEntity<Pipe> for PipeGraphValidator {
         let deps = pipe.list_dependency();
         if deps.len() == 0 {
             // it's source pipe - listener / poller
-            self.graph.insert(id.to_owned(), vec![]);
             self.sources.push(id.to_owned());
             return;
         }
+        self.in_edge_count.insert(id.to_owned(), deps.len());
         for upstream_id in deps.as_slice() {
             if !self.graph.contains_key(upstream_id) {
                 self.graph.insert(upstream_id.to_owned(), vec![]);
@@ -231,8 +230,11 @@ impl Validate<Pipe> for PipeGraphValidator {
                 None => continue, // sink (ex: exporter) pipe has no downstream
             };
             for dst in dsts {
-                // all pipe has at most one in edge
-                self.sources.push(dst.to_owned())
+                let count = self.in_edge_count.get_mut(dst).unwrap();
+                *count -= 1;
+                if *count == 0 {
+                    self.sources.push(dst.to_owned())
+                }
             }
         }
         for (id, visited) in &self.visited {
@@ -491,10 +493,19 @@ fn is_snake_lower_case(s: &str) -> bool {
 fn is_snake_case(s: &str, uppercase: bool) -> bool {
     // no leading underscore
     let mut underscore = true;
+    let mut initial_char = true;
     for c in s.chars() {
-        if c.is_ascii_uppercase() != uppercase {
-            // non uniform upper or lower case
+        if initial_char && !c.is_ascii() {
             return false;
+        }
+        initial_char = false;
+        if c.is_numeric() {
+            underscore = false;
+            continue;
+        }
+        if c.is_ascii() && c.is_ascii_uppercase() == uppercase {
+            underscore = false;
+            continue;
         }
         if c == '_' {
             if underscore {
@@ -504,17 +515,21 @@ fn is_snake_case(s: &str, uppercase: bool) -> bool {
             underscore = true;
             continue;
         }
-        underscore = false
+        return false;
     }
     true
 }
 
 fn is_camel_case(s: &str) -> bool {
     let mut uppercase = false;
-    let mut i: usize = 0;
+    let mut initial_char = true;
     for c in s.chars() {
-        if i == 0 && !c.is_ascii_uppercase() {
+        if initial_char && !c.is_ascii_uppercase() {
             // initial uppercase
+            return false;
+        }
+        initial_char = false;
+        if !(c.is_ascii() || c.is_numeric()) {
             return false;
         }
         if c.is_ascii_uppercase() {
@@ -523,11 +538,9 @@ fn is_camel_case(s: &str) -> bool {
                 return false;
             }
             uppercase = true;
-            i += 1;
             continue;
         }
         uppercase = false;
-        i += 1;
     }
     true
 }

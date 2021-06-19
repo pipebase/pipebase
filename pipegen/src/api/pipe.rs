@@ -1,9 +1,9 @@
 use crate::api::utils::indent_literal;
-use crate::api::{DataType, Entity, EntityAccept, VisitEntity};
+use crate::api::{Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
 use strum::{Display, EnumString};
 
-use super::data::{DataField, Object};
+use super::data::DataField;
 
 #[derive(Clone, Display, EnumString, PartialEq, Debug, Deserialize)]
 pub enum PipeKind {
@@ -41,8 +41,8 @@ pub struct Pipe {
     pub name: String,
     pub kind: PipeKind,
     pub config: PipeConfig,
-    // upstream pipe name
-    pub upstream: Option<String>,
+    // upstream pipe names
+    pub upstreams: Option<Vec<String>>,
     // output data type
     pub output: Option<DataField>,
 }
@@ -82,15 +82,20 @@ impl Pipe {
     }
 
     pub fn get_upstream_meta_literal(&self, indent: usize) -> Option<String> {
-        match self.upstream {
-            Some(ref upstream_pipe_name) => {
+        let upstreams = match self.upstreams {
+            Some(ref upstreams) => upstreams,
+            None => return None,
+        };
+        match upstreams.is_empty() {
+            false => {
                 let indent_lit = indent_literal(indent);
                 Some(format!(
                     r#"{}upstream = "{}""#,
-                    indent_lit, upstream_pipe_name
+                    indent_lit,
+                    upstreams.join(", ")
                 ))
             }
-            None => None,
+            true => None,
         }
     }
 
@@ -113,8 +118,8 @@ impl Entity for Pipe {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        match self.upstream.to_owned() {
-            Some(pipe_name) => vec![pipe_name],
+        match self.upstreams {
+            Some(ref upstreams) => upstreams.to_owned(),
             None => vec![],
         }
     }

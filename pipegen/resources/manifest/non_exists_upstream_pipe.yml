@@ -8,7 +8,7 @@ pipes:
       data_ty: Integer
   - name: mapper_a
     kind: Mapper
-    upstream: non_exists
+    upstreams: [ "non_exists" ]
     config:
       ty: MapperConfig
     output:
