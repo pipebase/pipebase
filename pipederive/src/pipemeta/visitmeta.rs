@@ -41,7 +41,7 @@ impl VisitPipeMeta for ChannelExpr {
             None => return,
         };
         // if pipe has upstream, then upstream pipe must have output
-        let upstream_output_meta = match upstream_meta.deref().borrow().get_output_meta() {
+        let channel_ty = match upstream_meta.deref().borrow().get_output_meta() {
             Some(parent_output_meta) => parent_output_meta,
             None => panic!(
                 "upstream pipe {} for {} has no output",
@@ -49,7 +49,6 @@ impl VisitPipeMeta for ChannelExpr {
                 meta.deref().borrow().get_name()
             ),
         };
-        let channel_ty = upstream_output_meta.get_path();
         let src_pipe_name = upstream_meta.deref().borrow().get_name();
         let dst_pipe_name = meta.get_name();
         let tx_name = Self::gen_sender_name(&src_pipe_name, &dst_pipe_name);

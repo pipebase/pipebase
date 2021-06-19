@@ -26,7 +26,7 @@ mod tests {
         name = "timer",
         kind = "listener",
         config(ty = "TimeListenerConfig", path = "resources/catalogs/timer.yml"),
-        output(ty = "TimeListenerTick")
+        output = "TimeListenerTick"
     )]
     #[pipe(
         name = "printer",

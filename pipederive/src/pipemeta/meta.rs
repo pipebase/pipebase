@@ -9,8 +9,8 @@ use std::rc::{Rc, Weak};
 use syn::Attribute;
 
 use crate::constants::{
-    PIPE_CONFIG_EMPTY_PATH, PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_KIND, PIPE_NAME,
-    PIPE_OUTPUT_MODULE, PIPE_OUTPUT_TYPE, PIPE_UPSTREAM,
+    PIPE_CONFIG_EMPTY_PATH, PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_KIND, PIPE_NAME, PIPE_OUTPUT,
+    PIPE_UPSTREAM,
 };
 use crate::utils::get_meta_string_value_by_meta_path;
 
@@ -34,34 +34,12 @@ impl PipeConfigMeta {
     }
 }
 
-#[derive(Clone)]
-pub struct PipeOutputMeta {
-    pub module: Option<String>,
-    pub ty: String,
-}
-
-impl PipeOutputMeta {
-    pub fn get_module(&self) -> Option<String> {
-        self.module.to_owned()
-    }
-    pub fn get_ty(&self) -> String {
-        self.ty.to_owned()
-    }
-    pub fn get_path(&self) -> String {
-        let module = match self.get_module() {
-            Some(module) => module,
-            None => return self.get_ty(),
-        };
-        format!("{}::{}", module, self.get_ty())
-    }
-}
-
 /// Pipe metadata
 pub struct PipeMeta {
     pub name: String,
     pub kind: String,
     pub config_meta: PipeConfigMeta,
-    pub output_meta: Option<PipeOutputMeta>,
+    pub output_meta: Option<String>,
     pub upstream_name: Option<String>,
     pub upstream_meta: Weak<RefCell<PipeMeta>>,
     pub downstream_metas: Vec<Rc<RefCell<PipeMeta>>>,
@@ -84,7 +62,7 @@ impl PipeMeta {
         self.config_meta.to_owned()
     }
 
-    pub fn get_output_meta(&self) -> Option<PipeOutputMeta> {
+    pub fn get_output_meta(&self) -> Option<String> {
         self.output_meta.to_owned()
     }
 
@@ -138,16 +116,11 @@ impl PipeMeta {
         PipeConfigMeta { ty: ty, path: path }
     }
 
-    fn parse_output_meta(attribute: &Attribute) -> Option<PipeOutputMeta> {
-        let ty = match get_meta_string_value_by_meta_path(PIPE_OUTPUT_TYPE, attribute, false) {
-            Some(ty) => ty,
-            None => return None,
-        };
-        let module = get_meta_string_value_by_meta_path(PIPE_OUTPUT_MODULE, attribute, false);
-        Some(PipeOutputMeta {
-            ty: ty,
-            module: module,
-        })
+    fn parse_output_meta(attribute: &Attribute) -> Option<String> {
+        match get_meta_string_value_by_meta_path(PIPE_OUTPUT, attribute, false) {
+            Some(ty) => Some(ty),
+            None => None,
+        }
     }
 }
 

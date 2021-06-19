@@ -22,8 +22,7 @@ pub const PIPE_UPSTREAM: &str = "pipe.upstream";
 pub const PIPE_CONFIG_TYPE: &str = "pipe.config.ty";
 pub const PIPE_CONFIG_PATH: &str = "pipe.config.path";
 pub const PIPE_CONFIG_EMPTY_PATH: &str = "";
-pub const PIPE_OUTPUT_MODULE: &str = "pipe.output.module";
-pub const PIPE_OUTPUT_TYPE: &str = "pipe.output.ty";
+pub const PIPE_OUTPUT: &str = "pipe.output";
 pub const PIPE_CHANNEL_DEFAULT_BUFFER: usize = 1024;
 
 pub const CHANNEL_MACRO: &str = "channel!";
