@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::api::utils::indent_literal;
 use crate::api::{Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
@@ -144,6 +146,12 @@ impl Entity for Pipe {
             "{}#[pipe(\n{}\n{})]",
             indent_lit, meta_lits_join, indent_lit
         )
+    }
+}
+
+impl Display for Pipe {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "name: {}, ty: {}", self.name, self.ty)
     }
 }
 
