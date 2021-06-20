@@ -7,9 +7,7 @@ objects:
     fields: 
       - name: foo
         data_ty:
-          Object:
-            ty: Foo # reference to Foo at position 0
+          Object: Foo # refer objects[0] 
       - name: buz
         data_ty:
-          Object:
-            ty: Buz # non-exists
+          Object: Buz # non-exists

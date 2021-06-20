@@ -9,8 +9,7 @@ pipes:
       data_ty:
         Vec:
           data_ty: 
-            Object:
-              ty: Record
+            Object: Record
 objects:
   - ty: Record
     fields:

@@ -11,8 +11,7 @@ pipes:
     upstreams: [ "record_source" ]
     output:
       data_ty: 
-        Object:
-          ty: Record
+        Object: Record
 objects:
   - ty: Record
     metas:
