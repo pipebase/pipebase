@@ -39,10 +39,23 @@ impl App {
         println!("{}", self.generate())
     }
 
-    fn generate_lits<T, G: Generate<T>>(items: &Vec<T>, indent: usize, join_sep: &str) -> String {
+    fn generate_entity<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
+        entity: &T,
+        indent: usize,
+    ) -> Option<String> {
+        let mut generator = G::new(indent);
+        entity.accept(&mut generator);
+        generator.generate()
+    }
+
+    fn generate_entities<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
+        entities: &Vec<T>,
+        indent: usize,
+        join_sep: &str,
+    ) -> String {
         let mut lits: Vec<String> = vec![];
-        for item in items.as_slice() {
-            match G::do_generate(item, indent) {
+        for entity in entities.as_slice() {
+            match Self::generate_entity(entity, indent) {
                 Some(lit) => lits.push(lit),
                 None => continue,
             }
@@ -55,7 +68,8 @@ impl App {
             Some(ref objects) => objects,
             None => return None,
         };
-        let objects_lit = Self::generate_lits::<Object, ObjectGenerator>(objects, indent, "\n\n");
+        let objects_lit =
+            Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n");
         Some(objects_lit)
     }
 
@@ -65,7 +79,7 @@ impl App {
             Some(objects_lit) => sections.push(objects_lit),
             None => (),
         };
-        sections.push(Self::generate_lits::<Pipe, PipeGenerator>(
+        sections.push(Self::generate_entities::<Pipe, PipeGenerator>(
             &(self.pipes),
             1,
             "\n",

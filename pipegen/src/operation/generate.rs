@@ -1,7 +1,7 @@
-use crate::api::{Entity, EntityAccept, Object, Pipe, VisitEntity};
+use crate::api::{Entity, Object, Pipe, VisitEntity};
 pub trait Generate<T> {
+    fn new(indent: usize) -> Self;
     fn generate(&self) -> Option<String>;
-    fn do_generate(t: &T, indent: usize) -> Option<String>;
 }
 
 pub struct PipeGenerator {
@@ -16,21 +16,19 @@ impl VisitEntity<Pipe> for PipeGenerator {
 }
 
 impl Generate<Pipe> for PipeGenerator {
+    fn new(indent: usize) -> Self {
+        PipeGenerator {
+            indent: indent,
+            pipe: None,
+        }
+    }
+
     fn generate(&self) -> Option<String> {
         let pipe = match self.pipe.to_owned() {
             Some(p) => p,
             None => return None,
         };
         Some(pipe.to_literal(self.indent))
-    }
-
-    fn do_generate(pipe: &Pipe, indent: usize) -> Option<String> {
-        let mut pipe_generator = PipeGenerator {
-            indent: indent,
-            pipe: None,
-        };
-        pipe.accept(&mut pipe_generator);
-        pipe_generator.generate()
     }
 }
 
@@ -46,21 +44,19 @@ impl VisitEntity<Object> for ObjectGenerator {
 }
 
 impl Generate<Object> for ObjectGenerator {
+    fn new(indent: usize) -> Self {
+        ObjectGenerator {
+            indent: indent,
+            object: None,
+        }
+    }
+
     fn generate(&self) -> Option<String> {
         let object = match self.object.to_owned() {
             Some(o) => o,
             None => return None,
         };
         Some(object.to_literal(self.indent))
-    }
-
-    fn do_generate(object: &Object, indent: usize) -> Option<String> {
-        let mut generator = ObjectGenerator {
-            indent: indent,
-            object: None,
-        };
-        object.accept(&mut generator);
-        generator.generate()
     }
 }
 
