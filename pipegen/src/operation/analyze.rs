@@ -1,10 +1,10 @@
 use crate::{
-    api::{Entity, EntityAccept, Pipe, VisitEntity},
+    api::{Entity, Pipe, VisitEntity},
     operation::utils::Graph,
 };
-use std::{collections::HashMap, hash::Hash};
+use std::collections::HashMap;
 pub trait Analyze<T> {
-    fn do_analyze(items: &Vec<T>) -> String;
+    fn new() -> Self;
     fn analyze(&mut self);
     fn get_result(&self) -> String;
 }
@@ -31,31 +31,26 @@ impl VisitEntity<Pipe> for PipeGraphAnalyzer {
 }
 
 impl Analyze<Pipe> for PipeGraphAnalyzer {
+    fn new() -> Self {
+        PipeGraphAnalyzer {
+            graph: Graph::new(),
+            order_vec: Vec::new(),
+            order_map: HashMap::new(),
+            results: Vec::new(),
+        }
+    }
+
     fn get_result(&self) -> String {
         self.results.join("")
     }
 
     fn analyze(&mut self) {
         self.results.clear();
-        self.analyze_source_sink_vertices();
+        self.collect_source_sink_vertices();
         self.analyze_section_sep();
-        self.analyze_components();
+        self.collect_components();
         self.analyze_section_sep();
-        self.append_all_vertices();
-    }
-
-    fn do_analyze(pipes: &Vec<Pipe>) -> String {
-        let mut analyzer = PipeGraphAnalyzer {
-            graph: Graph::new(),
-            order_vec: Vec::new(),
-            order_map: HashMap::new(),
-            results: Vec::new(),
-        };
-        for pipe in pipes {
-            pipe.accept(&mut analyzer);
-        }
-        analyzer.analyze();
-        analyzer.get_result()
+        self.collect_all_vertices();
     }
 }
 
@@ -74,7 +69,7 @@ impl PipeGraphAnalyzer {
         all_vertices.join("\n")
     }
 
-    fn analyze_source_sink_vertices(&mut self) {
+    fn collect_source_sink_vertices(&mut self) {
         let sources = self.graph.find_source_vertex();
         let sinks = self.graph.find_sink_vertex();
         self.results
@@ -83,7 +78,7 @@ impl PipeGraphAnalyzer {
             .push(self.show_vertices("sink", &sinks, ANALYZE_VERTEX_SEP));
     }
 
-    fn analyze_components(&mut self) {
+    fn collect_components(&mut self) {
         let components = self.graph.find_components();
         for (union_vertex, vertices) in &components {
             let label = format!("union {}", self.pipe_id_to_order(union_vertex));
@@ -92,7 +87,7 @@ impl PipeGraphAnalyzer {
         }
     }
 
-    fn append_all_vertices(&mut self) {
+    fn collect_all_vertices(&mut self) {
         self.results.push(self.show_all_vertices())
     }
 

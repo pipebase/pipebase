@@ -128,8 +128,15 @@ impl App {
         self.validate_objects()
     }
 
-    fn analyze_entity<T, A: Analyze<T>>(items: &Vec<T>) -> String {
-        A::do_analyze(items)
+    fn analyze_entity<T: EntityAccept<A>, A: Analyze<T> + VisitEntity<T>>(
+        entities: &Vec<T>,
+    ) -> String {
+        let mut analyzer = A::new();
+        for entity in entities {
+            entity.accept(&mut &mut analyzer);
+        }
+        analyzer.analyze();
+        analyzer.get_result()
     }
 
     fn analyze_pipe(&self) -> String {
