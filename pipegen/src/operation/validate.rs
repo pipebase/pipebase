@@ -1,23 +1,18 @@
 use crate::api::DataField;
-use crate::api::EntityAccept;
 use crate::api::Object;
-use crate::error::Result;
-use crate::{
-    api::{
-        Entity, Pipe, VisitEntity, DATA_FIELD_ENTITY_ID_FIELD, OBJECT_ENTITY_ID_FIELD,
-        PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD,
-    },
-    error::api_error,
+use crate::api::{
+    Entity, Pipe, VisitEntity, DATA_FIELD_ENTITY_ID_FIELD, OBJECT_ENTITY_ID_FIELD,
+    PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD,
 };
 use std::collections::{HashMap, HashSet};
 
 use super::utils::Graph;
 
 pub trait Validate<T> {
+    fn new(location: &str) -> Self;
     fn validate(&mut self);
     // error location -> msg
     fn get_errors(&self) -> Option<HashMap<String, String>>;
-    fn do_validate(items: &Vec<T>, location: &str) -> Result<()>;
 }
 
 pub struct PipeIdValidator {
@@ -33,6 +28,14 @@ impl VisitEntity<Pipe> for PipeIdValidator {
 }
 
 impl Validate<Pipe> for PipeIdValidator {
+    fn new(location: &str) -> Self {
+        PipeIdValidator {
+            location: location.to_owned(),
+            ids: vec![],
+            errors: HashMap::new(),
+        }
+    }
+
     fn get_errors(&self) -> Option<HashMap<String, String>> {
         match self.errors.is_empty() {
             true => None,
@@ -60,22 +63,6 @@ impl Validate<Pipe> for PipeIdValidator {
             "duplicated",
         );
         self.errors = errors;
-    }
-
-    fn do_validate(pipes: &Vec<Pipe>, location: &str) -> Result<()> {
-        let mut validator = PipeIdValidator {
-            location: location.to_owned(),
-            ids: vec![],
-            errors: HashMap::new(),
-        };
-        for pipe in pipes {
-            pipe.accept(&mut validator);
-        }
-        validator.validate();
-        match validator.get_errors() {
-            Some(errors) => Err(api_error(errors)),
-            None => Ok(()),
-        }
     }
 }
 
@@ -151,6 +138,13 @@ impl PipeDependencyValidator {
 }
 
 impl Validate<Pipe> for PipeDependencyValidator {
+    fn new(location: &str) -> Self {
+        PipeDependencyValidator {
+            location: location.to_owned(),
+            ..Default::default()
+        }
+    }
+
     fn get_errors(&self) -> Option<HashMap<String, String>> {
         if self.errors.is_empty() {
             return None;
@@ -167,21 +161,6 @@ impl Validate<Pipe> for PipeDependencyValidator {
                 false => self.validate_downstream_pipe(&id, &location),
             };
             i += 1;
-        }
-    }
-
-    fn do_validate(pipes: &Vec<Pipe>, location: &str) -> Result<()> {
-        let mut validator = PipeDependencyValidator {
-            location: location.to_owned(),
-            ..Default::default()
-        };
-        for pipe in pipes {
-            pipe.accept(&mut validator);
-        }
-        validator.validate();
-        match validator.get_errors() {
-            Some(errors) => Err(api_error(errors)),
-            None => Ok(()),
         }
     }
 }
@@ -208,6 +187,13 @@ impl VisitEntity<Pipe> for PipeGraphValidator {
 }
 
 impl Validate<Pipe> for PipeGraphValidator {
+    fn new(location: &str) -> Self {
+        PipeGraphValidator {
+            location: location.to_owned(),
+            ..Default::default()
+        }
+    }
+
     fn get_errors(&self) -> Option<HashMap<String, String>> {
         if self.errors.len() > 0 {
             return Some(self.errors.to_owned());
@@ -220,21 +206,6 @@ impl Validate<Pipe> for PipeGraphValidator {
         for id in &cycle_vertex {
             let location = format!("{}[{}]", self.location, self.positions.get(id).unwrap());
             self.errors.insert(location, "cycle detected".to_owned());
-        }
-    }
-
-    fn do_validate(pipes: &Vec<Pipe>, location: &str) -> Result<()> {
-        let mut validator = PipeGraphValidator {
-            location: location.to_owned(),
-            ..Default::default()
-        };
-        for pipe in pipes {
-            pipe.accept(&mut validator);
-        }
-        validator.validate();
-        match validator.get_errors() {
-            Some(errors) => Err(api_error(errors)),
-            None => Ok(()),
         }
     }
 }
@@ -253,6 +224,13 @@ impl VisitEntity<Object> for ObjectIdValidator {
 }
 
 impl Validate<Object> for ObjectIdValidator {
+    fn new(location: &str) -> Self {
+        ObjectIdValidator {
+            location: location.to_owned(),
+            ..Default::default()
+        }
+    }
+
     fn get_errors(&self) -> Option<HashMap<String, String>> {
         if self.errors.is_empty() {
             return None;
@@ -281,21 +259,6 @@ impl Validate<Object> for ObjectIdValidator {
         );
         self.errors = errors;
     }
-
-    fn do_validate(objects: &Vec<Object>, location: &str) -> Result<()> {
-        let mut validator = ObjectIdValidator {
-            location: location.to_owned(),
-            ..Default::default()
-        };
-        for object in objects {
-            object.accept(&mut validator);
-        }
-        validator.validate();
-        match validator.get_errors() {
-            Some(errors) => Err(api_error(errors)),
-            None => Ok(()),
-        }
-    }
 }
 
 #[derive(Default)]
@@ -316,6 +279,13 @@ impl VisitEntity<Object> for ObjectDependencyValidator {
 }
 
 impl Validate<Object> for ObjectDependencyValidator {
+    fn new(location: &str) -> Self {
+        ObjectDependencyValidator {
+            location: location.to_owned(),
+            ..Default::default()
+        }
+    }
+
     fn get_errors(&self) -> Option<HashMap<String, String>> {
         if self.errors.is_empty() {
             return None;
@@ -340,21 +310,6 @@ impl Validate<Object> for ObjectDependencyValidator {
             }
         }
     }
-
-    fn do_validate(objects: &Vec<Object>, location: &str) -> Result<()> {
-        let mut validator = ObjectDependencyValidator {
-            location: location.to_owned(),
-            ..Default::default()
-        };
-        for object in objects {
-            object.accept(&mut validator);
-        }
-        validator.validate();
-        match validator.get_errors() {
-            Some(errors) => Err(api_error(errors)),
-            None => Ok(()),
-        }
-    }
 }
 
 #[derive(Default)]
@@ -371,6 +326,13 @@ impl VisitEntity<DataField> for DataFieldValidator {
 }
 
 impl Validate<DataField> for DataFieldValidator {
+    fn new(location: &str) -> Self {
+        DataFieldValidator {
+            location: location.to_owned(),
+            ..Default::default()
+        }
+    }
+
     fn get_errors(&self) -> Option<HashMap<String, String>> {
         if self.errors.is_empty() {
             return None;
@@ -407,21 +369,6 @@ impl Validate<DataField> for DataFieldValidator {
             DATA_FIELD_ENTITY_ID_FIELD,
             "duplicate",
         );
-    }
-
-    fn do_validate(fields: &Vec<DataField>, location: &str) -> Result<()> {
-        let mut validator = DataFieldValidator {
-            location: location.to_owned(),
-            ..Default::default()
-        };
-        for field in fields {
-            field.accept(&mut validator);
-        }
-        validator.validate();
-        match validator.get_errors() {
-            Some(errors) => Err(api_error(errors)),
-            None => Ok(()),
-        }
     }
 }
 

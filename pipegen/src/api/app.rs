@@ -1,4 +1,6 @@
+use super::EntityAccept;
 use super::Object;
+use super::VisitEntity;
 use crate::api::pipe::Pipe;
 use crate::api::DataField;
 use crate::error::*;
@@ -71,8 +73,19 @@ impl App {
         format!("mod {} {{\n{}\n}}", self.name, sections.join("\n\n"))
     }
 
-    fn validate_entity<T, V: Validate<T>>(items: &Vec<T>, location: &str) -> Result<()> {
-        V::do_validate(items, location)
+    fn validate_entity<T: EntityAccept<V>, V: Validate<T> + VisitEntity<T>>(
+        items: &Vec<T>,
+        location: &str,
+    ) -> Result<()> {
+        let mut validator: V = V::new(location);
+        for item in items {
+            item.accept(&mut validator);
+        }
+        validator.validate();
+        match validator.get_errors() {
+            Some(errors) => Err(api_error(errors)),
+            None => Ok(()),
+        }
     }
 
     fn validate_pipes(&self) -> Result<()> {
