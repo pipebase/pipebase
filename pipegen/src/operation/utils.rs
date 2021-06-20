@@ -90,11 +90,12 @@ impl DirectedGraph {
                     let u_src_rk = ranks.get(&u_src).unwrap();
                     let u_dst_rk = ranks.get(&u_dst).unwrap();
                     if u_src_rk > u_dst_rk {
-                        *ranks.get_mut(&u_src).unwrap() += 1;
                         let u_dst = unions.get_mut(&u_dst).unwrap();
                         *u_dst = u_src;
                     } else {
-                        *ranks.get_mut(&u_dst).unwrap() += 1;
+                        if u_src_rk == u_dst_rk {
+                            *ranks.get_mut(&u_dst).unwrap() += 1;
+                        }
                         let u_src = unions.get_mut(&u_src).unwrap();
                         *u_src = u_dst;
                     }
