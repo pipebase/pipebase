@@ -15,16 +15,10 @@ pipes:
           ty: Record
 objects:
   - ty: Record
-    traits: ["Project", "Clone"]
     metas:
-      - List:
-          name: project
-          metas:
-            - Value:
-                name: input
-                meta:
-                  Str:
-                    value: Record 
+      - Derive: ["Clone", "Project"]
+      - Project:
+          input: Record
     fields:
       - name: key
         data_ty: String

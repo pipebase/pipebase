@@ -180,22 +180,11 @@ impl<V: VisitEntity<DataField>> EntityAccept<V> for DataField {}
 pub struct Object {
     // TODO: (Camel Case Validation)
     pub ty: String,
-    pub traits: Option<Vec<String>>,
     pub metas: Option<Vec<Meta>>,
     pub fields: Vec<DataField>,
 }
 
 impl Object {
-    pub fn get_trait_derives_literal(&self, indent: usize) -> Option<String> {
-        let trait_derives = match self.traits.to_owned() {
-            Some(trait_derives) => trait_derives,
-            None => return None,
-        };
-        let trait_derives_lit = trait_derives.join(", ");
-        let indent_lit = indent_literal(indent);
-        Some(format!("{}#[derive({})]", indent_lit, trait_derives_lit))
-    }
-
     pub fn get_metas_literal(&self, indent: usize) -> Option<String> {
         let metas = match self.metas.to_owned() {
             Some(metas) => metas,
@@ -229,17 +218,12 @@ impl Entity for Object {
             "{}pub struct {} {{\n{}\n{}}}",
             indent_lit, &self.ty, field_lits, indent_lit
         );
-        // derive -> attribute -> struct
-        let mut annotation = match self.get_trait_derives_literal(indent) {
-            Some(trait_derives_literal) => trait_derives_literal,
-            None => return struct_lit,
-        };
         let metas_lit = self.get_metas_literal(indent);
-        annotation = match metas_lit {
-            None => annotation,
-            Some(metas_lit) => format!("{}\n{}", annotation, metas_lit),
+        let metas_lit = match metas_lit {
+            None => return struct_lit,
+            Some(metas_lit) => metas_lit,
         };
-        format!("{}\n{}", annotation, struct_lit)
+        format!("{}\n{}", metas_lit, struct_lit)
     }
 }
 
