@@ -1,7 +1,7 @@
 name: complext_object_pipe
 pipes:
   - name: receive_records
-    kind: Listener
+    ty: Listener
     config:
       ty: ReceiverConfig
       path: catalogs/receiver.yml

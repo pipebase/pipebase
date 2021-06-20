@@ -1,27 +1,27 @@
 name: pipe_with_cycle
 pipes:
   - name: a_source
-    kind: Poller
+    ty: Poller
     config:
       ty: PollerConfig
     output:
       data_ty: Integer
   - name: mapper_a
-    kind: Mapper
+    ty: Mapper
     upstreams: [ "mapper_c" ]
     config:
       ty: MapperConfig
     output:
       data_ty: Integer
   - name: mapper_b
-    kind: Mapper
+    ty: Mapper
     upstreams: [ "mapper_a" ]
     config:
       ty: MapperConfig
     output:
       data_ty: Integer
   - name: mapper_c
-    kind: Mapper
+    ty: Mapper
     upstreams: [ "mapper_b" ]
     config:
       ty: MapperConfig

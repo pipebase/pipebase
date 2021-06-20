@@ -24,19 +24,19 @@ mod tests {
     #[derive(Bootstrap)]
     #[pipe(
         name = "timer1",
-        kind = "poller",
+        ty = "poller",
         config(ty = "TimerConfig", path = "resources/catalogs/timer.yml"),
         output = "u128"
     )]
     #[pipe(
         name = "timer2",
-        kind = "poller",
+        ty = "poller",
         config(ty = "TimerConfig", path = "resources/catalogs/timer.yml"),
         output = "u128"
     )]
     #[pipe(
         name = "printer",
-        kind = "exporter",
+        ty = "exporter",
         upstream = "timer1, timer2",
         config(ty = "PrinterConfig")
     )]
