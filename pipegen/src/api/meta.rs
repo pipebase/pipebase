@@ -10,9 +10,11 @@ pub enum MetaValue {
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
 pub enum Meta {
+    // Base meta enum
     Path { name: String },
     Value { name: String, meta: MetaValue },
     List { name: String, metas: Vec<Meta> },
+    // Extend meta enum
     Derive(Vec<String>),
     Project(HashMap<String, String>),
 }

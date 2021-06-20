@@ -6,7 +6,7 @@ use crate::api::{
 };
 use std::collections::{HashMap, HashSet};
 
-use super::utils::Graph;
+use super::utils::DirectedGraph;
 
 pub trait Validate<T> {
     fn new(location: &str) -> Self;
@@ -168,7 +168,7 @@ impl Validate<Pipe> for PipeDependencyValidator {
 #[derive(Default)]
 pub struct PipeGraphValidator {
     pub location: String,
-    pub graph: Graph,
+    pub graph: DirectedGraph,
     pub positions: HashMap<String, usize>,
     pub errors: HashMap<String, String>,
 }

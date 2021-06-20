@@ -1,6 +1,6 @@
 use crate::{
     api::{Entity, Pipe, VisitEntity},
-    operation::utils::Graph,
+    operation::utils::DirectedGraph,
 };
 use std::collections::HashMap;
 pub trait Analyze<T> {
@@ -10,17 +10,18 @@ pub trait Analyze<T> {
 }
 
 pub struct PipeGraphAnalyzer {
-    graph: Graph,
-    order_vec: Vec<String>,
-    order_map: HashMap<String, usize>,
+    graph: DirectedGraph,
+    order: Vec<String>,
+    order_lookup: HashMap<String, usize>,
     results: Vec<String>,
 }
 
 impl VisitEntity<Pipe> for PipeGraphAnalyzer {
     fn visit(&mut self, pipe: &Pipe) {
         let ref id = pipe.get_id();
-        self.order_map.insert(id.to_owned(), self.order_map.len());
-        self.order_vec.push(id.to_owned());
+        self.order_lookup
+            .insert(id.to_owned(), self.order_lookup.len());
+        self.order.push(id.to_owned());
         self.graph.add_vertex_if_not_exists(id);
         let deps = pipe.list_dependency();
         for dep in &deps {
@@ -33,9 +34,9 @@ impl VisitEntity<Pipe> for PipeGraphAnalyzer {
 impl Analyze<Pipe> for PipeGraphAnalyzer {
     fn new() -> Self {
         PipeGraphAnalyzer {
-            graph: Graph::new(),
-            order_vec: Vec::new(),
-            order_map: HashMap::new(),
+            graph: DirectedGraph::new(),
+            order: Vec::new(),
+            order_lookup: HashMap::new(),
             results: Vec::new(),
         }
     }
@@ -62,8 +63,8 @@ impl PipeGraphAnalyzer {
 
     fn show_all_vertices(&self) -> String {
         let mut all_vertices: Vec<String> = vec![];
-        for i in 0..self.order_vec.len() {
-            let id = self.order_vec.get(i).unwrap();
+        for i in 0..self.order.len() {
+            let id = self.order.get(i).unwrap();
             all_vertices.push(format!("{}: {}", i, id));
         }
         all_vertices.join("\n")
@@ -109,7 +110,7 @@ impl PipeGraphAnalyzer {
     }
 
     fn pipe_id_to_order(&self, id: &str) -> usize {
-        self.order_map.get(id).unwrap().to_owned()
+        self.order_lookup.get(id).unwrap().to_owned()
     }
 }
 

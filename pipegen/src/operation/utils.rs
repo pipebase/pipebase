@@ -3,14 +3,14 @@ use std::{
     ops::Deref,
 };
 
-pub struct Graph {
+pub struct DirectedGraph {
     g: HashMap<String, HashSet<String>>,
     in_counts: HashMap<String, usize>,
 }
 
-impl Graph {
-    pub fn new() -> Graph {
-        Graph {
+impl DirectedGraph {
+    pub fn new() -> DirectedGraph {
+        DirectedGraph {
             g: HashMap::new(),
             in_counts: HashMap::new(),
         }
@@ -143,9 +143,9 @@ impl Graph {
     }
 }
 
-impl Default for Graph {
+impl Default for DirectedGraph {
     fn default() -> Self {
-        Graph {
+        DirectedGraph {
             g: HashMap::new(),
             in_counts: HashMap::new(),
         }
