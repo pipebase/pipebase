@@ -6,8 +6,11 @@ use crate::operation::DataFieldValidator;
 use crate::operation::ObjectDependencyValidator;
 use crate::operation::ObjectIdValidator;
 use crate::operation::PipeDependencyValidator;
+use crate::operation::PipeGraphAnalyzer;
 use crate::operation::PipeGraphValidator;
-use crate::operation::{Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate};
+use crate::operation::{
+    Analyze, Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -96,5 +99,18 @@ impl App {
     pub fn validate(&self) -> Result<()> {
         self.validate_pipes()?;
         self.validate_objects()
+    }
+
+    fn analyze_entity<T, A: Analyze<T>>(items: &Vec<T>) -> String {
+        A::do_analyze(items)
+    }
+
+    fn analyze_pipe(&self) -> String {
+        Self::analyze_entity::<Pipe, PipeGraphAnalyzer>(&self.pipes)
+    }
+
+    pub fn analyze(&self) {
+        let result = self.analyze_pipe();
+        println!("{}", result);
     }
 }
