@@ -165,22 +165,22 @@ impl Validate<Pipe> for PipeDependencyValidator {
     }
 }
 
-#[derive(Default)]
 pub struct PipeGraphValidator {
     pub location: String,
-    pub graph: DirectedGraph,
-    pub positions: HashMap<String, usize>,
+    pub graph: DirectedGraph<usize>,
+    pub order: usize,
     pub errors: HashMap<String, String>,
 }
 
 impl VisitEntity<Pipe> for PipeGraphValidator {
     fn visit(&mut self, pipe: &Pipe) {
         let ref id = pipe.get_id();
-        self.positions.insert(id.to_owned(), self.positions.len());
-        self.graph.add_vertex_if_not_exists(id);
+        self.graph.add_vertex_if_not_exists(id.to_owned());
+        self.graph.set_value(id, self.order);
+        self.order += 1;
         let deps = pipe.list_dependency();
         for dep in &deps {
-            self.graph.add_vertex_if_not_exists(dep);
+            self.graph.add_vertex_if_not_exists(dep.to_owned());
             self.graph.add_edge(dep, id);
         }
     }
@@ -190,7 +190,9 @@ impl Validate<Pipe> for PipeGraphValidator {
     fn new(location: &str) -> Self {
         PipeGraphValidator {
             location: location.to_owned(),
-            ..Default::default()
+            graph: DirectedGraph::new(),
+            order: 0,
+            errors: HashMap::new(),
         }
     }
 
@@ -204,7 +206,7 @@ impl Validate<Pipe> for PipeGraphValidator {
     fn validate(&mut self) {
         let cycle_vertex = self.graph.find_cycle();
         for id in &cycle_vertex {
-            let location = format!("{}[{}]", self.location, self.positions.get(id).unwrap());
+            let location = format!("{}[{}]", self.location, self.graph.get_value(id).unwrap());
             self.errors.insert(location, "cycle detected".to_owned());
         }
     }

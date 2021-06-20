@@ -3,16 +3,18 @@ use std::{
     ops::Deref,
 };
 
-pub struct DirectedGraph {
+pub struct DirectedGraph<T: Clone> {
     g: HashMap<String, HashSet<String>>,
     in_counts: HashMap<String, usize>,
+    values: HashMap<String, T>,
 }
 
-impl DirectedGraph {
-    pub fn new() -> DirectedGraph {
+impl<T: Clone> DirectedGraph<T> {
+    pub fn new() -> Self {
         DirectedGraph {
             g: HashMap::new(),
             in_counts: HashMap::new(),
+            values: HashMap::new(),
         }
     }
 
@@ -20,13 +22,13 @@ impl DirectedGraph {
         self.g.contains_key(id)
     }
 
-    fn add_vertex(&mut self, id: &str) {
+    fn add_vertex(&mut self, id: String) {
         self.g.insert(id.to_owned(), HashSet::new());
         self.in_counts.insert(id.to_owned(), 0);
     }
 
-    pub fn add_vertex_if_not_exists(&mut self, id: &str) {
-        if !self.has_vertex(id) {
+    pub fn add_vertex_if_not_exists(&mut self, id: String) {
+        if !self.has_vertex(&id) {
             self.add_vertex(id)
         }
     }
@@ -46,6 +48,25 @@ impl DirectedGraph {
             return true;
         }
         false
+    }
+
+    pub fn set_value(&mut self, id: &str, value: T) -> bool {
+        if !self.has_vertex(id) {
+            return false;
+        }
+        self.values.insert(id.to_owned(), value);
+        true
+    }
+
+    pub fn get_value(&self, id: &str) -> Option<T> {
+        match self.values.get(id) {
+            Some(v) => Some(v.to_owned()),
+            None => None,
+        }
+    }
+
+    pub fn get_values(&self) -> HashMap<String, T> {
+        self.values.to_owned()
     }
 
     pub fn find_cycle(&self) -> Vec<String> {
@@ -141,14 +162,5 @@ impl DirectedGraph {
             }
         }
         sink_vertex
-    }
-}
-
-impl Default for DirectedGraph {
-    fn default() -> Self {
-        DirectedGraph {
-            g: HashMap::new(),
-            in_counts: HashMap::new(),
-        }
     }
 }

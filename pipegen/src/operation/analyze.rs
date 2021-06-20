@@ -10,22 +10,20 @@ pub trait Analyze<T> {
 }
 
 pub struct PipeGraphAnalyzer {
-    graph: DirectedGraph,
-    order: Vec<String>,
-    order_lookup: HashMap<String, usize>,
+    graph: DirectedGraph<usize>,
+    order: usize,
     results: Vec<String>,
 }
 
 impl VisitEntity<Pipe> for PipeGraphAnalyzer {
     fn visit(&mut self, pipe: &Pipe) {
         let ref id = pipe.get_id();
-        self.order_lookup
-            .insert(id.to_owned(), self.order_lookup.len());
-        self.order.push(id.to_owned());
-        self.graph.add_vertex_if_not_exists(id);
+        self.graph.add_vertex_if_not_exists(id.to_owned());
+        self.graph.set_value(id, self.order);
+        self.order += 1;
         let deps = pipe.list_dependency();
         for dep in &deps {
-            self.graph.add_vertex_if_not_exists(dep);
+            self.graph.add_vertex_if_not_exists(dep.to_owned());
             self.graph.add_edge(dep, id);
         }
     }
@@ -35,8 +33,7 @@ impl Analyze<Pipe> for PipeGraphAnalyzer {
     fn new() -> Self {
         PipeGraphAnalyzer {
             graph: DirectedGraph::new(),
-            order: Vec::new(),
-            order_lookup: HashMap::new(),
+            order: 0,
             results: Vec::new(),
         }
     }
@@ -61,11 +58,14 @@ impl PipeGraphAnalyzer {
         format!("{}: {}\n", label, vertices.join(sep))
     }
 
-    fn show_all_vertices(&self) -> String {
+    fn show_all_vertices_in_order(&self) -> String {
         let mut all_vertices: Vec<String> = vec![];
-        for i in 0..self.order.len() {
-            let id = self.order.get(i).unwrap();
-            all_vertices.push(format!("{}: {}", i, id));
+        let mut order_lookup: HashMap<usize, String> = HashMap::new();
+        for (id, value) in self.graph.get_values() {
+            assert!(order_lookup.insert(value, id).is_none());
+        }
+        for i in 0..self.order {
+            all_vertices.push(format!("{}: {}", i, order_lookup.get(&i).unwrap()));
         }
         all_vertices.join("\n")
     }
@@ -89,7 +89,7 @@ impl PipeGraphAnalyzer {
     }
 
     fn collect_all_vertices(&mut self) {
-        self.results.push(self.show_all_vertices())
+        self.results.push(self.show_all_vertices_in_order())
     }
 
     fn analyze_section_sep(&mut self) {
@@ -110,7 +110,7 @@ impl PipeGraphAnalyzer {
     }
 
     fn pipe_id_to_order(&self, id: &str) -> usize {
-        self.order_lookup.get(id).unwrap().to_owned()
+        self.graph.get_value(id).unwrap()
     }
 }
 
