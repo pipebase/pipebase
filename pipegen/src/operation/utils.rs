@@ -88,16 +88,16 @@ impl<T: Clone> DirectedGraph<T> {
         false
     }
 
-    pub fn set_value(&mut self, id: &str, value: T) -> bool {
-        if !self.has_vertex(id) {
+    pub fn set_value(&mut self, vid: &str, value: T) -> bool {
+        if !self.has_vertex(vid) {
             return false;
         }
-        self.values.insert(id.to_owned(), value);
+        self.values.insert(vid.to_owned(), value);
         true
     }
 
-    pub fn get_value(&self, id: &str) -> Option<T> {
-        match self.values.get(id) {
+    pub fn get_value(&self, vid: &str) -> Option<T> {
+        match self.values.get(vid) {
             Some(v) => Some(v.to_owned()),
             None => None,
         }
@@ -130,7 +130,7 @@ impl<T: Clone> DirectedGraph<T> {
         cycle_vertex
     }
 
-    pub fn find_components(&self) -> HashMap<String, Vec<String>> {
+    fn get_unions(&self) -> HashMap<String, String> {
         let mut unions: HashMap<String, String> = HashMap::new();
         let mut ranks: HashMap<String, usize> = HashMap::new();
         for vertex in self.g.keys() {
@@ -157,6 +157,11 @@ impl<T: Clone> DirectedGraph<T> {
                 }
             }
         }
+        unions
+    }
+
+    pub fn find_components(&self) -> HashMap<String, Vec<String>> {
+        let unions = self.get_unions();
         let mut components: HashMap<String, Vec<String>> = HashMap::new();
         for (vertex, union_vertex) in &unions {
             if !components.contains_key(union_vertex) {
@@ -168,6 +173,19 @@ impl<T: Clone> DirectedGraph<T> {
                 .push(vertex.to_owned());
         }
         components
+    }
+
+    // find component contains vertex
+    pub fn find_component(&self, vid: &str) -> Vec<String> {
+        let unions = self.get_unions();
+        let union = unions.get(vid).unwrap();
+        let mut component: Vec<String> = Vec::new();
+        for (v, u) in &unions {
+            if u == union {
+                component.push(v.to_owned());
+            }
+        }
+        component
     }
 
     fn find(union: &HashMap<String, String>, vertex: &str) -> String {
@@ -225,5 +243,53 @@ impl<T: Clone> DirectedGraph<T> {
             }
         }
         cache.get_paths(src, dst)
+    }
+}
+
+use crate::api::{Entity, Pipe};
+pub struct PipeGraph<T: Clone> {
+    graph: DirectedGraph<T>,
+}
+
+impl<T: Clone> PipeGraph<T> {
+    pub fn new() -> Self {
+        PipeGraph {
+            graph: DirectedGraph::new(),
+        }
+    }
+
+    pub fn add_pipe(&mut self, pipe: &Pipe, value: T) {
+        let ref id = pipe.get_id();
+        self.graph.add_vertex_if_not_exists(id.to_owned());
+        self.graph.set_value(id, value);
+        let deps = pipe.list_dependency();
+        for dep in &deps {
+            self.graph.add_vertex_if_not_exists(dep.to_owned());
+            self.graph.add_edge(dep, id);
+        }
+    }
+
+    pub fn find_source_vertex(&self) -> Vec<String> {
+        self.graph.find_source_vertex()
+    }
+
+    pub fn find_sink_vertex(&self) -> Vec<String> {
+        self.graph.find_sink_vertex()
+    }
+
+    pub fn find_components(&self) -> HashMap<String, Vec<String>> {
+        self.graph.find_components()
+    }
+
+    pub fn find_component(&self, vid: &str) -> Vec<String> {
+        self.graph.find_component(vid)
+    }
+
+    pub fn find_cycle(&self) -> Vec<String> {
+        self.graph.find_cycle()
+    }
+
+    pub fn get_value(&self, vid: &str) -> Option<T> {
+        self.graph.get_value(vid)
     }
 }

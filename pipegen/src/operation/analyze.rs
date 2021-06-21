@@ -1,6 +1,6 @@
 use crate::{
     api::{Entity, Pipe, VisitEntity},
-    operation::utils::DirectedGraph,
+    operation::utils::PipeGraph,
 };
 
 pub trait Analyze<T> {
@@ -10,29 +10,22 @@ pub trait Analyze<T> {
 }
 
 pub struct PipeGraphAnalyzer {
-    graph: DirectedGraph<Pipe>,
+    graph: PipeGraph<Pipe>,
     pipes: Vec<String>,
     results: Vec<String>,
 }
 
 impl VisitEntity<Pipe> for PipeGraphAnalyzer {
     fn visit(&mut self, pipe: &Pipe) {
-        let ref id = pipe.get_id();
-        self.graph.add_vertex_if_not_exists(id.to_owned());
-        self.graph.set_value(id, pipe.to_owned());
-        self.pipes.push(id.to_owned());
-        let deps = pipe.list_dependency();
-        for dep in &deps {
-            self.graph.add_vertex_if_not_exists(dep.to_owned());
-            self.graph.add_edge(dep, id);
-        }
+        self.graph.add_pipe(pipe, pipe.to_owned());
+        self.pipes.push(pipe.get_id().to_owned());
     }
 }
 
 impl Analyze<Pipe> for PipeGraphAnalyzer {
     fn new() -> Self {
         PipeGraphAnalyzer {
-            graph: DirectedGraph::new(),
+            graph: PipeGraph::new(),
             pipes: Vec::new(),
             results: Vec::new(),
         }
@@ -45,9 +38,9 @@ impl Analyze<Pipe> for PipeGraphAnalyzer {
     fn analyze(&mut self) {
         self.results.clear();
         self.collect_source_sink_vertices();
-        self.analyze_section_sep();
+        self.section_sep();
         self.collect_components();
-        self.analyze_section_sep();
+        self.section_sep();
         self.collect_all_vertices();
     }
 }
@@ -89,7 +82,7 @@ impl PipeGraphAnalyzer {
         self.results.push(self.show_all_pipes())
     }
 
-    fn analyze_section_sep(&mut self) {
+    fn section_sep(&mut self) {
         self.results.push(ANALYZE_SECTION_SEP.to_owned());
     }
 }

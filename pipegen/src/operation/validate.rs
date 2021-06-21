@@ -6,7 +6,7 @@ use crate::api::{
 };
 use std::collections::{HashMap, HashSet};
 
-use super::utils::DirectedGraph;
+use super::utils::PipeGraph;
 
 pub trait Validate<T> {
     fn new(location: &str) -> Self;
@@ -167,22 +167,15 @@ impl Validate<Pipe> for PipeDependencyValidator {
 
 pub struct PipeGraphValidator {
     pub location: String,
-    pub graph: DirectedGraph<usize>,
+    pub graph: PipeGraph<usize>,
     pub order: usize,
     pub errors: HashMap<String, String>,
 }
 
 impl VisitEntity<Pipe> for PipeGraphValidator {
     fn visit(&mut self, pipe: &Pipe) {
-        let ref id = pipe.get_id();
-        self.graph.add_vertex_if_not_exists(id.to_owned());
-        self.graph.set_value(id, self.order);
+        self.graph.add_pipe(pipe, self.order);
         self.order += 1;
-        let deps = pipe.list_dependency();
-        for dep in &deps {
-            self.graph.add_vertex_if_not_exists(dep.to_owned());
-            self.graph.add_edge(dep, id);
-        }
     }
 }
 
@@ -190,7 +183,7 @@ impl Validate<Pipe> for PipeGraphValidator {
     fn new(location: &str) -> Self {
         PipeGraphValidator {
             location: location.to_owned(),
-            graph: DirectedGraph::new(),
+            graph: PipeGraph::new(),
             order: 0,
             errors: HashMap::new(),
         }
