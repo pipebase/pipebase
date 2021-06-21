@@ -167,15 +167,15 @@ impl Validate<Pipe> for PipeDependencyValidator {
 
 pub struct PipeGraphValidator {
     pub location: String,
-    pub graph: PipeGraph<usize>,
-    pub order: usize,
+    pub graph: PipeGraph<Pipe>,
+    pub index: HashMap<String, usize>,
     pub errors: HashMap<String, String>,
 }
 
 impl VisitEntity<Pipe> for PipeGraphValidator {
     fn visit(&mut self, pipe: &Pipe) {
-        self.graph.add_pipe(pipe, self.order);
-        self.order += 1;
+        self.graph.add_pipe(pipe, pipe.to_owned());
+        self.index.insert(pipe.get_id(), self.index.len());
     }
 }
 
@@ -184,7 +184,7 @@ impl Validate<Pipe> for PipeGraphValidator {
         PipeGraphValidator {
             location: location.to_owned(),
             graph: PipeGraph::new(),
-            order: 0,
+            index: HashMap::new(),
             errors: HashMap::new(),
         }
     }
@@ -198,12 +198,8 @@ impl Validate<Pipe> for PipeGraphValidator {
 
     fn validate(&mut self) {
         let cycle_vertex = self.graph.find_cycle();
-        for id in &cycle_vertex {
-            let location = format!(
-                "{}[{}]",
-                self.location,
-                self.graph.get_pipe_value(id).unwrap()
-            );
+        for pid in &cycle_vertex {
+            let location = format!("{}[{}]", self.location, self.index.get(pid).unwrap());
             self.errors.insert(location, "cycle detected".to_owned());
         }
     }

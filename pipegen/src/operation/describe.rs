@@ -3,10 +3,7 @@ use crate::{
     operation::utils::PipeGraph,
 };
 
-use std::{
-    collections::HashMap,
-    fmt::{self, Display},
-};
+use std::fmt::{self, Display};
 
 pub trait Describe<T> {
     fn new() -> Self;
