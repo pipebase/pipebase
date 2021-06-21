@@ -57,12 +57,8 @@ impl ErrorImpl {
     }
 }
 
-pub fn api_error(errors: HashMap<String, String>) -> Error {
-    let mut buffer: Vec<String> = vec![];
-    for (location, detail) in errors {
-        buffer.push(format!("{} at {}", detail, location))
-    }
-    Error(Box::new(ErrorImpl::Api(format!("{}", buffer.join(",\n")))))
+pub fn api_error<E: Display>(detail: E) -> Error {
+    Error(Box::new(ErrorImpl::Api(format!("{}", detail))))
 }
 
 pub fn io_error(err: std::io::Error) -> Error {

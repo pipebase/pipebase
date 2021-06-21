@@ -5,20 +5,49 @@ use crate::api::{
     PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD,
 };
 use std::collections::{HashMap, HashSet};
+use std::fmt::{self, Display};
 
 use super::utils::PipeGraph;
+
+pub struct ValidationErrorDetailsDisplay {
+    details: HashMap<String, String>,
+}
+
+impl ValidationErrorDetailsDisplay {
+    pub fn new(details: HashMap<String, String>) -> Self {
+        ValidationErrorDetailsDisplay { details }
+    }
+}
+
+impl Display for ValidationErrorDetailsDisplay {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut buffer: Vec<String> = vec![];
+        for (location, detail) in &self.details {
+            buffer.push(format!("{} at {}", detail, location))
+        }
+        write!(f, "{}", buffer.join(",\n"))
+    }
+}
 
 pub trait Validate<T> {
     fn new(location: &str) -> Self;
     fn validate(&mut self);
     // error location -> msg
-    fn get_errors(&self) -> Option<HashMap<String, String>>;
+    fn display_error_details(&self) -> Option<ValidationErrorDetailsDisplay>;
+    fn details_to_display(
+        details: HashMap<String, String>,
+    ) -> Option<ValidationErrorDetailsDisplay> {
+        match details.is_empty() {
+            true => None,
+            false => Some(ValidationErrorDetailsDisplay::new(details)),
+        }
+    }
 }
 
 pub struct PipeIdValidator {
     pub location: String,
     pub ids: Vec<String>,
-    pub errors: HashMap<String, String>,
+    pub error_details: HashMap<String, String>,
 }
 
 impl VisitEntity<Pipe> for PipeIdValidator {
@@ -32,15 +61,12 @@ impl Validate<Pipe> for PipeIdValidator {
         PipeIdValidator {
             location: location.to_owned(),
             ids: vec![],
-            errors: HashMap::new(),
+            error_details: HashMap::new(),
         }
     }
 
-    fn get_errors(&self) -> Option<HashMap<String, String>> {
-        match self.errors.is_empty() {
-            true => None,
-            false => Some(self.errors.to_owned()),
-        }
+    fn display_error_details(&self) -> Option<ValidationErrorDetailsDisplay> {
+        Self::details_to_display(self.error_details.to_owned())
     }
 
     fn validate(&mut self) {
@@ -53,7 +79,7 @@ impl Validate<Pipe> for PipeIdValidator {
             &is_snake_lower_case,
         );
         if !errors.is_empty() {
-            self.errors = errors;
+            self.error_details = errors;
             return;
         }
         let errors = validate_ids_uniqueness(
@@ -62,7 +88,7 @@ impl Validate<Pipe> for PipeIdValidator {
             PIPE_ENTITY_ID_FIELD,
             "duplicated",
         );
-        self.errors = errors;
+        self.error_details = errors;
     }
 }
 
@@ -73,7 +99,7 @@ pub struct PipeDependencyValidator {
     pub is_source: HashMap<String, bool>,
     // dependency pipe id -> other pipe ids
     pub deps: HashMap<String, Vec<String>>,
-    pub errors: HashMap<String, String>,
+    pub error_details: HashMap<String, String>,
 }
 
 impl VisitEntity<Pipe> for PipeDependencyValidator {
@@ -100,7 +126,7 @@ impl PipeDependencyValidator {
         match self.deps.get(id).unwrap().is_empty() {
             true => (),
             false => {
-                self.errors.insert(
+                self.error_details.insert(
                     location.to_owned(),
                     format!("found invalid upstream for source pipe"),
                 );
@@ -112,7 +138,7 @@ impl PipeDependencyValidator {
         let deps = self.deps.get(id).unwrap();
         match deps.is_empty() {
             true => {
-                self.errors.insert(
+                self.error_details.insert(
                     location.to_owned(),
                     format!("no upstream found for downstream pipe"),
                 );
@@ -125,12 +151,12 @@ impl PipeDependencyValidator {
             match self.deps.contains_key(dep) {
                 true => (),
                 false => {
-                    self.errors
+                    self.error_details
                         .insert(location.to_owned(), format!("upstream does not exists"));
                 }
             }
             if !visited_deps.insert(dep.to_owned()) {
-                self.errors
+                self.error_details
                     .insert(location.to_owned(), format!("duplicated upstream"));
             }
         }
@@ -145,11 +171,8 @@ impl Validate<Pipe> for PipeDependencyValidator {
         }
     }
 
-    fn get_errors(&self) -> Option<HashMap<String, String>> {
-        if self.errors.is_empty() {
-            return None;
-        }
-        Some(self.errors.to_owned())
+    fn display_error_details(&self) -> Option<ValidationErrorDetailsDisplay> {
+        Self::details_to_display(self.error_details.to_owned())
     }
 
     fn validate(&mut self) {
@@ -169,7 +192,7 @@ pub struct PipeGraphValidator {
     pub location: String,
     pub graph: PipeGraph<Pipe>,
     pub index: HashMap<String, usize>,
-    pub errors: HashMap<String, String>,
+    pub error_details: HashMap<String, String>,
 }
 
 impl VisitEntity<Pipe> for PipeGraphValidator {
@@ -185,22 +208,20 @@ impl Validate<Pipe> for PipeGraphValidator {
             location: location.to_owned(),
             graph: PipeGraph::new(),
             index: HashMap::new(),
-            errors: HashMap::new(),
+            error_details: HashMap::new(),
         }
     }
 
-    fn get_errors(&self) -> Option<HashMap<String, String>> {
-        if self.errors.len() > 0 {
-            return Some(self.errors.to_owned());
-        }
-        None
+    fn display_error_details(&self) -> Option<ValidationErrorDetailsDisplay> {
+        Self::details_to_display(self.error_details.to_owned())
     }
 
     fn validate(&mut self) {
         let cycle_vertex = self.graph.find_cycle();
         for pid in &cycle_vertex {
             let location = format!("{}[{}]", self.location, self.index.get(pid).unwrap());
-            self.errors.insert(location, "cycle detected".to_owned());
+            self.error_details
+                .insert(location, "cycle detected".to_owned());
         }
     }
 }
@@ -209,7 +230,7 @@ impl Validate<Pipe> for PipeGraphValidator {
 pub struct ObjectIdValidator {
     pub location: String,
     pub ids: Vec<String>,
-    pub errors: HashMap<String, String>,
+    pub error_details: HashMap<String, String>,
 }
 
 impl VisitEntity<Object> for ObjectIdValidator {
@@ -226,11 +247,8 @@ impl Validate<Object> for ObjectIdValidator {
         }
     }
 
-    fn get_errors(&self) -> Option<HashMap<String, String>> {
-        if self.errors.is_empty() {
-            return None;
-        }
-        Some(self.errors.to_owned())
+    fn display_error_details(&self) -> Option<ValidationErrorDetailsDisplay> {
+        Self::details_to_display(self.error_details.to_owned())
     }
 
     fn validate(&mut self) {
@@ -243,7 +261,7 @@ impl Validate<Object> for ObjectIdValidator {
             &is_camel_case,
         );
         if !errors.is_empty() {
-            self.errors = errors;
+            self.error_details = errors;
             return;
         }
         let errors = validate_ids_uniqueness(
@@ -252,7 +270,7 @@ impl Validate<Object> for ObjectIdValidator {
             OBJECT_ENTITY_ID_FIELD,
             "duplicated",
         );
-        self.errors = errors;
+        self.error_details = errors;
     }
 }
 
@@ -261,7 +279,7 @@ pub struct ObjectDependencyValidator {
     pub location: String,
     pub deps: HashMap<String, Vec<String>>,
     pub ids: Vec<String>,
-    pub errors: HashMap<String, String>,
+    pub error_details: HashMap<String, String>,
 }
 
 impl VisitEntity<Object> for ObjectDependencyValidator {
@@ -281,11 +299,8 @@ impl Validate<Object> for ObjectDependencyValidator {
         }
     }
 
-    fn get_errors(&self) -> Option<HashMap<String, String>> {
-        if self.errors.is_empty() {
-            return None;
-        }
-        Some(self.errors.to_owned())
+    fn display_error_details(&self) -> Option<ValidationErrorDetailsDisplay> {
+        Self::details_to_display(self.error_details.to_owned())
     }
 
     fn validate(&mut self) {
@@ -295,7 +310,7 @@ impl Validate<Object> for ObjectDependencyValidator {
             for dep in self.deps.get(id).unwrap() {
                 if !self.deps.contains_key(dep) {
                     let location = format!("{}[{}].fields[{}]", self.location, i, j);
-                    self.errors
+                    self.error_details
                         .insert(location, "object dependency not found".to_owned());
                     j += 1;
                     continue;
@@ -311,7 +326,7 @@ impl Validate<Object> for ObjectDependencyValidator {
 pub struct DataFieldValidator {
     pub location: String,
     pub ids: Vec<String>,
-    pub errors: HashMap<String, String>,
+    pub error_details: HashMap<String, String>,
 }
 
 impl VisitEntity<DataField> for DataFieldValidator {
@@ -328,11 +343,8 @@ impl Validate<DataField> for DataFieldValidator {
         }
     }
 
-    fn get_errors(&self) -> Option<HashMap<String, String>> {
-        if self.errors.is_empty() {
-            return None;
-        }
-        Some(self.errors.to_owned())
+    fn display_error_details(&self) -> Option<ValidationErrorDetailsDisplay> {
+        Self::details_to_display(self.error_details.to_owned())
     }
 
     fn validate(&mut self) {
@@ -344,7 +356,7 @@ impl Validate<DataField> for DataFieldValidator {
             &is_non_empty,
         );
         if !errors.is_empty() {
-            self.errors = errors;
+            self.error_details = errors;
             return;
         }
         let errors = validate_ids_with_predicate(
@@ -355,10 +367,10 @@ impl Validate<DataField> for DataFieldValidator {
             &is_snake_lower_case,
         );
         if !errors.is_empty() {
-            self.errors = errors;
+            self.error_details = errors;
             return;
         }
-        self.errors = validate_ids_uniqueness(
+        self.error_details = validate_ids_uniqueness(
             &self.ids,
             &self.location,
             DATA_FIELD_ENTITY_ID_FIELD,

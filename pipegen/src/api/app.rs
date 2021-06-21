@@ -96,8 +96,8 @@ impl App {
             item.accept(&mut validator);
         }
         validator.validate();
-        match validator.get_errors() {
-            Some(errors) => Err(api_error(errors)),
+        match validator.display_error_details() {
+            Some(details) => Err(api_error(details)),
             None => Ok(()),
         }
     }
