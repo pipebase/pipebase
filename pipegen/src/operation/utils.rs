@@ -3,9 +3,47 @@ use std::{
     ops::Deref,
 };
 
+type Path = Vec<String>;
+
+pub struct Paths {
+    paths: HashMap<String, HashMap<String, Vec<Path>>>,
+}
+
+impl Paths {
+    pub fn new() -> Self {
+        Paths {
+            paths: HashMap::new(),
+        }
+    }
+
+    pub fn add_path(&mut self, src: &str, dst: &str, path: Path) {
+        if !self.paths.contains_key(src) {
+            self.paths.insert(src.to_owned(), HashMap::new());
+        }
+        let paths = self.paths.get_mut(src).unwrap();
+        if !paths.contains_key(dst) {
+            paths.insert(dst.to_owned(), Vec::new());
+        }
+        paths.get_mut(dst).unwrap().push(path);
+    }
+
+    pub fn get_paths(&self, src: &str, dst: &str) -> Option<Vec<Path>> {
+        let paths = match self.paths.get(src) {
+            Some(paths) => paths,
+            None => return None,
+        };
+        match paths.get(dst) {
+            Some(paths) => Some(paths.to_owned()),
+            None => return None,
+        }
+    }
+}
+
 pub struct DirectedGraph<T: Clone> {
+    // graph meta info
     g: HashMap<String, HashSet<String>>,
     in_counts: HashMap<String, usize>,
+    // vertex value
     values: HashMap<String, T>,
 }
 
@@ -63,10 +101,6 @@ impl<T: Clone> DirectedGraph<T> {
             Some(v) => Some(v.to_owned()),
             None => None,
         }
-    }
-
-    pub fn get_values(&self) -> HashMap<String, T> {
-        self.values.to_owned()
     }
 
     pub fn find_cycle(&self) -> Vec<String> {
@@ -162,5 +196,34 @@ impl<T: Clone> DirectedGraph<T> {
             }
         }
         sink_vertex
+    }
+
+    pub fn find_paths(
+        &self,
+        src: &str,
+        dst: &str,
+        visited: &mut HashSet<String>,
+        cache: &mut Paths,
+    ) -> Option<Vec<Path>> {
+        if src == dst {
+            let path: Path = vec![src.to_owned()];
+            return Some(vec![path]);
+        }
+        if !visited.insert(src.to_owned()) {
+            return cache.get_paths(src, dst);
+        }
+        for next in self.g.get(src).unwrap() {
+            let paths = match self.find_paths(next, dst, visited, cache) {
+                None => continue,
+                Some(paths) => paths,
+            };
+            // src, next ... dst
+            for path in &paths {
+                let mut new_path = vec![src.to_owned()];
+                new_path.extend(path.to_owned());
+                cache.add_path(src, dst, new_path);
+            }
+        }
+        cache.get_paths(src, dst)
     }
 }
