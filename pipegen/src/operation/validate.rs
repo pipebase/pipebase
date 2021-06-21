@@ -199,7 +199,11 @@ impl Validate<Pipe> for PipeGraphValidator {
     fn validate(&mut self) {
         let cycle_vertex = self.graph.find_cycle();
         for id in &cycle_vertex {
-            let location = format!("{}[{}]", self.location, self.graph.get_value(id).unwrap());
+            let location = format!(
+                "{}[{}]",
+                self.location,
+                self.graph.get_pipe_value(id).unwrap()
+            );
             self.errors.insert(location, "cycle detected".to_owned());
         }
     }

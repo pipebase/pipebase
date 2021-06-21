@@ -55,13 +55,17 @@ impl PipeGraphAnalyzer {
 
         for i in 0..self.pipes.len() {
             let pipe = self.pipes.get(i).unwrap();
-            all_vertices.push(format!("{} - {}", i, self.graph.get_value(pipe).unwrap()));
+            all_vertices.push(format!(
+                "{} - {}",
+                i,
+                self.graph.get_pipe_value(pipe).unwrap()
+            ));
         }
         all_vertices.join("\n")
     }
 
     fn show_pipelines(&self, pid: &str) -> Option<String> {
-        if !self.graph.has_vertex(pid) {
+        if !self.graph.has_pipe(pid) {
             return None;
         }
         let pipelines = self.graph.search_pipelines(pid);
@@ -76,8 +80,8 @@ impl PipeGraphAnalyzer {
     }
 
     fn collect_source_sink_vertices(&mut self) {
-        let sources = self.graph.find_source_vertices();
-        let sinks = self.graph.find_sink_vertices();
+        let sources = self.graph.find_source_pipes();
+        let sinks = self.graph.find_sink_pipes();
         self.results
             .push(self.show_pipes("source", &sources, ANALYZE_VERTEX_SEP));
         self.results

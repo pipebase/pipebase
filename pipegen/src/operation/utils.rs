@@ -39,30 +39,71 @@ impl GraphPaths {
     }
 }
 
+pub struct Vertex<T: Clone> {
+    in_vertices: HashSet<String>,
+    out_vertices: HashSet<String>,
+    value: Option<T>,
+}
+
+impl<T: Clone> Vertex<T> {
+    pub fn new(value: Option<T>) -> Self {
+        Vertex {
+            in_vertices: HashSet::new(),
+            out_vertices: HashSet::new(),
+            value: value,
+        }
+    }
+
+    pub fn get_in_vertices(&self) -> HashSet<String> {
+        self.in_vertices.to_owned()
+    }
+
+    pub fn get_in_vertices_count(&self) -> usize {
+        self.in_vertices.len()
+    }
+
+    pub fn get_out_vertices(&self) -> HashSet<String> {
+        self.out_vertices.to_owned()
+    }
+
+    pub fn get_out_vertices_count(&self) -> usize {
+        self.out_vertices.len()
+    }
+
+    pub fn get_value(&self) -> Option<T> {
+        self.value.to_owned()
+    }
+
+    pub fn set_value(&mut self, value: T) {
+        self.value = Some(value)
+    }
+
+    pub fn add_in_vertex(&mut self, vid: String) -> bool {
+        self.in_vertices.insert(vid)
+    }
+
+    pub fn add_out_vertex(&mut self, vid: String) -> bool {
+        self.out_vertices.insert(vid)
+    }
+}
+
 pub struct DirectedGraph<T: Clone> {
-    // graph meta info
-    g: HashMap<String, HashSet<String>>,
-    in_counts: HashMap<String, usize>,
-    // vertex value
-    values: HashMap<String, T>,
+    vertices: HashMap<String, Vertex<T>>,
 }
 
 impl<T: Clone> DirectedGraph<T> {
     pub fn new() -> Self {
         DirectedGraph {
-            g: HashMap::new(),
-            in_counts: HashMap::new(),
-            values: HashMap::new(),
+            vertices: HashMap::new(),
         }
     }
 
     pub fn has_vertex(&self, id: &str) -> bool {
-        self.g.contains_key(id)
+        self.vertices.contains_key(id)
     }
 
     fn add_vertex(&mut self, id: String) {
-        self.g.insert(id.to_owned(), HashSet::new());
-        self.in_counts.insert(id.to_owned(), 0);
+        self.vertices.insert(id, Vertex::new(None));
     }
 
     pub fn add_vertex_if_not_exists(&mut self, id: String) {
@@ -73,51 +114,60 @@ impl<T: Clone> DirectedGraph<T> {
 
     // return true if add edge success
     pub fn add_edge(&mut self, src: &str, dst: &str) -> bool {
-        match self.g.contains_key(dst) {
-            true => (),
-            false => return false,
-        };
-        let dsts = match self.g.get_mut(src) {
-            Some(dsts) => dsts,
-            None => return false,
-        };
-        if dsts.insert(dst.to_owned()) {
-            *self.in_counts.get_mut(dst).unwrap() += 1;
-            return true;
+        if !self.vertices.contains_key(src) {
+            return false;
         }
-        false
+        if !self.vertices.contains_key(dst) {
+            return false;
+        }
+        let mut success = true;
+        success = success
+            & self
+                .vertices
+                .get_mut(src)
+                .unwrap()
+                .add_out_vertex(dst.to_owned());
+        success = success
+            & self
+                .vertices
+                .get_mut(dst)
+                .unwrap()
+                .add_in_vertex(src.to_owned());
+        success
     }
 
     pub fn set_value(&mut self, vid: &str, value: T) -> bool {
         if !self.has_vertex(vid) {
             return false;
         }
-        self.values.insert(vid.to_owned(), value);
+        self.vertices.get_mut(vid).unwrap().set_value(value);
         true
     }
 
     pub fn get_value(&self, vid: &str) -> Option<T> {
-        match self.values.get(vid) {
-            Some(v) => Some(v.to_owned()),
-            None => None,
+        if !self.has_vertex(vid) {
+            return None;
         }
+        self.vertices.get(vid).unwrap().get_value()
     }
 
     pub fn find_cycle(&self) -> Vec<String> {
         let mut candidates: Vec<String> = vec![];
-        let mut in_counts = self.in_counts.to_owned();
-        for (id, in_count) in &in_counts {
-            if *in_count == 0 {
-                candidates.push(id.to_owned());
+        let mut in_counts: HashMap<String, usize> = HashMap::new();
+        for (vid, vertex) in &self.vertices {
+            let in_count = vertex.get_in_vertices_count();
+            in_counts.insert(vid.to_owned(), in_count);
+            if in_count == 0 {
+                candidates.push(vid.to_owned());
             }
         }
         while !candidates.is_empty() {
-            let src = candidates.pop().unwrap();
-            for dst in self.g.get(&src).unwrap() {
-                let count = in_counts.get_mut(dst).unwrap();
+            let vid = candidates.pop().unwrap();
+            for out_vid in &self.vertices.get(&vid).unwrap().get_out_vertices() {
+                let count = in_counts.get_mut(out_vid).unwrap();
                 *count -= 1;
                 if *count == 0 {
-                    candidates.push(dst.to_owned());
+                    candidates.push(out_vid.to_owned());
                 }
             }
         }
@@ -133,12 +183,13 @@ impl<T: Clone> DirectedGraph<T> {
     fn get_unions(&self) -> HashMap<String, String> {
         let mut unions: HashMap<String, String> = HashMap::new();
         let mut ranks: HashMap<String, usize> = HashMap::new();
-        for vertex in self.g.keys() {
+        for vertex in self.vertices.keys() {
             unions.insert(vertex.to_owned(), vertex.to_owned());
             ranks.insert(vertex.to_owned(), 0);
         }
-        for (src, dsts) in &self.g {
-            for dst in dsts {
+        for (src, vertex) in &self.vertices {
+            let dsts = vertex.get_out_vertices();
+            for dst in &dsts {
                 let u_src = Self::find(&unions, src);
                 let u_dst = Self::find(&unions, dst);
                 if u_src != u_dst {
@@ -198,9 +249,9 @@ impl<T: Clone> DirectedGraph<T> {
 
     pub fn find_source_vertices(&self) -> Vec<String> {
         let mut source_vertex = vec![];
-        for (vertex, in_count) in &self.in_counts {
-            if *in_count == 0 {
-                source_vertex.push(vertex.to_owned());
+        for (vid, vertex) in &self.vertices {
+            if vertex.get_in_vertices_count() == 0 {
+                source_vertex.push(vid.to_owned());
             }
         }
         source_vertex
@@ -208,9 +259,9 @@ impl<T: Clone> DirectedGraph<T> {
 
     pub fn find_sink_vertices(&self) -> Vec<String> {
         let mut sink_vertex = vec![];
-        for (src, dsts) in &self.g {
-            if dsts.is_empty() {
-                sink_vertex.push(src.to_owned());
+        for (vid, vertex) in &self.vertices {
+            if vertex.get_out_vertices_count() == 0 {
+                sink_vertex.push(vid.to_owned());
             }
         }
         sink_vertex
@@ -220,14 +271,14 @@ impl<T: Clone> DirectedGraph<T> {
         if !self.has_vertex(vid) {
             return false;
         }
-        *self.in_counts.get(vid).unwrap() == 0
+        self.vertices.get(vid).unwrap().get_in_vertices_count() == 0
     }
 
     pub fn is_sink_vertex(&self, vid: &str) -> bool {
         if !self.has_vertex(vid) {
             return false;
         }
-        self.g.get(vid).unwrap().is_empty()
+        self.vertices.get(vid).unwrap().get_out_vertices_count() == 0
     }
 
     pub fn find_paths(
@@ -244,7 +295,7 @@ impl<T: Clone> DirectedGraph<T> {
         if !visited.insert(src.to_owned()) {
             return cache.get_paths(src, dst);
         }
-        for next in self.g.get(src).unwrap() {
+        for next in &self.vertices.get(src).unwrap().get_out_vertices() {
             let paths = match self.find_paths(next, dst, visited, cache) {
                 None => continue,
                 Some(paths) => paths,
@@ -283,15 +334,15 @@ impl<T: Clone> PipeGraph<T> {
         }
     }
 
-    pub fn has_vertex(&self, pid: &str) -> bool {
+    pub fn has_pipe(&self, pid: &str) -> bool {
         self.graph.has_vertex(pid)
     }
 
-    pub fn find_source_vertices(&self) -> Vec<String> {
+    pub fn find_source_pipes(&self) -> Vec<String> {
         self.graph.find_source_vertices()
     }
 
-    pub fn find_sink_vertices(&self) -> Vec<String> {
+    pub fn find_sink_pipes(&self) -> Vec<String> {
         self.graph.find_sink_vertices()
     }
 
@@ -307,7 +358,7 @@ impl<T: Clone> PipeGraph<T> {
         self.graph.find_cycle()
     }
 
-    pub fn find_paths(
+    fn find_paths(
         &self,
         src: &str,
         dst: &str,
@@ -317,16 +368,16 @@ impl<T: Clone> PipeGraph<T> {
         self.graph.find_paths(src, dst, visited, cache)
     }
 
-    pub fn is_source_vertex(&self, vid: &str) -> bool {
-        self.graph.is_source_vertex(vid)
+    pub fn is_source_pipe(&self, pid: &str) -> bool {
+        self.graph.is_source_vertex(pid)
     }
 
-    pub fn is_sink_vertex(&self, vid: &str) -> bool {
-        self.graph.is_sink_vertex(vid)
+    pub fn is_sink_pipe(&self, pid: &str) -> bool {
+        self.graph.is_sink_vertex(pid)
     }
 
-    pub fn get_value(&self, vid: &str) -> Option<T> {
-        self.graph.get_value(vid)
+    pub fn get_pipe_value(&self, pid: &str) -> Option<T> {
+        self.graph.get_value(pid)
     }
 
     fn connect_path(left_path: Vec<String>, right_path: Vec<String>) -> GraphPath {
@@ -363,12 +414,12 @@ impl<T: Clone> PipeGraph<T> {
         let srcs: Vec<String> = vertics
             .to_owned()
             .into_iter()
-            .filter(|vid| self.is_source_vertex(vid))
+            .filter(|vid| self.is_source_pipe(vid))
             .collect();
         let sinks: Vec<String> = vertics
             .to_owned()
             .into_iter()
-            .filter(|vid| self.is_sink_vertex(vid))
+            .filter(|vid| self.is_sink_pipe(vid))
             .collect();
         let mut pipelines: Vec<GraphPath> = Vec::new();
         for src in &srcs {
@@ -390,6 +441,6 @@ impl<T: Clone> PipeGraph<T> {
     pub fn find_pipeline(&self, src: &str, dst: &str) -> Option<Vec<GraphPath>> {
         let mut visited: HashSet<String> = HashSet::new();
         let mut cache = GraphPaths::new();
-        self.graph.find_paths(src, dst, &mut visited, &mut cache)
+        self.find_paths(src, dst, &mut visited, &mut cache)
     }
 }
