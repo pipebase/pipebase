@@ -60,9 +60,24 @@ impl PipeGraphAnalyzer {
         all_vertices.join("\n")
     }
 
+    fn show_pipelines(&self, pid: &str) -> Option<String> {
+        if !self.graph.has_vertex(pid) {
+            return None;
+        }
+        let pipelines = self.graph.search_pipelines(pid);
+        if pipelines.is_empty() {
+            return None;
+        }
+        let mut pipelines_lit: Vec<String> = Vec::new();
+        for pipeline in pipelines {
+            pipelines_lit.push(pipeline.join(ANALYZE_VERTEX_CONNECT))
+        }
+        Some(pipelines_lit.join("\n"))
+    }
+
     fn collect_source_sink_vertices(&mut self) {
-        let sources = self.graph.find_source_vertex();
-        let sinks = self.graph.find_sink_vertex();
+        let sources = self.graph.find_source_vertices();
+        let sinks = self.graph.find_sink_vertices();
         self.results
             .push(self.show_pipes("source", &sources, ANALYZE_VERTEX_SEP));
         self.results
@@ -90,6 +105,7 @@ impl PipeGraphAnalyzer {
 // const ANALYZE_BASIC_INFO: &str = "basic";
 const ANALYZE_VERTEX_SEP: &str = ", ";
 const ANALYZE_SECTION_SEP: &str = "\n";
+const ANALYZE_VERTEX_CONNECT: &str = " -> ";
 
 #[cfg(test)]
 mod tests {
@@ -101,6 +117,16 @@ mod tests {
         let manifest_path = "resources/manifest/print_timer_tick_pipe.yml";
         let app = App::parse(manifest_path).unwrap();
         app.validate().expect("expect valid");
-        app.analyze()
+        app.analyze();
+    }
+
+    #[test]
+    fn test_get_timer_tick_pipeline() {
+        let manifest_path = "resources/manifest/print_timer_tick_pipe.yml";
+        let app = App::parse(manifest_path).unwrap();
+        app.validate().expect("expect valid");
+        let analyzer = app.get_pipe_analyzer();
+        let pipeline = analyzer.show_pipelines("printer").unwrap();
+        println!("{}", pipeline)
     }
 }

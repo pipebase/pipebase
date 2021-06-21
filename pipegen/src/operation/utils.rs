@@ -3,20 +3,20 @@ use std::{
     ops::Deref,
 };
 
-type Path = Vec<String>;
+type GraphPath = Vec<String>;
 
-pub struct Paths {
-    paths: HashMap<String, HashMap<String, Vec<Path>>>,
+pub struct GraphPaths {
+    paths: HashMap<String, HashMap<String, Vec<GraphPath>>>,
 }
 
-impl Paths {
+impl GraphPaths {
     pub fn new() -> Self {
-        Paths {
+        GraphPaths {
             paths: HashMap::new(),
         }
     }
 
-    pub fn add_path(&mut self, src: &str, dst: &str, path: Path) {
+    pub fn add_path(&mut self, src: &str, dst: &str, path: GraphPath) {
         if !self.paths.contains_key(src) {
             self.paths.insert(src.to_owned(), HashMap::new());
         }
@@ -27,7 +27,7 @@ impl Paths {
         paths.get_mut(dst).unwrap().push(path);
     }
 
-    pub fn get_paths(&self, src: &str, dst: &str) -> Option<Vec<Path>> {
+    pub fn get_paths(&self, src: &str, dst: &str) -> Option<Vec<GraphPath>> {
         let paths = match self.paths.get(src) {
             Some(paths) => paths,
             None => return None,
@@ -196,7 +196,7 @@ impl<T: Clone> DirectedGraph<T> {
         vertex
     }
 
-    pub fn find_source_vertex(&self) -> Vec<String> {
+    pub fn find_source_vertices(&self) -> Vec<String> {
         let mut source_vertex = vec![];
         for (vertex, in_count) in &self.in_counts {
             if *in_count == 0 {
@@ -206,7 +206,7 @@ impl<T: Clone> DirectedGraph<T> {
         source_vertex
     }
 
-    pub fn find_sink_vertex(&self) -> Vec<String> {
+    pub fn find_sink_vertices(&self) -> Vec<String> {
         let mut sink_vertex = vec![];
         for (src, dsts) in &self.g {
             if dsts.is_empty() {
@@ -216,15 +216,29 @@ impl<T: Clone> DirectedGraph<T> {
         sink_vertex
     }
 
+    pub fn is_source_vertex(&self, vid: &str) -> bool {
+        if !self.has_vertex(vid) {
+            return false;
+        }
+        *self.in_counts.get(vid).unwrap() == 0
+    }
+
+    pub fn is_sink_vertex(&self, vid: &str) -> bool {
+        if !self.has_vertex(vid) {
+            return false;
+        }
+        self.g.get(vid).unwrap().is_empty()
+    }
+
     pub fn find_paths(
         &self,
         src: &str,
         dst: &str,
         visited: &mut HashSet<String>,
-        cache: &mut Paths,
-    ) -> Option<Vec<Path>> {
+        cache: &mut GraphPaths,
+    ) -> Option<Vec<GraphPath>> {
         if src == dst {
-            let path: Path = vec![src.to_owned()];
+            let path: GraphPath = vec![src.to_owned()];
             return Some(vec![path]);
         }
         if !visited.insert(src.to_owned()) {
@@ -269,12 +283,16 @@ impl<T: Clone> PipeGraph<T> {
         }
     }
 
-    pub fn find_source_vertex(&self) -> Vec<String> {
-        self.graph.find_source_vertex()
+    pub fn has_vertex(&self, pid: &str) -> bool {
+        self.graph.has_vertex(pid)
     }
 
-    pub fn find_sink_vertex(&self) -> Vec<String> {
-        self.graph.find_sink_vertex()
+    pub fn find_source_vertices(&self) -> Vec<String> {
+        self.graph.find_source_vertices()
+    }
+
+    pub fn find_sink_vertices(&self) -> Vec<String> {
+        self.graph.find_sink_vertices()
     }
 
     pub fn find_components(&self) -> HashMap<String, Vec<String>> {
@@ -289,7 +307,89 @@ impl<T: Clone> PipeGraph<T> {
         self.graph.find_cycle()
     }
 
+    pub fn find_paths(
+        &self,
+        src: &str,
+        dst: &str,
+        visited: &mut HashSet<String>,
+        cache: &mut GraphPaths,
+    ) -> Option<Vec<GraphPath>> {
+        self.graph.find_paths(src, dst, visited, cache)
+    }
+
+    pub fn is_source_vertex(&self, vid: &str) -> bool {
+        self.graph.is_source_vertex(vid)
+    }
+
+    pub fn is_sink_vertex(&self, vid: &str) -> bool {
+        self.graph.is_sink_vertex(vid)
+    }
+
     pub fn get_value(&self, vid: &str) -> Option<T> {
         self.graph.get_value(vid)
+    }
+
+    fn connect_path(left_path: Vec<String>, right_path: Vec<String>) -> GraphPath {
+        if left_path.is_empty() {
+            return right_path;
+        }
+        if right_path.is_empty() {
+            return left_path;
+        }
+        // validate connection point
+        assert!(left_path.last().unwrap() == right_path.get(0).unwrap());
+        let mut connected_path: GraphPath = GraphPath::new();
+        connected_path.extend(left_path);
+        connected_path.extend(right_path[1..].to_owned());
+        connected_path
+    }
+
+    fn connect_all(left_paths: Vec<GraphPath>, right_paths: Vec<GraphPath>) -> Vec<GraphPath> {
+        let mut connected_path: Vec<GraphPath> = Vec::new();
+        for left_path in &left_paths {
+            for right_path in &right_paths {
+                connected_path.push(Self::connect_path(
+                    left_path.to_owned(),
+                    right_path.to_owned(),
+                ))
+            }
+        }
+        connected_path
+    }
+
+    // search pipelines given pipe id
+    pub fn search_pipelines(&self, pid: &str) -> Vec<GraphPath> {
+        let ref vertics = self.find_component(pid);
+        let srcs: Vec<String> = vertics
+            .to_owned()
+            .into_iter()
+            .filter(|vid| self.is_source_vertex(vid))
+            .collect();
+        let sinks: Vec<String> = vertics
+            .to_owned()
+            .into_iter()
+            .filter(|vid| self.is_sink_vertex(vid))
+            .collect();
+        let mut pipelines: Vec<GraphPath> = Vec::new();
+        for src in &srcs {
+            for sink in &sinks {
+                let src_to_pid = match self.find_pipeline(src, pid) {
+                    Some(src_to_pid) => src_to_pid,
+                    None => continue,
+                };
+                let pid_to_sink = match self.find_pipeline(pid, sink) {
+                    Some(pid_to_sink) => pid_to_sink,
+                    None => continue,
+                };
+                pipelines.extend(Self::connect_all(src_to_pid, pid_to_sink));
+            }
+        }
+        pipelines
+    }
+
+    pub fn find_pipeline(&self, src: &str, dst: &str) -> Option<Vec<GraphPath>> {
+        let mut visited: HashSet<String> = HashSet::new();
+        let mut cache = GraphPaths::new();
+        self.graph.find_paths(src, dst, &mut visited, &mut cache)
     }
 }

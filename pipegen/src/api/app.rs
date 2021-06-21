@@ -128,19 +128,22 @@ impl App {
         self.validate_objects()
     }
 
-    fn analyze_entity<T: EntityAccept<A>, A: Analyze<T> + VisitEntity<T>>(
-        entities: &Vec<T>,
-    ) -> String {
+    fn init_analyzer<T: EntityAccept<A>, A: Analyze<T> + VisitEntity<T>>(entities: &Vec<T>) -> A {
         let mut analyzer = A::new();
         for entity in entities {
             entity.accept(&mut &mut analyzer);
         }
-        analyzer.analyze();
-        analyzer.get_result()
+        analyzer
+    }
+
+    pub fn get_pipe_analyzer(&self) -> PipeGraphAnalyzer {
+        Self::init_analyzer::<Pipe, PipeGraphAnalyzer>(&self.pipes)
     }
 
     fn analyze_pipe(&self) -> String {
-        Self::analyze_entity::<Pipe, PipeGraphAnalyzer>(&self.pipes)
+        let mut analyzer = self.get_pipe_analyzer();
+        analyzer.analyze();
+        analyzer.get_result()
     }
 
     pub fn analyze(&self) {
