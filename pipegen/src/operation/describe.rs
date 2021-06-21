@@ -3,22 +3,27 @@ use crate::{
     operation::utils::PipeGraph,
 };
 
+use std::{
+    collections::HashMap,
+    fmt::{self, Display},
+};
+
 pub trait Describe<T> {
     fn new() -> Self;
     fn parse(&mut self);
-    fn describe(&self) -> String;
+    fn describe(&self) -> std::vec::IntoIter<std::string::String>;
 }
 
 pub struct PipeGraphDescriber {
     graph: PipeGraph<Pipe>,
-    pipes: Vec<String>,
-    results: Vec<String>,
+    pipe_ids: Vec<String>,
+    results: Vec<Box<dyn Display>>,
 }
 
 impl VisitEntity<Pipe> for PipeGraphDescriber {
     fn visit(&mut self, pipe: &Pipe) {
         self.graph.add_pipe(pipe, pipe.to_owned());
-        self.pipes.push(pipe.get_id().to_owned());
+        self.pipe_ids.push(pipe.get_id().to_owned());
     }
 }
 
@@ -26,106 +31,119 @@ impl Describe<Pipe> for PipeGraphDescriber {
     fn new() -> Self {
         PipeGraphDescriber {
             graph: PipeGraph::new(),
-            pipes: Vec::new(),
+            pipe_ids: Vec::new(),
             results: Vec::new(),
         }
     }
 
-    fn describe(&self) -> String {
-        self.results.join("")
+    fn describe(&self) -> std::vec::IntoIter<std::string::String> {
+        let mut results: Vec<String> = Vec::new();
+        for result in &self.results {
+            results.push(format!("{}", result))
+        }
+        results.into_iter()
     }
 
     fn parse(&mut self) {
         self.results.clear();
-        self.parse_source_sink_vertices();
-        self.section_sep();
-        self.parse_components();
-        self.section_sep();
-        self.parse_all_vertices();
+        self.results.push(self.display_source_pipe_ids());
+        self.results.push(self.display_sink_pipe_ids());
+        for component in self.display_pipe_components() {
+            self.results.push(component)
+        }
     }
 }
 
 impl PipeGraphDescriber {
-    fn format_pipe_ids(pids: &Vec<String>, sep: &str, label: Option<&str>) -> String {
-        let joined_pids = pids.join(sep);
-        match label {
-            Some(label) => format!("{}: {}\n", label, joined_pids),
-            None => joined_pids,
-        }
+    fn display_source_pipe_ids(&self) -> Box<PipeIdsDisplay> {
+        Box::new(PipeIdsDisplay {
+            ids: self.get_source_pipe_ids(),
+            sep: PIPE_LIST_SEP.to_owned(),
+            label: Some(SOURCE_PIPE_LABEL.to_owned()),
+        })
     }
 
-    fn describe_all_pipes(&self) -> String {
-        let mut all_pipes: Vec<String> = vec![];
-
-        for i in 0..self.pipes.len() {
-            let pipe = self.pipes.get(i).unwrap();
-            all_pipes.push(format!(
-                "{} - {}",
-                i,
-                self.graph.get_pipe_value(pipe).unwrap()
-            ));
-        }
-        all_pipes.join("\n")
+    fn display_sink_pipe_ids(&self) -> Box<PipeIdsDisplay> {
+        Box::new(PipeIdsDisplay {
+            ids: self.get_sink_pipe_ids(),
+            sep: PIPE_LIST_SEP.to_owned(),
+            label: Some(SINK_PIPE_LABEL.to_owned()),
+        })
     }
 
-    fn describe_pipelines(&self, pid: &str) -> Option<String> {
+    fn display_pipe_components(&self) -> Vec<Box<PipeIdsDisplay>> {
+        let mut components_display: Vec<Box<PipeIdsDisplay>> = Vec::new();
+        for component in self.get_pipe_components() {
+            let component_display = PipeIdsDisplay {
+                ids: component,
+                sep: PIPE_LIST_SEP.to_owned(),
+                label: Some(PIPE_COMPONENT_LABEL.to_owned()),
+            };
+            components_display.push(Box::new(component_display));
+        }
+        components_display
+    }
+
+    fn display_pipelines(&self, pid: &str) -> Vec<Box<PipeIdsDisplay>> {
+        let mut pipelines_display: Vec<Box<PipeIdsDisplay>> = Vec::new();
+        for pipeline in self.get_pipelines(pid) {
+            let pipeline_display = PipeIdsDisplay {
+                ids: pipeline,
+                sep: PIPE_DIRECT_SEP.to_owned(),
+                label: Some(PIPELINE_LABEL.to_owned()),
+            };
+            pipelines_display.push(Box::new(pipeline_display));
+        }
+        pipelines_display
+    }
+
+    pub fn get_source_pipe_ids(&self) -> Vec<String> {
+        self.graph.find_source_pipes()
+    }
+
+    pub fn get_sink_pipe_ids(&self) -> Vec<String> {
+        self.graph.find_sink_pipes()
+    }
+
+    pub fn get_pipelines(&self, pid: &str) -> Vec<Vec<String>> {
         if !self.graph.has_pipe(pid) {
-            return None;
+            return Vec::new();
         }
-        let pipelines = self.graph.search_pipelines(pid);
-        if pipelines.is_empty() {
-            return None;
-        }
-        let mut pipeline_results: Vec<String> = Vec::new();
-        for pipeline in &pipelines {
-            pipeline_results.push(Self::format_pipe_ids(
-                pipeline,
-                DESCRIBE_PIPE_VERTEX_CONNECT,
-                None,
-            ))
-        }
-        Some(pipeline_results.join("\n"))
+        self.graph.search_pipelines(pid)
     }
 
-    fn parse_source_sink_vertices(&mut self) {
-        let sources = self.graph.find_source_pipes();
-        let sinks = self.graph.find_sink_pipes();
-        self.results.push(Self::format_pipe_ids(
-            &sources,
-            DESCRIBE_PIPE_VERTEX_SEP,
-            Some("source"),
-        ));
-        self.results.push(Self::format_pipe_ids(
-            &sinks,
-            DESCRIBE_PIPE_VERTEX_SEP,
-            Some("sink"),
-        ));
-    }
-
-    fn parse_components(&mut self) {
-        let components = self.graph.find_components();
-        for (union_vertex, vertices) in &components {
-            let label = format!("union {}", union_vertex);
-            self.results.push(Self::format_pipe_ids(
-                vertices,
-                DESCRIBE_PIPE_VERTEX_SEP,
-                Some(&label),
-            ));
+    pub fn get_pipe_components(&self) -> Vec<Vec<String>> {
+        let mut components: Vec<Vec<String>> = Vec::new();
+        for component in self.graph.find_components().values() {
+            components.push(component.to_owned())
         }
-    }
-
-    fn parse_all_vertices(&mut self) {
-        self.results.push(self.describe_all_pipes())
-    }
-
-    fn section_sep(&mut self) {
-        self.results.push(DESCRIBE_PIPE_SECTION_SEP.to_owned());
+        components
     }
 }
 
-const DESCRIBE_PIPE_VERTEX_SEP: &str = ", ";
-const DESCRIBE_PIPE_SECTION_SEP: &str = "\n";
-const DESCRIBE_PIPE_VERTEX_CONNECT: &str = " -> ";
+pub struct PipeIdsDisplay {
+    ids: Vec<String>,
+    sep: String,
+    label: Option<String>,
+}
+
+impl fmt::Display for PipeIdsDisplay {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let ids_lit = self.ids.join(&self.sep);
+        match self.label {
+            Some(ref label) => write!(f, "{}: {}", label, ids_lit),
+            None => write!(f, "{}", ids_lit),
+        }
+    }
+}
+
+const SOURCE_PIPE_LABEL: &str = "source";
+const SINK_PIPE_LABEL: &str = "sink";
+const PIPE_COMPONENT_LABEL: &str = "union";
+const PIPELINE_LABEL: &str = "pipeline";
+const PIPE_LIST_SEP: &str = ", ";
+const PIPE_DIRECT_SEP: &str = " -> ";
+const DISPLAY_NEWLINE: &str = "\n";
 
 #[cfg(test)]
 mod tests {
@@ -145,8 +163,9 @@ mod tests {
         let manifest_path = "resources/manifest/print_timer_tick_pipe.yml";
         let app = App::parse(manifest_path).unwrap();
         app.validate().expect("expect valid");
-        let analyzer = app.get_pipe_describer();
-        let pipeline = analyzer.describe_pipelines("printer").unwrap();
-        println!("{}", pipeline)
+        let describer = app.get_pipe_describer();
+        for pipeline in describer.display_pipelines("printer") {
+            println!("{}", pipeline)
+        }
     }
 }

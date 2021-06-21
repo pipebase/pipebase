@@ -140,14 +140,19 @@ impl App {
         Self::init_describer::<Pipe, PipeGraphDescriber>(&self.pipes)
     }
 
-    fn describe_pipes(&self) -> String {
+    fn describe_pipes(&self) -> std::vec::IntoIter<std::string::String> {
         let mut describe = self.get_pipe_describer();
         describe.parse();
         describe.describe()
     }
 
     pub fn describe(&self) {
-        let result = self.describe_pipes();
-        println!("{}", result);
+        let mut results = self.describe_pipes();
+        loop {
+            match results.next() {
+                Some(result) => println!("{}", result),
+                None => break,
+            }
+        }
     }
 }
