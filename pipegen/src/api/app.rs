@@ -8,10 +8,10 @@ use crate::operation::DataFieldValidator;
 use crate::operation::ObjectDependencyValidator;
 use crate::operation::ObjectIdValidator;
 use crate::operation::PipeDependencyValidator;
-use crate::operation::PipeGraphAnalyzer;
+use crate::operation::PipeGraphDescriber;
 use crate::operation::PipeGraphValidator;
 use crate::operation::{
-    Analyze, Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate,
+    Describe, Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate,
 };
 use serde::Deserialize;
 
@@ -128,7 +128,7 @@ impl App {
         self.validate_objects()
     }
 
-    fn init_analyzer<T: EntityAccept<A>, A: Analyze<T> + VisitEntity<T>>(entities: &Vec<T>) -> A {
+    fn init_describer<T: EntityAccept<A>, A: Describe<T> + VisitEntity<T>>(entities: &Vec<T>) -> A {
         let mut analyzer = A::new();
         for entity in entities {
             entity.accept(&mut &mut analyzer);
@@ -136,18 +136,18 @@ impl App {
         analyzer
     }
 
-    pub fn get_pipe_analyzer(&self) -> PipeGraphAnalyzer {
-        Self::init_analyzer::<Pipe, PipeGraphAnalyzer>(&self.pipes)
+    pub fn get_pipe_describer(&self) -> PipeGraphDescriber {
+        Self::init_describer::<Pipe, PipeGraphDescriber>(&self.pipes)
     }
 
-    fn analyze_pipe(&self) -> String {
-        let mut analyzer = self.get_pipe_analyzer();
-        analyzer.analyze();
-        analyzer.get_result()
+    fn describe_pipes(&self) -> String {
+        let mut describe = self.get_pipe_describer();
+        describe.parse();
+        describe.describe()
     }
 
-    pub fn analyze(&self) {
-        let result = self.analyze_pipe();
+    pub fn describe(&self) {
+        let result = self.describe_pipes();
         println!("{}", result);
     }
 }
