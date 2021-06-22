@@ -7,7 +7,6 @@ use crate::error::*;
 use crate::operation::DataFieldValidator;
 use crate::operation::ObjectDependencyValidator;
 use crate::operation::ObjectIdValidator;
-use crate::operation::PipeDependencyValidator;
 use crate::operation::PipeGraphDescriber;
 use crate::operation::PipeGraphValidator;
 use crate::operation::{
@@ -104,7 +103,6 @@ impl App {
 
     fn validate_pipes(&self) -> Result<()> {
         Self::validate_entity::<Pipe, PipeIdValidator>(&self.pipes, "pipes")?;
-        Self::validate_entity::<Pipe, PipeDependencyValidator>(&self.pipes, "pipes")?;
         Self::validate_entity::<Pipe, PipeGraphValidator>(&self.pipes, "pipes")
     }
 

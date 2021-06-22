@@ -58,7 +58,7 @@ impl<T: Clone> Vertex<T> {
         self.in_vertices.to_owned()
     }
 
-    pub fn get_in_vertices_count(&self) -> usize {
+    pub fn get_in_vertex_count(&self) -> usize {
         self.in_vertices.len()
     }
 
@@ -66,7 +66,7 @@ impl<T: Clone> Vertex<T> {
         self.out_vertices.to_owned()
     }
 
-    pub fn get_out_vertices_count(&self) -> usize {
+    pub fn get_out_vertex_count(&self) -> usize {
         self.out_vertices.len()
     }
 
@@ -155,7 +155,7 @@ impl<T: Clone> DirectedGraph<T> {
         let mut candidates: Vec<String> = vec![];
         let mut in_counts: HashMap<String, usize> = HashMap::new();
         for (vid, vertex) in &self.vertices {
-            let in_count = vertex.get_in_vertices_count();
+            let in_count = vertex.get_in_vertex_count();
             in_counts.insert(vid.to_owned(), in_count);
             if in_count == 0 {
                 candidates.push(vid.to_owned());
@@ -250,7 +250,7 @@ impl<T: Clone> DirectedGraph<T> {
     pub fn find_source_vertices(&self) -> Vec<String> {
         let mut source_vertex = vec![];
         for (vid, vertex) in &self.vertices {
-            if vertex.get_in_vertices_count() == 0 {
+            if vertex.get_in_vertex_count() == 0 {
                 source_vertex.push(vid.to_owned());
             }
         }
@@ -260,25 +260,31 @@ impl<T: Clone> DirectedGraph<T> {
     pub fn find_sink_vertices(&self) -> Vec<String> {
         let mut sink_vertex = vec![];
         for (vid, vertex) in &self.vertices {
-            if vertex.get_out_vertices_count() == 0 {
+            if vertex.get_out_vertex_count() == 0 {
                 sink_vertex.push(vid.to_owned());
             }
         }
         sink_vertex
     }
 
-    pub fn is_source_vertex(&self, vid: &str) -> bool {
-        if !self.has_vertex(vid) {
-            return false;
-        }
-        self.vertices.get(vid).unwrap().get_in_vertices_count() == 0
+    pub fn has_in_vertex(&self, vid: &str) -> bool {
+        assert!(self.has_vertex(vid));
+        self.vertices.get(vid).unwrap().get_in_vertex_count() > 0
     }
 
-    pub fn is_sink_vertex(&self, vid: &str) -> bool {
-        if !self.has_vertex(vid) {
-            return false;
-        }
-        self.vertices.get(vid).unwrap().get_out_vertices_count() == 0
+    pub fn get_in_vertices(&self, vid: &str) -> HashSet<String> {
+        assert!(self.has_vertex(vid));
+        self.vertices.get(vid).unwrap().get_in_vertices()
+    }
+
+    pub fn has_out_vertex(&self, vid: &str) -> bool {
+        assert!(self.has_vertex(vid));
+        self.vertices.get(vid).unwrap().get_out_vertex_count() > 0
+    }
+
+    pub fn get_out_vertices(&self, vid: &str) -> HashSet<String> {
+        assert!(self.has_vertex(vid));
+        self.vertices.get(vid).unwrap().get_out_vertices()
     }
 
     pub fn find_paths(
@@ -335,7 +341,10 @@ impl<T: Clone> PipeGraph<T> {
     }
 
     pub fn has_pipe(&self, pid: &str) -> bool {
-        self.graph.has_vertex(pid)
+        if !self.graph.has_vertex(pid) {
+            return false;
+        }
+        self.graph.get_value(pid).is_some()
     }
 
     pub fn find_source_pipes(&self) -> Vec<String> {
@@ -368,15 +377,24 @@ impl<T: Clone> PipeGraph<T> {
         self.graph.find_paths(src, dst, visited, cache)
     }
 
-    pub fn is_source_pipe(&self, pid: &str) -> bool {
-        self.graph.is_source_vertex(pid)
+    pub fn has_upstream_pipe(&self, pid: &str) -> bool {
+        self.graph.has_in_vertex(pid)
     }
 
-    pub fn is_sink_pipe(&self, pid: &str) -> bool {
-        self.graph.is_sink_vertex(pid)
+    pub fn get_upstream_pipes(&self, pid: &str) -> HashSet<String> {
+        self.graph.get_in_vertices(pid)
+    }
+
+    pub fn has_downstream_pipe(&self, pid: &str) -> bool {
+        self.graph.has_out_vertex(pid)
+    }
+
+    pub fn get_downstream_pipes(&self, pid: &str) -> HashSet<String> {
+        self.graph.get_out_vertices(pid)
     }
 
     pub fn get_pipe_value(&self, pid: &str) -> Option<T> {
+        assert!(self.has_pipe(pid));
         self.graph.get_value(pid)
     }
 
@@ -414,12 +432,12 @@ impl<T: Clone> PipeGraph<T> {
         let srcs: Vec<String> = vertics
             .to_owned()
             .into_iter()
-            .filter(|vid| self.is_source_pipe(vid))
+            .filter(|vid| self.has_upstream_pipe(vid))
             .collect();
         let sinks: Vec<String> = vertics
             .to_owned()
             .into_iter()
-            .filter(|vid| self.is_sink_pipe(vid))
+            .filter(|vid| self.has_downstream_pipe(vid))
             .collect();
         let mut pipelines: Vec<GraphPath> = Vec::new();
         for src in &srcs {

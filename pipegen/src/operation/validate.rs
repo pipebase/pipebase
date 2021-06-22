@@ -92,102 +92,6 @@ impl Validate<Pipe> for PipeIdValidator {
     }
 }
 
-#[derive(Default)]
-pub struct PipeDependencyValidator {
-    pub location: String,
-    pub ids: Vec<String>,
-    pub is_source: HashMap<String, bool>,
-    // dependency pipe id -> other pipe ids
-    pub deps: HashMap<String, Vec<String>>,
-    pub error_details: HashMap<String, String>,
-}
-
-impl VisitEntity<Pipe> for PipeDependencyValidator {
-    fn visit(&mut self, pipe: &Pipe) {
-        let ref id = pipe.get_id();
-        self.ids.push(id.to_owned());
-        self.is_source.insert(id.to_owned(), pipe.is_source());
-        if !self.deps.contains_key(id) {
-            self.deps.insert(id.to_owned(), vec![]);
-        }
-        self.deps
-            .get_mut(id)
-            .unwrap()
-            .extend(pipe.list_dependency());
-    }
-}
-
-impl PipeDependencyValidator {
-    pub fn is_source_pipe(&self, id: &str) -> bool {
-        self.is_source.get(id).unwrap().to_owned()
-    }
-
-    pub fn validate_source_pipe(&mut self, id: &str, location: &str) {
-        match self.deps.get(id).unwrap().is_empty() {
-            true => (),
-            false => {
-                self.error_details.insert(
-                    location.to_owned(),
-                    format!("found invalid upstream for source pipe"),
-                );
-            }
-        }
-    }
-
-    pub fn validate_downstream_pipe(&mut self, id: &str, location: &str) {
-        let deps = self.deps.get(id).unwrap();
-        match deps.is_empty() {
-            true => {
-                self.error_details.insert(
-                    location.to_owned(),
-                    format!("no upstream found for downstream pipe"),
-                );
-                return;
-            }
-            false => (),
-        };
-        let mut visited_deps: HashSet<String> = HashSet::new();
-        for dep in deps {
-            match self.deps.contains_key(dep) {
-                true => (),
-                false => {
-                    self.error_details
-                        .insert(location.to_owned(), format!("upstream does not exists"));
-                }
-            }
-            if !visited_deps.insert(dep.to_owned()) {
-                self.error_details
-                    .insert(location.to_owned(), format!("duplicated upstream"));
-            }
-        }
-    }
-}
-
-impl Validate<Pipe> for PipeDependencyValidator {
-    fn new(location: &str) -> Self {
-        PipeDependencyValidator {
-            location: location.to_owned(),
-            ..Default::default()
-        }
-    }
-
-    fn display_error_details(&self) -> Option<ValidationErrorDetailsDisplay> {
-        Self::details_to_display(self.error_details.to_owned())
-    }
-
-    fn validate(&mut self) {
-        let mut i: usize = 0;
-        for id in self.ids.to_owned() {
-            let location = format!("{}[{}].{}", self.location, i, PIPE_ENTITY_DEPENDENCY_FIELD);
-            match self.is_source_pipe(&id) {
-                true => self.validate_source_pipe(&id, &location),
-                false => self.validate_downstream_pipe(&id, &location),
-            };
-            i += 1;
-        }
-    }
-}
-
 pub struct PipeGraphValidator {
     pub location: String,
     pub graph: PipeGraph<Pipe>,
@@ -217,6 +121,37 @@ impl Validate<Pipe> for PipeGraphValidator {
     }
 
     fn validate(&mut self) {
+        for (pid, i) in &self.index {
+            let pipe = self.graph.get_pipe_value(pid).unwrap();
+            let location = format!("{}[{}].{}", self.location, i, PIPE_ENTITY_DEPENDENCY_FIELD);
+            if pipe.is_source() {
+                if self.graph.has_upstream_pipe(pid) {
+                    self.error_details.insert(
+                        location.to_owned(),
+                        format!("found invalid upstream for source pipe"),
+                    );
+                }
+                continue;
+            }
+            // non-source pipe must have upstream
+            if !self.graph.has_upstream_pipe(pid) {
+                self.error_details.insert(
+                    location.to_owned(),
+                    format!("no upstream found for downstream pipe"),
+                );
+                continue;
+            }
+            for upid in &self.graph.get_upstream_pipes(pid) {
+                if !self.graph.has_pipe(upid) {
+                    self.error_details
+                        .insert(location.to_owned(), format!("upstream does not exists"));
+                }
+            }
+        }
+        if !self.error_details.is_empty() {
+            // continue validation if previous error fixed
+            return;
+        }
         let cycle_vertex = self.graph.find_cycle();
         for pid in &cycle_vertex {
             let location = format!("{}[{}]", self.location, self.index.get(pid).unwrap());
@@ -512,14 +447,6 @@ mod tests {
     #[test]
     fn test_non_exists_upstream_pipe() {
         let manifest_path = "resources/manifest/non_exists_upstream_pipe.yml";
-        let app = App::parse(manifest_path).unwrap();
-        let e = app.validate().expect_err("expect invalid");
-        println!("{}", e)
-    }
-
-    #[test]
-    fn test_duplicated_upstream_pipe() {
-        let manifest_path = "resources/manifest/duplicated_upstream_pipe.yml";
         let app = App::parse(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
