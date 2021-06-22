@@ -432,12 +432,12 @@ impl<T: Clone> PipeGraph<T> {
         let srcs: Vec<String> = vertics
             .to_owned()
             .into_iter()
-            .filter(|vid| self.has_upstream_pipe(vid))
+            .filter(|vid| !self.has_upstream_pipe(vid))
             .collect();
         let sinks: Vec<String> = vertics
             .to_owned()
             .into_iter()
-            .filter(|vid| self.has_downstream_pipe(vid))
+            .filter(|vid| !self.has_downstream_pipe(vid))
             .collect();
         let mut pipelines: Vec<GraphPath> = Vec::new();
         for src in &srcs {

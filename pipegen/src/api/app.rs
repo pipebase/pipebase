@@ -9,10 +9,12 @@ use crate::operation::ObjectDependencyValidator;
 use crate::operation::ObjectIdValidator;
 use crate::operation::PipeGraphDescriber;
 use crate::operation::PipeGraphValidator;
+use crate::operation::PipeIdsDisplay;
 use crate::operation::{
     Describe, Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate,
 };
 use serde::Deserialize;
+use std::fmt;
 
 #[derive(Deserialize, Debug)]
 pub struct App {
@@ -101,12 +103,12 @@ impl App {
         }
     }
 
-    fn validate_pipes(&self) -> Result<()> {
+    pub fn validate_pipes(&self) -> Result<()> {
         Self::validate_entity::<Pipe, PipeIdValidator>(&self.pipes, "pipes")?;
         Self::validate_entity::<Pipe, PipeGraphValidator>(&self.pipes, "pipes")
     }
 
-    fn validate_objects(&self) -> Result<()> {
+    pub fn validate_objects(&self) -> Result<()> {
         let objects = match self.objects {
             Some(ref objects) => objects,
             None => return Ok(()),
@@ -126,31 +128,34 @@ impl App {
         self.validate_objects()
     }
 
-    fn init_describer<T: EntityAccept<A>, A: Describe<T> + VisitEntity<T>>(entities: &Vec<T>) -> A {
-        let mut analyzer = A::new();
+    fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(entities: &Vec<T>) -> A {
+        let mut describer = A::new();
         for entity in entities {
-            entity.accept(&mut &mut analyzer);
+            entity.accept(&mut &mut describer);
         }
-        analyzer
+        describer.parse();
+        describer
     }
 
     pub fn get_pipe_describer(&self) -> PipeGraphDescriber {
         Self::init_describer::<Pipe, PipeGraphDescriber>(&self.pipes)
     }
 
-    fn describe_pipes(&self) -> std::vec::IntoIter<std::string::String> {
+    pub fn describe_pipes(&self) -> Vec<String> {
+        let describe = self.get_pipe_describer();
+        describe.describe()
+    }
+
+    pub fn describe_pipelines(&self, pid: &str) -> Vec<String> {
         let mut describe = self.get_pipe_describer();
         describe.parse();
-        describe.describe()
+        describe.describe_pipelines(pid)
     }
 
     pub fn describe(&self) {
         let mut results = self.describe_pipes();
-        loop {
-            match results.next() {
-                Some(result) => println!("{}", result),
-                None => break,
-            }
+        for result in results {
+            println!("{}", result)
         }
     }
 }

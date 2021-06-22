@@ -5,10 +5,10 @@ use crate::{
 
 use std::fmt::{self, Display};
 
-pub trait Describe<T> {
+pub trait Describe {
     fn new() -> Self;
     fn parse(&mut self);
-    fn describe(&self) -> std::vec::IntoIter<std::string::String>;
+    fn describe(&self) -> Vec<String>;
 }
 
 pub struct PipeGraphDescriber {
@@ -24,7 +24,7 @@ impl VisitEntity<Pipe> for PipeGraphDescriber {
     }
 }
 
-impl Describe<Pipe> for PipeGraphDescriber {
+impl Describe for PipeGraphDescriber {
     fn new() -> Self {
         PipeGraphDescriber {
             graph: PipeGraph::new(),
@@ -33,63 +33,71 @@ impl Describe<Pipe> for PipeGraphDescriber {
         }
     }
 
-    fn describe(&self) -> std::vec::IntoIter<std::string::String> {
+    fn describe(&self) -> Vec<String> {
         let mut results: Vec<String> = Vec::new();
         for result in &self.results {
             results.push(format!("{}", result))
         }
-        results.into_iter()
+        results
     }
 
     fn parse(&mut self) {
         self.results.clear();
-        self.results.push(self.display_source_pipe_ids());
-        self.results.push(self.display_sink_pipe_ids());
+        self.results.push(Box::new(self.display_source_pipe_ids()));
+        self.results.push(Box::new(self.display_sink_pipe_ids()));
         for component in self.display_pipe_components() {
-            self.results.push(component)
+            self.results.push(Box::new(component))
         }
     }
 }
 
 impl PipeGraphDescriber {
-    fn display_source_pipe_ids(&self) -> Box<PipeIdsDisplay> {
-        Box::new(PipeIdsDisplay {
+    pub fn describe_pipelines(&self, pid: &str) -> Vec<String> {
+        let mut results: Vec<String> = Vec::new();
+        for pipeline in &self.display_pipelines(pid) {
+            results.push(format!("{}", pipeline))
+        }
+        results
+    }
+
+    fn display_source_pipe_ids(&self) -> PipeIdsDisplay {
+        PipeIdsDisplay {
             ids: self.get_source_pipe_ids(),
             sep: PIPE_LIST_SEP.to_owned(),
             label: Some(SOURCE_PIPE_LABEL.to_owned()),
-        })
+        }
     }
 
-    fn display_sink_pipe_ids(&self) -> Box<PipeIdsDisplay> {
-        Box::new(PipeIdsDisplay {
+    fn display_sink_pipe_ids(&self) -> PipeIdsDisplay {
+        PipeIdsDisplay {
             ids: self.get_sink_pipe_ids(),
             sep: PIPE_LIST_SEP.to_owned(),
             label: Some(SINK_PIPE_LABEL.to_owned()),
-        })
+        }
     }
 
-    fn display_pipe_components(&self) -> Vec<Box<PipeIdsDisplay>> {
-        let mut components_display: Vec<Box<PipeIdsDisplay>> = Vec::new();
+    fn display_pipe_components(&self) -> Vec<PipeIdsDisplay> {
+        let mut components_display: Vec<PipeIdsDisplay> = Vec::new();
         for component in self.get_pipe_components() {
             let component_display = PipeIdsDisplay {
                 ids: component,
                 sep: PIPE_LIST_SEP.to_owned(),
                 label: Some(PIPE_COMPONENT_LABEL.to_owned()),
             };
-            components_display.push(Box::new(component_display));
+            components_display.push(component_display);
         }
         components_display
     }
 
-    fn display_pipelines(&self, pid: &str) -> Vec<Box<PipeIdsDisplay>> {
-        let mut pipelines_display: Vec<Box<PipeIdsDisplay>> = Vec::new();
+    fn display_pipelines(&self, pid: &str) -> Vec<PipeIdsDisplay> {
+        let mut pipelines_display: Vec<PipeIdsDisplay> = Vec::new();
         for pipeline in self.get_pipelines(pid) {
             let pipeline_display = PipeIdsDisplay {
                 ids: pipeline,
                 sep: PIPE_DIRECT_SEP.to_owned(),
                 label: Some(PIPELINE_LABEL.to_owned()),
             };
-            pipelines_display.push(Box::new(pipeline_display));
+            pipelines_display.push(pipeline_display);
         }
         pipelines_display
     }
@@ -103,9 +111,7 @@ impl PipeGraphDescriber {
     }
 
     pub fn get_pipelines(&self, pid: &str) -> Vec<Vec<String>> {
-        if !self.graph.has_pipe(pid) {
-            return Vec::new();
-        }
+        assert!(self.graph.has_pipe(pid));
         self.graph.search_pipelines(pid)
     }
 
@@ -118,6 +124,7 @@ impl PipeGraphDescriber {
     }
 }
 
+#[derive(Clone)]
 pub struct PipeIdsDisplay {
     ids: Vec<String>,
     sep: String,
@@ -161,7 +168,8 @@ mod tests {
         let app = App::parse(manifest_path).unwrap();
         app.validate().expect("expect valid");
         let describer = app.get_pipe_describer();
-        for pipeline in describer.display_pipelines("printer") {
+        assert_eq!(2, describer.get_pipelines("printer").len());
+        for pipeline in app.describe_pipelines("printer") {
             println!("{}", pipeline)
         }
     }
