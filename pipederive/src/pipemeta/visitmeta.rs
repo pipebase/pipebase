@@ -1,8 +1,5 @@
 use super::meta::PipeMeta;
 use crate::constants::{CHANNEL_MACRO, PIPE_CHANNEL_DEFAULT_BUFFER, SPAWN_JOIN_MACRO};
-use core::panic;
-use std::borrow::Borrow;
-use std::ops::Deref;
 
 pub trait VisitPipeMeta: Default {
     fn visit(&mut self, meta: &PipeMeta);
@@ -82,7 +79,7 @@ pub struct PipeExpr {
 impl VisitPipeMeta for PipeExpr {
     fn visit(&mut self, meta: &PipeMeta) {
         let name = meta.get_name();
-        let kind = meta.get_kind();
+        let ty = meta.get_ty();
         let config_meta = meta.get_config_meta();
         let config_ty = config_meta.get_ty();
         let config_path = config_meta.get_path();
@@ -95,7 +92,7 @@ impl VisitPipeMeta for PipeExpr {
         };
         let rhs = format!(
             r#"{}("{}", "{}", {}, {}, {})"#,
-            Self::kind_macro(&kind),
+            Self::type_macro(&ty),
             name,
             config_path,
             config_ty,
@@ -117,8 +114,8 @@ impl Expr for PipeExpr {
 }
 
 impl PipeExpr {
-    fn kind_macro(kind: &str) -> String {
-        format!("{}!", kind)
+    fn type_macro(ty: &str) -> String {
+        format!("{}!", ty)
     }
 
     fn gen_recevier_expr(pipe_name: &str) -> String {

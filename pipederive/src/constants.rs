@@ -17,7 +17,7 @@ pub const HASH_KEY: &str = "hkey";
 pub const ORD_KEY: &str = "okey";
 
 pub const PIPE_NAME: &str = "pipe.name";
-pub const PIPE_KIND: &str = "pipe.kind";
+pub const PIPE_TYPE: &str = "pipe.ty";
 pub const PIPE_UPSTREAM: &str = "pipe.upstream";
 pub const PIPE_UPSTREAM_NAME_SEP: &str = ",";
 pub const PIPE_CONFIG_TYPE: &str = "pipe.config.ty";

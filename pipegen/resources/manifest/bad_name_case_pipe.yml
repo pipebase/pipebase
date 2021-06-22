@@ -1,6 +1,6 @@
 name: bad_pipe_name
 pipes:
   - name: BadpipeName
-    kind: Poller
+    ty: Poller
     config:
       ty: SomeConfig

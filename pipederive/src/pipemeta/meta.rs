@@ -1,16 +1,15 @@
 use super::Expr;
 use super::VisitPipeMeta;
 
-use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Deref;
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 use syn::Attribute;
 
 use crate::constants::PIPE_UPSTREAM_NAME_SEP;
 use crate::constants::{
-    PIPE_CONFIG_EMPTY_PATH, PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_KIND, PIPE_NAME, PIPE_OUTPUT,
+    PIPE_CONFIG_EMPTY_PATH, PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_NAME, PIPE_OUTPUT, PIPE_TYPE,
     PIPE_UPSTREAM,
 };
 use crate::utils::get_meta_string_value_by_meta_path;
@@ -38,7 +37,7 @@ impl PipeConfigMeta {
 /// Pipe metadata
 pub struct PipeMeta {
     pub name: String,
-    pub kind: String,
+    pub ty: String,
     pub config_meta: PipeConfigMeta,
     pub output_meta: Option<String>,
     pub upstream_names: Vec<String>,
@@ -55,8 +54,8 @@ impl PipeMeta {
         self.name.to_owned()
     }
 
-    pub fn get_kind(&self) -> String {
-        self.kind.to_owned()
+    pub fn get_ty(&self) -> String {
+        self.ty.to_owned()
     }
 
     pub fn get_config_meta(&self) -> PipeConfigMeta {
@@ -105,7 +104,7 @@ impl PipeMeta {
     pub fn parse(attribute: &Attribute) -> Self {
         PipeMeta {
             name: Self::parse_name(attribute),
-            kind: Self::parse_kind(attribute),
+            ty: Self::parse_ty(attribute),
             config_meta: Self::parse_config_meta(attribute),
             output_meta: Self::parse_output_meta(attribute),
             upstream_names: Self::parse_upstream_names(attribute),
@@ -118,19 +117,22 @@ impl PipeMeta {
         get_meta_string_value_by_meta_path(PIPE_NAME, attribute, true).unwrap()
     }
 
-    fn parse_kind(attribute: &Attribute) -> String {
-        get_meta_string_value_by_meta_path(PIPE_KIND, attribute, true).unwrap()
+    fn parse_ty(attribute: &Attribute) -> String {
+        get_meta_string_value_by_meta_path(PIPE_TYPE, attribute, true).unwrap()
     }
 
     fn parse_upstream_names(attribute: &Attribute) -> Vec<String> {
         match get_meta_string_value_by_meta_path(PIPE_UPSTREAM, attribute, false) {
-            Some(mut upstream_names) => {
-                // clean whitespace
-                upstream_names.retain(|c| !c.is_whitespace());
+            Some(upstream_names) => {
                 // split into vector of upstreams
                 upstream_names
                     .split(PIPE_UPSTREAM_NAME_SEP)
-                    .map(|n| n.to_owned())
+                    .map(|n| {
+                        let mut n = n.to_owned();
+                        // clean whitespace after split
+                        n.retain(|c| !c.is_whitespace());
+                        n
+                    })
                     .collect()
             }
             None => vec![],

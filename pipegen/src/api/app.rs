@@ -1,14 +1,20 @@
+use super::EntityAccept;
 use super::Object;
+use super::VisitEntity;
 use crate::api::pipe::Pipe;
 use crate::api::DataField;
 use crate::error::*;
 use crate::operation::DataFieldValidator;
 use crate::operation::ObjectDependencyValidator;
 use crate::operation::ObjectIdValidator;
-use crate::operation::PipeDependencyValidator;
+use crate::operation::PipeGraphDescriber;
 use crate::operation::PipeGraphValidator;
-use crate::operation::{Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate};
+use crate::operation::PipeIdsDisplay;
+use crate::operation::{
+    Describe, Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate,
+};
 use serde::Deserialize;
+use std::fmt;
 
 #[derive(Deserialize, Debug)]
 pub struct App {
@@ -34,10 +40,23 @@ impl App {
         println!("{}", self.generate())
     }
 
-    fn generate_lits<T, G: Generate<T>>(items: &Vec<T>, indent: usize, join_sep: &str) -> String {
+    fn generate_entity<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
+        entity: &T,
+        indent: usize,
+    ) -> Option<String> {
+        let mut generator = G::new(indent);
+        entity.accept(&mut generator);
+        generator.generate()
+    }
+
+    fn generate_entities<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
+        entities: &Vec<T>,
+        indent: usize,
+        join_sep: &str,
+    ) -> String {
         let mut lits: Vec<String> = vec![];
-        for item in items.as_slice() {
-            match G::do_generate(item, indent) {
+        for entity in entities.as_slice() {
+            match Self::generate_entity(entity, indent) {
                 Some(lit) => lits.push(lit),
                 None => continue,
             }
@@ -50,7 +69,8 @@ impl App {
             Some(ref objects) => objects,
             None => return None,
         };
-        let objects_lit = Self::generate_lits::<Object, ObjectGenerator>(objects, indent, "\n\n");
+        let objects_lit =
+            Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n");
         Some(objects_lit)
     }
 
@@ -60,7 +80,7 @@ impl App {
             Some(objects_lit) => sections.push(objects_lit),
             None => (),
         };
-        sections.push(Self::generate_lits::<Pipe, PipeGenerator>(
+        sections.push(Self::generate_entities::<Pipe, PipeGenerator>(
             &(self.pipes),
             1,
             "\n",
@@ -68,17 +88,27 @@ impl App {
         format!("mod {} {{\n{}\n}}", self.name, sections.join("\n\n"))
     }
 
-    fn validate_entity<T, V: Validate<T>>(items: &Vec<T>, location: &str) -> Result<()> {
-        V::do_validate(items, location)
+    fn validate_entity<T: EntityAccept<V>, V: Validate<T> + VisitEntity<T>>(
+        items: &Vec<T>,
+        location: &str,
+    ) -> Result<()> {
+        let mut validator: V = V::new(location);
+        for item in items {
+            item.accept(&mut validator);
+        }
+        validator.validate();
+        match validator.display_error_details() {
+            Some(details) => Err(api_error(details)),
+            None => Ok(()),
+        }
     }
 
-    fn validate_pipes(&self) -> Result<()> {
+    pub fn validate_pipes(&self) -> Result<()> {
         Self::validate_entity::<Pipe, PipeIdValidator>(&self.pipes, "pipes")?;
-        Self::validate_entity::<Pipe, PipeDependencyValidator>(&self.pipes, "pipes")?;
         Self::validate_entity::<Pipe, PipeGraphValidator>(&self.pipes, "pipes")
     }
 
-    fn validate_objects(&self) -> Result<()> {
+    pub fn validate_objects(&self) -> Result<()> {
         let objects = match self.objects {
             Some(ref objects) => objects,
             None => return Ok(()),
@@ -96,5 +126,36 @@ impl App {
     pub fn validate(&self) -> Result<()> {
         self.validate_pipes()?;
         self.validate_objects()
+    }
+
+    fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(entities: &Vec<T>) -> A {
+        let mut describer = A::new();
+        for entity in entities {
+            entity.accept(&mut &mut describer);
+        }
+        describer.parse();
+        describer
+    }
+
+    pub fn get_pipe_describer(&self) -> PipeGraphDescriber {
+        Self::init_describer::<Pipe, PipeGraphDescriber>(&self.pipes)
+    }
+
+    pub fn describe_pipes(&self) -> Vec<String> {
+        let describe = self.get_pipe_describer();
+        describe.describe()
+    }
+
+    pub fn describe_pipelines(&self, pid: &str) -> Vec<String> {
+        let mut describe = self.get_pipe_describer();
+        describe.parse();
+        describe.describe_pipelines(pid)
+    }
+
+    pub fn describe(&self) {
+        let mut results = self.describe_pipes();
+        for result in results {
+            println!("{}", result)
+        }
     }
 }

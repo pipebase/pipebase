@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::api::utils::indent_literal;
 use crate::api::{Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
@@ -6,7 +8,7 @@ use strum::{Display, EnumString};
 use super::data::DataField;
 
 #[derive(Clone, Display, EnumString, PartialEq, Debug, Deserialize)]
-pub enum PipeKind {
+pub enum PipeType {
     #[strum(to_string = "listener")]
     Listener,
     #[strum(to_string = "poller")]
@@ -39,7 +41,7 @@ impl PipeConfig {
 #[derive(Deserialize, Debug, Clone)]
 pub struct Pipe {
     pub name: String,
-    pub kind: PipeKind,
+    pub ty: PipeType,
     pub config: PipeConfig,
     // upstream pipe names
     pub upstreams: Option<Vec<String>>,
@@ -49,8 +51,8 @@ pub struct Pipe {
 
 impl Pipe {
     pub fn is_source(&self) -> bool {
-        match &self.kind {
-            PipeKind::Listener | PipeKind::Poller => true,
+        match &self.ty {
+            PipeType::Listener | PipeType::Poller => true,
             _ => false,
         }
     }
@@ -60,9 +62,9 @@ impl Pipe {
         format!(r#"{}name = "{}""#, indent_lit, self.name)
     }
 
-    pub fn get_kind_meta_literal(&self, indent: usize) -> String {
+    pub fn get_type_meta_literal(&self, indent: usize) -> String {
         let indent_lit = indent_literal(indent);
-        format!(r#"{}kind = "{}""#, indent_lit, self.kind)
+        format!(r#"{}ty = "{}""#, indent_lit, self.ty)
     }
 
     pub fn get_config_meta_literal(&self, indent: usize) -> String {
@@ -128,7 +130,7 @@ impl Entity for Pipe {
     fn to_literal(&self, indent: usize) -> String {
         let mut meta_lits = vec![];
         meta_lits.push(self.get_name_meta_literal(indent + 1));
-        meta_lits.push(self.get_kind_meta_literal(indent + 1));
+        meta_lits.push(self.get_type_meta_literal(indent + 1));
         meta_lits.push(self.get_config_meta_literal(indent + 1));
         match self.get_upstream_meta_literal(indent + 1) {
             Some(upstream_literal) => meta_lits.push(upstream_literal),
@@ -144,6 +146,12 @@ impl Entity for Pipe {
             "{}#[pipe(\n{}\n{})]",
             indent_lit, meta_lits_join, indent_lit
         )
+    }
+}
+
+impl Display for Pipe {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "name: {}, ty: {}", self.name, self.ty)
     }
 }
 
