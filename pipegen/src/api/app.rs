@@ -40,7 +40,7 @@ impl App {
         println!("{}", self.generate())
     }
 
-    fn generate_entity<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
+    pub fn generate_entity<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
         entity: &T,
         indent: usize,
     ) -> Option<String> {
@@ -49,7 +49,7 @@ impl App {
         generator.generate()
     }
 
-    fn generate_entities<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
+    pub fn generate_entities<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
         entities: &Vec<T>,
         indent: usize,
         join_sep: &str,
@@ -64,7 +64,7 @@ impl App {
         lits.join(join_sep)
     }
 
-    fn generate_objects(&self, indent: usize) -> Option<String> {
+    pub fn generate_objects(&self, indent: usize) -> Option<String> {
         let objects = match self.objects {
             Some(ref objects) => objects,
             None => return None,
@@ -88,7 +88,7 @@ impl App {
         format!("mod {} {{\n{}\n}}", self.name, sections.join("\n\n"))
     }
 
-    fn validate_entity<T: EntityAccept<V>, V: Validate<T> + VisitEntity<T>>(
+    pub fn validate_entity<T: EntityAccept<V>, V: Validate<T> + VisitEntity<T>>(
         items: &Vec<T>,
         location: &str,
     ) -> Result<()> {
@@ -128,7 +128,9 @@ impl App {
         self.validate_objects()
     }
 
-    fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(entities: &Vec<T>) -> A {
+    pub fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(
+        entities: &Vec<T>,
+    ) -> A {
         let mut describer = A::new();
         for entity in entities {
             entity.accept(&mut &mut describer);
@@ -153,7 +155,7 @@ impl App {
     }
 
     pub fn describe(&self) {
-        let mut results = self.describe_pipes();
+        let results = self.describe_pipes();
         for result in results {
             println!("{}", result)
         }
