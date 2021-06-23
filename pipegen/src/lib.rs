@@ -1,5 +1,3 @@
-mod api;
-mod error;
-mod operation;
-
-// pub use api::*;
+pub mod api;
+pub mod error;
+pub mod operation;

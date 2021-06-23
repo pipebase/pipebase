@@ -60,7 +60,7 @@ impl PipeGraphDescriber {
         results
     }
 
-    fn display_source_pipe_ids(&self) -> PipeIdsDisplay {
+    pub fn display_source_pipe_ids(&self) -> PipeIdsDisplay {
         PipeIdsDisplay {
             ids: self.get_source_pipe_ids(),
             sep: PIPE_LIST_SEP.to_owned(),
@@ -68,7 +68,7 @@ impl PipeGraphDescriber {
         }
     }
 
-    fn display_sink_pipe_ids(&self) -> PipeIdsDisplay {
+    pub fn display_sink_pipe_ids(&self) -> PipeIdsDisplay {
         PipeIdsDisplay {
             ids: self.get_sink_pipe_ids(),
             sep: PIPE_LIST_SEP.to_owned(),
@@ -76,7 +76,7 @@ impl PipeGraphDescriber {
         }
     }
 
-    fn display_pipe_components(&self) -> Vec<PipeIdsDisplay> {
+    pub fn display_pipe_components(&self) -> Vec<PipeIdsDisplay> {
         let mut components_display: Vec<PipeIdsDisplay> = Vec::new();
         for component in self.get_pipe_components() {
             let component_display = PipeIdsDisplay {
@@ -89,7 +89,7 @@ impl PipeGraphDescriber {
         components_display
     }
 
-    fn display_pipelines(&self, pid: &str) -> Vec<PipeIdsDisplay> {
+    pub fn display_pipelines(&self, pid: &str) -> Vec<PipeIdsDisplay> {
         let mut pipelines_display: Vec<PipeIdsDisplay> = Vec::new();
         for pipeline in self.get_pipelines(pid) {
             let pipeline_display = PipeIdsDisplay {

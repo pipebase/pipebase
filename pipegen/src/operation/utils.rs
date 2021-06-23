@@ -98,17 +98,17 @@ impl<T: Clone> DirectedGraph<T> {
         }
     }
 
-    pub fn has_vertex(&self, id: &str) -> bool {
+    pub fn has_vertex_id(&self, id: &str) -> bool {
         self.vertices.contains_key(id)
     }
 
-    fn add_vertex(&mut self, id: String) {
+    fn add_vertex_id(&mut self, id: String) {
         self.vertices.insert(id, Vertex::new(None));
     }
 
-    pub fn add_vertex_if_not_exists(&mut self, id: String) {
-        if !self.has_vertex(&id) {
-            self.add_vertex(id)
+    pub fn add_vertex_id_if_not_exists(&mut self, id: String) {
+        if !self.has_vertex_id(&id) {
+            self.add_vertex_id(id)
         }
     }
 
@@ -136,16 +136,16 @@ impl<T: Clone> DirectedGraph<T> {
         success
     }
 
-    pub fn set_value(&mut self, vid: &str, value: T) -> bool {
-        if !self.has_vertex(vid) {
+    pub fn set_vertex_value(&mut self, vid: &str, value: T) -> bool {
+        if !self.has_vertex_id(vid) {
             return false;
         }
         self.vertices.get_mut(vid).unwrap().set_value(value);
         true
     }
 
-    pub fn get_value(&self, vid: &str) -> Option<T> {
-        if !self.has_vertex(vid) {
+    pub fn get_vertex_value(&self, vid: &str) -> Option<T> {
+        if !self.has_vertex_id(vid) {
             return None;
         }
         self.vertices.get(vid).unwrap().get_value()
@@ -268,22 +268,22 @@ impl<T: Clone> DirectedGraph<T> {
     }
 
     pub fn has_in_vertex(&self, vid: &str) -> bool {
-        assert!(self.has_vertex(vid));
+        assert!(self.has_vertex_id(vid));
         self.vertices.get(vid).unwrap().get_in_vertex_count() > 0
     }
 
     pub fn get_in_vertices(&self, vid: &str) -> HashSet<String> {
-        assert!(self.has_vertex(vid));
+        assert!(self.has_vertex_id(vid));
         self.vertices.get(vid).unwrap().get_in_vertices()
     }
 
     pub fn has_out_vertex(&self, vid: &str) -> bool {
-        assert!(self.has_vertex(vid));
+        assert!(self.has_vertex_id(vid));
         self.vertices.get(vid).unwrap().get_out_vertex_count() > 0
     }
 
     pub fn get_out_vertices(&self, vid: &str) -> HashSet<String> {
-        assert!(self.has_vertex(vid));
+        assert!(self.has_vertex_id(vid));
         self.vertices.get(vid).unwrap().get_out_vertices()
     }
 
@@ -331,20 +331,20 @@ impl<T: Clone> PipeGraph<T> {
 
     pub fn add_pipe(&mut self, pipe: &Pipe, value: T) {
         let ref id = pipe.get_id();
-        self.graph.add_vertex_if_not_exists(id.to_owned());
-        self.graph.set_value(id, value);
+        self.graph.add_vertex_id_if_not_exists(id.to_owned());
+        self.graph.set_vertex_value(id, value);
         let deps = pipe.list_dependency();
         for dep in &deps {
-            self.graph.add_vertex_if_not_exists(dep.to_owned());
+            self.graph.add_vertex_id_if_not_exists(dep.to_owned());
             self.graph.add_edge(dep, id);
         }
     }
 
     pub fn has_pipe(&self, pid: &str) -> bool {
-        if !self.graph.has_vertex(pid) {
+        if !self.graph.has_vertex_id(pid) {
             return false;
         }
-        self.graph.get_value(pid).is_some()
+        self.graph.get_vertex_value(pid).is_some()
     }
 
     pub fn find_source_pipes(&self) -> Vec<String> {
@@ -395,7 +395,7 @@ impl<T: Clone> PipeGraph<T> {
 
     pub fn get_pipe_value(&self, pid: &str) -> Option<T> {
         assert!(self.has_pipe(pid));
-        self.graph.get_value(pid)
+        self.graph.get_vertex_value(pid)
     }
 
     fn connect_path(left_path: Vec<String>, right_path: Vec<String>) -> GraphPath {
