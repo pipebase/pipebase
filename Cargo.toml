@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+	"cargo-pipe",
 	"pipebase",
 	"pipederive",
 	"pipeext",
