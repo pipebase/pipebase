@@ -47,3 +47,12 @@ impl CheckOptions {
         self.object
     }
 }
+
+impl Default for CheckOptions {
+    fn default() -> Self {
+        CheckOptions {
+            pipe: true,
+            object: true,
+        }
+    }
+}

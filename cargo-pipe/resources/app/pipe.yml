@@ -1,6 +1,6 @@
 name: print_timer_tick
 pipes:
-  - name: Timer1
+  - name: timer1
     ty: Poller
     config:
       ty: TimerConfig
