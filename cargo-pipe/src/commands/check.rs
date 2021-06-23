@@ -1,8 +1,8 @@
 use crate::commands::Cmd;
 use crate::config::Config;
 use crate::errors::CmdResult;
+use crate::ops::do_check::do_exec;
 use clap::Arg;
-use pipegen::api::App;
 
 pub fn cmd() -> Cmd {
     Cmd::new("check").args(vec![
@@ -16,10 +16,34 @@ pub fn cmd() -> Cmd {
 }
 
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
-    match (args.is_present("pipe"), args.is_present("object")) {
-        (true, false) => println!("validate pipes"),
-        (false, true) => println!("validate objects"),
-        (_, _) => println!("check all"),
-    }
+    let opts = match (args.is_present("pipe"), args.is_present("object")) {
+        (true, false) => CheckOptions {
+            pipe: true,
+            object: false,
+        },
+        (false, true) => CheckOptions {
+            pipe: false,
+            object: true,
+        },
+        (_, _) => CheckOptions {
+            pipe: true,
+            object: true,
+        },
+    };
+    do_exec(config, &opts)?;
     Ok(())
+}
+
+pub struct CheckOptions {
+    pipe: bool,
+    object: bool,
+}
+
+impl CheckOptions {
+    pub fn check_pipe(&self) -> bool {
+        self.pipe
+    }
+    pub fn check_object(&self) -> bool {
+        self.object
+    }
 }

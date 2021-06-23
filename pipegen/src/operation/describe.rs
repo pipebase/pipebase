@@ -153,10 +153,11 @@ const DISPLAY_NEWLINE: &str = "\n";
 mod tests {
 
     use crate::api::App;
+    use std::path::Path;
 
     #[test]
     fn test_describe_timer_tick_pipe() {
-        let manifest_path = "resources/manifest/print_timer_tick_pipe.yml";
+        let manifest_path: &Path = Path::new("resources/manifest/print_timer_tick_pipe.yml");
         let app = App::parse(manifest_path).unwrap();
         app.validate().expect("expect valid");
         app.describe();
@@ -164,7 +165,7 @@ mod tests {
 
     #[test]
     fn test_describe_timer_tick_pipeline() {
-        let manifest_path = "resources/manifest/print_timer_tick_pipe.yml";
+        let manifest_path: &Path = Path::new("resources/manifest/print_timer_tick_pipe.yml");
         let app = App::parse(manifest_path).unwrap();
         app.validate().expect("expect valid");
         let describer = app.get_pipe_describer();

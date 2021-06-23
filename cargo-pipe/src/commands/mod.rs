@@ -3,8 +3,8 @@ use clap::ArgMatches;
 use crate::config::Config;
 use crate::errors::CmdResult;
 
-mod check;
-mod describe;
+pub mod check;
+pub mod describe;
 
 pub type Cmd = clap::App<'static>;
 
