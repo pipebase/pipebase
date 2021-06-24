@@ -18,6 +18,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use crate::context::{Context, State};
 use crate::error::Result;
 use crate::{ConfigInto, FromConfig, Pipe};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -29,7 +30,7 @@ pub trait Map<T, U, C>: Send + Sync + FromConfig<C> {
 pub struct Mapper<'a, T, U, M: Map<T, U, C>, C: ConfigInto<M>> {
     pub name: &'a str,
     pub rx: Receiver<T>,
-    pub txs: Vec<Arc<Sender<U>>>,
+    pub txs: HashMap<usize, Arc<Sender<U>>>,
     pub config: C,
     pub mapper: PhantomData<M>,
     pub context: Arc<RwLock<Context>>,
@@ -74,16 +75,13 @@ impl<
                 }
             };
             Self::set_state(&self.context, State::Send).await;
-            let mut jhs = vec![];
-            for tx in self.txs.to_owned() {
+            let mut jhs = HashMap::new();
+            for (idx, tx) in &self.txs {
                 let u_clone: U = u.to_owned();
-                jhs.push(Self::spawn_send(tx, u_clone));
+                jhs.insert(idx.to_owned(), Self::spawn_send(tx.to_owned(), u_clone));
             }
-            let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
-            self.txs = Self::filter_sender_by_dropped_receiver_idx(
-                self.txs.to_owned(),
-                dropped_receiver_idxs,
-            );
+            let drop_sender_indices = Self::wait_join_handles(jhs).await;
+            Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
             Self::inc_success_run(&self.context).await;
         }
         Self::set_state(&self.context, State::Done).await;
@@ -91,7 +89,8 @@ impl<
     }
 
     fn add_sender(&mut self, tx: Sender<U>) {
-        self.txs.push(Arc::new(tx));
+        let idx = self.txs.len();
+        self.txs.insert(idx, Arc::new(tx));
     }
 
     fn get_context(&self) -> Arc<RwLock<Context>> {
@@ -109,7 +108,7 @@ macro_rules! mapper {
             let mut pipe = Mapper {
                 name: $name,
                 rx: $rx,
-                txs: vec![],
+                txs: std::collections::HashMap::new(),
                 config: config,
                 mapper: std::marker::PhantomData,
                 context: Default::default()

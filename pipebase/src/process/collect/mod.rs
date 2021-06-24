@@ -13,6 +13,7 @@ use crate::{
 };
 
 use async_trait::async_trait;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::{
     sync::{
@@ -38,7 +39,7 @@ pub struct Collector<
 > {
     pub name: &'a str,
     pub rx: Arc<Mutex<Receiver<T>>>,
-    pub txs: Vec<Arc<Sender<U>>>,
+    pub txs: HashMap<usize, Arc<Sender<U>>>,
     pub config: C,
     pub collector: PhantomData<V>,
     pub collection: PhantomData<U>,
@@ -100,17 +101,14 @@ impl<
                 let mut c = collector_clone.lock().await;
                 let data = c.flush().await;
                 Self::set_state(&context, State::Send).await;
-                let mut jhs = vec![];
-                for tx in txs.as_slice() {
+                let mut jhs = HashMap::new();
+                for (idx, tx) in &txs {
                     let tx_clone = tx.to_owned();
                     let data_clone = data.to_owned();
-                    jhs.push(Self::spawn_send(tx_clone, data_clone));
+                    jhs.insert(idx.to_owned(), Self::spawn_send(tx_clone, data_clone));
                 }
-                let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
-                txs = Self::filter_sender_by_dropped_receiver_idx(
-                    txs.to_owned(),
-                    dropped_receiver_idxs,
-                );
+                let drop_sender_indices = Self::wait_join_handles(jhs).await;
+                Self::filter_senders_by_indices(&mut txs, drop_sender_indices);
                 Self::inc_success_run(&context).await;
                 let is_end = { *(is_end_clone.lock().await) };
                 if is_end {
@@ -127,7 +125,8 @@ impl<
     }
 
     fn add_sender(&mut self, tx: Sender<U>) {
-        self.txs.push(tx.into())
+        let idx = self.txs.len();
+        self.txs.insert(idx, Arc::new(tx));
     }
 
     fn get_context(&self) -> Arc<RwLock<Context>> {
@@ -145,7 +144,7 @@ macro_rules! collector {
             let mut pipe = Collector {
                 name: $name,
                 rx: std::sync::Arc::new(tokio::sync::Mutex::new($rx)),
-                txs: vec![],
+                txs: std::collections::HashMap::new(),
                 config: config,
                 collector: std::marker::PhantomData,
                 collection: std::marker::PhantomData,

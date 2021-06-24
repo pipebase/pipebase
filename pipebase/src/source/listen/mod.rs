@@ -7,6 +7,7 @@ use tokio::sync::RwLock;
 use crate::context::{Context, State};
 use crate::error::Result;
 use crate::{ConfigInto, FromConfig, Pipe};
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tokio::sync::mpsc::channel;
@@ -30,7 +31,7 @@ pub trait Listen<T: Send + 'static, C>: Send + Sync + FromConfig<C> {
 
 pub struct Listener<'a, T: Send + 'static, L: Listen<T, C>, C: ConfigInto<L>> {
     pub name: &'a str,
-    pub txs: Vec<Arc<Sender<T>>>,
+    pub txs: HashMap<usize, Arc<Sender<T>>>,
     pub config: C,
     pub listener: PhantomData<L>,
     pub context: Arc<RwLock<Context>>,
@@ -75,16 +76,13 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
                     }
                 };
                 Self::set_state(&context, State::Send).await;
-                let mut jhs = vec![];
-                for tx in txs.as_slice() {
+                let mut jhs = HashMap::new();
+                for (idx, tx) in &txs {
                     let u_clone: T = t.to_owned();
-                    jhs.push(Self::spawn_send(tx.clone(), u_clone));
+                    jhs.insert(idx.to_owned(), Self::spawn_send(tx.clone(), u_clone));
                 }
-                let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
-                txs = Self::filter_sender_by_dropped_receiver_idx(
-                    txs.to_owned(),
-                    dropped_receiver_idxs,
-                );
+                let drop_sender_indices = Self::wait_join_handles(jhs).await;
+                Self::filter_senders_by_indices(&mut txs, drop_sender_indices);
                 Self::inc_success_run(&context).await;
             }
             Self::set_state(&context, State::Done).await;
@@ -99,8 +97,15 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
         Ok(())
     }
 
+    /*
     fn add_sender(&mut self, tx: Sender<T>) {
         self.txs.push(Arc::new(tx));
+    }
+    */
+
+    fn add_sender(&mut self, tx: Sender<T>) {
+        let idx = self.txs.len();
+        self.txs.insert(idx, Arc::new(tx));
     }
 
     fn get_context(&self) -> Arc<RwLock<Context>> {
@@ -117,7 +122,7 @@ macro_rules! listener {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
             let mut pipe = Listener {
                 name: $name,
-                txs: vec![],
+                txs: std::collections::HashMap::new(),
                 config: config,
                 listener: std::marker::PhantomData,
                 context: Default::default()

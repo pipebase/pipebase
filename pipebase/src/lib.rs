@@ -19,6 +19,7 @@ use context::State;
 use async_trait::async_trait;
 use log::error;
 use serde::de::DeserializeOwned;
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::mpsc::error::SendError;
@@ -67,17 +68,15 @@ pub trait Pipe<T: Send + 'static> {
     }
 
     async fn wait_join_handles(
-        join_handles: Vec<JoinHandle<core::result::Result<(), SendError<T>>>>,
-    ) -> HashSet<usize> {
-        let mut i: usize = 0;
-        let mut dropped_receiver_idxs = HashSet::new();
-        for jh in join_handles {
+        join_handles: HashMap<usize, JoinHandle<core::result::Result<(), SendError<T>>>>,
+    ) -> Vec<usize> {
+        let mut drop_sender_indices = Vec::new();
+        for (idx, jh) in join_handles {
             let result = match jh.await {
                 Ok(res) => res,
                 Err(err) => {
                     error!("join error in pipe err: {:#?}", err);
-                    dropped_receiver_idxs.insert(i);
-                    i += 1;
+                    drop_sender_indices.push(idx);
                     continue;
                 }
             };
@@ -85,16 +84,24 @@ pub trait Pipe<T: Send + 'static> {
                 Ok(()) => (),
                 Err(err) => {
                     error!("send error {}", err);
-                    dropped_receiver_idxs.insert(i);
+                    drop_sender_indices.push(idx);
                 }
             }
-            i += 1;
         }
-        dropped_receiver_idxs
+        drop_sender_indices
+    }
+
+    fn filter_senders_by_indices(
+        senders: &mut HashMap<usize, Arc<Sender<T>>>,
+        remove_indices: Vec<usize>,
+    ) {
+        for idx in remove_indices {
+            senders.remove(&idx);
+        }
     }
 
     fn filter_sender_by_dropped_receiver_idx(
-        senders: Vec<Arc<Sender<T>>>,
+        senders: &Vec<Arc<Sender<T>>>,
         dropped_receiver_idxs: HashSet<usize>,
     ) -> Vec<Arc<Sender<T>>> {
         let mut healthy_senders: Vec<Arc<Sender<T>>> = vec![];

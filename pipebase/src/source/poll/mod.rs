@@ -10,6 +10,7 @@ use tokio::sync::RwLock;
 use crate::context::{Context, State};
 use crate::error::Result;
 use crate::{ConfigInto, FromConfig, Pipe};
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -22,7 +23,7 @@ pub trait Poll<T, C>: Send + Sync + FromConfig<C> {
 
 pub struct Poller<'a, T, P: Poll<T, C>, C: ConfigInto<P>> {
     pub name: &'a str,
-    pub txs: Vec<Arc<Sender<T>>>,
+    pub txs: HashMap<usize, Arc<Sender<T>>>,
     pub config: C,
     pub poller: PhantomData<P>,
     pub context: Arc<RwLock<Context>>,
@@ -61,16 +62,13 @@ impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Syn
                 }
             };
             Self::set_state(&self.context, State::Send).await;
-            let mut jhs = vec![];
-            for tx in self.txs.to_owned() {
+            let mut jhs = HashMap::new();
+            for (idx, tx) in &self.txs {
                 let t_clone = t.to_owned();
-                jhs.push(Self::spawn_send(tx, t_clone));
+                jhs.insert(idx.to_owned(), Self::spawn_send(tx.to_owned(), t_clone));
             }
-            let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
-            self.txs = Self::filter_sender_by_dropped_receiver_idx(
-                self.txs.to_owned(),
-                dropped_receiver_idxs,
-            );
+            let drop_sender_indices = Self::wait_join_handles(jhs).await;
+            Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
             Self::inc_success_run(&self.context).await;
         }
         Self::set_state(&self.context, State::Done).await;
@@ -79,7 +77,8 @@ impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Syn
     }
 
     fn add_sender(&mut self, tx: Sender<T>) {
-        self.txs.push(Arc::new(tx));
+        let idx = self.txs.len();
+        self.txs.insert(idx, Arc::new(tx));
     }
 
     fn get_context(&self) -> Arc<RwLock<Context>> {
@@ -96,7 +95,7 @@ macro_rules! poller {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
             let mut pipe = Poller {
                 name: $name,
-                txs: vec![],
+                txs: std::collections::HashMap::new(),
                 config: config,
                 poller: std::marker::PhantomData,
                 context: Default::default()
