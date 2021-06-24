@@ -7,7 +7,7 @@ use std::fmt::Display;
 pub struct PrinterConfig {}
 
 impl FromFile for PrinterConfig {
-    fn from_file(_path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    fn from_file(_path: &str) -> anyhow::Result<Self> {
         Ok(PrinterConfig {})
     }
 }
@@ -18,19 +18,14 @@ pub struct Printer {}
 
 #[async_trait]
 impl FromConfig<PrinterConfig> for Printer {
-    async fn from_config(
-        _config: &PrinterConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(_config: &PrinterConfig) -> anyhow::Result<Self> {
         Ok(Printer {})
     }
 }
 
 #[async_trait]
 impl<T: Send + Sync + Display + 'static> Export<T, PrinterConfig> for Printer {
-    async fn export(
-        &mut self,
-        t: &T,
-    ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn export(&mut self, t: &T) -> anyhow::Result<()> {
         println!("{}", t);
         Ok(())
     }

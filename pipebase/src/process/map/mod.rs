@@ -24,7 +24,7 @@ use tokio::sync::RwLock;
 
 #[async_trait]
 pub trait Map<T, U, C>: Send + Sync + FromConfig<C> {
-    async fn map(&mut self, data: &T) -> std::result::Result<U, Box<dyn std::error::Error>>;
+    async fn map(&mut self, data: &T) -> anyhow::Result<U>;
 }
 
 pub struct Mapper<'a, T, U, M, C>

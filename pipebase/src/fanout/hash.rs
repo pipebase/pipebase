@@ -20,9 +20,7 @@ pub struct DefaultHashSelect {
 
 #[async_trait]
 impl FromConfig<DefaultHashSelectConfig> for DefaultHashSelect {
-    async fn from_config(
-        config: &DefaultHashSelectConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(config: &DefaultHashSelectConfig) -> anyhow::Result<Self> {
         Ok(DefaultHashSelect { n: config.n })
     }
 }

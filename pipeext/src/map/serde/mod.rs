@@ -1,12 +1,11 @@
 mod json;
 
 use serde::{de::DeserializeOwned, Serialize};
-use std::error::Error;
-use std::result::Result;
+
 pub trait Ser {
-    fn serialize<T: Serialize>(t: &T) -> Result<Vec<u8>, Box<dyn Error>>;
+    fn serialize<T: Serialize>(t: &T) -> anyhow::Result<Vec<u8>>;
 }
 
 pub trait Deser {
-    fn deserialize<T: DeserializeOwned>(bytes: &[u8]) -> Result<T, Box<dyn Error>>;
+    fn deserialize<T: DeserializeOwned>(bytes: &[u8]) -> anyhow::Result<T>;
 }

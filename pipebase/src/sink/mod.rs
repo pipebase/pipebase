@@ -20,10 +20,7 @@ pub trait Export<T, C>: Send + Sync + FromConfig<C>
 where
     T: Send + Sync + 'static,
 {
-    async fn export(
-        &mut self,
-        t: &T,
-    ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>;
+    async fn export(&mut self, t: &T) -> anyhow::Result<()>;
 }
 
 pub struct Exporter<'a, T, E, C>

@@ -4,13 +4,11 @@ use lapin::Channel;
 use lapin::{
     options::BasicAckOptions, types::FieldTable, Connection, ConnectionProperties, Consumer,
 };
-use log::{error, info};
+use log::info;
 use pipebase::ConfigInto;
 use pipebase::Listen;
 use pipebase::{FromConfig, FromFile};
 use serde::Deserialize;
-use std::error::Error;
-use std::result::Result;
 use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use tokio_amqp::*;
@@ -39,7 +37,7 @@ impl ConfigInto<RabbitMQConsumer> for RabbitMQConsumerConfig {}
 
 #[async_trait]
 impl FromConfig<RabbitMQConsumerConfig> for RabbitMQConsumer {
-    async fn from_config(config: &RabbitMQConsumerConfig) -> Result<Self, Box<dyn Error>> {
+    async fn from_config(config: &RabbitMQConsumerConfig) -> anyhow::Result<Self> {
         let properties = ConnectionProperties::default().with_tokio_executor();
         info!("start connection ...");
         let conn = Connection::connect(&config.uri, properties).await?;
@@ -59,7 +57,7 @@ impl FromConfig<RabbitMQConsumerConfig> for RabbitMQConsumer {
 
 #[async_trait]
 impl Listen<Vec<u8>, RabbitMQConsumerConfig> for RabbitMQConsumer {
-    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn run(&mut self) -> anyhow::Result<()> {
         info!("creating consumer ...");
         let consumer = match self.create_consumer().await {
             Ok(consumer) => consumer,
@@ -109,7 +107,7 @@ mod tests {
     use tokio::sync::mpsc::Receiver;
 
     use super::RabbitMQConsumerConfig;
-    use std::{println as info, println as error};
+    // use std::{println as info, println as error};
 
     async fn on_receive(rx: &mut Receiver<Vec<u8>>) {
         let mut i: i32 = 0;
@@ -136,9 +134,9 @@ mod tests {
         );
         println!("consumer built ...");
         let jh0 = tokio::spawn(async move {
-            s.run().await;
+            let _ = s.run().await;
         });
         let jh1 = on_receive(&mut rx);
-        tokio::join!(jh0, jh1);
+        let _ = tokio::join!(jh0, jh1);
     }
 }

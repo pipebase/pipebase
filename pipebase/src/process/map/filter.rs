@@ -14,7 +14,7 @@ pub trait Filter<Rhs = Self>: Clone {
 pub struct FilterMapConfig {}
 
 impl FromFile for FilterMapConfig {
-    fn from_file(_path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    fn from_file(_path: &str) -> anyhow::Result<Self> {
         Ok(FilterMapConfig {})
     }
 }
@@ -26,9 +26,7 @@ pub struct FilterMap {}
 
 #[async_trait]
 impl FromConfig<FilterMapConfig> for FilterMap {
-    async fn from_config(
-        _config: &FilterMapConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(_config: &FilterMapConfig) -> anyhow::Result<Self> {
         Ok(FilterMap {})
     }
 }
@@ -40,7 +38,7 @@ impl<
         V: FromIterator<T> + Send,
     > Map<U, V, FilterMapConfig> for FilterMap
 {
-    async fn map(&mut self, data: &U) -> std::result::Result<V, Box<dyn std::error::Error>> {
+    async fn map(&mut self, data: &U) -> anyhow::Result<V> {
         Ok(data
             .to_owned()
             .into_iter()

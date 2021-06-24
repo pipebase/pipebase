@@ -30,7 +30,7 @@ use tokio::task::JoinHandle;
 use error::Result;
 
 pub trait FromFile: Sized + DeserializeOwned {
-    fn from_file(path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    fn from_file(path: &str) -> anyhow::Result<Self> {
         let file = std::fs::File::open(path)?;
         let config = serde_yaml::from_reader::<std::fs::File, Self>(file)?;
         Ok(config)
@@ -39,12 +39,12 @@ pub trait FromFile: Sized + DeserializeOwned {
 
 #[async_trait]
 pub trait FromConfig<T>: Sized {
-    async fn from_config(config: &T) -> std::result::Result<Self, Box<dyn std::error::Error>>;
+    async fn from_config(config: &T) -> anyhow::Result<Self>;
 }
 
 #[async_trait]
 pub trait ConfigInto<T: FromConfig<Self>>: Sized {
-    async fn config_into(&self) -> std::result::Result<T, Box<dyn std::error::Error>> {
+    async fn config_into(&self) -> anyhow::Result<T> {
         T::from_config(self).await
     }
 }

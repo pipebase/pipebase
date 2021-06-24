@@ -23,9 +23,7 @@ pub struct SetCollector<T: Ord> {
 
 #[async_trait]
 impl<T: Ord> FromConfig<SetCollectorConfig> for SetCollector<T> {
-    async fn from_config(
-        config: &SetCollectorConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(config: &SetCollectorConfig) -> anyhow::Result<Self> {
         Ok(SetCollector {
             flush_period_in_millis: config.flush_period_in_millis,
             buffer: Vec::new(),

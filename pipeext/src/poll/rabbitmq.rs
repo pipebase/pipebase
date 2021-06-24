@@ -9,8 +9,6 @@ use pipebase::ConfigInto;
 use pipebase::Poll;
 use pipebase::{FromConfig, FromFile};
 use serde::Deserialize;
-use std::error::Error;
-use std::result::Result;
 use tokio_amqp::*;
 pub struct RabbitMQConsumer {
     queue: String,
@@ -35,7 +33,7 @@ impl ConfigInto<RabbitMQConsumer> for RabbitMQConsumerConfig {}
 
 #[async_trait]
 impl FromConfig<RabbitMQConsumerConfig> for RabbitMQConsumer {
-    async fn from_config(config: &RabbitMQConsumerConfig) -> Result<Self, Box<dyn Error>> {
+    async fn from_config(config: &RabbitMQConsumerConfig) -> anyhow::Result<Self> {
         let properties = ConnectionProperties::default().with_tokio_executor();
         info!("start connection ...");
         let conn = Connection::connect(&config.uri, properties).await?;
@@ -54,7 +52,7 @@ impl FromConfig<RabbitMQConsumerConfig> for RabbitMQConsumer {
 
 #[async_trait]
 impl Poll<Vec<u8>, RabbitMQConsumerConfig> for RabbitMQConsumer {
-    async fn poll(&mut self) -> Result<Option<Vec<u8>>, Box<dyn Error + Send + Sync>> {
+    async fn poll(&mut self) -> anyhow::Result<Option<Vec<u8>>> {
         let consumer = match self.create_consumer().await {
             Ok(consumer) => consumer,
             Err(err) => return Err(err.into()),
@@ -119,9 +117,9 @@ mod tests {
             [tx]
         );
         let jh0 = tokio::spawn(async move {
-            s.run().await;
+            let _ = s.run().await;
         });
         let jh1 = on_receive(&mut rx);
-        tokio::join!(jh0, jh1);
+        let _ = tokio::join!(jh0, jh1);
     }
 }

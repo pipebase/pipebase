@@ -17,7 +17,7 @@ pub trait Listen<T, C>: Send + Sync + FromConfig<C>
 where
     T: Send + 'static,
 {
-    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>;
+    async fn run(&mut self) -> anyhow::Result<()>;
     async fn set_sender(&mut self, sender: Arc<Sender<T>>);
     // send data and return true if succeed
     async fn send_data(sender: Option<Arc<Sender<T>>>, t: T) -> bool {

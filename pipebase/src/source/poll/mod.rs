@@ -16,9 +16,7 @@ use std::sync::Arc;
 
 #[async_trait]
 pub trait Poll<T, C>: Send + Sync + FromConfig<C> {
-    async fn poll(
-        &mut self,
-    ) -> std::result::Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>;
+    async fn poll(&mut self) -> anyhow::Result<Option<T>>;
 }
 
 pub struct Poller<'a, T, P, C>

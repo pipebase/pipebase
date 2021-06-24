@@ -19,9 +19,7 @@ pub struct Random {
 
 #[async_trait]
 impl FromConfig<RandomConfig> for Random {
-    async fn from_config(
-        config: &RandomConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(config: &RandomConfig) -> anyhow::Result<Self> {
         Ok(Random { n: config.n })
     }
 }

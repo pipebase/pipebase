@@ -3,14 +3,12 @@ use async_trait::async_trait;
 use pipebase::{ConfigInto, FromConfig, FromFile, Map};
 use serde::Deserialize;
 use serde::{de::DeserializeOwned, Serialize};
-use std::error::Error;
-use std::result::Result;
 
 #[derive(Deserialize)]
 pub struct JsonSerConfig {}
 
 impl FromFile for JsonSerConfig {
-    fn from_file(_path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    fn from_file(_path: &str) -> anyhow::Result<Self> {
         Ok(JsonSerConfig {})
     }
 }
@@ -22,15 +20,13 @@ pub struct JsonSer {}
 
 #[async_trait]
 impl FromConfig<JsonSerConfig> for JsonSer {
-    async fn from_config(
-        _config: &JsonSerConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(_config: &JsonSerConfig) -> anyhow::Result<Self> {
         Ok(JsonSer {})
     }
 }
 
 impl Ser for JsonSer {
-    fn serialize<T: Serialize>(t: &T) -> Result<Vec<u8>, Box<dyn Error>> {
+    fn serialize<T: Serialize>(t: &T) -> anyhow::Result<Vec<u8>> {
         match serde_json::to_vec(t) {
             Ok(r) => Ok(r),
             Err(err) => Err(err.into()),
@@ -40,7 +36,7 @@ impl Ser for JsonSer {
 
 #[async_trait]
 impl<T: Serialize + Sync> Map<T, Vec<u8>, JsonSerConfig> for JsonSer {
-    async fn map(&mut self, t: &T) -> Result<Vec<u8>, Box<dyn Error>> {
+    async fn map(&mut self, t: &T) -> anyhow::Result<Vec<u8>> {
         JsonSer::serialize(t)
     }
 }
@@ -49,7 +45,7 @@ impl<T: Serialize + Sync> Map<T, Vec<u8>, JsonSerConfig> for JsonSer {
 pub struct JsonDeserConfig {}
 
 impl FromFile for JsonDeserConfig {
-    fn from_file(_path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    fn from_file(_path: &str) -> anyhow::Result<Self> {
         Ok(JsonDeserConfig {})
     }
 }
@@ -61,15 +57,13 @@ pub struct JsonDeser {}
 
 #[async_trait]
 impl FromConfig<JsonDeserConfig> for JsonDeser {
-    async fn from_config(
-        _config: &JsonDeserConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(_config: &JsonDeserConfig) -> anyhow::Result<Self> {
         Ok(JsonDeser {})
     }
 }
 
 impl Deser for JsonDeser {
-    fn deserialize<T: DeserializeOwned>(bytes: &[u8]) -> Result<T, Box<dyn Error>> {
+    fn deserialize<T: DeserializeOwned>(bytes: &[u8]) -> anyhow::Result<T> {
         match serde_json::from_slice::<T>(bytes) {
             Ok(t) => Ok(t),
             Err(err) => Err(err.into()),
@@ -79,7 +73,7 @@ impl Deser for JsonDeser {
 
 #[async_trait]
 impl<T: DeserializeOwned + Sync> Map<Vec<u8>, T, JsonDeserConfig> for JsonDeser {
-    async fn map(&mut self, bytes: &Vec<u8>) -> Result<T, Box<dyn Error>> {
+    async fn map(&mut self, bytes: &Vec<u8>) -> anyhow::Result<T> {
         JsonDeser::deserialize(bytes.as_slice())
     }
 }

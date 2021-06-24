@@ -61,7 +61,7 @@ impl<T, U: Project<T>> Project<Vec<T>> for Vec<U> {
 pub struct ProjectionConfig {}
 
 impl FromFile for ProjectionConfig {
-    fn from_file(_path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    fn from_file(_path: &str) -> anyhow::Result<Self> {
         Ok(ProjectionConfig {})
     }
 }
@@ -73,16 +73,14 @@ pub struct Projection {}
 
 #[async_trait]
 impl FromConfig<ProjectionConfig> for Projection {
-    async fn from_config(
-        _config: &ProjectionConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(_config: &ProjectionConfig) -> anyhow::Result<Self> {
         Ok(Projection {})
     }
 }
 
 #[async_trait]
 impl<T: Sync, U: Project<T>> Map<T, U, ProjectionConfig> for Projection {
-    async fn map(&mut self, data: &T) -> std::result::Result<U, Box<dyn std::error::Error>> {
+    async fn map(&mut self, data: &T) -> anyhow::Result<U> {
         Ok(U::project(&data))
     }
 }

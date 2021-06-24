@@ -1,7 +1,5 @@
 use async_trait::async_trait;
 use serde::Deserialize;
-use std::error::Error;
-use std::result::Result;
 use std::time::Duration;
 use std::u128;
 use tokio::time::Interval;
@@ -27,9 +25,7 @@ pub struct Timer {
 
 #[async_trait]
 impl FromConfig<TimerConfig> for Timer {
-    async fn from_config(
-        config: &TimerConfig,
-    ) -> std::result::Result<Timer, Box<dyn std::error::Error>> {
+    async fn from_config(config: &TimerConfig) -> anyhow::Result<Timer> {
         Ok(Timer {
             interval: tokio::time::interval(Duration::from_millis(config.period_in_millis)),
             ticks: config.ticks,
@@ -40,7 +36,7 @@ impl FromConfig<TimerConfig> for Timer {
 
 #[async_trait]
 impl Poll<u128, TimerConfig> for Timer {
-    async fn poll(&mut self) -> Result<Option<u128>, Box<dyn Error + Send + Sync>> {
+    async fn poll(&mut self) -> anyhow::Result<Option<u128>> {
         self.interval.tick().await;
         let tick = match self.ticks > 0 {
             true => {

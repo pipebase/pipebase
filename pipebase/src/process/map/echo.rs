@@ -11,7 +11,7 @@ use serde::Deserialize;
 pub struct EchoConfig {}
 
 impl FromFile for EchoConfig {
-    fn from_file(_path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    fn from_file(_path: &str) -> anyhow::Result<Self> {
         Ok(EchoConfig {})
     }
 }
@@ -23,16 +23,14 @@ pub struct Echo {}
 
 #[async_trait]
 impl FromConfig<EchoConfig> for Echo {
-    async fn from_config(
-        _config: &EchoConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(_config: &EchoConfig) -> anyhow::Result<Self> {
         Ok(Echo {})
     }
 }
 
 #[async_trait]
 impl<T: Clone + Debug + Sync> Map<T, T, EchoConfig> for Echo {
-    async fn map(&mut self, t: &T) -> std::result::Result<T, Box<dyn std::error::Error>> {
+    async fn map(&mut self, t: &T) -> anyhow::Result<T> {
         info!("{:#?}", t);
         Ok(t.to_owned())
     }

@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 pipebase = { path = "../pipebase" }
 async-trait = "0.1.50"
-
+anyhow = "1.0"
 lapin = "1.7.1"
 log = "0.4.14"
 tokio-amqp = "1.0.0"
