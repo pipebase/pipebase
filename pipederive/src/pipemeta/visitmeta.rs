@@ -1,5 +1,5 @@
 use super::meta::PipeMeta;
-use crate::constants::{CHANNEL_MACRO, PIPE_CHANNEL_DEFAULT_BUFFER, SPAWN_JOIN_MACRO};
+use crate::constants::{BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, CHANNEL_MACRO, SPAWN_JOIN_MACRO};
 
 pub trait VisitPipeMeta: Default {
     fn visit(&mut self, meta: &PipeMeta);
@@ -46,7 +46,7 @@ impl VisitPipeMeta for ChannelExpr {
         self.lhs = Some(format!("({}, {})", tx_name, rx_name));
         self.rhs = Some(format!(
             "{}({}, {})",
-            CHANNEL_MACRO, channel_ty, PIPE_CHANNEL_DEFAULT_BUFFER
+            CHANNEL_MACRO, channel_ty, BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER
         ));
     }
 }

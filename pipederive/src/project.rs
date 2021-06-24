@@ -6,7 +6,7 @@ use crate::constants::{
     PROJECT, PROJECT_ALIAS, PROJECT_ALIAS_DEFAULT, PROJECT_EXPR, PROJECT_FROM, PROJECT_INPUT,
 };
 use crate::utils::{
-    get_any_attribute_by_meta_prefix, get_meta_string_value_by_meta_path, get_type_token,
+    get_any_attribute_by_meta_prefix, get_meta_string_value_by_meta_path, get_type_name_token,
     resolve_field_path_token,
 };
 
@@ -16,8 +16,8 @@ pub fn impl_project(
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
-    let ref input_attribute = get_any_attribute_by_meta_prefix(PROJECT, attributes, true).unwrap();
-    let input_type_token = get_type_token(input_attribute, PROJECT_INPUT);
+    let ref project_attribute = get_any_project_attribute(attributes);
+    let input_type_token = get_type_name_token(project_attribute, PROJECT_INPUT);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     let resolved_data = resolve_data(data, &input_type_token);
     let expanded = quote! {
@@ -55,32 +55,27 @@ fn resolve_field_named(field: &Field, input_type_ident: &TokenStream) -> TokenSt
     let ref attributes = field.attrs;
     let ref field_ident = field.ident;
     let ref field_type = field.ty;
-    let ref project_attribute =
-        get_any_attribute_by_meta_prefix(PROJECT, attributes, true).unwrap();
-    let project_from_field_path =
-        get_meta_string_value_by_meta_path(PROJECT_FROM, project_attribute, false);
-    let project_expr_closure =
-        get_meta_string_value_by_meta_path(PROJECT_EXPR, project_attribute, false);
-    match (project_from_field_path, project_expr_closure) {
-        (Some(project_field_path), _) => {
-            handle_field_project(field.span(), field_ident, &project_field_path)
-        }
-        (None, Some(expr_closure)) => {
-            let input_alias = get_project_field_input_alias(project_attribute);
-            handle_field_expr(
+    let ref project_attribute = get_any_project_attribute(attributes);
+    let project_from = get_project_from(project_attribute);
+    let project_expr = get_project_expr(project_attribute);
+    match (project_from, project_expr) {
+        (Some(project_from), _) => handle_project_from(field.span(), field_ident, &project_from),
+        (None, Some(project_expr)) => {
+            let project_alias = get_project_alias(project_attribute);
+            handle_project_expr(
                 field.span(),
                 field_ident,
                 field_type,
-                &expr_closure,
+                &project_expr,
                 input_type_ident,
-                &input_alias,
+                &project_alias,
             )
         }
         (None, None) => panic!("field require one of attributes transform(project, expr)"),
     }
 }
 
-fn handle_field_project(
+fn handle_project_from(
     field_span: Span,
     field_ident: &Option<Ident>,
     field_path: &str,
@@ -92,7 +87,7 @@ fn handle_field_project(
 }
 
 // evaluate field expression
-fn handle_field_expr(
+fn handle_project_expr(
     field_span: Span,
     field_ident: &Option<Ident>,
     field_type: &Type,
@@ -113,9 +108,21 @@ fn handle_field_expr(
     }
 }
 
-fn get_project_field_input_alias(attribute: &Attribute) -> String {
+fn get_project_alias(attribute: &Attribute) -> String {
     match get_meta_string_value_by_meta_path(PROJECT_ALIAS, attribute, false) {
         Some(alias) => alias,
         None => PROJECT_ALIAS_DEFAULT.to_owned(),
     }
+}
+
+fn get_any_project_attribute(attributes: &Vec<Attribute>) -> Attribute {
+    get_any_attribute_by_meta_prefix(PROJECT, attributes, true).unwrap()
+}
+
+fn get_project_from(attribute: &Attribute) -> Option<String> {
+    get_meta_string_value_by_meta_path(PROJECT_FROM, attribute, false)
+}
+
+fn get_project_expr(attribute: &Attribute) -> Option<String> {
+    get_meta_string_value_by_meta_path(PROJECT_EXPR, attribute, false)
 }

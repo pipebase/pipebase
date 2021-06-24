@@ -21,7 +21,7 @@ mod tests {
     use std::ops::Deref;
     use std::pin::Pin;
 
-    #[derive(Bootstrap)]
+    #[derive(Bootstrap, ContextStore)]
     #[pipe(
         name = "timer1",
         ty = "poller",
@@ -40,21 +40,10 @@ mod tests {
         upstream = "timer1, timer2",
         config(ty = "PrinterConfig")
     )]
+    #[cstore(method(get = "get", insert = "insert"))]
     struct App {
+        #[cstore]
         pipe_contexts: HashMap<String, Arc<RwLock<Context>>>,
-    }
-
-    impl ContextStore for App {
-        fn add_pipe_context(&mut self, pipe_name: String, context: Arc<RwLock<Context>>) {
-            self.pipe_contexts.insert(pipe_name, context);
-        }
-
-        fn get_pipe_context(&self, pipe_name: &str) -> Option<Arc<RwLock<Context>>> {
-            match self.pipe_contexts.get(pipe_name) {
-                Some(context) => Some(context.to_owned()),
-                None => None,
-            }
-        }
     }
 
     #[tokio::test]
