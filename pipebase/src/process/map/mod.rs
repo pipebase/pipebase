@@ -47,12 +47,12 @@ impl<
     async fn run(&mut self) -> Result<()> {
         let mut mapper = self.config.config_into().await.unwrap();
         loop {
-            Self::inc_total_run(self.context.clone()).await;
-            Self::set_state(self.context.clone(), State::Receive).await;
+            Self::inc_total_run(&self.context).await;
+            Self::set_state(&self.context, State::Receive).await;
             // if all receiver dropped, sender drop as well
             match self.txs.is_empty() {
                 true => {
-                    Self::inc_success_run(self.context.clone()).await;
+                    Self::inc_success_run(&self.context).await;
                     break;
                 }
                 false => (),
@@ -61,11 +61,11 @@ impl<
             let t = match t {
                 Some(t) => t,
                 None => {
-                    Self::inc_success_run(self.context.clone()).await;
+                    Self::inc_success_run(&self.context).await;
                     break;
                 }
             };
-            Self::set_state(self.context.clone(), State::Process).await;
+            Self::set_state(&self.context, State::Process).await;
             let u = match mapper.map(&t).await {
                 Ok(u) => u,
                 Err(e) => {
@@ -73,7 +73,7 @@ impl<
                     break;
                 }
             };
-            Self::set_state(self.context.clone(), State::Send).await;
+            Self::set_state(&self.context, State::Send).await;
             let mut jhs = vec![];
             for tx in self.txs.to_owned() {
                 let u_clone: U = u.to_owned();
@@ -84,9 +84,9 @@ impl<
                 self.txs.to_owned(),
                 dropped_receiver_idxs,
             );
-            Self::inc_success_run(self.context.clone()).await;
+            Self::inc_success_run(&self.context).await;
         }
-        Self::set_state(self.context.clone(), State::Done).await;
+        Self::set_state(&self.context, State::Done).await;
         Ok(())
     }
 

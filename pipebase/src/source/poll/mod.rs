@@ -35,12 +35,12 @@ impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Syn
     async fn run(&mut self) -> Result<()> {
         let mut poller = self.config.config_into().await.unwrap();
         loop {
-            Self::inc_total_run(self.context.clone()).await;
-            Self::set_state(self.context.clone(), State::Poll).await;
+            Self::inc_total_run(&self.context).await;
+            Self::set_state(&self.context, State::Poll).await;
             // if all receiver dropped, sender drop as well
             match self.txs.is_empty() {
                 true => {
-                    Self::inc_success_run(self.context.clone()).await;
+                    Self::inc_success_run(&self.context).await;
                     break;
                 }
                 false => (),
@@ -56,11 +56,11 @@ impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Syn
             let t = match t {
                 Some(t) => t,
                 None => {
-                    Self::inc_success_run(self.context.clone()).await;
+                    Self::inc_success_run(&self.context).await;
                     break;
                 }
             };
-            Self::set_state(self.context.clone(), State::Send).await;
+            Self::set_state(&self.context, State::Send).await;
             let mut jhs = vec![];
             for tx in self.txs.to_owned() {
                 let t_clone = t.to_owned();
@@ -71,9 +71,9 @@ impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Syn
                 self.txs.to_owned(),
                 dropped_receiver_idxs,
             );
-            Self::inc_success_run(self.context.clone()).await;
+            Self::inc_success_run(&self.context).await;
         }
-        Self::set_state(self.context.clone(), State::Done).await;
+        Self::set_state(&self.context, State::Done).await;
         info!("source {} exit ...", self.name);
         Ok(())
     }

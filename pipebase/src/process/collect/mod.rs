@@ -86,12 +86,12 @@ impl<
                 c.get_flush_interval()
             };
             loop {
-                Self::set_state(context.clone(), State::Receive).await;
-                Self::inc_total_run(context.clone()).await;
+                Self::set_state(&context, State::Receive).await;
+                Self::inc_total_run(&context).await;
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        Self::inc_success_run(context.clone()).await;
+                        Self::inc_success_run(&context).await;
                         break;
                     }
                     false => (),
@@ -99,7 +99,7 @@ impl<
                 interval.tick().await;
                 let mut c = collector_clone.lock().await;
                 let data = c.flush().await;
-                Self::set_state(context.clone(), State::Send).await;
+                Self::set_state(&context, State::Send).await;
                 let mut jhs = vec![];
                 for tx in txs.as_slice() {
                     let tx_clone = tx.to_owned();
@@ -111,13 +111,13 @@ impl<
                     txs.to_owned(),
                     dropped_receiver_idxs,
                 );
-                Self::inc_success_run(context.clone()).await;
+                Self::inc_success_run(&context).await;
                 let is_end = { *(is_end_clone.lock().await) };
                 if is_end {
                     break;
                 }
             }
-            Self::set_state(context.clone(), State::Done).await;
+            Self::set_state(&context, State::Done).await;
         });
         let join_all = tokio::spawn(async move { tokio::join!(join_event, join_flush) });
         match join_all.await {

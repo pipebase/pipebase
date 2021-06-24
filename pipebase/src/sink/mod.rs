@@ -39,19 +39,19 @@ impl<'a, T: Send + Sync + 'static, E: Export<T, C> + 'static, C: ConfigInto<E> +
         let mut exporter = self.config.config_into().await.unwrap();
 
         loop {
-            Self::inc_total_run(self.context.to_owned()).await;
-            Self::set_state(self.context.to_owned(), State::Receive).await;
+            Self::inc_total_run(&self.context).await;
+            Self::set_state(&self.context, State::Receive).await;
             let t = match self.rx.recv().await {
                 Some(t) => t,
                 None => {
-                    Self::inc_success_run(self.context.to_owned()).await;
+                    Self::inc_success_run(&self.context).await;
                     break;
                 }
             };
-            Self::set_state(self.context.to_owned(), State::Export).await;
+            Self::set_state(&self.context, State::Export).await;
             match exporter.export(&t).await {
                 Ok(_) => {
-                    Self::inc_success_run(self.context.to_owned()).await;
+                    Self::inc_success_run(&self.context).await;
                 }
                 Err(err) => {
                     error!("export error {}", err);
@@ -59,7 +59,7 @@ impl<'a, T: Send + Sync + 'static, E: Export<T, C> + 'static, C: ConfigInto<E> +
                 }
             }
         }
-        Self::set_state(self.context.to_owned(), State::Done).await;
+        Self::set_state(&self.context, State::Done).await;
 
         Ok(())
     }

@@ -57,12 +57,12 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
         let context = self.context.clone();
         let join_event_loop = tokio::spawn(async move {
             loop {
-                Self::inc_total_run(context.clone()).await;
-                Self::set_state(context.clone(), State::Receive).await;
+                Self::inc_total_run(&context).await;
+                Self::set_state(&context, State::Receive).await;
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        Self::inc_success_run(context.clone()).await;
+                        Self::inc_success_run(&context).await;
                         break;
                     }
                     false => (),
@@ -70,11 +70,11 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
                 let t = match rx.recv().await {
                     Some(t) => t,
                     None => {
-                        Self::inc_success_run(context.clone()).await;
+                        Self::inc_success_run(&context).await;
                         break;
                     }
                 };
-                Self::set_state(context.clone(), State::Send).await;
+                Self::set_state(&context, State::Send).await;
                 let mut jhs = vec![];
                 for tx in txs.as_slice() {
                     let u_clone: T = t.to_owned();
@@ -85,9 +85,9 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
                     txs.to_owned(),
                     dropped_receiver_idxs,
                 );
-                Self::inc_success_run(context.clone()).await;
+                Self::inc_success_run(&context).await;
             }
-            Self::set_state(context.clone(), State::Done).await;
+            Self::set_state(&context, State::Done).await;
         });
         // join listener and loop
         match tokio::spawn(async move { tokio::join!(join_listener, join_event_loop) }).await {

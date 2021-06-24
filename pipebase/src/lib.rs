@@ -109,17 +109,17 @@ pub trait Pipe<T: Send + 'static> {
         healthy_senders
     }
 
-    async fn set_state(context: Arc<RwLock<Context>>, state: State) {
+    async fn set_state(context: &Arc<RwLock<Context>>, state: State) {
         let mut ctx = context.write().await;
         ctx.set_state(state)
     }
 
-    async fn inc_total_run(context: Arc<RwLock<Context>>) {
+    async fn inc_total_run(context: &Arc<RwLock<Context>>) {
         let mut ctx = context.write().await;
         ctx.inc_total_run()
     }
 
-    async fn inc_success_run(context: Arc<RwLock<Context>>) {
+    async fn inc_success_run(context: &Arc<RwLock<Context>>) {
         let mut ctx = context.write().await;
         ctx.inc_success_run()
     }
