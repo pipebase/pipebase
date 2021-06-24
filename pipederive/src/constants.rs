@@ -16,15 +16,24 @@ pub const HASH_KEY: &str = "hkey";
 
 pub const ORD_KEY: &str = "okey";
 
-pub const PIPE_NAME: &str = "pipe.name";
-pub const PIPE_TYPE: &str = "pipe.ty";
-pub const PIPE_UPSTREAM: &str = "pipe.upstream";
-pub const PIPE_UPSTREAM_NAME_SEP: &str = ",";
-pub const PIPE_CONFIG_TYPE: &str = "pipe.config.ty";
-pub const PIPE_CONFIG_PATH: &str = "pipe.config.path";
-pub const PIPE_CONFIG_EMPTY_PATH: &str = "";
-pub const PIPE_OUTPUT: &str = "pipe.output";
-pub const PIPE_CHANNEL_DEFAULT_BUFFER: usize = 1024;
+pub const CONTEXT_STORE: &str = "cstore";
+
+pub const CONTEXT_STORE_METHOD_INSERT: &str = "cstore.method.insert";
+pub const CONTEXT_STORE_METHOD_INSERT_DEFAULT: &str = "insert";
+
+pub const CONTEXT_STORE_METHOD_GET: &str = "cstore.method.get";
+pub const CONTEXT_STORE_METHOD_GET_DEFAULT: &str = "get";
+
+pub const BOOTSTRAP_PIPE: &str = "pipe";
+pub const BOOTSTRAP_PIPE_NAME: &str = "pipe.name";
+pub const BOOTSTRAP_PIPE_TYPE: &str = "pipe.ty";
+pub const BOOTSTRAP_PIPE_UPSTREAM: &str = "pipe.upstream";
+pub const BOOTSTRAP_PIPE_UPSTREAM_NAME_SEP: &str = ",";
+pub const BOOTSTRAP_PIPE_CONFIG_TYPE: &str = "pipe.config.ty";
+pub const BOOTSTRAP_PIPE_CONFIG_PATH: &str = "pipe.config.path";
+pub const BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH: &str = "";
+pub const BOOTSTRAP_PIPE_OUTPUT: &str = "pipe.output";
+pub const BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER: usize = 1024;
 
 pub const CHANNEL_MACRO: &str = "channel!";
 pub const SPAWN_JOIN_MACRO: &str = "spawn_join!";

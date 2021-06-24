@@ -5,10 +5,10 @@ use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
 use syn::Attribute;
 
-use crate::constants::PIPE_UPSTREAM_NAME_SEP;
+use crate::constants::BOOTSTRAP_PIPE_UPSTREAM_NAME_SEP;
 use crate::constants::{
-    PIPE_CONFIG_EMPTY_PATH, PIPE_CONFIG_PATH, PIPE_CONFIG_TYPE, PIPE_NAME, PIPE_OUTPUT, PIPE_TYPE,
-    PIPE_UPSTREAM,
+    BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH, BOOTSTRAP_PIPE_CONFIG_TYPE, BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE,
+    BOOTSTRAP_PIPE_UPSTREAM,
 };
 use crate::utils::get_meta_string_value_by_meta_path;
 
@@ -27,7 +27,7 @@ impl PipeConfigMeta {
     pub fn get_path(&self) -> String {
         match self.path.to_owned() {
             Some(path) => path,
-            None => PIPE_CONFIG_EMPTY_PATH.to_owned(),
+            None => BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH.to_owned(),
         }
     }
 }
@@ -109,19 +109,19 @@ impl PipeMeta {
     }
 
     fn parse_name(attribute: &Attribute) -> String {
-        get_meta_string_value_by_meta_path(PIPE_NAME, attribute, true).unwrap()
+        get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_NAME, attribute, true).unwrap()
     }
 
     fn parse_ty(attribute: &Attribute) -> String {
-        get_meta_string_value_by_meta_path(PIPE_TYPE, attribute, true).unwrap()
+        get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_TYPE, attribute, true).unwrap()
     }
 
     fn parse_upstream_names(attribute: &Attribute) -> Vec<String> {
-        match get_meta_string_value_by_meta_path(PIPE_UPSTREAM, attribute, false) {
+        match get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_UPSTREAM, attribute, false) {
             Some(upstream_names) => {
                 // split into vector of upstreams
                 upstream_names
-                    .split(PIPE_UPSTREAM_NAME_SEP)
+                    .split(BOOTSTRAP_PIPE_UPSTREAM_NAME_SEP)
                     .map(|n| {
                         let mut n = n.to_owned();
                         // clean whitespace after split
@@ -135,13 +135,13 @@ impl PipeMeta {
     }
 
     fn parse_config_meta(attribute: &Attribute) -> PipeConfigMeta {
-        let ty = get_meta_string_value_by_meta_path(PIPE_CONFIG_TYPE, attribute, true).unwrap();
-        let path = get_meta_string_value_by_meta_path(PIPE_CONFIG_PATH, attribute, false);
+        let ty = get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_CONFIG_TYPE, attribute, true).unwrap();
+        let path = get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_CONFIG_PATH, attribute, false);
         PipeConfigMeta { ty: ty, path: path }
     }
 
     fn parse_output_meta(attribute: &Attribute) -> Option<String> {
-        match get_meta_string_value_by_meta_path(PIPE_OUTPUT, attribute, false) {
+        match get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_OUTPUT, attribute, false) {
             Some(ty) => Some(ty),
             None => None,
         }
