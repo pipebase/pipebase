@@ -133,7 +133,7 @@ macro_rules! spawn_join {
         $( $pipe:expr ), *
     ) => {
 
-            tokio::join!($(
+            let _ = tokio::join!($(
                 tokio::spawn(async move {
                     match $pipe.run().await {
                         Ok(context) => Ok(context),
@@ -143,8 +143,7 @@ macro_rules! spawn_join {
                         }
                     }
                 })
-            ),*)
-
+            ),*);
     };
 }
 

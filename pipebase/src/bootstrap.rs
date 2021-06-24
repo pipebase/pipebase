@@ -5,7 +5,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub trait ContextStore {
-    fn add_pipe_context(&mut self, pipe_name: &str, context: Arc<RwLock<Context>>);
+    fn add_pipe_context(&mut self, pipe_name: String, context: Arc<RwLock<Context>>);
     fn get_pipe_context(&self, pipe_name: &str) -> Option<Arc<RwLock<Context>>>;
 }
 pub trait Bootstrap: ContextStore {
@@ -45,8 +45,8 @@ mod tests {
     }
 
     impl ContextStore for App {
-        fn add_pipe_context(&mut self, pipe_name: &str, context: Arc<RwLock<Context>>) {
-            self.pipe_contexts.insert(pipe_name.to_owned(), context);
+        fn add_pipe_context(&mut self, pipe_name: String, context: Arc<RwLock<Context>>) {
+            self.pipe_contexts.insert(pipe_name, context);
         }
 
         fn get_pipe_context(&self, pipe_name: &str) -> Option<Arc<RwLock<Context>>> {

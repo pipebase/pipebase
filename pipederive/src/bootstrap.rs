@@ -94,6 +94,6 @@ fn resolve_pipe_contexts(pipe_names: &Vec<String>) -> TokenStream {
 fn resolve_pipe_context(pipe_name: &str) -> TokenStream {
     let pipe_ident = Ident::new(pipe_name, Span::call_site());
     quote! {
-        self.add_pipe_context(#pipe_name, #pipe_ident.get_context())
+        self.add_pipe_context(String::from(#pipe_name), #pipe_ident.get_context())
     }
 }
