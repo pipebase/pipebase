@@ -36,8 +36,8 @@ pub struct ChannelExpr {
 
 impl VisitPipeMeta for ChannelExpr {
     fn visit(&mut self, meta: &PipeMeta) {
-        let channel_ty = match meta.get_upstream_output_name() {
-            Some(upstream_output_meta) => upstream_output_meta,
+        let channel_ty = match meta.get_upstream_output_type_name() {
+            Some(upstream_output_type_name) => upstream_output_type_name,
             None => return,
         };
         let pipe_name = meta.get_name();
@@ -78,28 +78,28 @@ pub struct PipeExpr {
 
 impl VisitPipeMeta for PipeExpr {
     fn visit(&mut self, meta: &PipeMeta) {
-        let name = meta.get_name();
+        let pipe_name = meta.get_name();
         let ty = meta.get_ty();
         let config_meta = meta.get_config_meta();
         let config_ty = config_meta.get_ty();
         let config_path = config_meta.get_path();
-        let upstream_output_meta = meta.get_upstream_output_name();
+        let upstream_output_type_name = meta.get_upstream_output_type_name();
         let downstream_pipe_names = meta.get_downstream_names();
         let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
-        let receiver_expr = match upstream_output_meta {
-            Some(_) => Self::gen_recevier_expr(&name),
+        let receiver_expr = match upstream_output_type_name {
+            Some(_) => Self::gen_recevier_expr(&pipe_name),
             None => "dummy".to_owned(),
         };
         let rhs = format!(
             r#"{}("{}", "{}", {}, {}, {})"#,
-            Self::type_macro(&ty),
-            name,
+            Self::pipe_type_macro(&ty),
+            pipe_name,
             config_path,
             config_ty,
             receiver_expr,
             senders_expr
         );
-        self.lhs = Some(Self::as_mut(&name));
+        self.lhs = Some(Self::as_mut(&pipe_name));
         self.rhs = Some(rhs);
     }
 }
@@ -114,7 +114,7 @@ impl Expr for PipeExpr {
 }
 
 impl PipeExpr {
-    fn type_macro(ty: &str) -> String {
+    fn pipe_type_macro(ty: &str) -> String {
         format!("{}!", ty)
     }
 
