@@ -9,12 +9,11 @@ use crate::operation::ObjectDependencyValidator;
 use crate::operation::ObjectIdValidator;
 use crate::operation::PipeGraphDescriber;
 use crate::operation::PipeGraphValidator;
-use crate::operation::PipeIdsDisplay;
 use crate::operation::{
     Describe, Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate,
 };
 use serde::Deserialize;
-use std::fmt;
+use std::path::Path;
 
 #[derive(Deserialize, Debug)]
 pub struct App {
@@ -24,7 +23,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn parse(api_manifest_path: &str) -> Result<App> {
+    pub fn parse(api_manifest_path: &Path) -> Result<App> {
         let file = match std::fs::File::open(api_manifest_path) {
             Ok(file) => file,
             Err(err) => return Err(io_error(err)),
