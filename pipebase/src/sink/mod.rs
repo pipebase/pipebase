@@ -16,14 +16,22 @@ use crate::Result;
 use crate::{context::Context, ConfigInto, FromConfig};
 
 #[async_trait]
-pub trait Export<T: Send + Sync + 'static, C>: Send + Sync + FromConfig<C> {
+pub trait Export<T, C>: Send + Sync + FromConfig<C>
+where
+    T: Send + Sync + 'static,
+{
     async fn export(
         &mut self,
         t: &T,
     ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }
 
-pub struct Exporter<'a, T: Send + Sync + 'static, E: Export<T, C>, C: ConfigInto<E>> {
+pub struct Exporter<'a, T, E, C>
+where
+    T: Send + Sync + 'static,
+    E: Export<T, C>,
+    C: ConfigInto<E>,
+{
     pub name: &'a str,
     pub rx: Receiver<T>,
     pub config: C,
@@ -32,8 +40,11 @@ pub struct Exporter<'a, T: Send + Sync + 'static, E: Export<T, C>, C: ConfigInto
 }
 
 #[async_trait]
-impl<'a, T: Send + Sync + 'static, E: Export<T, C> + 'static, C: ConfigInto<E> + Send + Sync>
-    Pipe<()> for Exporter<'a, T, E, C>
+impl<'a, T, E, C> Pipe<()> for Exporter<'a, T, E, C>
+where
+    T: Send + Sync + 'static,
+    E: Export<T, C> + 'static,
+    C: ConfigInto<E> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
         let mut exporter = self.config.config_into().await.unwrap();

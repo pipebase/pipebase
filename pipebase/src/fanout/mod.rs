@@ -25,7 +25,12 @@ pub trait Select<T, C>: Send + Sync + FromConfig<C> {
     fn get_range(&mut self) -> usize;
 }
 
-pub struct Selector<'a, T, S: Select<T, C>, C: ConfigInto<S>> {
+pub struct Selector<'a, T, S, C>
+where
+    T: Clone + Send + 'static,
+    S: Select<T, C>,
+    C: ConfigInto<S> + Send + Sync,
+{
     pub name: &'a str,
     pub rx: Receiver<T>,
     pub txs: HashMap<usize, Arc<Sender<T>>>,
@@ -35,8 +40,11 @@ pub struct Selector<'a, T, S: Select<T, C>, C: ConfigInto<S>> {
 }
 
 #[async_trait]
-impl<'a, T: Clone + Send + 'static, S: Select<T, C>, C: ConfigInto<S> + Send + Sync> Pipe<T>
-    for Selector<'a, T, S, C>
+impl<'a, T, S, C> Pipe<T> for Selector<'a, T, S, C>
+where
+    T: Clone + Send + 'static,
+    S: Select<T, C>,
+    C: ConfigInto<S> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
         let mut selector = self.config.config_into().await.unwrap();

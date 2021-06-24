@@ -24,19 +24,23 @@ use tokio::{
 };
 
 #[async_trait]
-pub trait Collect<T: Clone, U: FromIterator<T> + Clone, C>: Send + Sync + FromConfig<C> {
+pub trait Collect<T, U, C>: Send + Sync + FromConfig<C>
+where
+    T: Clone,
+    U: FromIterator<T> + Clone,
+{
     async fn collect(&mut self, t: &T);
     async fn flush(&mut self) -> U;
     fn get_flush_interval(&self) -> Interval;
 }
 
-pub struct Collector<
-    'a,
-    T: Clone,
-    U: FromIterator<T> + Clone,
-    V: Collect<T, U, C>,
-    C: ConfigInto<V>,
-> {
+pub struct Collector<'a, T, U, V, C>
+where
+    T: Clone + Send + Sync + 'static,
+    U: FromIterator<T> + Clone + Send + 'static,
+    V: Collect<T, U, C> + 'static,
+    C: ConfigInto<V> + Send + Sync,
+{
     pub name: &'a str,
     pub rx: Arc<Mutex<Receiver<T>>>,
     pub txs: HashMap<usize, Arc<Sender<U>>>,
@@ -47,13 +51,12 @@ pub struct Collector<
 }
 
 #[async_trait]
-impl<
-        'a,
-        T: Clone + Send + Sync + 'static,
-        U: FromIterator<T> + Clone + Send + 'static,
-        V: Collect<T, U, C> + 'static,
-        C: ConfigInto<V> + Send + Sync,
-    > Pipe<U> for Collector<'a, T, U, V, C>
+impl<'a, T, U, V, C> Pipe<U> for Collector<'a, T, U, V, C>
+where
+    T: Clone + Send + Sync + 'static,
+    U: FromIterator<T> + Clone + Send + 'static,
+    V: Collect<T, U, C> + 'static,
+    C: ConfigInto<V> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
         let collector: Arc<Mutex<V>> =

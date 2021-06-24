@@ -27,7 +27,13 @@ pub trait Map<T, U, C>: Send + Sync + FromConfig<C> {
     async fn map(&mut self, data: &T) -> std::result::Result<U, Box<dyn std::error::Error>>;
 }
 
-pub struct Mapper<'a, T, U, M: Map<T, U, C>, C: ConfigInto<M>> {
+pub struct Mapper<'a, T, U, M, C>
+where
+    T: Send + Sync,
+    U: Clone + Debug + Send + 'static,
+    M: Map<T, U, C>,
+    C: ConfigInto<M> + Send + Sync,
+{
     pub name: &'a str,
     pub rx: Receiver<T>,
     pub txs: HashMap<usize, Arc<Sender<U>>>,
@@ -37,13 +43,12 @@ pub struct Mapper<'a, T, U, M: Map<T, U, C>, C: ConfigInto<M>> {
 }
 
 #[async_trait]
-impl<
-        'a,
-        T: Send + Sync,
-        U: Clone + Debug + Send + 'static,
-        M: Map<T, U, C>,
-        C: ConfigInto<M> + Send + Sync,
-    > Pipe<U> for Mapper<'a, T, U, M, C>
+impl<'a, T, U, M, C> Pipe<U> for Mapper<'a, T, U, M, C>
+where
+    T: Send + Sync,
+    U: Clone + Debug + Send + 'static,
+    M: Map<T, U, C>,
+    C: ConfigInto<M> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
         let mut mapper = self.config.config_into().await.unwrap();

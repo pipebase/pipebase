@@ -13,7 +13,10 @@ use std::sync::Arc;
 use tokio::sync::mpsc::channel;
 
 #[async_trait]
-pub trait Listen<T: Send + 'static, C>: Send + Sync + FromConfig<C> {
+pub trait Listen<T, C>: Send + Sync + FromConfig<C>
+where
+    T: Send + 'static,
+{
     async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>;
     async fn set_sender(&mut self, sender: Arc<Sender<T>>);
     // send data and return true if succeed
@@ -29,7 +32,12 @@ pub trait Listen<T: Send + 'static, C>: Send + Sync + FromConfig<C> {
     }
 }
 
-pub struct Listener<'a, T: Send + 'static, L: Listen<T, C>, C: ConfigInto<L>> {
+pub struct Listener<'a, T, L, C>
+where
+    T: Clone + Send + 'static,
+    L: Listen<T, C> + 'static,
+    C: ConfigInto<L> + Send + Sync,
+{
     pub name: &'a str,
     pub txs: HashMap<usize, Arc<Sender<T>>>,
     pub config: C,
@@ -38,8 +46,11 @@ pub struct Listener<'a, T: Send + 'static, L: Listen<T, C>, C: ConfigInto<L>> {
 }
 
 #[async_trait]
-impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> + Send + Sync>
-    Pipe<T> for Listener<'a, T, L, C>
+impl<'a, T, L, C> Pipe<T> for Listener<'a, T, L, C>
+where
+    T: Clone + Send + 'static,
+    L: Listen<T, C> + 'static,
+    C: ConfigInto<L> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
         // connect listener

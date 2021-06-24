@@ -21,7 +21,12 @@ pub trait Poll<T, C>: Send + Sync + FromConfig<C> {
     ) -> std::result::Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>;
 }
 
-pub struct Poller<'a, T, P: Poll<T, C>, C: ConfigInto<P>> {
+pub struct Poller<'a, T, P, C>
+where
+    T: Clone + Send + 'static,
+    P: Poll<T, C>,
+    C: ConfigInto<P> + Send + Sync,
+{
     pub name: &'a str,
     pub txs: HashMap<usize, Arc<Sender<T>>>,
     pub config: C,
@@ -30,8 +35,11 @@ pub struct Poller<'a, T, P: Poll<T, C>, C: ConfigInto<P>> {
 }
 
 #[async_trait]
-impl<'a, T: Clone + Send + 'static, P: Poll<T, C>, C: ConfigInto<P> + Send + Sync> Pipe<T>
-    for Poller<'a, T, P, C>
+impl<'a, T, P, C> Pipe<T> for Poller<'a, T, P, C>
+where
+    T: Clone + Send + 'static,
+    P: Poll<T, C>,
+    C: ConfigInto<P> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
         let mut poller = self.config.config_into().await.unwrap();
