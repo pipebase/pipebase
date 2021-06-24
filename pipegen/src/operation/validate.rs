@@ -141,7 +141,7 @@ impl Validate<Pipe> for PipeGraphValidator {
                 );
                 continue;
             }
-            for upid in &self.graph.get_upstream_pipes(pid) {
+            for upid in self.graph.get_upstream_pipes(pid) {
                 if !self.graph.has_pipe(upid) {
                     self.error_details
                         .insert(location.to_owned(), format!("upstream does not exists"));

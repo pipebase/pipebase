@@ -54,24 +54,24 @@ impl<T: Clone> Vertex<T> {
         }
     }
 
-    pub fn get_in_vertices(&self) -> HashSet<String> {
-        self.in_vertices.to_owned()
+    pub fn get_in_vertices(&self) -> &HashSet<String> {
+        &self.in_vertices
     }
 
     pub fn get_in_vertex_count(&self) -> usize {
         self.in_vertices.len()
     }
 
-    pub fn get_out_vertices(&self) -> HashSet<String> {
-        self.out_vertices.to_owned()
+    pub fn get_out_vertices(&self) -> &HashSet<String> {
+        &self.out_vertices
     }
 
     pub fn get_out_vertex_count(&self) -> usize {
         self.out_vertices.len()
     }
 
-    pub fn get_value(&self) -> Option<T> {
-        self.value.to_owned()
+    pub fn get_value(&self) -> Option<&T> {
+        self.value.as_ref()
     }
 
     pub fn set_value(&mut self, value: T) {
@@ -144,7 +144,7 @@ impl<T: Clone> DirectedGraph<T> {
         true
     }
 
-    pub fn get_vertex_value(&self, vid: &str) -> Option<T> {
+    pub fn get_vertex_value(&self, vid: &str) -> Option<&T> {
         if !self.has_vertex_id(vid) {
             return None;
         }
@@ -163,7 +163,7 @@ impl<T: Clone> DirectedGraph<T> {
         }
         while !candidates.is_empty() {
             let vid = candidates.pop().unwrap();
-            for out_vid in &self.vertices.get(&vid).unwrap().get_out_vertices() {
+            for out_vid in self.vertices.get(&vid).unwrap().get_out_vertices() {
                 let count = in_counts.get_mut(out_vid).unwrap();
                 *count -= 1;
                 if *count == 0 {
@@ -189,7 +189,7 @@ impl<T: Clone> DirectedGraph<T> {
         }
         for (src, vertex) in &self.vertices {
             let dsts = vertex.get_out_vertices();
-            for dst in &dsts {
+            for dst in dsts {
                 let u_src = Self::find(&unions, src);
                 let u_dst = Self::find(&unions, dst);
                 if u_src != u_dst {
@@ -272,7 +272,7 @@ impl<T: Clone> DirectedGraph<T> {
         self.vertices.get(vid).unwrap().get_in_vertex_count() > 0
     }
 
-    pub fn get_in_vertices(&self, vid: &str) -> HashSet<String> {
+    pub fn get_in_vertices(&self, vid: &str) -> &HashSet<String> {
         assert!(self.has_vertex_id(vid));
         self.vertices.get(vid).unwrap().get_in_vertices()
     }
@@ -282,7 +282,7 @@ impl<T: Clone> DirectedGraph<T> {
         self.vertices.get(vid).unwrap().get_out_vertex_count() > 0
     }
 
-    pub fn get_out_vertices(&self, vid: &str) -> HashSet<String> {
+    pub fn get_out_vertices(&self, vid: &str) -> &HashSet<String> {
         assert!(self.has_vertex_id(vid));
         self.vertices.get(vid).unwrap().get_out_vertices()
     }
@@ -301,7 +301,7 @@ impl<T: Clone> DirectedGraph<T> {
         if !visited.insert(src.to_owned()) {
             return cache.get_paths(src, dst);
         }
-        for next in &self.vertices.get(src).unwrap().get_out_vertices() {
+        for next in self.vertices.get(src).unwrap().get_out_vertices() {
             let paths = match self.find_paths(next, dst, visited, cache) {
                 None => continue,
                 Some(paths) => paths,
@@ -381,7 +381,7 @@ impl<T: Clone> PipeGraph<T> {
         self.graph.has_in_vertex(pid)
     }
 
-    pub fn get_upstream_pipes(&self, pid: &str) -> HashSet<String> {
+    pub fn get_upstream_pipes(&self, pid: &str) -> &HashSet<String> {
         self.graph.get_in_vertices(pid)
     }
 
@@ -389,11 +389,11 @@ impl<T: Clone> PipeGraph<T> {
         self.graph.has_out_vertex(pid)
     }
 
-    pub fn get_downstream_pipes(&self, pid: &str) -> HashSet<String> {
+    pub fn get_downstream_pipes(&self, pid: &str) -> &HashSet<String> {
         self.graph.get_out_vertices(pid)
     }
 
-    pub fn get_pipe_value(&self, pid: &str) -> Option<T> {
+    pub fn get_pipe_value(&self, pid: &str) -> Option<&T> {
         assert!(self.has_pipe(pid));
         self.graph.get_vertex_value(pid)
     }
