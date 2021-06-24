@@ -147,7 +147,6 @@ const PIPE_COMPONENT_LABEL: &str = "union";
 const PIPELINE_LABEL: &str = "pipeline";
 const PIPE_LIST_SEP: &str = ", ";
 const PIPE_DIRECT_SEP: &str = " -> ";
-const DISPLAY_NEWLINE: &str = "\n";
 
 #[cfg(test)]
 mod tests {
