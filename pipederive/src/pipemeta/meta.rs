@@ -1,10 +1,8 @@
 use super::Expr;
 use super::VisitPipeMeta;
 
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::ops::Deref;
-use std::rc::Rc;
+use std::collections::{HashMap, HashSet};
+use std::iter::FromIterator;
 use syn::Attribute;
 
 use crate::constants::PIPE_UPSTREAM_NAME_SEP;
@@ -67,7 +65,7 @@ impl PipeMeta {
         &self.output_type_name
     }
 
-    pub fn get_upstream_output_name(&self) -> Option<String> {
+    pub fn get_upstream_output_type_name(&self) -> Option<String> {
         self.upstream_output_type_name.to_owned()
     }
 
@@ -158,23 +156,28 @@ pub struct PipeMetas {
 impl PipeMetas {
     pub fn parse(attributes: &Vec<Attribute>) -> Self {
         let mut pipe_metas: HashMap<String, PipeMeta> = HashMap::new();
-        let mut pipe_names = vec![];
+        let mut pipe_names: HashSet<String> = HashSet::new();
         let mut pipe_output_type_names: HashMap<String, Option<String>> = HashMap::new();
         let mut downstream_pipe_names: HashMap<String, Vec<String>> = HashMap::new();
-        let mut upstream_pipe_names: HashMap<String, Vec<String>> = HashMap::new();
+        let mut upstream_pipe_names: HashMap<String, HashSet<String>> = HashMap::new();
         for attribute in attributes {
             let ref pipe_meta = PipeMeta::parse(&attribute);
             let pipe_name = pipe_meta.get_name();
-            pipe_names.push(pipe_name.to_owned());
+            if !pipe_names.insert(pipe_name.to_owned()) {
+                panic!("duplicated pipe name {}", pipe_name)
+            }
             pipe_metas.insert(pipe_name.to_owned(), pipe_meta.to_owned());
+            // collect output type per pipe - channel ty
             pipe_output_type_names.insert(
                 pipe_name.to_owned(),
                 pipe_meta.get_output_type_name().to_owned(),
             );
+            // collect upstream pipe for input loopup - channel rx
             upstream_pipe_names.insert(
                 pipe_name.to_owned(),
-                pipe_meta.get_upstream_names().to_owned(),
+                HashSet::from_iter(pipe_meta.get_upstream_names().to_owned()),
             );
+            // collect downstream pipe - channel tx
             for upstream_pipe_name in pipe_meta.get_upstream_names() {
                 if !downstream_pipe_names.contains_key(upstream_pipe_name) {
                     downstream_pipe_names
