@@ -83,7 +83,7 @@ mod tests {
     use tokio::sync::mpsc::Sender;
 
     async fn populate_records(tx: &mut Sender<Vec<Record>>, records: Vec<Record>) {
-        tx.send(records).await;
+        let _ = tx.send(records).await;
     }
     #[tokio::test]
     async fn test_filter_map() {

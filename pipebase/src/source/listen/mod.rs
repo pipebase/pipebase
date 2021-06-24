@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use log::error;
+use log::info;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::RwLock;
 
@@ -46,12 +47,15 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
         // start listener
         let join_listener = tokio::spawn(async move {
             listener.set_sender(tx.into()).await;
-            listener.run().await;
+            match listener.run().await {
+                Ok(_) => info!("listener exit ..."),
+                Err(e) => error!("listenr exit with error {}", e),
+            };
         });
         // start event loop
         let mut txs = self.txs.to_owned();
         let context = self.context.clone();
-        let join_loop = tokio::spawn(async move {
+        let join_event_loop = tokio::spawn(async move {
             loop {
                 Self::inc_total_run(context.clone()).await;
                 Self::set_state(context.clone(), State::Receive).await;
@@ -86,7 +90,7 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
             Self::set_state(context.clone(), State::Done).await;
         });
         // join listener and loop
-        match tokio::spawn(async move { tokio::join!(join_listener, join_loop) }).await {
+        match tokio::spawn(async move { tokio::join!(join_listener, join_event_loop) }).await {
             Ok(_) => (),
             Err(err) => {
                 error!("listener join error {:#?}", err)

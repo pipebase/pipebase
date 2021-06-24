@@ -79,7 +79,7 @@ mod tests {
     use tokio::sync::mpsc::Sender;
 
     async fn populate_records(tx: &mut Sender<Records>, records: Records) {
-        tx.send(records).await;
+        let _ = tx.send(records).await;
     }
 
     #[tokio::test]

@@ -51,7 +51,7 @@ mod tests {
     }
 
     async fn populate_message(tx0: &mut Sender<Message>, message: Message) {
-        tx0.send(message).await;
+        let _ = tx0.send(message).await;
     }
 
     #[tokio::test]

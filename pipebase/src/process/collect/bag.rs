@@ -65,7 +65,7 @@ mod tests {
 
     async fn populate_record(tx: Sender<Record>, records: Vec<Record>) {
         for r in records {
-            tx.send(r).await;
+            let _ = tx.send(r).await;
         }
     }
 
