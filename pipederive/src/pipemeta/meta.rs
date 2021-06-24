@@ -35,13 +35,14 @@ impl PipeConfigMeta {
 }
 
 /// Pipe metadata
+#[derive(Clone)]
 pub struct PipeMeta {
     pub name: String,
     pub ty: String,
     pub config_meta: PipeConfigMeta,
-    pub output_meta: Option<String>,
+    pub output_type_name: Option<String>,
     pub upstream_names: Vec<String>,
-    pub upstream_output_meta: Option<String>,
+    pub upstream_output_type_name: Option<String>,
     pub downstream_names: Vec<String>,
 }
 
@@ -50,55 +51,51 @@ impl PipeMeta {
         visitor.visit(self);
     }
 
-    pub fn get_name(&self) -> String {
-        self.name.to_owned()
+    pub fn get_name(&self) -> &String {
+        &self.name
     }
 
-    pub fn get_ty(&self) -> String {
-        self.ty.to_owned()
+    pub fn get_ty(&self) -> &String {
+        &self.ty
     }
 
-    pub fn get_config_meta(&self) -> PipeConfigMeta {
-        self.config_meta.to_owned()
+    pub fn get_config_meta(&self) -> &PipeConfigMeta {
+        &self.config_meta
     }
 
-    pub fn get_output_meta(&self) -> Option<String> {
-        self.output_meta.to_owned()
+    pub fn get_output_type_name(&self) -> &Option<String> {
+        &self.output_type_name
     }
 
-    pub fn get_upstream_output_meta(&self) -> Option<String> {
-        self.upstream_output_meta.to_owned()
+    pub fn get_upstream_output_name(&self) -> Option<String> {
+        self.upstream_output_type_name.to_owned()
     }
 
-    pub fn get_upstream_names(&self) -> Vec<String> {
-        self.upstream_names.to_owned()
+    pub fn get_upstream_names(&self) -> &Vec<String> {
+        &self.upstream_names
     }
 
-    pub fn set_upstream_output_meta(&mut self, upstream_output_meta: Option<String>) {
-        let upstream_output_meta = match upstream_output_meta {
-            Some(upstream_output_meta) => upstream_output_meta,
-            None => panic!("output meta not found in upstream pipe"),
-        };
+    pub fn set_upstream_output_type_name(&mut self, upstream_output_type_name: String) {
         // upstream pipes should have identical output meta
-        match self.upstream_output_meta {
-            Some(ref local_upstream_output_meta) => {
-                if !local_upstream_output_meta.eq(&upstream_output_meta) {
+        match self.upstream_output_type_name {
+            Some(ref local_upstream_output_type_name) => {
+                if !local_upstream_output_type_name.eq(&upstream_output_type_name) {
                     panic!(
                         "upstream output conflict, found {} != {}",
-                        local_upstream_output_meta, upstream_output_meta
+                        local_upstream_output_type_name, upstream_output_type_name
                     )
                 }
             }
-            None => self.upstream_output_meta = Some(upstream_output_meta),
+            None => self.upstream_output_type_name = Some(upstream_output_type_name),
         }
     }
 
-    pub fn add_downstream_name(&mut self, downstream_name: &str) {
-        self.downstream_names.push(downstream_name.to_owned())
+    pub fn add_downstream_name(&mut self, downstream_name: String) {
+        self.downstream_names.push(downstream_name)
     }
 
-    pub fn get_downstream_names(&self) -> Vec<String> {
-        self.downstream_names.to_owned()
+    pub fn get_downstream_names(&self) -> &Vec<String> {
+        &self.downstream_names
     }
 
     pub fn parse(attribute: &Attribute) -> Self {
@@ -106,9 +103,9 @@ impl PipeMeta {
             name: Self::parse_name(attribute),
             ty: Self::parse_ty(attribute),
             config_meta: Self::parse_config_meta(attribute),
-            output_meta: Self::parse_output_meta(attribute),
+            output_type_name: Self::parse_output_meta(attribute),
             upstream_names: Self::parse_upstream_names(attribute),
-            upstream_output_meta: None,
+            upstream_output_type_name: None,
             downstream_names: vec![],
         }
     }
@@ -155,38 +152,64 @@ impl PipeMeta {
 
 #[derive(Default)]
 pub struct PipeMetas {
-    pub pipe_metas: HashMap<String, Rc<RefCell<PipeMeta>>>,
+    pub pipe_metas: HashMap<String, PipeMeta>,
 }
 
 impl PipeMetas {
     pub fn parse(attributes: &Vec<Attribute>) -> Self {
-        let mut pipe_metas: HashMap<String, Rc<RefCell<PipeMeta>>> = HashMap::new();
+        let mut pipe_metas: HashMap<String, PipeMeta> = HashMap::new();
         let mut pipe_names = vec![];
+        let mut pipe_output_type_names: HashMap<String, Option<String>> = HashMap::new();
+        let mut downstream_pipe_names: HashMap<String, Vec<String>> = HashMap::new();
+        let mut upstream_pipe_names: HashMap<String, Vec<String>> = HashMap::new();
         for attribute in attributes {
-            let pipe_meta = PipeMeta::parse(&attribute);
+            let ref pipe_meta = PipeMeta::parse(&attribute);
             let pipe_name = pipe_meta.get_name();
             pipe_names.push(pipe_name.to_owned());
-            pipe_metas.insert(pipe_name.to_owned(), Rc::new(RefCell::new(pipe_meta)));
+            pipe_metas.insert(pipe_name.to_owned(), pipe_meta.to_owned());
+            pipe_output_type_names.insert(
+                pipe_name.to_owned(),
+                pipe_meta.get_output_type_name().to_owned(),
+            );
+            upstream_pipe_names.insert(
+                pipe_name.to_owned(),
+                pipe_meta.get_upstream_names().to_owned(),
+            );
+            for upstream_pipe_name in pipe_meta.get_upstream_names() {
+                if !downstream_pipe_names.contains_key(upstream_pipe_name) {
+                    downstream_pipe_names
+                        .insert(upstream_pipe_name.to_owned(), vec![pipe_name.to_owned()]);
+                } else {
+                    downstream_pipe_names
+                        .get_mut(upstream_pipe_name)
+                        .unwrap()
+                        .push(pipe_name.to_owned());
+                }
+            }
         }
-        for pipe_name in pipe_names.as_slice() {
-            let pipe_meta = pipe_metas.get(pipe_name).unwrap().to_owned();
-            let upstream_names = pipe_meta.to_owned().deref().borrow().get_upstream_names();
-            for upstream_name in upstream_names.as_slice() {
-                // upstream pipe register downstream pipe name
-                let upstream_pipe_meta = match pipe_metas.get(upstream_name) {
-                    Some(upstream_pipe_meta) => upstream_pipe_meta.to_owned(),
-                    None => panic!("upstream {} not found", upstream_name),
+        for pipe_name in &pipe_names {
+            let pipe_meta = pipe_metas.get_mut(pipe_name).unwrap();
+            // connect downstream pipe
+            if downstream_pipe_names.contains_key(pipe_name) {
+                for downstream_pipe_name in downstream_pipe_names.get(pipe_name).unwrap() {
+                    pipe_meta.add_downstream_name(downstream_pipe_name.to_owned())
+                }
+            }
+            // setup upstream output as input type for channel
+            for upstream_pipe_name in upstream_pipe_names.get(pipe_name).unwrap() {
+                let upstream_output_type_name = match pipe_output_type_names.get(upstream_pipe_name)
+                {
+                    Some(upstream_output_type_name) => upstream_output_type_name,
+                    None => panic!("upstream pipe {} does not exists", upstream_pipe_name),
                 };
-                upstream_pipe_meta
-                    .deref()
-                    .borrow_mut()
-                    .add_downstream_name(pipe_name);
-                // downstream pipe collect upstream pipe output type and check identical
-                let upstream_output_meta = upstream_pipe_meta.deref().borrow().get_output_meta();
-                pipe_meta
-                    .deref()
-                    .borrow_mut()
-                    .set_upstream_output_meta(upstream_output_meta)
+                match upstream_output_type_name {
+                    Some(upstream_output_type_name) => pipe_meta
+                        .set_upstream_output_type_name(upstream_output_type_name.to_owned()),
+                    None => panic!(
+                        "output type not found in upstream pipe {}",
+                        upstream_pipe_name
+                    ),
+                }
             }
         }
         PipeMetas {
@@ -206,7 +229,7 @@ impl PipeMetas {
         let mut exprs: Vec<T> = vec![];
         for pipe_meta in self.pipe_metas.values() {
             let mut expr = T::default();
-            pipe_meta.deref().borrow().accept(&mut expr);
+            pipe_meta.accept(&mut expr);
             exprs.push(expr)
         }
         exprs
@@ -225,7 +248,7 @@ impl PipeMetas {
     fn visit_pipe_metas<T: VisitPipeMeta>(&self) -> T {
         let mut expr = T::default();
         for pipe_meta in self.pipe_metas.values() {
-            pipe_meta.deref().borrow().accept(&mut expr)
+            pipe_meta.accept(&mut expr)
         }
         expr
     }
