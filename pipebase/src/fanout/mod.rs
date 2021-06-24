@@ -10,6 +10,7 @@ pub use roundrobin::*;
 
 use crate::{ConfigInto, FromConfig, Pipe};
 use async_trait::async_trait;
+use std::collections::HashMap;
 use std::marker::PhantomData;
 
 use std::sync::Arc;
@@ -24,18 +25,26 @@ pub trait Select<T, C>: Send + Sync + FromConfig<C> {
     fn get_range(&mut self) -> usize;
 }
 
-pub struct Selector<'a, T, S: Select<T, C>, C: ConfigInto<S>> {
+pub struct Selector<'a, T, S, C>
+where
+    T: Clone + Send + 'static,
+    S: Select<T, C>,
+    C: ConfigInto<S> + Send + Sync,
+{
     pub name: &'a str,
     pub rx: Receiver<T>,
-    pub txs: Vec<Arc<Sender<T>>>,
+    pub txs: HashMap<usize, Arc<Sender<T>>>,
     pub config: C,
     pub selector: PhantomData<S>,
     pub context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, T: Clone + Send + 'static, S: Select<T, C>, C: ConfigInto<S> + Send + Sync> Pipe<T>
-    for Selector<'a, T, S, C>
+impl<'a, T, S, C> Pipe<T> for Selector<'a, T, S, C>
+where
+    T: Clone + Send + 'static,
+    S: Select<T, C>,
+    C: ConfigInto<S> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
         let mut selector = self.config.config_into().await.unwrap();
@@ -51,12 +60,12 @@ impl<'a, T: Clone + Send + 'static, S: Select<T, C>, C: ConfigInto<S> + Send + S
             _ => (),
         }
         loop {
-            Self::inc_total_run(self.context.clone()).await;
-            Self::set_state(self.context.clone(), State::Receive).await;
+            Self::inc_total_run(&self.context).await;
+            Self::set_state(&self.context, State::Receive).await;
             // if all receiver dropped, sender drop as well
             match self.txs.is_empty() {
                 true => {
-                    Self::inc_success_run(self.context.clone()).await;
+                    Self::inc_success_run(&self.context).await;
                     break;
                 }
                 false => (),
@@ -65,30 +74,28 @@ impl<'a, T: Clone + Send + 'static, S: Select<T, C>, C: ConfigInto<S> + Send + S
             let t = match t {
                 Some(t) => t,
                 None => {
-                    Self::inc_success_run(self.context.clone()).await;
+                    Self::inc_success_run(&self.context).await;
                     break;
                 }
             };
-            Self::set_state(self.context.clone(), State::Send).await;
-            let mut jhs = vec![];
+            Self::set_state(&self.context, State::Send).await;
+            let mut jhs = HashMap::new();
             for i in selector.select(&t) {
-                let tx = self.txs.get(i).unwrap().to_owned();
+                let tx = self.txs.get(&i).unwrap();
                 let t_clone = t.to_owned();
-                jhs.push(Self::spawn_send(tx, t_clone));
+                jhs.insert(i, Self::spawn_send(tx.to_owned(), t_clone));
             }
-            let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
-            self.txs = Self::filter_sender_by_dropped_receiver_idx(
-                self.txs.to_owned(),
-                dropped_receiver_idxs,
-            );
-            Self::inc_success_run(self.context.clone()).await;
+            let drop_sender_indices = Self::wait_join_handles(jhs).await;
+            Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
+            Self::inc_success_run(&self.context).await;
         }
-        Self::set_state(self.context.clone(), State::Done).await;
+        Self::set_state(&self.context, State::Done).await;
         Ok(())
     }
 
     fn add_sender(&mut self, tx: Sender<T>) {
-        self.txs.push(Arc::new(tx));
+        let idx = self.txs.len();
+        self.txs.insert(idx, Arc::new(tx));
     }
 
     fn get_context(&self) -> Arc<RwLock<Context>> {
@@ -106,7 +113,7 @@ macro_rules! selector {
             let mut pipe = Selector {
                 name: $name,
                 rx: $rx,
-                txs: vec![],
+                txs: std::collections::HashMap::new(),
                 config: config,
                 selector: std::marker::PhantomData,
                 context: Default::default()

@@ -19,6 +19,7 @@ use context::State;
 use async_trait::async_trait;
 use log::error;
 use serde::de::DeserializeOwned;
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::mpsc::error::SendError;
@@ -29,7 +30,7 @@ use tokio::task::JoinHandle;
 use error::Result;
 
 pub trait FromFile: Sized + DeserializeOwned {
-    fn from_file(path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    fn from_file(path: &str) -> anyhow::Result<Self> {
         let file = std::fs::File::open(path)?;
         let config = serde_yaml::from_reader::<std::fs::File, Self>(file)?;
         Ok(config)
@@ -38,12 +39,12 @@ pub trait FromFile: Sized + DeserializeOwned {
 
 #[async_trait]
 pub trait FromConfig<T>: Sized {
-    async fn from_config(config: &T) -> std::result::Result<Self, Box<dyn std::error::Error>>;
+    async fn from_config(config: &T) -> anyhow::Result<Self>;
 }
 
 #[async_trait]
 pub trait ConfigInto<T: FromConfig<Self>>: Sized {
-    async fn config_into(&self) -> std::result::Result<T, Box<dyn std::error::Error>> {
+    async fn config_into(&self) -> anyhow::Result<T> {
         T::from_config(self).await
     }
 }
@@ -67,17 +68,15 @@ pub trait Pipe<T: Send + 'static> {
     }
 
     async fn wait_join_handles(
-        join_handles: Vec<JoinHandle<core::result::Result<(), SendError<T>>>>,
-    ) -> HashSet<usize> {
-        let mut i: usize = 0;
-        let mut dropped_receiver_idxs = HashSet::new();
-        for jh in join_handles {
+        join_handles: HashMap<usize, JoinHandle<core::result::Result<(), SendError<T>>>>,
+    ) -> Vec<usize> {
+        let mut drop_sender_indices = Vec::new();
+        for (idx, jh) in join_handles {
             let result = match jh.await {
                 Ok(res) => res,
                 Err(err) => {
                     error!("join error in pipe err: {:#?}", err);
-                    dropped_receiver_idxs.insert(i);
-                    i += 1;
+                    drop_sender_indices.push(idx);
                     continue;
                 }
             };
@@ -85,16 +84,24 @@ pub trait Pipe<T: Send + 'static> {
                 Ok(()) => (),
                 Err(err) => {
                     error!("send error {}", err);
-                    dropped_receiver_idxs.insert(i);
+                    drop_sender_indices.push(idx);
                 }
             }
-            i += 1;
         }
-        dropped_receiver_idxs
+        drop_sender_indices
+    }
+
+    fn filter_senders_by_indices(
+        senders: &mut HashMap<usize, Arc<Sender<T>>>,
+        remove_indices: Vec<usize>,
+    ) {
+        for idx in remove_indices {
+            senders.remove(&idx);
+        }
     }
 
     fn filter_sender_by_dropped_receiver_idx(
-        senders: Vec<Arc<Sender<T>>>,
+        senders: &Vec<Arc<Sender<T>>>,
         dropped_receiver_idxs: HashSet<usize>,
     ) -> Vec<Arc<Sender<T>>> {
         let mut healthy_senders: Vec<Arc<Sender<T>>> = vec![];
@@ -109,17 +116,17 @@ pub trait Pipe<T: Send + 'static> {
         healthy_senders
     }
 
-    async fn set_state(context: Arc<RwLock<Context>>, state: State) {
+    async fn set_state(context: &Arc<RwLock<Context>>, state: State) {
         let mut ctx = context.write().await;
         ctx.set_state(state)
     }
 
-    async fn inc_total_run(context: Arc<RwLock<Context>>) {
+    async fn inc_total_run(context: &Arc<RwLock<Context>>) {
         let mut ctx = context.write().await;
         ctx.inc_total_run()
     }
 
-    async fn inc_success_run(context: Arc<RwLock<Context>>) {
+    async fn inc_success_run(context: &Arc<RwLock<Context>>) {
         let mut ctx = context.write().await;
         ctx.inc_success_run()
     }

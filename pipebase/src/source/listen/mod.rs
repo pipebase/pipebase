@@ -1,18 +1,23 @@
 use async_trait::async_trait;
 use log::error;
+use log::info;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::RwLock;
 
 use crate::context::{Context, State};
 use crate::error::Result;
 use crate::{ConfigInto, FromConfig, Pipe};
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tokio::sync::mpsc::channel;
 
 #[async_trait]
-pub trait Listen<T: Send + 'static, C>: Send + Sync + FromConfig<C> {
-    async fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>;
+pub trait Listen<T, C>: Send + Sync + FromConfig<C>
+where
+    T: Send + 'static,
+{
+    async fn run(&mut self) -> anyhow::Result<()>;
     async fn set_sender(&mut self, sender: Arc<Sender<T>>);
     // send data and return true if succeed
     async fn send_data(sender: Option<Arc<Sender<T>>>, t: T) -> bool {
@@ -27,17 +32,25 @@ pub trait Listen<T: Send + 'static, C>: Send + Sync + FromConfig<C> {
     }
 }
 
-pub struct Listener<'a, T: Send + 'static, L: Listen<T, C>, C: ConfigInto<L>> {
+pub struct Listener<'a, T, L, C>
+where
+    T: Clone + Send + 'static,
+    L: Listen<T, C> + 'static,
+    C: ConfigInto<L> + Send + Sync,
+{
     pub name: &'a str,
-    pub txs: Vec<Arc<Sender<T>>>,
+    pub txs: HashMap<usize, Arc<Sender<T>>>,
     pub config: C,
     pub listener: PhantomData<L>,
     pub context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> + Send + Sync>
-    Pipe<T> for Listener<'a, T, L, C>
+impl<'a, T, L, C> Pipe<T> for Listener<'a, T, L, C>
+where
+    T: Clone + Send + 'static,
+    L: Listen<T, C> + 'static,
+    C: ConfigInto<L> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
         // connect listener
@@ -46,19 +59,22 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
         // start listener
         let join_listener = tokio::spawn(async move {
             listener.set_sender(tx.into()).await;
-            listener.run().await;
+            match listener.run().await {
+                Ok(_) => info!("listener exit ..."),
+                Err(e) => error!("listenr exit with error {}", e),
+            };
         });
         // start event loop
         let mut txs = self.txs.to_owned();
         let context = self.context.clone();
-        let join_loop = tokio::spawn(async move {
+        let join_event_loop = tokio::spawn(async move {
             loop {
-                Self::inc_total_run(context.clone()).await;
-                Self::set_state(context.clone(), State::Receive).await;
+                Self::inc_total_run(&context).await;
+                Self::set_state(&context, State::Receive).await;
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        Self::inc_success_run(context.clone()).await;
+                        Self::inc_success_run(&context).await;
                         break;
                     }
                     false => (),
@@ -66,27 +82,24 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
                 let t = match rx.recv().await {
                     Some(t) => t,
                     None => {
-                        Self::inc_success_run(context.clone()).await;
+                        Self::inc_success_run(&context).await;
                         break;
                     }
                 };
-                Self::set_state(context.clone(), State::Send).await;
-                let mut jhs = vec![];
-                for tx in txs.as_slice() {
+                Self::set_state(&context, State::Send).await;
+                let mut jhs = HashMap::new();
+                for (idx, tx) in &txs {
                     let u_clone: T = t.to_owned();
-                    jhs.push(Self::spawn_send(tx.clone(), u_clone));
+                    jhs.insert(idx.to_owned(), Self::spawn_send(tx.clone(), u_clone));
                 }
-                let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
-                txs = Self::filter_sender_by_dropped_receiver_idx(
-                    txs.to_owned(),
-                    dropped_receiver_idxs,
-                );
-                Self::inc_success_run(context.clone()).await;
+                let drop_sender_indices = Self::wait_join_handles(jhs).await;
+                Self::filter_senders_by_indices(&mut txs, drop_sender_indices);
+                Self::inc_success_run(&context).await;
             }
-            Self::set_state(context.clone(), State::Done).await;
+            Self::set_state(&context, State::Done).await;
         });
         // join listener and loop
-        match tokio::spawn(async move { tokio::join!(join_listener, join_loop) }).await {
+        match tokio::spawn(async move { tokio::join!(join_listener, join_event_loop) }).await {
             Ok(_) => (),
             Err(err) => {
                 error!("listener join error {:#?}", err)
@@ -95,8 +108,15 @@ impl<'a, T: Clone + Send + 'static, L: Listen<T, C> + 'static, C: ConfigInto<L> 
         Ok(())
     }
 
+    /*
     fn add_sender(&mut self, tx: Sender<T>) {
         self.txs.push(Arc::new(tx));
+    }
+    */
+
+    fn add_sender(&mut self, tx: Sender<T>) {
+        let idx = self.txs.len();
+        self.txs.insert(idx, Arc::new(tx));
     }
 
     fn get_context(&self) -> Arc<RwLock<Context>> {
@@ -113,7 +133,7 @@ macro_rules! listener {
             let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
             let mut pipe = Listener {
                 name: $name,
-                txs: vec![],
+                txs: std::collections::HashMap::new(),
                 config: config,
                 listener: std::marker::PhantomData,
                 context: Default::default()

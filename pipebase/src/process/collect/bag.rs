@@ -22,9 +22,7 @@ pub struct BagCollector<T> {
 
 #[async_trait]
 impl<T> FromConfig<BagCollectorConfig> for BagCollector<T> {
-    async fn from_config(
-        config: &BagCollectorConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(config: &BagCollectorConfig) -> anyhow::Result<Self> {
         Ok(BagCollector {
             flush_period_in_millis: config.flush_period_in_millis,
             buffer: vec![],
@@ -65,7 +63,7 @@ mod tests {
 
     async fn populate_record(tx: Sender<Record>, records: Vec<Record>) {
         for r in records {
-            tx.send(r).await;
+            let _ = tx.send(r).await;
         }
     }
 

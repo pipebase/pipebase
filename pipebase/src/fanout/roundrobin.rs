@@ -19,9 +19,7 @@ pub struct RoundRobin {
 
 #[async_trait]
 impl FromConfig<RoundRobinConfig> for RoundRobin {
-    async fn from_config(
-        config: &RoundRobinConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(config: &RoundRobinConfig) -> anyhow::Result<Self> {
         Ok(RoundRobin { i: 0, n: config.n })
     }
 }

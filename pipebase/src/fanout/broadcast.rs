@@ -18,9 +18,7 @@ pub struct Broadcast {
 
 #[async_trait]
 impl FromConfig<BroadcastConfig> for Broadcast {
-    async fn from_config(
-        config: &BroadcastConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(config: &BroadcastConfig) -> anyhow::Result<Self> {
         Ok(Broadcast { n: config.n })
     }
 }

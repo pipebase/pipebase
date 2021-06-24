@@ -13,6 +13,7 @@ use crate::{
 };
 
 use async_trait::async_trait;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::{
     sync::{
@@ -23,22 +24,26 @@ use tokio::{
 };
 
 #[async_trait]
-pub trait Collect<T: Clone, U: FromIterator<T> + Clone, C>: Send + Sync + FromConfig<C> {
+pub trait Collect<T, U, C>: Send + Sync + FromConfig<C>
+where
+    T: Clone,
+    U: FromIterator<T> + Clone,
+{
     async fn collect(&mut self, t: &T);
     async fn flush(&mut self) -> U;
     fn get_flush_interval(&self) -> Interval;
 }
 
-pub struct Collector<
-    'a,
-    T: Clone,
-    U: FromIterator<T> + Clone,
-    V: Collect<T, U, C>,
-    C: ConfigInto<V>,
-> {
+pub struct Collector<'a, T, U, V, C>
+where
+    T: Clone + Send + Sync + 'static,
+    U: FromIterator<T> + Clone + Send + 'static,
+    V: Collect<T, U, C> + 'static,
+    C: ConfigInto<V> + Send + Sync,
+{
     pub name: &'a str,
     pub rx: Arc<Mutex<Receiver<T>>>,
-    pub txs: Vec<Arc<Sender<U>>>,
+    pub txs: HashMap<usize, Arc<Sender<U>>>,
     pub config: C,
     pub collector: PhantomData<V>,
     pub collection: PhantomData<U>,
@@ -46,13 +51,12 @@ pub struct Collector<
 }
 
 #[async_trait]
-impl<
-        'a,
-        T: Clone + Send + Sync + 'static,
-        U: FromIterator<T> + Clone + Send + 'static,
-        V: Collect<T, U, C> + 'static,
-        C: ConfigInto<V> + Send + Sync,
-    > Pipe<U> for Collector<'a, T, U, V, C>
+impl<'a, T, U, V, C> Pipe<U> for Collector<'a, T, U, V, C>
+where
+    T: Clone + Send + Sync + 'static,
+    U: FromIterator<T> + Clone + Send + 'static,
+    V: Collect<T, U, C> + 'static,
+    C: ConfigInto<V> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
         let collector: Arc<Mutex<V>> =
@@ -86,12 +90,12 @@ impl<
                 c.get_flush_interval()
             };
             loop {
-                Self::set_state(context.clone(), State::Receive).await;
-                Self::inc_total_run(context.clone()).await;
+                Self::set_state(&context, State::Receive).await;
+                Self::inc_total_run(&context).await;
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        Self::inc_success_run(context.clone()).await;
+                        Self::inc_success_run(&context).await;
                         break;
                     }
                     false => (),
@@ -99,25 +103,22 @@ impl<
                 interval.tick().await;
                 let mut c = collector_clone.lock().await;
                 let data = c.flush().await;
-                Self::set_state(context.clone(), State::Send).await;
-                let mut jhs = vec![];
-                for tx in txs.as_slice() {
+                Self::set_state(&context, State::Send).await;
+                let mut jhs = HashMap::new();
+                for (idx, tx) in &txs {
                     let tx_clone = tx.to_owned();
                     let data_clone = data.to_owned();
-                    jhs.push(Self::spawn_send(tx_clone, data_clone));
+                    jhs.insert(idx.to_owned(), Self::spawn_send(tx_clone, data_clone));
                 }
-                let dropped_receiver_idxs = Self::wait_join_handles(jhs).await;
-                txs = Self::filter_sender_by_dropped_receiver_idx(
-                    txs.to_owned(),
-                    dropped_receiver_idxs,
-                );
-                Self::inc_success_run(context.clone()).await;
+                let drop_sender_indices = Self::wait_join_handles(jhs).await;
+                Self::filter_senders_by_indices(&mut txs, drop_sender_indices);
+                Self::inc_success_run(&context).await;
                 let is_end = { *(is_end_clone.lock().await) };
                 if is_end {
                     break;
                 }
             }
-            Self::set_state(context.clone(), State::Done).await;
+            Self::set_state(&context, State::Done).await;
         });
         let join_all = tokio::spawn(async move { tokio::join!(join_event, join_flush) });
         match join_all.await {
@@ -127,7 +128,8 @@ impl<
     }
 
     fn add_sender(&mut self, tx: Sender<U>) {
-        self.txs.push(tx.into())
+        let idx = self.txs.len();
+        self.txs.insert(idx, Arc::new(tx));
     }
 
     fn get_context(&self) -> Arc<RwLock<Context>> {
@@ -145,7 +147,7 @@ macro_rules! collector {
             let mut pipe = Collector {
                 name: $name,
                 rx: std::sync::Arc::new(tokio::sync::Mutex::new($rx)),
-                txs: vec![],
+                txs: std::collections::HashMap::new(),
                 config: config,
                 collector: std::marker::PhantomData,
                 collection: std::marker::PhantomData,

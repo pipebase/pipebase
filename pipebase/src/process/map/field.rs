@@ -25,7 +25,7 @@ pub trait FieldAccept<F: Clone> {
 pub struct FieldVisitConfig {}
 
 impl FromFile for FieldVisitConfig {
-    fn from_file(_path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    fn from_file(_path: &str) -> anyhow::Result<Self> {
         Ok(FieldVisitConfig {})
     }
 }
@@ -36,16 +36,14 @@ impl ConfigInto<FieldVisit> for FieldVisitConfig {}
 pub struct FieldVisit {}
 #[async_trait]
 impl FromConfig<FieldVisitConfig> for FieldVisit {
-    async fn from_config(
-        _config: &FieldVisitConfig,
-    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    async fn from_config(_config: &FieldVisitConfig) -> anyhow::Result<Self> {
         Ok(FieldVisit {})
     }
 }
 
 #[async_trait]
 impl<T: FieldAccept<U> + Sync, U: Clone> Map<T, U, FieldVisitConfig> for FieldVisit {
-    async fn map(&mut self, t: &T) -> std::result::Result<U, Box<dyn std::error::Error>> {
+    async fn map(&mut self, t: &T) -> anyhow::Result<U> {
         let mut visitor = FieldVisitor::<U> { value: None };
         t.accept(&mut visitor);
         Ok(visitor.get_value().unwrap())
@@ -79,7 +77,7 @@ mod tests {
     use tokio::sync::mpsc::Sender;
 
     async fn populate_records(tx: &mut Sender<Records>, records: Records) {
-        tx.send(records).await;
+        let _ = tx.send(records).await;
     }
 
     #[tokio::test]
