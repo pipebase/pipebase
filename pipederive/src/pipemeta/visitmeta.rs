@@ -36,7 +36,7 @@ pub struct ChannelExpr {
 
 impl VisitPipeMeta for ChannelExpr {
     fn visit(&mut self, meta: &PipeMeta) {
-        let channel_ty = match meta.get_upstream_output_meta() {
+        let channel_ty = match meta.get_upstream_output_name() {
             Some(upstream_output_meta) => upstream_output_meta,
             None => return,
         };
@@ -83,7 +83,7 @@ impl VisitPipeMeta for PipeExpr {
         let config_meta = meta.get_config_meta();
         let config_ty = config_meta.get_ty();
         let config_path = config_meta.get_path();
-        let upstream_output_meta = meta.get_upstream_output_meta();
+        let upstream_output_meta = meta.get_upstream_output_name();
         let downstream_pipe_names = meta.get_downstream_names();
         let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
         let receiver_expr = match upstream_output_meta {
@@ -122,9 +122,9 @@ impl PipeExpr {
         ChannelExpr::gen_receiver_name(pipe_name)
     }
 
-    fn gen_senders_expr(pipe_names: Vec<String>) -> String {
+    fn gen_senders_expr(pipe_names: &Vec<String>) -> String {
         let mut sender_exprs: Vec<String> = vec![];
-        for pipe_name in pipe_names.as_slice() {
+        for pipe_name in pipe_names {
             let sender_exp = ChannelExpr::gen_sender_name(pipe_name);
             sender_exprs.push(Self::to_owned(&sender_exp))
         }
@@ -140,7 +140,7 @@ pub struct SpawnJoinExpr {
 
 impl VisitPipeMeta for SpawnJoinExpr {
     fn visit(&mut self, meta: &PipeMeta) {
-        self.pipe_names.push(meta.get_name())
+        self.pipe_names.push(meta.get_name().to_owned())
     }
 }
 
