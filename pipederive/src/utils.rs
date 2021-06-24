@@ -179,12 +179,13 @@ pub fn get_meta_number_value_by_meta_path(
     None
 }
 
-pub fn get_type_token(attribute: &Attribute, type_meta_path: &str) -> TokenStream {
-    let type_literal = get_meta_string_value_by_meta_path(type_meta_path, attribute, true).unwrap();
-    resolve_type_token(&type_literal)
+pub fn get_type_name_token(attribute: &Attribute, type_name_meta_path: &str) -> TokenStream {
+    let type_literal =
+        get_meta_string_value_by_meta_path(type_name_meta_path, attribute, true).unwrap();
+    resolve_type_name_token(&type_literal)
 }
 
-pub fn resolve_type_token(type_literal: &str) -> proc_macro2::TokenStream {
+pub fn resolve_type_name_token(type_literal: &str) -> proc_macro2::TokenStream {
     type_literal.parse().unwrap()
 }
 

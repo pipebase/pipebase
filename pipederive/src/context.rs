@@ -1,13 +1,23 @@
-use crate::constants::{CONTEXT_STORE, CONTEXT_STORE_METHOD_GET, CONTEXT_STORE_METHOD_INSERT, CONTEXT_STORE_METHOD_GET_DEFAULT, CONTEXT_STORE_METHOD_INSERT_DEFAULT};
-use crate::utils::{get_any_attribute_by_meta_prefix, resolve_first_field, get_meta_string_value_by_meta_path, get_all_attributes_by_meta_prefix};
+use crate::constants::{
+    CONTEXT_STORE, CONTEXT_STORE_METHOD_GET, CONTEXT_STORE_METHOD_GET_DEFAULT,
+    CONTEXT_STORE_METHOD_INSERT, CONTEXT_STORE_METHOD_INSERT_DEFAULT,
+};
+use crate::utils::{
+    get_all_attributes_by_meta_prefix, get_any_attribute_by_meta_prefix,
+    get_meta_string_value_by_meta_path, resolve_first_field,
+};
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{Attribute, Data, Field, Generics};
 
-pub fn impl_context_store(ident: &Ident, attributes: &Vec<Attribute>, data: &Data, generics: &Generics) -> TokenStream {
+pub fn impl_context_store(
+    ident: &Ident,
+    attributes: &Vec<Attribute>,
+    data: &Data,
+    generics: &Generics,
+) -> TokenStream {
     let field = resolve_first_field(data, &is_context_store_field);
     let field_ident = field.ident;
-    let ref attributes = get_all_context_store_attributes(attributes);
     let attribute = get_context_store_attribute(attributes);
     let get_method_token = get_context_store_get_method_token(attribute.as_ref());
     let insert_method_token = get_context_store_insert_method_token(attribute.as_ref());
@@ -34,34 +44,32 @@ fn is_context_store_field(field: &Field) -> bool {
 fn get_context_store_attribute(attributes: &Vec<Attribute>) -> Option<Attribute> {
     match get_any_attribute_by_meta_prefix(CONTEXT_STORE, attributes, false) {
         Some(attribute) => Some(attribute),
-        None => None
+        None => None,
     }
 }
 
 fn get_context_store_insert_method_token(attribute: Option<&Attribute>) -> TokenStream {
     let attribute = match attribute {
         Some(attribute) => attribute,
-        None => return CONTEXT_STORE_METHOD_INSERT_DEFAULT.parse().unwrap()
+        None => return CONTEXT_STORE_METHOD_INSERT_DEFAULT.parse().unwrap(),
     };
-    let insert_method = match get_meta_string_value_by_meta_path(CONTEXT_STORE_METHOD_INSERT, attribute, false) {
-        Some(insert_method) => insert_method,
-        None => CONTEXT_STORE_METHOD_INSERT_DEFAULT.to_owned()
-    };
+    let insert_method =
+        match get_meta_string_value_by_meta_path(CONTEXT_STORE_METHOD_INSERT, attribute, false) {
+            Some(insert_method) => insert_method,
+            None => CONTEXT_STORE_METHOD_INSERT_DEFAULT.to_owned(),
+        };
     insert_method.parse().unwrap()
 }
 
 fn get_context_store_get_method_token(attribute: Option<&Attribute>) -> TokenStream {
     let attribute = match attribute {
         Some(attribute) => attribute,
-        None => return CONTEXT_STORE_METHOD_GET_DEFAULT.parse().unwrap()
+        None => return CONTEXT_STORE_METHOD_GET_DEFAULT.parse().unwrap(),
     };
-    let get_method = match get_meta_string_value_by_meta_path(CONTEXT_STORE_METHOD_GET, attribute, false) {
-        Some(get_method) => get_method,
-        None => CONTEXT_STORE_METHOD_GET_DEFAULT.to_owned()
-    };
+    let get_method =
+        match get_meta_string_value_by_meta_path(CONTEXT_STORE_METHOD_GET, attribute, false) {
+            Some(get_method) => get_method,
+            None => CONTEXT_STORE_METHOD_GET_DEFAULT.to_owned(),
+        };
     get_method.parse().unwrap()
-}
-
-fn get_all_context_store_attributes(attributes: &Vec<Attribute>) -> Vec<Attribute> {
-    get_all_attributes_by_meta_prefix(CONTEXT_STORE, attributes)
 }

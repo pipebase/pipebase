@@ -1,8 +1,11 @@
-use crate::{constants::BOOTSTRAP_PIPE, pipemeta::{ChannelExpr, PipeExpr, PipeMetas, SpawnJoinExpr}};
+use crate::utils::get_all_attributes_by_meta_prefix;
+use crate::{
+    constants::BOOTSTRAP_PIPE,
+    pipemeta::{ChannelExpr, PipeExpr, PipeMetas, SpawnJoinExpr},
+};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{Attribute, Generics};
-use crate::utils::get_all_attributes_by_meta_prefix;
 
 pub fn impl_bootstrap(
     ident: &Ident,
@@ -99,7 +102,6 @@ fn resolve_pipe_context(pipe_name: &str) -> TokenStream {
         self.add_pipe_context(String::from(#pipe_name), #pipe_ident.get_context())
     }
 }
-
 
 fn get_all_pipe_attributes(attributes: &Vec<Attribute>) -> Vec<Attribute> {
     get_all_attributes_by_meta_prefix(BOOTSTRAP_PIPE, attributes)

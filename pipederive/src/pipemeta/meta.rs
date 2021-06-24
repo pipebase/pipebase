@@ -7,8 +7,8 @@ use syn::Attribute;
 
 use crate::constants::BOOTSTRAP_PIPE_UPSTREAM_NAME_SEP;
 use crate::constants::{
-    BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH, BOOTSTRAP_PIPE_CONFIG_TYPE, BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE,
-    BOOTSTRAP_PIPE_UPSTREAM,
+    BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH, BOOTSTRAP_PIPE_CONFIG_TYPE,
+    BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE, BOOTSTRAP_PIPE_UPSTREAM,
 };
 use crate::utils::get_meta_string_value_by_meta_path;
 
@@ -135,7 +135,8 @@ impl PipeMeta {
     }
 
     fn parse_config_meta(attribute: &Attribute) -> PipeConfigMeta {
-        let ty = get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_CONFIG_TYPE, attribute, true).unwrap();
+        let ty = get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_CONFIG_TYPE, attribute, true)
+            .unwrap();
         let path = get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_CONFIG_PATH, attribute, false);
         PipeConfigMeta { ty: ty, path: path }
     }

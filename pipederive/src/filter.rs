@@ -36,7 +36,6 @@ fn get_filter_attribute(attributes: &Vec<Attribute>) -> Attribute {
     get_any_attribute_by_meta_prefix(FILTER, attributes, true).unwrap()
 }
 
-
 fn get_filter_alias(attribute: &Attribute) -> String {
     match get_meta_string_value_by_meta_path(FILTER_ALIAS, attribute, false) {
         Some(alias) => alias,
