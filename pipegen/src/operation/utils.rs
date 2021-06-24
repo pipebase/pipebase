@@ -70,8 +70,8 @@ impl<T: Clone> Vertex<T> {
         self.out_vertices.len()
     }
 
-    pub fn get_value(&self) -> Option<T> {
-        self.value.to_owned()
+    pub fn get_value(&self) -> Option<&T> {
+        self.value.as_ref()
     }
 
     pub fn set_value(&mut self, value: T) {
@@ -144,7 +144,7 @@ impl<T: Clone> DirectedGraph<T> {
         true
     }
 
-    pub fn get_vertex_value(&self, vid: &str) -> Option<T> {
+    pub fn get_vertex_value(&self, vid: &str) -> Option<&T> {
         if !self.has_vertex_id(vid) {
             return None;
         }
@@ -393,7 +393,7 @@ impl<T: Clone> PipeGraph<T> {
         self.graph.get_out_vertices(pid)
     }
 
-    pub fn get_pipe_value(&self, pid: &str) -> Option<T> {
+    pub fn get_pipe_value(&self, pid: &str) -> Option<&T> {
         assert!(self.has_pipe(pid));
         self.graph.get_vertex_value(pid)
     }
