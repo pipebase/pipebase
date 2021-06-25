@@ -14,7 +14,7 @@ pub const FIELD_VISIT: &str = "visit";
 
 pub const HASH_KEY: &str = "hkey";
 
-pub const ORD_KEY: &str = "okey";
+pub const ORDER_KEY: &str = "okey";
 
 pub const CONTEXT_STORE: &str = "cstore";
 
