@@ -18,6 +18,7 @@ pub enum Meta {
     Derive(Vec<String>),
     Project(HashMap<String, String>),
     Filter(HashMap<String, String>),
+    ContextStore(HashMap<String, String>),
     HashKey,
     OrderKey,
     FieldVisit,
@@ -61,11 +62,24 @@ fn expand_str_value_list(name: &str, values: &HashMap<String, String>) -> Meta {
     }
 }
 
+fn expand_nested_str_value_list(names: &[&str], values: &HashMap<String, String>) -> Meta {
+    assert!(!names.is_empty());
+    let name = names[0];
+    if names.len() == 1 {
+        return expand_str_value_list(name, values);
+    }
+    return Meta::List {
+        name: name.to_owned(),
+        metas: vec![expand_nested_str_value_list(&names[1..], values)],
+    };
+}
+
 fn expand_meta(meta: &Meta) -> Meta {
     match meta {
         Meta::Derive(derives) => expand_path_list("derive", derives),
         Meta::Project(projects) => expand_str_value_list("project", projects),
         Meta::Filter(filters) => expand_str_value_list("filter", filters),
+        Meta::ContextStore(methods) => expand_nested_str_value_list(&["cstore", "method"], methods),
         Meta::HashKey => Meta::Path {
             name: "hkey".to_owned(),
         },
@@ -102,7 +116,7 @@ fn expand_meta_lit(meta: &Meta, indent: usize) -> String {
     )
 }
 
-fn meta_to_literal(meta: &Meta, indent: usize) -> String {
+pub fn meta_to_literal(meta: &Meta, indent: usize) -> String {
     let indent_lit = indent_literal(indent);
     let meta_lit = expand_meta_lit(meta, indent + 1);
     format!("{}#[\n{}\n{}]", indent_lit, meta_lit, indent_lit)

@@ -1,6 +1,6 @@
-use super::{Entity, EntityAccept, Object, VisitEntity};
+use super::meta::Meta;
+use super::{DataType, Entity, EntityAccept, Object, VisitEntity};
 use crate::api::pipe::Pipe;
-use crate::api::utils::indent_literal;
 use crate::api::DataField;
 use crate::error::*;
 use crate::ops::DataFieldValidator;
@@ -10,13 +10,59 @@ use crate::ops::PipeGraphDescriber;
 use crate::ops::PipeGraphValidator;
 use crate::ops::{Describe, Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate};
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::path::Path;
 
 #[derive(Deserialize, Debug, Clone)]
+pub struct ContextStore {
+    name: String,
+    methods: HashMap<String, String>,
+    data_ty: DataType,
+}
+
+impl ContextStore {
+    pub fn new(name: String) -> Self {
+        let mut methods = HashMap::new();
+        methods.insert("get".to_owned(), "get".to_owned());
+        methods.insert("insert".to_owned(), "insert".to_owned());
+        let data_ty = DataType::HashMap {
+            key_data_ty: Box::new(DataType::String),
+            value_data_ty: Box::new(DataType::Object("Arc<RwLock<Context>>".to_owned())),
+        };
+        ContextStore {
+            name: name,
+            methods: methods,
+            data_ty: data_ty,
+        }
+    }
+
+    pub fn get_name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn get_methods(&self) -> &HashMap<String, String> {
+        &self.methods
+    }
+
+    pub fn as_data_field(&self) -> DataField {
+        DataField::new_named_field(
+            self.data_ty.to_owned(),
+            self.name.to_owned(),
+            vec![Meta::ContextStore(self.methods.to_owned())],
+            false,
+            false,
+        )
+    }
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct App {
-    pub name: String,
-    pub pipes: Vec<Pipe>,
-    pub objects: Option<Vec<Object>>,
+    name: String,
+    metas: Option<Vec<Meta>>,
+    cstore: Option<ContextStore>,
+    dependencies: Option<Vec<String>>,
+    pipes: Vec<Pipe>,
+    objects: Option<Vec<Object>>,
 }
 
 impl Entity for App {
@@ -24,9 +70,21 @@ impl Entity for App {
         self.name.to_owned()
     }
 
+    fn list_dependency(&self) -> Vec<String> {
+        match self.dependencies {
+            Some(ref dependencies) => dependencies.to_owned(),
+            None => vec![],
+        }
+    }
+
     fn to_literal(&self, indent: usize) -> String {
-        let indent_lit = indent_literal(indent);
-        format!("{}App {{}}", indent_lit)
+        // app metas
+        let metas = self.get_metas();
+        // app object fields
+        let cstore = self.get_context_store().as_data_field();
+        // create app object
+        let app = Object::new(self.get_id(), metas, vec![cstore]);
+        app.to_literal(indent)
     }
 }
 
@@ -43,6 +101,23 @@ impl App {
             Err(err) => return Err(yaml_error(err)),
         };
         Ok(app)
+    }
+
+    pub fn get_metas(&self) -> Vec<Meta> {
+        match self.metas {
+            Some(ref metas) => metas.to_owned(),
+            None => vec![Meta::Derive(vec![
+                "Bootstrap".to_owned(),
+                "ContextStore".to_owned(),
+            ])],
+        }
+    }
+
+    pub fn get_context_store(&self) -> ContextStore {
+        match self.cstore {
+            Some(ref cstore) => cstore.to_owned(),
+            None => ContextStore::new("pipe_contexts".to_owned()),
+        }
     }
 
     pub fn print(&self) {
@@ -94,6 +169,7 @@ impl App {
             1,
             "\n",
         ));
+        sections.push(self.to_literal(1));
         format!("mod {} {{\n{}\n}}", self.name, sections.join("\n\n"))
     }
 

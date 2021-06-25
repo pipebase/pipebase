@@ -106,6 +106,22 @@ pub struct DataField {
 }
 
 impl DataField {
+    pub fn new_named_field(
+        data_ty: DataType,
+        name: String,
+        metas: Vec<Meta>,
+        is_boxed: bool,
+        is_optional: bool,
+    ) -> Self {
+        DataField {
+            name: Some(name),
+            data_ty: data_ty,
+            metas: Some(metas),
+            is_boxed: Some(is_boxed),
+            is_optional: Some(is_optional),
+        }
+    }
+
     pub fn get_data_type_literal(&self, indent: usize) -> String {
         let ty_lit = data_ty_to_literal(&self.data_ty);
         let ty_lit = match self.is_boxed {
@@ -182,6 +198,14 @@ pub struct Object {
 }
 
 impl Object {
+    pub fn new(ty: String, metas: Vec<Meta>, fields: Vec<DataField>) -> Self {
+        Object {
+            ty: ty,
+            metas: Some(metas),
+            fields: fields,
+        }
+    }
+
     pub fn get_metas_literal(&self, indent: usize) -> Option<String> {
         let metas = match self.metas.to_owned() {
             Some(metas) => metas,
