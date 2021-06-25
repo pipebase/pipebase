@@ -31,7 +31,10 @@ impl<T> FromConfig<BagCollectorConfig> for BagCollector<T> {
 }
 
 #[async_trait]
-impl<T: Clone + Send + Sync> Collect<T, Vec<T>, BagCollectorConfig> for BagCollector<T> {
+impl<T> Collect<T, Vec<T>, BagCollectorConfig> for BagCollector<T>
+where
+    T: Clone + Send + Sync,
+{
     async fn collect(&mut self, t: &T) {
         self.buffer.push(t.to_owned())
     }
