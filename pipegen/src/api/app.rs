@@ -1,4 +1,4 @@
-use super::meta::Meta;
+use super::meta::{Meta, MetaValue};
 use super::{DataType, Entity, EntityAccept, Object, VisitEntity};
 use crate::api::pipe::Pipe;
 use crate::api::DataField;
@@ -44,11 +44,32 @@ impl ContextStore {
         &self.methods
     }
 
+    fn methods_as_meta(&self) -> Meta {
+        let mut method_metas = vec![];
+        for (name, value) in &self.methods {
+            method_metas.push(Meta::Value {
+                name: name.to_owned(),
+                meta: MetaValue::Str(value.to_owned()),
+            });
+        }
+        Meta::List {
+            name: "method".to_owned(),
+            metas: method_metas,
+        }
+    }
+
+    fn get_meta(&self) -> Meta {
+        Meta::List {
+            name: "cstore".to_owned(),
+            metas: vec![self.methods_as_meta()],
+        }
+    }
+
     pub fn as_data_field(&self) -> DataField {
         DataField::new_named_field(
             self.data_ty.to_owned(),
             self.name.to_owned(),
-            vec![Meta::ContextStore(self.methods.to_owned())],
+            vec![self.get_meta()],
             false,
             false,
         )
@@ -106,10 +127,17 @@ impl App {
     pub fn get_metas(&self) -> Vec<Meta> {
         match self.metas {
             Some(ref metas) => metas.to_owned(),
-            None => vec![Meta::Derive(vec![
-                "Bootstrap".to_owned(),
-                "ContextStore".to_owned(),
-            ])],
+            None => vec![Meta::List {
+                name: "derive".to_owned(),
+                metas: vec![
+                    Meta::Path {
+                        name: "Boostrap".to_owned(),
+                    },
+                    Meta::Path {
+                        name: "ContextStore".to_owned(),
+                    },
+                ],
+            }],
         }
     }
 
