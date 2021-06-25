@@ -1,6 +1,6 @@
 use crate::{
     api::{Entity, Pipe, VisitEntity},
-    operation::utils::PipeGraph,
+    ops::utils::PipeGraph,
 };
 
 use std::fmt::{self, Display};

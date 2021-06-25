@@ -4,12 +4,12 @@ use super::VisitEntity;
 use crate::api::pipe::Pipe;
 use crate::api::DataField;
 use crate::error::*;
-use crate::operation::DataFieldValidator;
-use crate::operation::ObjectDependencyValidator;
-use crate::operation::ObjectIdValidator;
-use crate::operation::PipeGraphDescriber;
-use crate::operation::PipeGraphValidator;
-use crate::operation::{
+use crate::ops::DataFieldValidator;
+use crate::ops::ObjectDependencyValidator;
+use crate::ops::ObjectIdValidator;
+use crate::ops::PipeGraphDescriber;
+use crate::ops::PipeGraphValidator;
+use crate::ops::{
     Describe, Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate,
 };
 use serde::Deserialize;
