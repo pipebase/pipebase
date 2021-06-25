@@ -1,14 +1,18 @@
 use super::{Deser, Ser};
 use async_trait::async_trait;
-use pipebase::{ConfigInto, FromConfig, FromFile, Map};
+use pipebase::{ConfigInto, FromConfig, FromPath, Map};
 use serde::Deserialize;
 use serde::{de::DeserializeOwned, Serialize};
+use std::path::Path;
 
 #[derive(Deserialize)]
 pub struct JsonSerConfig {}
 
-impl FromFile for JsonSerConfig {
-    fn from_file(_path: &str) -> anyhow::Result<Self> {
+impl FromPath for JsonSerConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         Ok(JsonSerConfig {})
     }
 }
@@ -44,8 +48,11 @@ impl<T: Serialize + Sync> Map<T, Vec<u8>, JsonSerConfig> for JsonSer {
 #[derive(Deserialize)]
 pub struct JsonDeserConfig {}
 
-impl FromFile for JsonDeserConfig {
-    fn from_file(_path: &str) -> anyhow::Result<Self> {
+impl FromPath for JsonDeserConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         Ok(JsonDeserConfig {})
     }
 }

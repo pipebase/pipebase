@@ -2,7 +2,7 @@ use serde::Deserialize;
 use std::time::Duration;
 use tokio::time::Interval;
 
-use crate::{Collect, ConfigInto, FromConfig, FromFile};
+use crate::{Collect, ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 
 #[derive(Deserialize)]
@@ -10,7 +10,7 @@ pub struct BagCollectorConfig {
     pub flush_period_in_millis: u64,
 }
 
-impl FromFile for BagCollectorConfig {}
+impl FromPath for BagCollectorConfig {}
 
 #[async_trait]
 impl<T> ConfigInto<BagCollector<T>> for BagCollectorConfig {}
@@ -50,7 +50,7 @@ impl<T: Clone + Send + Sync> Collect<T, Vec<T>, BagCollectorConfig> for BagColle
 #[cfg(test)]
 mod tests {
     use crate::{
-        channel, collector, context::State, spawn_join, BagCollectorConfig, Collector, FromFile,
+        channel, collector, context::State, spawn_join, BagCollectorConfig, Collector, FromPath,
         Pipe,
     };
     use tokio::sync::mpsc::{Receiver, Sender};

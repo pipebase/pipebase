@@ -1,17 +1,21 @@
 use std::fmt::Debug;
 
-use crate::{ConfigInto, FromConfig, FromFile};
+use crate::{ConfigInto, FromConfig, FromPath};
 
 use super::Map;
 use async_trait::async_trait;
 use log::info;
 use serde::Deserialize;
+use std::path::Path;
 
 #[derive(Deserialize)]
 pub struct EchoConfig {}
 
-impl FromFile for EchoConfig {
-    fn from_file(_path: &str) -> anyhow::Result<Self> {
+impl FromPath for EchoConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         Ok(EchoConfig {})
     }
 }
@@ -38,7 +42,7 @@ impl<T: Clone + Debug + Sync> Map<T, T, EchoConfig> for Echo {
 
 #[cfg(test)]
 mod tests {
-    use crate::{channel, mapper, spawn_join, EchoConfig, FromFile, Mapper, Pipe};
+    use crate::{channel, mapper, spawn_join, EchoConfig, FromPath, Mapper, Pipe};
     // use std::println as info;
     use tokio::sync::mpsc::Sender;
 

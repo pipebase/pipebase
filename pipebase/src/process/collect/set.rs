@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use std::time::Duration;
 use tokio::time::Interval;
 
-use crate::{Collect, ConfigInto, FromConfig, FromFile};
+use crate::{Collect, ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 
 #[derive(Deserialize)]
@@ -11,7 +11,7 @@ pub struct SetCollectorConfig {
     pub flush_period_in_millis: u64,
 }
 
-impl FromFile for SetCollectorConfig {}
+impl FromPath for SetCollectorConfig {}
 
 #[async_trait]
 impl<T: Ord> ConfigInto<SetCollector<T>> for SetCollectorConfig {}
@@ -52,7 +52,7 @@ impl<T: Clone + Send + Sync + Ord> Collect<T, BTreeSet<T>, SetCollectorConfig> f
 #[cfg(test)]
 mod tests {
     use crate::{
-        channel, collector, context::State, spawn_join, Collector, FromFile, OrderKey, Pipe,
+        channel, collector, context::State, spawn_join, Collector, FromPath, OrderKey, Pipe,
         SetCollectorConfig,
     };
     use std::{cmp::Ordering, collections::BTreeSet};

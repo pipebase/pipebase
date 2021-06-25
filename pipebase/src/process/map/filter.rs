@@ -1,10 +1,11 @@
 use std::iter::{FromIterator, IntoIterator};
 
-use crate::{ConfigInto, FromConfig, FromFile};
+use crate::{ConfigInto, FromConfig, FromPath};
 
 use super::Map;
 use async_trait::async_trait;
 use serde::Deserialize;
+use std::path::Path;
 
 pub trait Filter<Rhs = Self>: Clone {
     fn filter(rhs: &Rhs) -> Option<Rhs>;
@@ -13,8 +14,11 @@ pub trait Filter<Rhs = Self>: Clone {
 #[derive(Deserialize)]
 pub struct FilterMapConfig {}
 
-impl FromFile for FilterMapConfig {
-    fn from_file(_path: &str) -> anyhow::Result<Self> {
+impl FromPath for FilterMapConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         Ok(FilterMapConfig {})
     }
 }
@@ -49,7 +53,7 @@ impl<
 
 #[cfg(test)]
 mod tests {
-    use crate::{channel, mapper, spawn_join, FilterMapConfig, FromFile, Mapper, Pipe};
+    use crate::{channel, mapper, spawn_join, FilterMapConfig, FromPath, Mapper, Pipe};
     use pipederive::Filter;
 
     use super::Filter;

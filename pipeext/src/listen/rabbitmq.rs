@@ -7,7 +7,7 @@ use lapin::{
 use log::info;
 use pipebase::ConfigInto;
 use pipebase::Listen;
-use pipebase::{FromConfig, FromFile};
+use pipebase::{FromConfig, FromPath};
 use serde::Deserialize;
 use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
@@ -30,7 +30,7 @@ pub struct RabbitMQConsumerConfig {
     pub uri: String,
 }
 
-impl FromFile for RabbitMQConsumerConfig {}
+impl FromPath for RabbitMQConsumerConfig {}
 
 #[async_trait]
 impl ConfigInto<RabbitMQConsumer> for RabbitMQConsumerConfig {}
@@ -102,7 +102,7 @@ impl RabbitMQConsumer {
 #[cfg(test)]
 mod tests {
 
-    use pipebase::{listener, FromFile, Listener, Pipe};
+    use pipebase::{listener, FromPath, Listener, Pipe};
     use tokio::sync::mpsc::channel;
     use tokio::sync::mpsc::Receiver;
 

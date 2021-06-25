@@ -83,7 +83,7 @@ macro_rules! exporter {
         $name:expr, $path:expr, $config:ty, $rx:expr
     ) => {{
         let config =
-            <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
+            <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
         let pipe = Exporter {
             name: $name,
             rx: $rx,

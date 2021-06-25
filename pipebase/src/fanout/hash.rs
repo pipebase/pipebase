@@ -1,4 +1,4 @@
-use crate::{ConfigInto, FromConfig, FromFile, Select};
+use crate::{ConfigInto, FromConfig, FromPath, Select};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::collections::hash_map::DefaultHasher;
@@ -9,7 +9,7 @@ pub struct DefaultHashSelectConfig {
     pub n: usize,
 }
 
-impl FromFile for DefaultHashSelectConfig {}
+impl FromPath for DefaultHashSelectConfig {}
 
 #[async_trait]
 impl ConfigInto<DefaultHashSelect> for DefaultHashSelectConfig {}
@@ -44,7 +44,7 @@ mod tests {
 
     use super::DefaultHashSelectConfig;
     use crate::HashKey;
-    use crate::{channel, selector, spawn_join, FromFile, Pipe, Selector};
+    use crate::{channel, selector, spawn_join, FromPath, Pipe, Selector};
     use std::hash::{Hash, Hasher};
     use tokio::sync::mpsc::{Receiver, Sender};
 

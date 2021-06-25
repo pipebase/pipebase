@@ -1,8 +1,9 @@
-use crate::{ConfigInto, FromConfig, FromFile};
+use crate::{ConfigInto, FromConfig, FromPath};
 
 use super::Map;
 use async_trait::async_trait;
 use serde::Deserialize;
+use std::path::Path;
 
 pub trait Project<Rhs = Self> {
     fn project(rhs: &Rhs) -> Self;
@@ -60,8 +61,11 @@ impl<T, U: Project<T>> Project<Vec<T>> for Vec<U> {
 #[derive(Deserialize)]
 pub struct ProjectionConfig {}
 
-impl FromFile for ProjectionConfig {
-    fn from_file(_path: &str) -> anyhow::Result<Self> {
+impl FromPath for ProjectionConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         Ok(ProjectionConfig {})
     }
 }
@@ -89,7 +93,7 @@ impl<T: Sync, U: Project<T>> Map<T, U, ProjectionConfig> for Projection {
 mod tests {
 
     use crate::{
-        channel, mapper, spawn_join, FromFile, Mapper, Pipe, Project, ProjectionConfig, State,
+        channel, mapper, spawn_join, FromPath, Mapper, Pipe, Project, ProjectionConfig, State,
     };
     use tokio::sync::mpsc::Sender;
 
