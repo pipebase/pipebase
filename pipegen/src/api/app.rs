@@ -1,7 +1,6 @@
-use super::EntityAccept;
-use super::Object;
-use super::VisitEntity;
+use super::{Entity, EntityAccept, Object, VisitEntity};
 use crate::api::pipe::Pipe;
+use crate::api::utils::indent_literal;
 use crate::api::DataField;
 use crate::error::*;
 use crate::ops::DataFieldValidator;
@@ -13,12 +12,25 @@ use crate::ops::{Describe, Generate, ObjectGenerator, PipeGenerator, PipeIdValid
 use serde::Deserialize;
 use std::path::Path;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct App {
     pub name: String,
     pub pipes: Vec<Pipe>,
     pub objects: Option<Vec<Object>>,
 }
+
+impl Entity for App {
+    fn get_id(&self) -> String {
+        self.name.to_owned()
+    }
+
+    fn to_literal(&self, indent: usize) -> String {
+        let indent_lit = indent_literal(indent);
+        format!("{}App {{}}", indent_lit)
+    }
+}
+
+impl<V> EntityAccept<V> for App where V: VisitEntity<Self> {}
 
 impl App {
     pub fn parse(api_manifest_path: &Path) -> Result<App> {
@@ -114,7 +126,7 @@ impl App {
         for i in 0..objects.len() {
             let object = objects.get(i).unwrap();
             let location = format!("objects[{}].fields", i);
-            Self::validate_entity::<DataField, DataFieldValidator>(&object.fields, &location)?;
+            Self::validate_entity::<DataField, DataFieldValidator>(object.get_fields(), &location)?;
         }
         Self::validate_entity::<Object, ObjectDependencyValidator>(objects, "objects")?;
         Ok(())

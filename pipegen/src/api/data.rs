@@ -98,11 +98,11 @@ fn data_ty_to_literal(ty: &DataType) -> String {
 #[derive(Clone, Debug, Deserialize)]
 pub struct DataField {
     // either named or unamed data field
-    pub name: Option<String>,
-    pub data_ty: DataType,
-    pub metas: Option<Vec<Meta>>,
-    pub is_boxed: Option<bool>,
-    pub is_optional: Option<bool>,
+    name: Option<String>,
+    data_ty: DataType,
+    metas: Option<Vec<Meta>>,
+    is_boxed: Option<bool>,
+    is_optional: Option<bool>,
 }
 
 impl DataField {
@@ -176,10 +176,9 @@ impl<V: VisitEntity<DataField>> EntityAccept<V> for DataField {}
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Object {
-    // TODO: (Camel Case Validation)
-    pub ty: String,
-    pub metas: Option<Vec<Meta>>,
-    pub fields: Vec<DataField>,
+    ty: String,
+    metas: Option<Vec<Meta>>,
+    fields: Vec<DataField>,
 }
 
 impl Object {
@@ -189,6 +188,10 @@ impl Object {
             None => return None,
         };
         Some(metas_to_literal(&metas, indent))
+    }
+
+    pub fn get_fields(&self) -> &Vec<DataField> {
+        &self.fields
     }
 }
 

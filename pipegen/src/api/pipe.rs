@@ -25,28 +25,28 @@ pub enum PipeType {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct PipeConfig {
-    pub ty: String,
-    pub path: Option<String>,
+    ty: String,
+    path: Option<String>,
 }
 
 impl PipeConfig {
-    pub fn get_path(&self) -> Option<String> {
-        self.path.to_owned()
+    pub fn get_path(&self) -> Option<&String> {
+        self.path.as_ref()
     }
-    pub fn get_config_type(&self) -> String {
-        self.ty.to_owned()
+    pub fn get_config_type(&self) -> &String {
+        &self.ty
     }
 }
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Pipe {
-    pub name: String,
-    pub ty: PipeType,
-    pub config: PipeConfig,
+    name: String,
+    ty: PipeType,
+    config: PipeConfig,
     // upstream pipe names
-    pub upstreams: Option<Vec<String>>,
+    upstreams: Option<Vec<String>>,
     // output data type
-    pub output: Option<DataField>,
+    output: Option<DataField>,
 }
 
 impl Pipe {
