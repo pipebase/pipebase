@@ -33,7 +33,10 @@ impl FromConfig<EchoConfig> for Echo {
 }
 
 #[async_trait]
-impl<T: Clone + Debug + Sync> Map<T, T, EchoConfig> for Echo {
+impl<T> Map<T, T, EchoConfig> for Echo
+where
+    T: Clone + Debug + Sync,
+{
     async fn map(&mut self, t: &T) -> anyhow::Result<T> {
         info!("{:#?}", t);
         Ok(t.to_owned())
