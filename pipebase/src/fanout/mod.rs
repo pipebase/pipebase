@@ -109,7 +109,7 @@ macro_rules! selector {
         $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
         {
-            let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
+            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
             let mut pipe = Selector {
                 name: $name,
                 rx: $rx,

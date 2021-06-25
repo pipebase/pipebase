@@ -1,7 +1,8 @@
 use super::Map;
-use crate::{ConfigInto, FromConfig, FromFile};
+use crate::{ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 use serde::Deserialize;
+use std::path::Path;
 
 pub struct FieldVisitor<F: Clone> {
     value: Option<F>,
@@ -24,8 +25,11 @@ pub trait FieldAccept<F: Clone> {
 #[derive(Deserialize)]
 pub struct FieldVisitConfig {}
 
-impl FromFile for FieldVisitConfig {
-    fn from_file(_path: &str) -> anyhow::Result<Self> {
+impl FromPath for FieldVisitConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         Ok(FieldVisitConfig {})
     }
 }
@@ -54,7 +58,7 @@ impl<T: FieldAccept<U> + Sync, U: Clone> Map<T, U, FieldVisitConfig> for FieldVi
 mod tests {
 
     use crate::{
-        channel, mapper, spawn_join, FieldAccept, FieldVisitConfig, FieldVisitor, FromFile, Mapper,
+        channel, mapper, spawn_join, FieldAccept, FieldVisitConfig, FieldVisitor, FromPath, Mapper,
         Pipe,
     };
 

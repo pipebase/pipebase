@@ -1,4 +1,4 @@
-use crate::{ConfigInto, FromConfig, FromFile, Select};
+use crate::{ConfigInto, FromConfig, FromPath, Select};
 use async_trait::async_trait;
 use serde::Deserialize;
 
@@ -7,7 +7,7 @@ pub struct RoundRobinConfig {
     pub n: usize,
 }
 
-impl FromFile for RoundRobinConfig {}
+impl FromPath for RoundRobinConfig {}
 
 #[async_trait]
 impl ConfigInto<RoundRobin> for RoundRobinConfig {}

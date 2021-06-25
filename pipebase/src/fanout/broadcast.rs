@@ -1,4 +1,4 @@
-use crate::{ConfigInto, FromConfig, FromFile, Select};
+use crate::{ConfigInto, FromConfig, FromPath, Select};
 use async_trait::async_trait;
 use serde::Deserialize;
 
@@ -7,7 +7,7 @@ pub struct BroadcastConfig {
     pub n: usize,
 }
 
-impl FromFile for BroadcastConfig {}
+impl FromPath for BroadcastConfig {}
 
 #[async_trait]
 impl ConfigInto<Broadcast> for BroadcastConfig {}

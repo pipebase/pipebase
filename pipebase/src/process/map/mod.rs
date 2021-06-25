@@ -109,7 +109,7 @@ macro_rules! mapper {
         $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
         {
-            let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
+            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
             let mut pipe = Mapper {
                 name: $name,
                 rx: $rx,

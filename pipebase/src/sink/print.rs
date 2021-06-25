@@ -1,13 +1,17 @@
-use crate::{ConfigInto, Export, FromConfig, FromFile};
+use crate::{ConfigInto, Export, FromConfig, FromPath};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::fmt::Display;
+use std::path::Path;
 
 #[derive(Deserialize)]
 pub struct PrinterConfig {}
 
-impl FromFile for PrinterConfig {
-    fn from_file(_path: &str) -> anyhow::Result<Self> {
+impl FromPath for PrinterConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         Ok(PrinterConfig {})
     }
 }

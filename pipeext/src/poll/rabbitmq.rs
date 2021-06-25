@@ -7,7 +7,7 @@ use lapin::{
 use log::info;
 use pipebase::ConfigInto;
 use pipebase::Poll;
-use pipebase::{FromConfig, FromFile};
+use pipebase::{FromConfig, FromPath};
 use serde::Deserialize;
 use tokio_amqp::*;
 pub struct RabbitMQConsumer {
@@ -26,7 +26,7 @@ pub struct RabbitMQConsumerConfig {
     pub uri: String,
 }
 
-impl FromFile for RabbitMQConsumerConfig {}
+impl FromPath for RabbitMQConsumerConfig {}
 
 #[async_trait]
 impl ConfigInto<RabbitMQConsumer> for RabbitMQConsumerConfig {}
@@ -87,7 +87,7 @@ impl RabbitMQConsumer {
 #[cfg(test)]
 mod tests {
 
-    use pipebase::{poller, FromFile, Pipe, Poller};
+    use pipebase::{poller, FromPath, Pipe, Poller};
     use tokio::sync::mpsc::channel;
     use tokio::sync::mpsc::Receiver;
 

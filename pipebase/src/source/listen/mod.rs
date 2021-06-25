@@ -130,7 +130,7 @@ macro_rules! listener {
         $name:expr, $path:expr, $config:ty, [$( $tx:expr ), *]
     ) => {
         {
-            let config = <$config>::from_file($path).expect(&format!("invalid config file location {}", $path));
+            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
             let mut pipe = Listener {
                 name: $name,
                 txs: std::collections::HashMap::new(),

@@ -1,4 +1,4 @@
-use crate::{ConfigInto, FromConfig, FromFile, Select};
+use crate::{ConfigInto, FromConfig, FromPath, Select};
 use async_trait::async_trait;
 use rand::Rng;
 use serde::Deserialize;
@@ -8,7 +8,7 @@ pub struct RandomConfig {
     pub n: usize,
 }
 
-impl FromFile for RandomConfig {}
+impl FromPath for RandomConfig {}
 
 #[async_trait]
 impl ConfigInto<Random> for RandomConfig {}
