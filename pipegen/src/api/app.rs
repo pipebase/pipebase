@@ -3,12 +3,12 @@ use super::{DataType, Entity, EntityAccept, Object, VisitEntity};
 use crate::api::pipe::Pipe;
 use crate::api::DataField;
 use crate::error::*;
-use crate::ops::DataFieldValidator;
 use crate::ops::ObjectDependencyValidator;
 use crate::ops::ObjectIdValidator;
 use crate::ops::PipeGraphDescriber;
 use crate::ops::PipeGraphValidator;
-use crate::ops::{Describe, Generate, ObjectGenerator, PipeGenerator, PipeIdValidator, Validate};
+use crate::ops::{AppGenerator, DataFieldValidator};
+use crate::ops::{Describe, Generate, PipeIdValidator, Validate};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::Path;
@@ -148,57 +148,25 @@ impl App {
         }
     }
 
+    pub fn get_objects(&self) -> Option<&Vec<Object>> {
+        self.objects.as_ref()
+    }
+
+    pub fn get_pipes(&self) -> &Vec<Pipe> {
+        &self.pipes.as_ref()
+    }
+
     pub fn print(&self) {
-        println!("{}", self.generate())
-    }
-
-    pub fn generate_entity<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
-        entity: &T,
-        indent: usize,
-    ) -> Option<String> {
-        let mut generator = G::new(indent);
-        entity.accept(&mut generator);
-        generator.generate()
-    }
-
-    pub fn generate_entities<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
-        entities: &Vec<T>,
-        indent: usize,
-        join_sep: &str,
-    ) -> String {
-        let mut lits: Vec<String> = vec![];
-        for entity in entities.as_slice() {
-            match Self::generate_entity(entity, indent) {
-                Some(lit) => lits.push(lit),
-                None => continue,
-            }
-        }
-        lits.join(join_sep)
-    }
-
-    pub fn generate_objects(&self, indent: usize) -> Option<String> {
-        let objects = match self.objects {
-            Some(ref objects) => objects,
-            None => return None,
-        };
-        let objects_lit =
-            Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n");
-        Some(objects_lit)
-    }
-
-    pub fn generate(&self) -> String {
-        let mut sections: Vec<String> = vec![];
-        match self.generate_objects(1) {
-            Some(objects_lit) => sections.push(objects_lit),
+        match self.generate() {
+            Some(lit) => println!("{}", lit),
             None => (),
-        };
-        sections.push(Self::generate_entities::<Pipe, PipeGenerator>(
-            &(self.pipes),
-            1,
-            "\n",
-        ));
-        sections.push(self.to_literal(1));
-        format!("mod {} {{\n{}\n}}", self.name, sections.join("\n\n"))
+        }
+    }
+
+    pub fn generate(&self) -> Option<String> {
+        let mut app_generator = AppGenerator::new(0);
+        self.accept(&mut app_generator);
+        app_generator.generate()
     }
 
     pub fn validate_entity<T: EntityAccept<V>, V: Validate<T> + VisitEntity<T>>(
@@ -262,8 +230,7 @@ impl App {
     }
 
     pub fn describe_pipelines(&self, pid: &str) -> Vec<String> {
-        let mut describe = self.get_pipe_describer();
-        describe.parse();
+        let describe = self.get_pipe_describer();
         describe.describe_pipelines(pid)
     }
 
