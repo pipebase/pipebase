@@ -120,8 +120,11 @@ impl<T, U: Project<T>> Project<Option<T>> for Option<U> {
     }
 }
 
-/// Project fixed-size array
-impl<T, U: Project<T> + Default + Copy, const N: usize> Project<[T; N]> for [U; N] {
+/// Project Fixed Size Array
+impl<T, U, const N: usize> Project<[T; N]> for [U; N]
+where
+    U: Project<T> + Default + Copy,
+{
     fn project(from: &[T; N]) -> [U; N] {
         let mut to: [U; N] = [U::default(); N];
         for i in 0..N {
@@ -131,8 +134,11 @@ impl<T, U: Project<T> + Default + Copy, const N: usize> Project<[T; N]> for [U; 
     }
 }
 
-/// Project vec
-impl<T, U: Project<T>> Project<Vec<T>> for Vec<U> {
+/// Project Vec
+impl<T, U> Project<Vec<T>> for Vec<U>
+where
+    U: Project<T>,
+{
     fn project(from: &Vec<T>) -> Vec<U> {
         let mut to: Vec<U> = vec![];
         for item in from {
@@ -167,7 +173,11 @@ impl FromConfig<ProjectionConfig> for Projection {
 }
 
 #[async_trait]
-impl<T: Sync, U: Project<T>> Map<T, U, ProjectionConfig> for Projection {
+impl<T, U> Map<T, U, ProjectionConfig> for Projection
+where
+    T: Sync,
+    U: Project<T>,
+{
     async fn map(&mut self, data: &T) -> anyhow::Result<U> {
         Ok(U::project(&data))
     }

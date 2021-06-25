@@ -9,12 +9,12 @@ pub struct FieldVisitor<F: Clone> {
 }
 
 impl<F: Clone> FieldVisitor<F> {
-    pub fn visit(&mut self, value: F) {
-        self.value = Some(value);
+    pub fn visit(&mut self, value: &F) {
+        self.value = Some(value.to_owned());
     }
 
-    pub fn get_value(&self) -> Option<F> {
-        self.value.to_owned()
+    pub fn get_value(&self) -> Option<&F> {
+        self.value.as_ref()
     }
 }
 
@@ -38,6 +38,7 @@ impl FromPath for FieldVisitConfig {
 impl ConfigInto<FieldVisit> for FieldVisitConfig {}
 
 pub struct FieldVisit {}
+
 #[async_trait]
 impl FromConfig<FieldVisitConfig> for FieldVisit {
     async fn from_config(_config: &FieldVisitConfig) -> anyhow::Result<Self> {
@@ -46,11 +47,15 @@ impl FromConfig<FieldVisitConfig> for FieldVisit {
 }
 
 #[async_trait]
-impl<T: FieldAccept<U> + Sync, U: Clone> Map<T, U, FieldVisitConfig> for FieldVisit {
+impl<T, U> Map<T, U, FieldVisitConfig> for FieldVisit
+where
+    T: FieldAccept<U> + Sync,
+    U: Clone,
+{
     async fn map(&mut self, t: &T) -> anyhow::Result<U> {
         let mut visitor = FieldVisitor::<U> { value: None };
         t.accept(&mut visitor);
-        Ok(visitor.get_value().unwrap())
+        Ok(visitor.get_value().unwrap().to_owned())
     }
 }
 
@@ -74,7 +79,7 @@ mod tests {
         let records = Records { records: record };
         let mut visitor = FieldVisitor::<[i32; 3]> { value: None };
         records.accept(&mut visitor);
-        let visitor_record = visitor.get_value().unwrap();
+        let visitor_record = visitor.get_value().unwrap().to_owned();
         assert_eq!(record, visitor_record)
     }
 

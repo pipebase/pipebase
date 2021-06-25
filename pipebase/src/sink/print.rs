@@ -28,7 +28,10 @@ impl FromConfig<PrinterConfig> for Printer {
 }
 
 #[async_trait]
-impl<T: Send + Sync + Display + 'static> Export<T, PrinterConfig> for Printer {
+impl<T> Export<T, PrinterConfig> for Printer
+where
+    T: Send + Sync + Display + 'static,
+{
     async fn export(&mut self, t: &T) -> anyhow::Result<()> {
         println!("{}", t);
         Ok(())

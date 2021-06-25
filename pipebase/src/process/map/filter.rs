@@ -36,11 +36,11 @@ impl FromConfig<FilterMapConfig> for FilterMap {
 }
 
 #[async_trait]
-impl<
-        T: Filter + Clone + Sync,
-        U: IntoIterator<Item = T> + Sync + Clone,
-        V: FromIterator<T> + Send,
-    > Map<U, V, FilterMapConfig> for FilterMap
+impl<T, U, V> Map<U, V, FilterMapConfig> for FilterMap
+where
+    T: Filter + Clone + Sync,
+    U: IntoIterator<Item = T> + Sync + Clone,
+    V: FromIterator<T> + Send,
 {
     async fn map(&mut self, data: &U) -> anyhow::Result<V> {
         Ok(data

@@ -32,7 +32,10 @@ impl<T: Ord> FromConfig<SetCollectorConfig> for SetCollector<T> {
 }
 
 #[async_trait]
-impl<T: Clone + Send + Sync + Ord> Collect<T, BTreeSet<T>, SetCollectorConfig> for SetCollector<T> {
+impl<T> Collect<T, BTreeSet<T>, SetCollectorConfig> for SetCollector<T>
+where
+    T: Clone + Send + Sync + Ord,
+{
     async fn collect(&mut self, t: &T) {
         self.buffer.push(t.to_owned());
     }
