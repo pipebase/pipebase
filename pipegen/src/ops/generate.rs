@@ -24,8 +24,8 @@ impl Generate<Pipe> for PipeGenerator {
     }
 
     fn generate(&self) -> Option<String> {
-        let pipe = match self.pipe.to_owned() {
-            Some(p) => p,
+        let pipe = match self.pipe {
+            Some(ref p) => p,
             None => return None,
         };
         Some(pipe.to_literal(self.indent))
@@ -52,8 +52,8 @@ impl Generate<Object> for ObjectGenerator {
     }
 
     fn generate(&self) -> Option<String> {
-        let object = match self.object.to_owned() {
-            Some(o) => o,
+        let object = match self.object {
+            Some(ref o) => o,
             None => return None,
         };
         Some(object.to_literal(self.indent))
