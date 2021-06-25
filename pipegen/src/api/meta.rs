@@ -17,6 +17,10 @@ pub enum Meta {
     // Extend meta enum
     Derive(Vec<String>),
     Project(HashMap<String, String>),
+    Filter(HashMap<String, String>),
+    HashKey,
+    OrderKey,
+    FieldVisit,
 }
 
 fn expand_path_list(name: &str, paths: &Vec<String>) -> Meta {
@@ -61,6 +65,16 @@ fn expand_meta(meta: &Meta) -> Meta {
     match meta {
         Meta::Derive(derives) => expand_path_list("derive", derives),
         Meta::Project(projects) => expand_str_value_list("project", projects),
+        Meta::Filter(filters) => expand_str_value_list("filter", filters),
+        Meta::HashKey => Meta::Path {
+            name: "hkey".to_owned(),
+        },
+        Meta::OrderKey => Meta::Path {
+            name: "okey".to_owned(),
+        },
+        Meta::FieldVisit => Meta::Path {
+            name: "visit".to_owned(),
+        },
         _ => meta.to_owned(),
     }
 }
