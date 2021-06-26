@@ -40,9 +40,8 @@ mod tests {
         upstream = "timer1, timer2",
         config(ty = "PrinterConfig")
     )]
-    #[cstore(method(get = "get", insert = "insert"))]
     struct App {
-        #[cstore]
+        #[cstore(method(get = "get", insert = "insert"))]
         pipe_contexts: HashMap<String, Arc<RwLock<Context>>>,
     }
 
