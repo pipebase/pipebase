@@ -31,7 +31,7 @@ impl Entity for App {
             Some(ref dependencies) => dependencies,
             None => return Vec::new(),
         };
-        let mut modules: Vec<String> = Self::default_modules();
+        let mut modules: Vec<String> = Vec::new();
         for dependency in dependencies {
             modules.extend(dependency.get_modules().to_owned());
         }
@@ -42,7 +42,10 @@ impl Entity for App {
         // app metas
         let metas = self.get_metas();
         // app object fields
-        let cstore = self.get_context_store().as_data_field();
+        let cstore = match self.get_context_store() {
+            Some(cstore) => cstore.as_data_field(),
+            None => panic!("App's context store is None"),
+        };
         // create app object
         let app = Object::new("App".to_owned(), metas, vec![cstore]);
         app.to_literal(indent)
@@ -72,6 +75,14 @@ impl App {
                 app.add_dependency(default_dependency)
             }
         }
+        // init context store
+        match app.get_context_store() {
+            Some(_) => (),
+            None => {
+                let default_cstore = ContextStore::new("pipe_contexts".to_owned());
+                app.set_context_store(default_cstore);
+            }
+        };
     }
 
     pub fn has_dependency(&self, other: &Dependency) -> bool {
@@ -105,7 +116,14 @@ impl App {
             ),
             Dependency::new(
                 "tokio".to_owned(),
-                Some("0.1.0".to_owned()),
+                Some("1.6.1".to_owned()),
+                None,
+                Some(vec!["full".to_owned()]),
+                vec![],
+            ),
+            Dependency::new(
+                "log".to_owned(),
+                Some("0.4.14".to_owned()),
                 None,
                 None,
                 vec![],
@@ -123,14 +141,54 @@ impl App {
         use_module_lits.join(";\n")
     }
 
-    pub fn default_modules() -> Vec<String> {
-        // default rust module to use
-        vec![
-            "std::collections::HashMap".to_owned(),
-            "std::future::Future".to_owned(),
-            "std::ops::Deref".to_owned(),
-            "std::pin::Pin".to_owned(),
-        ]
+    // TODO: function lit replaced with function entity or procedure derive
+    pub fn get_new_app_function_lit(&self, indent: usize) -> String {
+        let cstore_name = match self.cstore {
+            Some(ref cstore) => cstore.get_name(),
+            None => panic!("App's App's context store is None"),
+        };
+        let new_app_lit = format!(
+            "{}App {{\n{}{}: std::collections::HashMap::new(),\n{}}}",
+            indent_literal(indent + 1),
+            indent_literal(indent + 2),
+            cstore_name,
+            indent_literal(indent + 1)
+        );
+        format!(
+            "{}pub fn app() -> App {{\n{}\n{}}}",
+            indent_literal(indent),
+            new_app_lit,
+            indent_literal(indent)
+        )
+    }
+
+    pub fn get_bootstrap_app_function_lit(&self, indent: usize) -> String {
+        let new_app_and_bootstap_lit = format!(
+            "{}self::app().bootstrap().await;",
+            indent_literal(indent + 1)
+        );
+        format!(
+            "{}pub async fn bootstrap() {{\n{}\n{}}}",
+            indent_literal(indent),
+            new_app_and_bootstap_lit,
+            indent_literal(indent)
+        )
+    }
+
+    pub fn get_main_function_lit(&self, indent: usize) -> String {
+        let tokio_main_lit = format!("{}#[tokio::main]", indent_literal(indent));
+        let bootstrap_app_lit = format!(
+            "{}{}::bootstrap().await;",
+            indent_literal(indent + 1),
+            self.name
+        );
+        format!(
+            "{}\n{}async fn main() {{\n{}\n{}}}",
+            tokio_main_lit,
+            indent_literal(indent),
+            bootstrap_app_lit,
+            indent_literal(indent)
+        )
     }
 
     pub fn get_metas(&self) -> Vec<Meta> {
@@ -140,7 +198,7 @@ impl App {
                 name: "derive".to_owned(),
                 metas: vec![
                     Meta::Path {
-                        name: "Boostrap".to_owned(),
+                        name: "Bootstrap".to_owned(),
                     },
                     Meta::Path {
                         name: "ContextStore".to_owned(),
@@ -150,11 +208,12 @@ impl App {
         }
     }
 
-    pub fn get_context_store(&self) -> ContextStore {
-        match self.cstore {
-            Some(ref cstore) => cstore.to_owned(),
-            None => ContextStore::new("pipe_contexts".to_owned()),
-        }
+    pub fn get_context_store(&self) -> Option<&ContextStore> {
+        self.cstore.as_ref()
+    }
+
+    pub fn set_context_store(&mut self, cstore: ContextStore) {
+        self.cstore = Some(cstore)
     }
 
     pub fn get_objects(&self) -> Option<&Vec<Object>> {

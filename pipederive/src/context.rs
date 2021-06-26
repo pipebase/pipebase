@@ -18,10 +18,10 @@ pub fn impl_context_store(ident: &Ident, data: &Data, generics: &Generics) -> To
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
         impl #impl_generics ContextStore for #ident #type_generics #where_clause {
-            fn add_pipe_context(&mut self, pipe_name: String, context: Arc<RwLock<Context>>) {
+            fn add_pipe_context(&mut self, pipe_name: String, context: std::sync::Arc<tokio::sync::RwLock<Context>>) {
                 self.#field_ident.#insert_method_token(pipe_name, context);
             }
-            fn get_pipe_context(&self, pipe_name: &str) -> Option<Arc<RwLock<Context>>> {
+            fn get_pipe_context(&self, pipe_name: &str) -> Option<std::sync::Arc<tokio::sync::RwLock<Context>>> {
                 match self.#field_ident.#get_method_token(pipe_name) {
                     Some(context) => Some(context.to_owned()),
                     None => None,

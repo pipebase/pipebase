@@ -35,7 +35,7 @@ pub fn impl_bootstrap(
                 println!("{}", exprs)
             }
 
-            fn bootstrap(&mut self) -> Pin<Box<dyn Future<Output = ()> + Send + Sync>> {
+            fn bootstrap(&mut self) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + Sync>> {
                 #channel_expr_tokens
                 ;
                 #pipe_expr_tokens

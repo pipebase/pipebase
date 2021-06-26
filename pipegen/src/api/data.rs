@@ -67,7 +67,7 @@ fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::Object(object) => object.to_owned(),
         DataType::Vec { data_ty } => {
             let data_ty_lit = data_ty_to_literal(data_ty);
-            format!("Vec<{}>", data_ty_lit)
+            format!("std::collections::Vec<{}>", data_ty_lit)
         }
         DataType::Array { data_ty, size } => {
             let data_ty_lit = data_ty_to_literal(data_ty);
@@ -86,11 +86,14 @@ fn data_ty_to_literal(ty: &DataType) -> String {
         } => {
             let key_data_ty = data_ty_to_literal(key_data_ty);
             let value_data_ty = data_ty_to_literal(value_data_ty);
-            format!("HashMap<{}, {}>", key_data_ty, value_data_ty)
+            format!(
+                "std::collections::HashMap<{}, {}>",
+                key_data_ty, value_data_ty
+            )
         }
         DataType::HashSet { data_ty } => {
             let data_ty_lit = data_ty_to_literal(data_ty);
-            format!("HashSet<{}>", data_ty_lit)
+            format!("std::collections::HashSet<{}>", data_ty_lit)
         }
     }
 }

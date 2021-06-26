@@ -140,6 +140,27 @@ impl AppGenerator {
         }
     }
 
+    pub fn generate_new_app_function(&self, indent: usize) -> Option<String> {
+        match self.app {
+            Some(ref app) => Some(app.get_new_app_function_lit(indent)),
+            None => None,
+        }
+    }
+
+    pub fn generate_bootstrap_app_function(&self, indent: usize) -> Option<String> {
+        match self.app {
+            Some(ref app) => Some(app.get_bootstrap_app_function_lit(indent)),
+            None => None,
+        }
+    }
+
+    pub fn generate_main_function(&self, indent: usize) -> Option<String> {
+        match self.app {
+            Some(ref app) => Some(app.get_main_function_lit(indent)),
+            None => None,
+        }
+    }
+
     // module paths
     pub fn generate_use_modules(&self, indent: usize) -> Option<String> {
         let app = match self.app {
@@ -172,8 +193,19 @@ impl AppGenerator {
             Some(app_object_lit) => sections.push(app_object_lit),
             None => (),
         };
+        match self.generate_new_app_function(indent) {
+            Some(new_app_function_lit) => sections.push(new_app_function_lit),
+            None => (),
+        };
+        match self.generate_bootstrap_app_function(indent) {
+            Some(bootstrap_app_function_lit) => sections.push(bootstrap_app_function_lit),
+            None => (),
+        };
         let module_lit = Self::generate_module(&module_name, &sections);
-        Some(module_lit)
+        match self.generate_main_function(self.indent) {
+            Some(main_function_lit) => Some(format!("{}\n\n{}", module_lit, main_function_lit)),
+            None => Some(module_lit),
+        }
     }
 
     pub fn generate_module(module: &str, sections: &Vec<String>) -> String {
