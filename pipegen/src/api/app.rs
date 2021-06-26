@@ -3,9 +3,8 @@ use super::{DataType, Entity, EntityAccept, Object, VisitEntity};
 use crate::api::pipe::Pipe;
 use crate::api::DataField;
 use crate::error::*;
-use crate::ops::AppGenerator;
 use crate::ops::AppValidator;
-use crate::ops::PipeGraphDescriber;
+use crate::ops::{AppDescriber, AppGenerator};
 use crate::ops::{Describe, Generate, Validate};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -180,39 +179,26 @@ impl App {
     }
 
     pub fn validate(&self) -> Result<()> {
-        self.validate_pipes()?;
-        self.validate_objects()
-    }
-
-    pub fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(
-        entities: &Vec<T>,
-    ) -> A {
-        let mut describer = A::new();
-        for entity in entities {
-            entity.accept(&mut &mut describer);
-        }
-        describer.parse();
-        describer
-    }
-
-    pub fn get_pipe_describer(&self) -> PipeGraphDescriber {
-        Self::init_describer::<Pipe, PipeGraphDescriber>(&self.pipes)
+        let mut validator = AppValidator::new("");
+        self.accept(&mut validator);
+        validator.validate()
     }
 
     pub fn describe_pipes(&self) -> Vec<String> {
-        let describe = self.get_pipe_describer();
-        describe.describe()
+        let mut describer = AppDescriber::new();
+        self.accept(&mut describer);
+        describer.describe_pipes()
     }
 
     pub fn describe_pipelines(&self, pid: &str) -> Vec<String> {
-        let describe = self.get_pipe_describer();
-        describe.describe_pipelines(pid)
+        let mut describer = AppDescriber::new();
+        self.accept(&mut describer);
+        describer.describe_pipelines(pid)
     }
 
-    pub fn describe(&self) {
-        let results = self.describe_pipes();
-        for result in results {
-            println!("{}", result)
-        }
+    pub fn describe(&self) -> Vec<String> {
+        let mut describer = AppDescriber::new();
+        self.accept(&mut describer);
+        describer.describe()
     }
 }
