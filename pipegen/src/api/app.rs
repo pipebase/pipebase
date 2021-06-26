@@ -3,12 +3,10 @@ use super::{DataType, Entity, EntityAccept, Object, VisitEntity};
 use crate::api::pipe::Pipe;
 use crate::api::DataField;
 use crate::error::*;
-use crate::ops::ObjectDependencyValidator;
-use crate::ops::ObjectIdValidator;
+use crate::ops::AppGenerator;
+use crate::ops::AppValidator;
 use crate::ops::PipeGraphDescriber;
-use crate::ops::PipeGraphValidator;
-use crate::ops::{AppGenerator, DataFieldValidator};
-use crate::ops::{Describe, Generate, PipeIdValidator, Validate};
+use crate::ops::{Describe, Generate, Validate};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::Path;
@@ -169,39 +167,16 @@ impl App {
         app_generator.generate()
     }
 
-    pub fn validate_entity<T: EntityAccept<V>, V: Validate<T> + VisitEntity<T>>(
-        items: &Vec<T>,
-        location: &str,
-    ) -> Result<()> {
-        let mut validator: V = V::new(location);
-        for item in items {
-            item.accept(&mut validator);
-        }
-        validator.validate();
-        match validator.display_error_details() {
-            Some(details) => Err(api_error(details)),
-            None => Ok(()),
-        }
-    }
-
     pub fn validate_pipes(&self) -> Result<()> {
-        Self::validate_entity::<Pipe, PipeIdValidator>(&self.pipes, "pipes")?;
-        Self::validate_entity::<Pipe, PipeGraphValidator>(&self.pipes, "pipes")
+        let mut validator = AppValidator::new("");
+        self.accept(&mut validator);
+        validator.validate_pipes()
     }
 
     pub fn validate_objects(&self) -> Result<()> {
-        let objects = match self.objects {
-            Some(ref objects) => objects,
-            None => return Ok(()),
-        };
-        Self::validate_entity::<Object, ObjectIdValidator>(objects, "objects")?;
-        for i in 0..objects.len() {
-            let object = objects.get(i).unwrap();
-            let location = format!("objects[{}].fields", i);
-            Self::validate_entity::<DataField, DataFieldValidator>(object.get_fields(), &location)?;
-        }
-        Self::validate_entity::<Object, ObjectDependencyValidator>(objects, "objects")?;
-        Ok(())
+        let mut validator = AppValidator::new("");
+        self.accept(&mut validator);
+        validator.validate_objects()
     }
 
     pub fn validate(&self) -> Result<()> {
