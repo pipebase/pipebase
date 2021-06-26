@@ -1,11 +1,11 @@
 use std::fmt::Display;
 
-use crate::api::utils::indent_literal;
 use crate::api::{Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
 use strum::{Display, EnumString};
 
 use super::data::DataField;
+use super::meta::{meta_to_literal, Meta, MetaValue};
 
 #[derive(Clone, Display, EnumString, PartialEq, Debug, Deserialize)]
 pub enum PipeType {
@@ -57,60 +57,63 @@ impl Pipe {
         }
     }
 
-    pub fn get_name_meta_literal(&self, indent: usize) -> String {
-        let indent_lit = indent_literal(indent);
-        format!(r#"{}name = "{}""#, indent_lit, self.name)
+    fn get_name_meta(&self) -> Meta {
+        Meta::Value {
+            name: "name".to_owned(),
+            meta: MetaValue::Str(self.name.to_owned()),
+        }
     }
 
-    pub fn get_type_meta_literal(&self, indent: usize) -> String {
-        let indent_lit = indent_literal(indent);
-        format!(r#"{}ty = "{}""#, indent_lit, self.ty)
+    fn get_type_meta(&self) -> Meta {
+        Meta::Value {
+            name: "ty".to_owned(),
+            meta: MetaValue::Str(self.ty.to_string()),
+        }
     }
 
-    pub fn get_config_meta_literal(&self, indent: usize) -> String {
-        let indent_lit = indent_literal(indent);
-        let config_ty_meta_lit = format!(r#"ty = "{}""#, self.config.get_config_type());
-        let config_meta_lit = match self.config.get_path() {
+    fn get_config_meta(&self) -> Meta {
+        let mut config_metas = vec![];
+        config_metas.push(Meta::Value {
+            name: "ty".to_owned(),
+            meta: MetaValue::Str(self.config.get_config_type().to_owned()),
+        });
+        match self.config.get_path() {
             Some(path) => {
-                let config_path_lit = format!(r#"path = "{}""#, path);
-                format!(
-                    "{}config({}, {})",
-                    indent_lit, config_ty_meta_lit, config_path_lit
-                )
+                config_metas.push(Meta::Value {
+                    name: "path".to_owned(),
+                    meta: MetaValue::Str(path.to_owned()),
+                });
             }
-            None => format!("{}config({})", indent_lit, config_ty_meta_lit),
+            None => (),
         };
-        config_meta_lit
+        Meta::List {
+            name: "config".to_owned(),
+            metas: config_metas,
+        }
     }
 
-    pub fn get_upstream_meta_literal(&self, indent: usize) -> Option<String> {
+    fn get_upstream_meta(&self) -> Option<Meta> {
         let upstreams = match self.upstreams {
             Some(ref upstreams) => upstreams,
             None => return None,
         };
-        match upstreams.is_empty() {
-            false => {
-                let indent_lit = indent_literal(indent);
-                Some(format!(
-                    r#"{}upstream = "{}""#,
-                    indent_lit,
-                    upstreams.join(", ")
-                ))
-            }
-            true => None,
-        }
+        let meta = Meta::Value {
+            name: "upstream".to_owned(),
+            meta: MetaValue::Str(upstreams.join(", ")),
+        };
+        Some(meta)
     }
 
-    pub fn get_output_data_type_meta_literal(&self, indent: usize) -> Option<String> {
-        let output_data_type = match self.output {
-            Some(ref output_data_type) => output_data_type,
+    pub fn get_output_data_type_meta(&self) -> Option<Meta> {
+        let output = match self.output {
+            Some(ref output) => output,
             None => return None,
         };
-        Some(format!(
-            r#"{}output = "{}""#,
-            indent_literal(indent),
-            output_data_type.to_literal(0)
-        ))
+        let meta = Meta::Value {
+            name: "output".to_owned(),
+            meta: MetaValue::Str(output.to_literal(0)),
+        };
+        Some(meta)
     }
 }
 
@@ -128,24 +131,23 @@ impl Entity for Pipe {
 
     // to pipe meta
     fn to_literal(&self, indent: usize) -> String {
-        let mut meta_lits = vec![];
-        meta_lits.push(self.get_name_meta_literal(indent + 1));
-        meta_lits.push(self.get_type_meta_literal(indent + 1));
-        meta_lits.push(self.get_config_meta_literal(indent + 1));
-        match self.get_upstream_meta_literal(indent + 1) {
-            Some(upstream_literal) => meta_lits.push(upstream_literal),
+        let mut metas: Vec<Meta> = Vec::new();
+        metas.push(self.get_name_meta());
+        metas.push(self.get_type_meta());
+        metas.push(self.get_config_meta());
+        match self.get_upstream_meta() {
+            Some(meta) => metas.push(meta),
             None => (),
         };
-        match self.get_output_data_type_meta_literal(indent + 1) {
-            Some(output_ty_literal) => meta_lits.push(output_ty_literal),
+        match self.get_output_data_type_meta() {
+            Some(meta) => metas.push(meta),
             None => (),
         };
-        let meta_lits_join = meta_lits.join(",\n");
-        let indent_lit = indent_literal(indent);
-        format!(
-            "{}#[pipe(\n{}\n{})]",
-            indent_lit, meta_lits_join, indent_lit
-        )
+        let meta = Meta::List {
+            name: "pipe".to_owned(),
+            metas: metas,
+        };
+        meta_to_literal(&meta, indent)
     }
 }
 
