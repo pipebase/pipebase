@@ -9,15 +9,10 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{Attribute, Data, Field, Generics};
 
-pub fn impl_context_store(
-    ident: &Ident,
-    attributes: &Vec<Attribute>,
-    data: &Data,
-    generics: &Generics,
-) -> TokenStream {
+pub fn impl_context_store(ident: &Ident, data: &Data, generics: &Generics) -> TokenStream {
     let field = resolve_first_field(data, &is_context_store_field);
     let field_ident = field.ident;
-    let attribute = get_context_store_attribute(attributes);
+    let attribute = get_context_store_attribute(&field.attrs);
     let get_method_token = get_context_store_get_method_token(attribute.as_ref());
     let insert_method_token = get_context_store_insert_method_token(attribute.as_ref());
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
