@@ -1,84 +1,22 @@
-use super::meta::{Meta, MetaValue};
-use super::{DataType, Entity, EntityAccept, Object, VisitEntity};
-use crate::api::pipe::Pipe;
-use crate::api::DataField;
+use super::context::ContextStore;
+use super::dependency::Dependency;
+use super::meta::Meta;
+use super::pipe::Pipe;
+use super::utils::indent_literal;
+use super::{Entity, EntityAccept, Object, VisitEntity};
 use crate::error::*;
 use crate::ops::AppValidator;
 use crate::ops::{AppDescriber, AppGenerator};
 use crate::ops::{Describe, Generate, Validate};
 use serde::Deserialize;
-use std::collections::HashMap;
 use std::path::Path;
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct ContextStore {
-    name: String,
-    methods: HashMap<String, String>,
-    data_ty: DataType,
-}
-
-impl ContextStore {
-    pub fn new(name: String) -> Self {
-        let mut methods = HashMap::new();
-        methods.insert("get".to_owned(), "get".to_owned());
-        methods.insert("insert".to_owned(), "insert".to_owned());
-        let data_ty = DataType::HashMap {
-            key_data_ty: Box::new(DataType::String),
-            value_data_ty: Box::new(DataType::Object("Arc<RwLock<Context>>".to_owned())),
-        };
-        ContextStore {
-            name: name,
-            methods: methods,
-            data_ty: data_ty,
-        }
-    }
-
-    pub fn get_name(&self) -> &String {
-        &self.name
-    }
-
-    pub fn get_methods(&self) -> &HashMap<String, String> {
-        &self.methods
-    }
-
-    fn methods_as_meta(&self) -> Meta {
-        let mut method_metas = vec![];
-        for (name, value) in &self.methods {
-            method_metas.push(Meta::Value {
-                name: name.to_owned(),
-                meta: MetaValue::Str(value.to_owned()),
-            });
-        }
-        Meta::List {
-            name: "method".to_owned(),
-            metas: method_metas,
-        }
-    }
-
-    fn get_meta(&self) -> Meta {
-        Meta::List {
-            name: "cstore".to_owned(),
-            metas: vec![self.methods_as_meta()],
-        }
-    }
-
-    pub fn as_data_field(&self) -> DataField {
-        DataField::new_named_field(
-            self.data_ty.to_owned(),
-            self.name.to_owned(),
-            vec![self.get_meta()],
-            false,
-            false,
-        )
-    }
-}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct App {
     name: String,
     metas: Option<Vec<Meta>>,
     cstore: Option<ContextStore>,
-    dependencies: Option<Vec<String>>,
+    dependencies: Option<Vec<Dependency>>,
     pipes: Vec<Pipe>,
     objects: Option<Vec<Object>>,
 }
@@ -89,10 +27,15 @@ impl Entity for App {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        match self.dependencies {
-            Some(ref dependencies) => dependencies.to_owned(),
-            None => vec![],
+        let dependencies = match self.dependencies {
+            Some(ref dependencies) => dependencies,
+            None => return Vec::new(),
+        };
+        let mut modules: Vec<String> = Self::default_modules();
+        for dependency in dependencies {
+            modules.extend(dependency.get_modules().to_owned());
         }
+        modules
     }
 
     fn to_literal(&self, indent: usize) -> String {
@@ -114,11 +57,80 @@ impl App {
             Ok(file) => file,
             Err(err) => return Err(io_error(err)),
         };
-        let app = match serde_yaml::from_reader::<std::fs::File, Self>(file) {
+        let mut app = match serde_yaml::from_reader::<std::fs::File, Self>(file) {
             Ok(app) => app,
             Err(err) => return Err(yaml_error(err)),
         };
+        Self::init_app(&mut app);
         Ok(app)
+    }
+
+    fn init_app(app: &mut App) {
+        // init app dependencies
+        for default_dependency in Self::default_dependencies() {
+            if !app.has_dependency(&default_dependency) {
+                app.add_dependency(default_dependency)
+            }
+        }
+    }
+
+    pub fn has_dependency(&self, other: &Dependency) -> bool {
+        let dependencies = match self.dependencies {
+            Some(ref dependencies) => dependencies,
+            None => return false,
+        };
+        for dependency in dependencies {
+            if dependency.eq(other) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    pub fn add_dependency(&mut self, dependency: Dependency) {
+        match self.dependencies {
+            Some(ref mut dependencies) => dependencies.push(dependency),
+            None => self.dependencies = Some(vec![dependency]),
+        }
+    }
+
+    pub fn default_dependencies() -> Vec<Dependency> {
+        vec![
+            Dependency::new(
+                "pipebase".to_owned(),
+                Some("0.1.0".to_owned()),
+                None,
+                None,
+                vec!["pipebase::*".to_owned()],
+            ),
+            Dependency::new(
+                "tokio".to_owned(),
+                Some("0.1.0".to_owned()),
+                None,
+                None,
+                vec![],
+            ),
+        ]
+    }
+
+    pub fn get_use_modules_lit(&self, indent: usize) -> String {
+        let indent_lit = indent_literal(indent);
+        let mut use_module_lits: Vec<String> = Vec::new();
+        for module_lit in self.list_dependency() {
+            use_module_lits.push(format!("{}use {}", indent_lit, module_lit));
+        }
+        use_module_lits.push("".to_owned());
+        use_module_lits.join(";\n")
+    }
+
+    pub fn default_modules() -> Vec<String> {
+        // default rust module to use
+        vec![
+            "std::collections::HashMap".to_owned(),
+            "std::future::Future".to_owned(),
+            "std::ops::Deref".to_owned(),
+            "std::pin::Pin".to_owned(),
+        ]
     }
 
     pub fn get_metas(&self) -> Vec<Meta> {

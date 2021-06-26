@@ -1,4 +1,5 @@
 use crate::api::{App, Entity, EntityAccept, Object, Pipe, VisitEntity};
+
 pub trait Generate<T> {
     fn new(indent: usize) -> Self;
     fn generate(&self) -> Option<String>;
@@ -139,6 +140,15 @@ impl AppGenerator {
         }
     }
 
+    // module paths
+    pub fn generate_use_modules(&self, indent: usize) -> Option<String> {
+        let app = match self.app {
+            Some(ref app) => app,
+            None => return None,
+        };
+        Some(app.get_use_modules_lit(indent))
+    }
+
     pub fn generate_all(&self) -> Option<String> {
         let module_name = match self.app {
             Some(ref app) => app.get_id(),
@@ -146,6 +156,10 @@ impl AppGenerator {
         };
         let mut sections: Vec<String> = vec![];
         let indent: usize = self.indent + 1;
+        match self.generate_use_modules(indent) {
+            Some(use_module_lits) => sections.push(use_module_lits),
+            None => (),
+        };
         match self.generate_objects(indent) {
             Some(objects_lit) => sections.push(objects_lit),
             None => (),
