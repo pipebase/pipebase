@@ -11,7 +11,7 @@ mod utils;
 
 use syn::{parse_macro_input, DeriveInput};
 
-#[proc_macro_derive(Project, attributes(project, input))]
+#[proc_macro_derive(Project, attributes(project))]
 pub fn derive_project(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ref tokens = parse_macro_input!(_tokens as DeriveInput);
     let ref ident = tokens.ident;

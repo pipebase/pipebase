@@ -15,9 +15,14 @@ pipes:
 objects:
   - ty: Record
     metas:
-      - Derive: ["Clone", "Project"]
-      - Project:
-          input: Record
+      - name: derive
+        metas:
+          - name: Project
+          - name: Clone
+      - name: project
+        metas:
+          - name: input
+            meta: Record
     fields:
       - name: key
         data_ty: String

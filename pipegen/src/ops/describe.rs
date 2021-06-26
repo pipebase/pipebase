@@ -1,20 +1,18 @@
 use crate::{
-    api::{Entity, Pipe, VisitEntity},
-    operation::utils::PipeGraph,
+    api::{App, Entity, EntityAccept, Pipe, VisitEntity},
+    ops::utils::PipeGraph,
 };
 
-use std::fmt::{self, Display};
+use std::fmt;
 
 pub trait Describe {
     fn new() -> Self;
-    fn parse(&mut self);
     fn describe(&self) -> Vec<String>;
 }
 
 pub struct PipeGraphDescriber {
     graph: PipeGraph<Pipe>,
     pipe_ids: Vec<String>,
-    results: Vec<Box<dyn Display>>,
 }
 
 impl VisitEntity<Pipe> for PipeGraphDescriber {
@@ -29,25 +27,15 @@ impl Describe for PipeGraphDescriber {
         PipeGraphDescriber {
             graph: PipeGraph::new(),
             pipe_ids: Vec::new(),
-            results: Vec::new(),
         }
     }
 
     fn describe(&self) -> Vec<String> {
         let mut results: Vec<String> = Vec::new();
-        for result in &self.results {
-            results.push(format!("{}", result))
-        }
+        results.push(self.describe_source_pipe_ids());
+        results.push(self.describe_sink_pipe_ids());
+        results.extend(self.describe_pipe_components());
         results
-    }
-
-    fn parse(&mut self) {
-        self.results.clear();
-        self.results.push(Box::new(self.display_source_pipe_ids()));
-        self.results.push(Box::new(self.display_sink_pipe_ids()));
-        for component in self.display_pipe_components() {
-            self.results.push(Box::new(component))
-        }
     }
 }
 
@@ -56,6 +44,22 @@ impl PipeGraphDescriber {
         let mut results: Vec<String> = Vec::new();
         for pipeline in &self.display_pipelines(pid) {
             results.push(format!("{}", pipeline))
+        }
+        results
+    }
+
+    pub fn describe_source_pipe_ids(&self) -> String {
+        format!("{}", self.display_source_pipe_ids())
+    }
+
+    pub fn describe_sink_pipe_ids(&self) -> String {
+        format!("{}", self.display_sink_pipe_ids())
+    }
+
+    pub fn describe_pipe_components(&self) -> Vec<String> {
+        let mut results: Vec<String> = Vec::new();
+        for component in self.display_pipe_components() {
+            results.push(format!("{}", component))
         }
         results
     }
@@ -141,6 +145,59 @@ impl fmt::Display for PipeIdsDisplay {
     }
 }
 
+pub struct AppDescriber {
+    app: Option<App>,
+}
+
+impl VisitEntity<App> for AppDescriber {
+    fn visit(&mut self, app: &App) {
+        self.app = Some(app.to_owned())
+    }
+}
+
+impl Describe for AppDescriber {
+    fn new() -> Self {
+        AppDescriber { app: None }
+    }
+
+    fn describe(&self) -> Vec<String> {
+        let mut results: Vec<String> = Vec::new();
+        // describe app basic info
+        results.extend(self.describe_pipes());
+        results
+    }
+}
+
+impl AppDescriber {
+    pub fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(
+        entities: &Vec<T>,
+    ) -> A {
+        let mut describer = A::new();
+        for entity in entities {
+            entity.accept(&mut describer);
+        }
+        describer
+    }
+
+    pub fn describe_pipes(&self) -> Vec<String> {
+        let pipes = match self.app {
+            Some(ref app) => app.get_pipes(),
+            None => return Vec::new(),
+        };
+        let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
+        describer.describe()
+    }
+
+    pub fn describe_pipelines(&self, pid: &str) -> Vec<String> {
+        let pipes = match self.app {
+            Some(ref app) => app.get_pipes(),
+            None => return Vec::new(),
+        };
+        let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
+        describer.describe_pipelines(pid)
+    }
+}
+
 const SOURCE_PIPE_LABEL: &str = "source";
 const SINK_PIPE_LABEL: &str = "sink";
 const PIPE_COMPONENT_LABEL: &str = "union";
@@ -159,7 +216,9 @@ mod tests {
         let manifest_path: &Path = Path::new("resources/manifest/print_timer_tick_pipe.yml");
         let app = App::parse(manifest_path).unwrap();
         app.validate().expect("expect valid");
-        app.describe();
+        for result in app.describe() {
+            println!("{}", result)
+        }
     }
 
     #[test]
@@ -167,9 +226,9 @@ mod tests {
         let manifest_path: &Path = Path::new("resources/manifest/print_timer_tick_pipe.yml");
         let app = App::parse(manifest_path).unwrap();
         app.validate().expect("expect valid");
-        let describer = app.get_pipe_describer();
-        assert_eq!(2, describer.get_pipelines("printer").len());
-        for pipeline in app.describe_pipelines("printer") {
+        let pipelines = app.describe_pipelines("printer");
+        assert_eq!(2, pipelines.len());
+        for pipeline in pipelines {
             println!("{}", pipeline)
         }
     }
