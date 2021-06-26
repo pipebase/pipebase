@@ -101,7 +101,7 @@ impl Entity for App {
         // app object fields
         let cstore = self.get_context_store().as_data_field();
         // create app object
-        let app = Object::new(self.get_id(), metas, vec![cstore]);
+        let app = Object::new("App".to_owned(), metas, vec![cstore]);
         app.to_literal(indent)
     }
 }
