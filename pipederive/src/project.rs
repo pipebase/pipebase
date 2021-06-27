@@ -17,7 +17,8 @@ pub fn impl_project(
     generics: &Generics,
 ) -> TokenStream {
     let ref project_attribute = get_any_project_attribute(attributes);
-    let input_type_token = get_type_name_token(project_attribute, PROJECT_INPUT);
+    let input_type_token =
+        get_type_name_token(&project_attribute.parse_meta().unwrap(), PROJECT_INPUT);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     let resolved_data = resolve_data(data, &input_type_token);
     let expanded = quote! {
@@ -109,7 +110,8 @@ fn handle_project_expr(
 }
 
 fn get_project_alias(attribute: &Attribute) -> String {
-    match get_meta_string_value_by_meta_path(PROJECT_ALIAS, attribute, false) {
+    match get_meta_string_value_by_meta_path(PROJECT_ALIAS, &attribute.parse_meta().unwrap(), false)
+    {
         Some(alias) => alias,
         None => PROJECT_ALIAS_DEFAULT.to_owned(),
     }
@@ -120,9 +122,9 @@ fn get_any_project_attribute(attributes: &Vec<Attribute>) -> Attribute {
 }
 
 fn get_project_from(attribute: &Attribute) -> Option<String> {
-    get_meta_string_value_by_meta_path(PROJECT_FROM, attribute, false)
+    get_meta_string_value_by_meta_path(PROJECT_FROM, &attribute.parse_meta().unwrap(), false)
 }
 
 fn get_project_expr(attribute: &Attribute) -> Option<String> {
-    get_meta_string_value_by_meta_path(PROJECT_EXPR, attribute, false)
+    get_meta_string_value_by_meta_path(PROJECT_EXPR, &attribute.parse_meta().unwrap(), false)
 }

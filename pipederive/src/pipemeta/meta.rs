@@ -109,15 +109,29 @@ impl PipeMeta {
     }
 
     fn parse_name(attribute: &Attribute) -> String {
-        get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_NAME, attribute, true).unwrap()
+        get_meta_string_value_by_meta_path(
+            BOOTSTRAP_PIPE_NAME,
+            &attribute.parse_meta().unwrap(),
+            true,
+        )
+        .unwrap()
     }
 
     fn parse_ty(attribute: &Attribute) -> String {
-        get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_TYPE, attribute, true).unwrap()
+        get_meta_string_value_by_meta_path(
+            BOOTSTRAP_PIPE_TYPE,
+            &attribute.parse_meta().unwrap(),
+            true,
+        )
+        .unwrap()
     }
 
     fn parse_upstream_names(attribute: &Attribute) -> Vec<String> {
-        match get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_UPSTREAM, attribute, false) {
+        match get_meta_string_value_by_meta_path(
+            BOOTSTRAP_PIPE_UPSTREAM,
+            &attribute.parse_meta().unwrap(),
+            false,
+        ) {
             Some(upstream_names) => {
                 // split into vector of upstreams
                 upstream_names
@@ -135,14 +149,26 @@ impl PipeMeta {
     }
 
     fn parse_config_meta(attribute: &Attribute) -> PipeConfigMeta {
-        let ty = get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_CONFIG_TYPE, attribute, true)
-            .unwrap();
-        let path = get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_CONFIG_PATH, attribute, false);
+        let ty = get_meta_string_value_by_meta_path(
+            BOOTSTRAP_PIPE_CONFIG_TYPE,
+            &attribute.parse_meta().unwrap(),
+            true,
+        )
+        .unwrap();
+        let path = get_meta_string_value_by_meta_path(
+            BOOTSTRAP_PIPE_CONFIG_PATH,
+            &attribute.parse_meta().unwrap(),
+            false,
+        );
         PipeConfigMeta { ty: ty, path: path }
     }
 
     fn parse_output_meta(attribute: &Attribute) -> Option<String> {
-        match get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_OUTPUT, attribute, false) {
+        match get_meta_string_value_by_meta_path(
+            BOOTSTRAP_PIPE_OUTPUT,
+            &attribute.parse_meta().unwrap(),
+            false,
+        ) {
             Some(ty) => Some(ty),
             None => None,
         }

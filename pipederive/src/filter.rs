@@ -37,12 +37,14 @@ fn get_filter_attribute(attributes: &Vec<Attribute>) -> Attribute {
 }
 
 fn get_filter_alias(attribute: &Attribute) -> String {
-    match get_meta_string_value_by_meta_path(FILTER_ALIAS, attribute, false) {
+    match get_meta_string_value_by_meta_path(FILTER_ALIAS, &attribute.parse_meta().unwrap(), false)
+    {
         Some(alias) => alias,
         None => FILTER_ALIAS_DEFAULT.to_owned(),
     }
 }
 
 fn get_filter_predicate(attribute: &Attribute) -> String {
-    get_meta_string_value_by_meta_path(FILTER_PREDICATE, attribute, true).unwrap()
+    get_meta_string_value_by_meta_path(FILTER_PREDICATE, &attribute.parse_meta().unwrap(), true)
+        .unwrap()
 }

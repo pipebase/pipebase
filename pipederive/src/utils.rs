@@ -139,13 +139,11 @@ pub fn get_all_attributes_by_meta_prefix(
 
 pub fn get_meta_string_value_by_meta_path(
     full_path: &str,
-    attribute: &Attribute,
+    meta: &Meta,
     is_required: bool,
 ) -> Option<String> {
     let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
-    if let Some(ref lit) =
-        find_meta_value_by_meta_path(full_path_vec, &attribute.parse_meta().unwrap())
-    {
+    if let Some(ref lit) = find_meta_value_by_meta_path(full_path_vec, meta) {
         if let Some(value) = parse_lit_as_string(lit) {
             return Some(value);
         }
@@ -181,9 +179,8 @@ pub fn get_meta_number_value_by_meta_path(
     None
 }
 
-pub fn get_type_name_token(attribute: &Attribute, type_name_meta_path: &str) -> TokenStream {
-    let type_literal =
-        get_meta_string_value_by_meta_path(type_name_meta_path, attribute, true).unwrap();
+pub fn get_type_name_token(meta: &Meta, type_name_meta_path: &str) -> TokenStream {
+    let type_literal = get_meta_string_value_by_meta_path(type_name_meta_path, meta, true).unwrap();
     resolve_type_name_token(&type_literal)
 }
 

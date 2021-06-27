@@ -47,11 +47,14 @@ fn get_context_store_insert_method_token(attribute: Option<&Attribute>) -> Token
         Some(attribute) => attribute,
         None => return CONTEXT_STORE_METHOD_INSERT_DEFAULT.parse().unwrap(),
     };
-    let insert_method =
-        match get_meta_string_value_by_meta_path(CONTEXT_STORE_METHOD_INSERT, attribute, false) {
-            Some(insert_method) => insert_method,
-            None => CONTEXT_STORE_METHOD_INSERT_DEFAULT.to_owned(),
-        };
+    let insert_method = match get_meta_string_value_by_meta_path(
+        CONTEXT_STORE_METHOD_INSERT,
+        &attribute.parse_meta().unwrap(),
+        false,
+    ) {
+        Some(insert_method) => insert_method,
+        None => CONTEXT_STORE_METHOD_INSERT_DEFAULT.to_owned(),
+    };
     insert_method.parse().unwrap()
 }
 
@@ -60,10 +63,13 @@ fn get_context_store_get_method_token(attribute: Option<&Attribute>) -> TokenStr
         Some(attribute) => attribute,
         None => return CONTEXT_STORE_METHOD_GET_DEFAULT.parse().unwrap(),
     };
-    let get_method =
-        match get_meta_string_value_by_meta_path(CONTEXT_STORE_METHOD_GET, attribute, false) {
-            Some(get_method) => get_method,
-            None => CONTEXT_STORE_METHOD_GET_DEFAULT.to_owned(),
-        };
+    let get_method = match get_meta_string_value_by_meta_path(
+        CONTEXT_STORE_METHOD_GET,
+        &attribute.parse_meta().unwrap(),
+        false,
+    ) {
+        Some(get_method) => get_method,
+        None => CONTEXT_STORE_METHOD_GET_DEFAULT.to_owned(),
+    };
     get_method.parse().unwrap()
 }
