@@ -37,13 +37,13 @@ fn expand_meta_lit(meta: &Meta, indent: usize) -> String {
     )
 }
 
-pub fn meta_to_literal(meta: &Meta, indent: usize) -> String {
+pub(crate) fn meta_to_literal(meta: &Meta, indent: usize) -> String {
     let indent_lit = indent_literal(indent);
     let meta_lit = expand_meta_lit(meta, indent + 1);
     format!("{}#[\n{}\n{}]", indent_lit, meta_lit, indent_lit)
 }
 
-pub fn metas_to_literal(metas: &Vec<Meta>, indent: usize) -> String {
+pub(crate) fn metas_to_literal(metas: &Vec<Meta>, indent: usize) -> String {
     let mut metas_literal: Vec<String> = vec![];
     for meta in metas {
         metas_literal.push(meta_to_literal(meta, indent))

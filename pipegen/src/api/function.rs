@@ -103,7 +103,7 @@ impl Function {
         }
     }
 
-    pub fn to_literal(&self, indent: usize) -> String {
+    pub(crate) fn to_literal(&self, indent: usize) -> String {
         let signature_lit = self.get_signature_literal(indent);
         let block_lit = self.block.to_literal(indent + 1);
         let indent_lit = indent_literal(indent);
@@ -114,7 +114,7 @@ impl Function {
         }
     }
 
-    pub fn get_signature_literal(&self, indent: usize) -> String {
+    fn get_signature_literal(&self, indent: usize) -> String {
         let mut lits: Vec<String> = Vec::new();
         if self.is_public {
             lits.push("pub".to_owned())
@@ -133,7 +133,7 @@ impl Function {
         format!("{}{}", indent_lit, lits.join(" "))
     }
 
-    pub fn get_input_literal(&self) -> String {
+    fn get_input_literal(&self) -> String {
         let mut lits: Vec<String> = Vec::new();
         for arg in &self.args {
             lits.push(arg.to_literal(0));
@@ -141,7 +141,7 @@ impl Function {
         lits.join(", ")
     }
 
-    pub fn get_rtype_literal(&self) -> Option<String> {
+    fn get_rtype_literal(&self) -> Option<String> {
         let rtype = match self.rtype {
             Some(ref rtype) => rtype,
             None => return None,
@@ -149,7 +149,7 @@ impl Function {
         Some(format!("-> {}", data_ty_to_literal(rtype)))
     }
 
-    pub fn get_metas_literal(&self, indent: usize) -> Option<String> {
+    fn get_metas_literal(&self, indent: usize) -> Option<String> {
         let meta = match self.meta {
             Some(ref meta) => meta,
             None => return None,

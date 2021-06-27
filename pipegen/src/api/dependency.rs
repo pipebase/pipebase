@@ -19,7 +19,7 @@ impl PartialEq for Dependency {
 impl Eq for Dependency {}
 
 impl Dependency {
-    pub fn new(
+    pub(crate) fn new(
         package: String,
         version: Option<String>,
         path: Option<String>,
@@ -35,19 +35,19 @@ impl Dependency {
         }
     }
 
-    pub fn get_package(&self) -> &String {
+    pub(crate) fn get_package(&self) -> &String {
         &self.package
     }
 
-    pub fn get_version(&self) -> Option<&String> {
+    pub(crate) fn get_version(&self) -> Option<&String> {
         self.version.as_ref()
     }
 
-    pub fn get_path(&self) -> Option<&String> {
+    pub(crate) fn get_path(&self) -> Option<&String> {
         self.path.as_ref()
     }
 
-    pub fn get_modules(&self) -> &Vec<String> {
+    pub(crate) fn get_modules(&self) -> &Vec<String> {
         &self.modules
     }
 }

@@ -1,4 +1,5 @@
 use super::context::ContextStore;
+use super::constants::{APP_OBJECT_NAME, DEFAULT_APP_OBJECT, BOOTSTRAP_FUNCTION_META, BOOTSTRAP_FUNCTION_NAME, BOOTSTRAP_MODULE_META_PATH, DEFAULT_CONTEXT_STORE_NAME, PIPEBASE_MAIN};
 use super::dependency::Dependency;
 use super::meta::{Meta, MetaValue};
 use super::pipe::Pipe;
@@ -28,10 +29,7 @@ impl Entity for App {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        let dependencies = match self.dependencies {
-            Some(ref dependencies) => dependencies,
-            None => return Vec::new(),
-        };
+        let dependencies = self.get_dependency();
         let mut modules: Vec<String> = Vec::new();
         for dependency in dependencies {
             modules.extend(dependency.get_modules().to_owned());
@@ -45,7 +43,7 @@ impl Entity for App {
         // app object fields
         let cstore = self.get_context_store().as_data_field();
         // create app object
-        let app = Object::new("App".to_owned(), metas.to_owned(), vec![cstore]);
+        let app = Object::new(APP_OBJECT_NAME.to_owned(), metas.to_owned(), vec![cstore]);
         app.to_literal(indent)
     }
 }
@@ -81,7 +79,7 @@ impl App {
         // init context store
         match self.cstore {
             Some(_) => (),
-            None => self.cstore = Some(ContextStore::new("pipe_contexts".to_owned())),
+            None => self.cstore = Some(ContextStore::new(DEFAULT_CONTEXT_STORE_NAME.to_owned())),
         };
         // init metas
         match self.metas {
@@ -110,7 +108,7 @@ impl App {
         }
     }
 
-    pub fn has_dependency(&self, other: &Dependency) -> bool {
+    fn has_dependency(&self, other: &Dependency) -> bool {
         let dependencies = self.dependencies.as_ref().unwrap();
         for dependency in dependencies {
             if dependency.eq(other) {
@@ -120,12 +118,16 @@ impl App {
         return false;
     }
 
-    pub fn add_dependency(&mut self, dependency: Dependency) {
+    fn add_dependency(&mut self, dependency: Dependency) {
         let dependencies = self.dependencies.as_mut().unwrap();
         dependencies.push(dependency);
     }
 
-    pub fn default_dependencies() -> Vec<Dependency> {
+    fn get_dependency(&self) -> &Vec<Dependency> {
+        self.dependencies.as_ref().unwrap()
+    }
+
+    fn default_dependencies() -> Vec<Dependency> {
         vec![
             Dependency::new(
                 "pipebase".to_owned(),
@@ -151,7 +153,7 @@ impl App {
         ]
     }
 
-    pub fn get_use_modules_literal(&self, indent: usize) -> String {
+    pub(crate) fn get_use_modules_literal(&self, indent: usize) -> String {
         let indent_lit = indent_literal(indent);
         let mut use_module_lits: Vec<String> = Vec::new();
         for module_lit in self.list_dependency() {
@@ -161,17 +163,17 @@ impl App {
         use_module_lits.join(";\n")
     }
 
-    pub fn get_bootstrap_function_literal(&self, indent: usize) -> String {
+    pub(crate) fn get_bootstrap_function_literal(&self, indent: usize) -> String {
         let meta = Meta::Path {
-            name: "bootstrap".to_owned(),
+            name: BOOTSTRAP_FUNCTION_META.to_owned(),
         };
-        let rtype = DataType::Object("App".to_owned());
+        let rtype = DataType::Object(APP_OBJECT_NAME.to_owned());
         let block = Block::new(vec![Statement::new(
             None,
-            Rhs::Expr("App::default()".to_owned()),
+            Rhs::Expr(DEFAULT_APP_OBJECT.to_owned()),
         )]);
         let function = Function::new(
-            "bootstrap".to_owned(),
+            BOOTSTRAP_FUNCTION_NAME.to_owned(),
             Some(meta),
             true,
             true,
@@ -182,11 +184,11 @@ impl App {
         function.to_literal(indent)
     }
 
-    pub fn get_main_function_literal(&self, indent: usize) -> String {
+    pub(crate) fn get_main_function_literal(&self, indent: usize) -> String {
         let meta = Meta::List {
-            name: "pipebase::main".to_owned(),
+            name: PIPEBASE_MAIN.to_owned(),
             metas: vec![Meta::Value {
-                name: "bootstrap".to_owned(),
+                name: BOOTSTRAP_MODULE_META_PATH.to_owned(),
                 meta: MetaValue::Str(self.get_app_module_name()),
             }],
         };
@@ -202,23 +204,23 @@ impl App {
         function.to_literal(indent)
     }
 
-    pub fn get_metas(&self) -> &Vec<Meta> {
+    fn get_metas(&self) -> &Vec<Meta> {
         self.metas.as_ref().unwrap()
     }
 
-    pub fn get_context_store(&self) -> &ContextStore {
+    fn get_context_store(&self) -> &ContextStore {
         self.cstore.as_ref().unwrap()
     }
 
-    pub fn get_objects(&self) -> &Vec<Object> {
+    pub(crate) fn get_objects(&self) -> &Vec<Object> {
         self.objects.as_ref().unwrap()
     }
 
-    pub fn get_pipes(&self) -> &Vec<Pipe> {
+    pub(crate) fn get_pipes(&self) -> &Vec<Pipe> {
         &self.pipes.as_ref()
     }
 
-    pub fn get_app_module_name(&self) -> String {
+    pub(crate) fn get_app_module_name(&self) -> String {
         self.get_id()
     }
 

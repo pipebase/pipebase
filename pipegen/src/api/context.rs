@@ -12,7 +12,7 @@ pub struct ContextStore {
 }
 
 impl ContextStore {
-    pub fn new(name: String) -> Self {
+    pub(crate) fn new(name: String) -> Self {
         let mut methods = HashMap::new();
         methods.insert("get".to_owned(), "get".to_owned());
         methods.insert("insert".to_owned(), "insert".to_owned());
@@ -29,11 +29,11 @@ impl ContextStore {
         }
     }
 
-    pub fn get_name(&self) -> &String {
+    pub(crate) fn get_name(&self) -> &String {
         &self.name
     }
 
-    pub fn get_methods(&self) -> &HashMap<String, String> {
+    pub(crate) fn get_methods(&self) -> &HashMap<String, String> {
         &self.methods
     }
 
@@ -58,7 +58,7 @@ impl ContextStore {
         }
     }
 
-    pub fn as_data_field(&self) -> DataField {
+    pub(crate) fn as_data_field(&self) -> DataField {
         DataField::new_named_field(
             self.data_ty.to_owned(),
             self.name.to_owned(),

@@ -40,7 +40,7 @@ impl Describe for PipeGraphDescriber {
 }
 
 impl PipeGraphDescriber {
-    pub fn describe_pipelines(&self, pid: &str) -> Vec<String> {
+    pub(crate) fn describe_pipelines(&self, pid: &str) -> Vec<String> {
         let mut results: Vec<String> = Vec::new();
         for pipeline in &self.display_pipelines(pid) {
             results.push(format!("{}", pipeline))
@@ -48,15 +48,15 @@ impl PipeGraphDescriber {
         results
     }
 
-    pub fn describe_source_pipe_ids(&self) -> String {
+    pub(crate) fn describe_source_pipe_ids(&self) -> String {
         format!("{}", self.display_source_pipe_ids())
     }
 
-    pub fn describe_sink_pipe_ids(&self) -> String {
+    pub(crate) fn describe_sink_pipe_ids(&self) -> String {
         format!("{}", self.display_sink_pipe_ids())
     }
 
-    pub fn describe_pipe_components(&self) -> Vec<String> {
+    pub(crate) fn describe_pipe_components(&self) -> Vec<String> {
         let mut results: Vec<String> = Vec::new();
         for component in self.display_pipe_components() {
             results.push(format!("{}", component))
@@ -64,7 +64,7 @@ impl PipeGraphDescriber {
         results
     }
 
-    pub fn display_source_pipe_ids(&self) -> PipeIdsDisplay {
+    pub(crate) fn display_source_pipe_ids(&self) -> PipeIdsDisplay {
         PipeIdsDisplay {
             ids: self.get_source_pipe_ids(),
             sep: PIPE_LIST_SEP.to_owned(),
@@ -72,7 +72,7 @@ impl PipeGraphDescriber {
         }
     }
 
-    pub fn display_sink_pipe_ids(&self) -> PipeIdsDisplay {
+    pub(crate) fn display_sink_pipe_ids(&self) -> PipeIdsDisplay {
         PipeIdsDisplay {
             ids: self.get_sink_pipe_ids(),
             sep: PIPE_LIST_SEP.to_owned(),
@@ -80,7 +80,7 @@ impl PipeGraphDescriber {
         }
     }
 
-    pub fn display_pipe_components(&self) -> Vec<PipeIdsDisplay> {
+    pub(crate) fn display_pipe_components(&self) -> Vec<PipeIdsDisplay> {
         let mut components_display: Vec<PipeIdsDisplay> = Vec::new();
         for component in self.get_pipe_components() {
             let component_display = PipeIdsDisplay {
@@ -93,7 +93,7 @@ impl PipeGraphDescriber {
         components_display
     }
 
-    pub fn display_pipelines(&self, pid: &str) -> Vec<PipeIdsDisplay> {
+    pub(crate) fn display_pipelines(&self, pid: &str) -> Vec<PipeIdsDisplay> {
         let mut pipelines_display: Vec<PipeIdsDisplay> = Vec::new();
         for pipeline in self.get_pipelines(pid) {
             let pipeline_display = PipeIdsDisplay {
@@ -106,20 +106,20 @@ impl PipeGraphDescriber {
         pipelines_display
     }
 
-    pub fn get_source_pipe_ids(&self) -> Vec<String> {
+    pub(crate) fn get_source_pipe_ids(&self) -> Vec<String> {
         self.graph.find_source_pipes()
     }
 
-    pub fn get_sink_pipe_ids(&self) -> Vec<String> {
+    pub(crate) fn get_sink_pipe_ids(&self) -> Vec<String> {
         self.graph.find_sink_pipes()
     }
 
-    pub fn get_pipelines(&self, pid: &str) -> Vec<Vec<String>> {
+    pub(crate) fn get_pipelines(&self, pid: &str) -> Vec<Vec<String>> {
         assert!(self.graph.has_pipe(pid));
         self.graph.search_pipelines(pid)
     }
 
-    pub fn get_pipe_components(&self) -> Vec<Vec<String>> {
+    pub(crate) fn get_pipe_components(&self) -> Vec<Vec<String>> {
         let mut components: Vec<Vec<String>> = Vec::new();
         for component in self.graph.find_components().values() {
             components.push(component.to_owned())
