@@ -31,12 +31,12 @@ where
     S: Select<T, C>,
     C: ConfigInto<S> + Send + Sync,
 {
-    pub name: &'a str,
-    pub rx: Receiver<T>,
-    pub txs: HashMap<usize, Arc<Sender<T>>>,
-    pub config: C,
-    pub selector: PhantomData<S>,
-    pub context: Arc<RwLock<Context>>,
+    name: &'a str,
+    config: C,
+    rx: Receiver<T>,
+    txs: HashMap<usize, Arc<Sender<T>>>,
+    selector: PhantomData<S>,
+    context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
@@ -103,6 +103,24 @@ where
     }
 }
 
+impl<'a, T, S, C> Selector<'a, T, S, C>
+where
+    T: Clone + Send + 'static,
+    S: Select<T, C>,
+    C: ConfigInto<S> + Send + Sync,
+{
+    fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+        Selector {
+            name: name,
+            config: config,
+            rx: rx,
+            txs: HashMap::new(),
+            selector: std::marker::PhantomData,
+            context: Default::default(),
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! selector {
     (
@@ -110,14 +128,7 @@ macro_rules! selector {
     ) => {
         {
             let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Selector {
-                name: $name,
-                rx: $rx,
-                txs: std::collections::HashMap::new(),
-                config: config,
-                selector: std::marker::PhantomData,
-                context: Default::default()
-            };
+            let mut pipe = Selector::new($name, config, $rx);
             $(
                 pipe.add_sender($tx);
             )*
