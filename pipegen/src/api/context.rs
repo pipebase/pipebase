@@ -65,6 +65,7 @@ impl ContextStore {
             vec![self.get_meta()],
             false,
             false,
+            true,
         )
     }
 }

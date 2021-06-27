@@ -45,7 +45,7 @@ pub enum DataType {
     },
 }
 
-fn data_ty_to_literal(ty: &DataType) -> String {
+pub fn data_ty_to_literal(ty: &DataType) -> String {
     match ty {
         DataType::Boolean => "bool".to_owned(),
         DataType::Character => "char".to_owned(),
@@ -106,6 +106,7 @@ pub struct DataField {
     metas: Option<Vec<Meta>>,
     is_boxed: Option<bool>,
     is_optional: Option<bool>,
+    is_public: Option<bool>,
 }
 
 impl DataField {
@@ -115,6 +116,7 @@ impl DataField {
         metas: Vec<Meta>,
         is_boxed: bool,
         is_optional: bool,
+        is_public: bool,
     ) -> Self {
         DataField {
             name: Some(name),
@@ -122,6 +124,7 @@ impl DataField {
             metas: Some(metas),
             is_boxed: Some(is_boxed),
             is_optional: Some(is_optional),
+            is_public: Some(is_public),
         }
     }
 
@@ -152,6 +155,17 @@ impl DataField {
         };
         Some(metas_to_literal(&metas, indent))
     }
+
+    pub fn get_pub_literal(&self) -> String {
+        let is_public = match self.is_public {
+            Some(is_public) => is_public,
+            None => return "pub ".to_owned(),
+        };
+        match is_public {
+            true => "pub ".to_owned(),
+            false => "".to_owned(),
+        }
+    }
 }
 
 impl Entity for DataField {
@@ -178,9 +192,11 @@ impl Entity for DataField {
         };
         let indent_lit = indent_literal(indent);
         let metas_lit = self.get_metas_literal(indent);
+        let pub_lit = self.get_pub_literal();
         let literal = format!(
-            "{}pub {}: {}",
+            "{}{}{}: {}",
             indent_lit,
+            pub_lit,
             name,
             self.get_data_type_literal(0)
         );
