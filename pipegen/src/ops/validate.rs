@@ -299,6 +299,10 @@ impl Validate<App> for AppValidator {
 }
 
 impl AppValidator {
+    fn get_app(&self) -> &App {
+        self.app.as_ref().unwrap()
+    }
+
     fn validate_entities<T: EntityAccept<V>, V: Validate<T> + VisitEntity<T>>(
         items: &Vec<T>,
         location: &str,
@@ -311,19 +315,13 @@ impl AppValidator {
     }
 
     pub fn validate_pipes(&self) -> Result<()> {
-        let app = match self.app {
-            Some(ref app) => app,
-            None => return Ok(()),
-        };
-        Self::validate_entities::<Pipe, PipeIdValidator>(app.get_pipes(), "pipes")?;
-        Self::validate_entities::<Pipe, PipeGraphValidator>(app.get_pipes(), "pipes")
+        let pipes = self.get_app().get_pipes();
+        Self::validate_entities::<Pipe, PipeIdValidator>(pipes, "pipes")?;
+        Self::validate_entities::<Pipe, PipeGraphValidator>(pipes, "pipes")
     }
 
     pub fn validate_objects(&self) -> Result<()> {
-        let objects = match self.app {
-            Some(ref app) => app.get_objects(),
-            None => return Ok(()),
-        };
+        let objects = self.get_app().get_objects();
         Self::validate_entities::<Object, ObjectIdValidator>(objects, "objects")?;
         for i in 0..objects.len() {
             let object = objects.get(i).unwrap();
