@@ -1,6 +1,6 @@
 use super::{
     data_ty_to_literal,
-    meta::{metas_to_literal, Meta},
+    meta::{meta_to_literal, Meta},
     utils::indent_literal,
     DataField, DataType, Entity,
 };
@@ -73,7 +73,7 @@ impl Block {
 pub struct Function {
     // TODO: Support generics
     name: String,
-    metas: Option<Vec<Meta>>,
+    meta: Option<Meta>,
     is_public: bool,
     is_async: bool,
     args: Vec<DataField>,
@@ -85,7 +85,7 @@ pub struct Function {
 impl Function {
     pub fn new(
         name: String,
-        metas: Option<Vec<Meta>>,
+        meta: Option<Meta>,
         is_public: bool,
         is_async: bool,
         args: Vec<DataField>,
@@ -94,7 +94,7 @@ impl Function {
     ) -> Self {
         Function {
             name: name,
-            metas,
+            meta: meta,
             is_public: is_public,
             is_async: is_async,
             args: args,
@@ -116,12 +116,13 @@ impl Function {
 
     pub fn get_signature_literal(&self, indent: usize) -> String {
         let mut lits: Vec<String> = Vec::new();
-        if self.is_async {
-            lits.push("".to_owned())
-        }
         if self.is_public {
             lits.push("pub".to_owned())
         }
+        if self.is_async {
+            lits.push("async".to_owned())
+        }
+        lits.push("fn".to_owned());
         let input_lit = self.get_input_literal();
         lits.push(format!("{}({})", self.name, input_lit));
         match self.get_rtype_literal() {
@@ -149,10 +150,10 @@ impl Function {
     }
 
     pub fn get_metas_literal(&self, indent: usize) -> Option<String> {
-        let metas = match self.metas {
-            Some(ref metas) => metas,
+        let meta = match self.meta {
+            Some(ref meta) => meta,
             None => return None,
         };
-        Some(metas_to_literal(metas, indent))
+        Some(meta_to_literal(meta, indent))
     }
 }

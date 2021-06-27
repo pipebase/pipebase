@@ -140,23 +140,16 @@ impl AppGenerator {
         }
     }
 
-    pub fn generate_new_app_function(&self, indent: usize) -> Option<String> {
-        match self.app {
-            Some(ref app) => Some(app.get_new_app_function_lit(indent)),
-            None => None,
-        }
-    }
-
     pub fn generate_bootstrap_app_function(&self, indent: usize) -> Option<String> {
         match self.app {
-            Some(ref app) => Some(app.get_bootstrap_app_function_lit(indent)),
+            Some(ref app) => Some(app.get_bootstrap_function_literal(indent)),
             None => None,
         }
     }
 
     pub fn generate_main_function(&self, indent: usize) -> Option<String> {
         match self.app {
-            Some(ref app) => Some(app.get_main_function_lit(indent)),
+            Some(ref app) => Some(app.get_main_function_literal(indent)),
             None => None,
         }
     }
@@ -191,10 +184,6 @@ impl AppGenerator {
         };
         match self.generate_app_object(indent) {
             Some(app_object_lit) => sections.push(app_object_lit),
-            None => (),
-        };
-        match self.generate_new_app_function(indent) {
-            Some(new_app_function_lit) => sections.push(new_app_function_lit),
             None => (),
         };
         match self.generate_bootstrap_app_function(indent) {

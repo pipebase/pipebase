@@ -1,9 +1,10 @@
 use super::context::ContextStore;
 use super::dependency::Dependency;
-use super::meta::Meta;
+use super::meta::{Meta, MetaValue};
 use super::pipe::Pipe;
 use super::utils::indent_literal;
 use super::{Entity, EntityAccept, Object, VisitEntity};
+use crate::api::{Block, DataType, Function, Rhs, Statement};
 use crate::error::*;
 use crate::ops::AppValidator;
 use crate::ops::{AppDescriber, AppGenerator};
@@ -141,54 +142,45 @@ impl App {
         use_module_lits.join(";\n")
     }
 
-    // TODO: function lit replaced with function entity or procedure derive
-    pub fn get_new_app_function_lit(&self, indent: usize) -> String {
-        let cstore_name = match self.cstore {
-            Some(ref cstore) => cstore.get_name(),
-            None => panic!("App's App's context store is None"),
+    pub fn get_bootstrap_function_literal(&self, indent: usize) -> String {
+        let meta = Meta::Path {
+            name: "bootstrap".to_owned(),
         };
-        let new_app_lit = format!(
-            "{}App {{\n{}{}: std::collections::HashMap::new(),\n{}}}",
-            indent_literal(indent + 1),
-            indent_literal(indent + 2),
-            cstore_name,
-            indent_literal(indent + 1)
+        let rtype = DataType::Object("App".to_owned());
+        let block = Block::new(vec![Statement::new(
+            None,
+            Rhs::Expr("App::default()".to_owned()),
+        )]);
+        let function = Function::new(
+            "bootstrap".to_owned(),
+            Some(meta),
+            true,
+            true,
+            vec![],
+            block,
+            Some(rtype),
         );
-        format!(
-            "{}pub fn app() -> App {{\n{}\n{}}}",
-            indent_literal(indent),
-            new_app_lit,
-            indent_literal(indent)
-        )
+        function.to_literal(indent)
     }
 
-    pub fn get_bootstrap_app_function_lit(&self, indent: usize) -> String {
-        let new_app_and_bootstap_lit = format!(
-            "{}self::app().bootstrap().await;",
-            indent_literal(indent + 1)
+    pub fn get_main_function_literal(&self, indent: usize) -> String {
+        let meta = Meta::List {
+            name: "pipebase::main".to_owned(),
+            metas: vec![Meta::Value {
+                name: "bootstrap".to_owned(),
+                meta: MetaValue::Str(self.get_id()),
+            }],
+        };
+        let function = Function::new(
+            "main".to_owned(),
+            Some(meta),
+            false,
+            true,
+            vec![],
+            Block::new(vec![]),
+            None,
         );
-        format!(
-            "{}pub async fn bootstrap() {{\n{}\n{}}}",
-            indent_literal(indent),
-            new_app_and_bootstap_lit,
-            indent_literal(indent)
-        )
-    }
-
-    pub fn get_main_function_lit(&self, indent: usize) -> String {
-        let tokio_main_lit = format!("{}#[tokio::main]", indent_literal(indent));
-        let bootstrap_app_lit = format!(
-            "{}{}::bootstrap().await;",
-            indent_literal(indent + 1),
-            self.name
-        );
-        format!(
-            "{}\n{}async fn main() {{\n{}\n{}}}",
-            tokio_main_lit,
-            indent_literal(indent),
-            bootstrap_app_lit,
-            indent_literal(indent)
-        )
+        function.to_literal(indent)
     }
 
     pub fn get_metas(&self) -> Vec<Meta> {
