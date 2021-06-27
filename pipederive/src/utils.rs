@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
-use syn::{Attribute, Lit, Meta, MetaList, MetaNameValue, NestedMeta};
+use quote::{quote, ToTokens};
+use syn::{Attribute, ItemFn, Lit, Meta, MetaList, MetaNameValue, NestedMeta};
 use syn::{Data, Field, Fields, FieldsNamed};
 
 // traversal tree with full path
@@ -221,4 +221,17 @@ pub fn find_first_field<'a>(
     predicate: &dyn Fn(&Field) -> bool,
 ) -> Option<&'a Field> {
     fields.named.iter().filter(|&field| predicate(field)).next()
+}
+
+pub fn get_last_stmt_span(function: &ItemFn) -> (Span, Span) {
+    let mut last_stmt = function
+        .block
+        .stmts
+        .last()
+        .map(ToTokens::into_token_stream)
+        .unwrap_or_default()
+        .into_iter();
+    let start = last_stmt.next().map_or_else(Span::call_site, |t| t.span());
+    let end = last_stmt.last().map_or(start, |t| t.span());
+    (start, end)
 }

@@ -1,11 +1,11 @@
-use crate::utils::get_all_attributes_by_meta_prefix;
+use crate::utils::{get_all_attributes_by_meta_prefix, get_last_stmt_span};
 use crate::{
     constants::BOOTSTRAP_PIPE,
     pipemeta::{ChannelExpr, PipeExpr, PipeMetas, SpawnJoinExpr},
 };
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
-use syn::{Attribute, Generics};
+use quote::{quote, quote_spanned};
+use syn::{Attribute, Generics, ItemFn, NestedMeta};
 
 pub fn impl_bootstrap(
     ident: &Ident,
@@ -105,4 +105,27 @@ fn resolve_pipe_context(pipe_name: &str) -> TokenStream {
 
 fn get_all_pipe_attributes(attributes: &Vec<Attribute>) -> Vec<Attribute> {
     get_all_attributes_by_meta_prefix(BOOTSTRAP_PIPE, attributes)
+}
+
+pub fn impl_bootstrap_macro(_args: Vec<NestedMeta>, mut function: ItemFn) -> TokenStream {
+    if function.sig.asyncness.is_none() {
+        panic!("the `async` keyword is missing from the function declaration")
+    }
+    let (_, end) = get_last_stmt_span(&function);
+    let body = &function.block;
+    let brace_token = function.block.brace_token;
+    function.block = syn::parse2(quote_spanned! { end =>
+        {
+            let mut app = {
+                #body
+            };
+            app.bootstrap().await;
+            app
+        }
+    })
+    .unwrap();
+    function.block.brace_token = brace_token;
+    quote! {
+        #function
+    }
 }

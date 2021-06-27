@@ -203,6 +203,9 @@ impl App {
                     Meta::Path {
                         name: "ContextStore".to_owned(),
                     },
+                    Meta::Path {
+                        name: "Default".to_owned(),
+                    },
                 ],
             }],
         }
