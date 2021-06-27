@@ -62,13 +62,13 @@ where
                     Self::inc_success_run(&self.context).await;
                 }
                 Err(err) => {
-                    error!("export error {}", err);
+                    error!("exporter error {}", err);
                     break;
                 }
             }
         }
+        log::info!("exporter {} exit ...", self.name);
         Self::set_state(&self.context, State::Done).await;
-
         Ok(())
     }
 

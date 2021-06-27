@@ -77,8 +77,8 @@ where
             Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
             Self::inc_success_run(&self.context).await;
         }
-        Self::set_state(&self.context, State::Done).await;
         info!("source {} exit ...", self.name);
+        Self::set_state(&self.context, State::Done).await;
         Ok(())
     }
 

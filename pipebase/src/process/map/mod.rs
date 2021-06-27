@@ -89,6 +89,7 @@ where
             Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
             Self::inc_success_run(&self.context).await;
         }
+        log::info!("mapper {} exit ...", self.name);
         Self::set_state(&self.context, State::Done).await;
         Ok(())
     }

@@ -89,6 +89,7 @@ where
             Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
             Self::inc_success_run(&self.context).await;
         }
+        log::info!("selector {} exit ...", self.name);
         Self::set_state(&self.context, State::Done).await;
         Ok(())
     }
@@ -109,7 +110,7 @@ where
     S: Select<T, C>,
     C: ConfigInto<S> + Send + Sync,
 {
-    fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
         Selector {
             name: name,
             config: config,

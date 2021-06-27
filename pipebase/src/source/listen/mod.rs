@@ -67,6 +67,7 @@ where
         // start event loop
         let mut txs = self.txs.to_owned();
         let context = self.context.clone();
+        let name = self.name.to_owned();
         let join_event_loop = tokio::spawn(async move {
             loop {
                 Self::inc_total_run(&context).await;
@@ -96,6 +97,7 @@ where
                 Self::filter_senders_by_indices(&mut txs, drop_sender_indices);
                 Self::inc_success_run(&context).await;
             }
+            log::info!("listener {} exit ...", name);
             Self::set_state(&context, State::Done).await;
         });
         // join listener and loop

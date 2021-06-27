@@ -84,6 +84,7 @@ where
         let mut txs = self.txs.to_owned();
         let is_end_clone = is_end.to_owned();
         let context = self.get_context();
+        let name = self.name.to_owned();
         let join_flush = tokio::spawn(async move {
             let mut interval = {
                 let c = collector_clone.lock().await;
@@ -118,6 +119,7 @@ where
                     break;
                 }
             }
+            log::info!("collector {} exit ...", name);
             Self::set_state(&context, State::Done).await;
         });
         let join_all = tokio::spawn(async move { tokio::join!(join_event, join_flush) });
