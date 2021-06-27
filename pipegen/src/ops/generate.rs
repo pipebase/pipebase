@@ -115,10 +115,6 @@ impl AppGenerator {
             Some(ref app) => app.get_objects(),
             None => return None,
         };
-        let objects = match objects {
-            Some(objects) => objects,
-            None => return None,
-        };
         let objects_lit =
             Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n");
         Some(objects_lit)
@@ -160,7 +156,7 @@ impl AppGenerator {
             Some(ref app) => app,
             None => return None,
         };
-        Some(app.get_use_modules_lit(indent))
+        Some(app.get_use_modules_literal(indent))
     }
 
     pub fn generate_all(&self) -> Option<String> {

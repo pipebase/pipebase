@@ -324,10 +324,6 @@ impl AppValidator {
             Some(ref app) => app.get_objects(),
             None => return Ok(()),
         };
-        let objects = match objects {
-            Some(objects) => objects,
-            None => return Ok(()),
-        };
         Self::validate_entities::<Object, ObjectIdValidator>(objects, "objects")?;
         for i in 0..objects.len() {
             let object = objects.get(i).unwrap();
