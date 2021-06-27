@@ -169,6 +169,11 @@ impl Describe for AppDescriber {
 }
 
 impl AppDescriber {
+
+    fn get_app(&self) -> &App {
+        self.app.as_ref().unwrap()
+    }
+
     pub fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(
         entities: &Vec<T>,
     ) -> A {
@@ -180,19 +185,13 @@ impl AppDescriber {
     }
 
     pub fn describe_pipes(&self) -> Vec<String> {
-        let pipes = match self.app {
-            Some(ref app) => app.get_pipes(),
-            None => return Vec::new(),
-        };
+        let pipes = self.get_app().get_pipes();
         let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
         describer.describe()
     }
 
     pub fn describe_pipelines(&self, pid: &str) -> Vec<String> {
-        let pipes = match self.app {
-            Some(ref app) => app.get_pipes(),
-            None => return Vec::new(),
-        };
+        let pipes = self.get_app().get_pipes();
         let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
         describer.describe_pipelines(pid)
     }
