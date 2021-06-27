@@ -26,8 +26,8 @@ where
     C: ConfigInto<P> + Send + Sync,
 {
     name: &'a str,
-    txs: HashMap<usize, Arc<Sender<T>>>,
     config: C,
+    txs: HashMap<usize, Arc<Sender<T>>>,
     poller: PhantomData<P>,
     context: Arc<RwLock<Context>>,
 }

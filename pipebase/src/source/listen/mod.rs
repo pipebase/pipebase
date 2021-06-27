@@ -38,11 +38,11 @@ where
     L: Listen<T, C> + 'static,
     C: ConfigInto<L> + Send + Sync,
 {
-    pub name: &'a str,
-    pub txs: HashMap<usize, Arc<Sender<T>>>,
-    pub config: C,
-    pub listener: PhantomData<L>,
-    pub context: Arc<RwLock<Context>>,
+    name: &'a str,
+    config: C,
+    txs: HashMap<usize, Arc<Sender<T>>>,
+    listener: PhantomData<L>,
+    context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
@@ -108,12 +108,6 @@ where
         Ok(())
     }
 
-    /*
-    fn add_sender(&mut self, tx: Sender<T>) {
-        self.txs.push(Arc::new(tx));
-    }
-    */
-
     fn add_sender(&mut self, tx: Sender<T>) {
         let idx = self.txs.len();
         self.txs.insert(idx, Arc::new(tx));
@@ -124,6 +118,23 @@ where
     }
 }
 
+impl<'a, T, L, C> Listener<'a, T, L, C>
+where
+    T: Clone + Send + 'static,
+    L: Listen<T, C> + 'static,
+    C: ConfigInto<L> + Send + Sync,
+{
+    pub fn new(name: &'a str, config: C) -> Self {
+        Listener {
+            name: name,
+            config: config,
+            txs: HashMap::new(),
+            listener: std::marker::PhantomData,
+            context: Default::default(),
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! listener {
     (
@@ -131,13 +142,7 @@ macro_rules! listener {
     ) => {
         {
             let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Listener {
-                name: $name,
-                txs: std::collections::HashMap::new(),
-                config: config,
-                listener: std::marker::PhantomData,
-                context: Default::default()
-            };
+            let mut pipe = Listener::new($name, config);
             $(
                 pipe.add_sender($tx);
             )*
