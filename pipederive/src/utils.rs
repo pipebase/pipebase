@@ -197,6 +197,13 @@ pub fn resolve_field_path_token(field_path: &str) -> TokenStream {
     }
 }
 
+pub fn resolve_module_path_token(module_path: &str) -> TokenStream {
+    let module_idents = module_path.split("::").map(resolve_ident);
+    quote! {
+        #(#module_idents)::*
+    }
+}
+
 pub fn resolve_ident(field: &str) -> Ident {
     Ident::new(field, Span::call_site())
 }

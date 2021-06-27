@@ -1,11 +1,14 @@
-use crate::utils::{get_all_attributes_by_meta_prefix, get_last_stmt_span};
+use crate::utils::{
+    get_all_attributes_by_meta_prefix, get_last_stmt_span, parse_lit_as_string,
+    resolve_module_path_token,
+};
 use crate::{
     constants::BOOTSTRAP_PIPE,
     pipemeta::{ChannelExpr, PipeExpr, PipeMetas, SpawnJoinExpr},
 };
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, quote_spanned};
-use syn::{Attribute, Generics, ItemFn, NestedMeta};
+use syn::{Attribute, Generics, ItemFn, Meta, MetaNameValue, NestedMeta};
 
 pub fn impl_bootstrap(
     ident: &Ident,
@@ -128,4 +131,49 @@ pub fn impl_bootstrap_macro(_args: Vec<NestedMeta>, mut function: ItemFn) -> Tok
     quote! {
         #function
     }
+}
+
+pub fn impl_bootstrap_main_macro(args: Vec<NestedMeta>, mut function: ItemFn) -> TokenStream {
+    if function.sig.asyncness.is_none() {
+        panic!("the `async` keyword is missing from the function declaration")
+    }
+    let modult_path_token = find_bootstrap_module(&args);
+    let (_, end) = get_last_stmt_span(&function);
+    let body = &function.block;
+    let brace_token = function.block.brace_token;
+    function.block = syn::parse2(quote_spanned! { end =>
+        {
+            #body
+            #modult_path_token::bootstrap().await;
+        }
+    })
+    .unwrap();
+    function.block.brace_token = brace_token;
+    let tokio_header = quote! {
+        #[tokio::main]
+    };
+    quote! {
+        #tokio_header
+        #function
+    }
+}
+
+fn find_bootstrap_module(args: &Vec<NestedMeta>) -> TokenStream {
+    for arg in args {
+        let (path, lit) = match arg {
+            NestedMeta::Meta(Meta::NameValue(MetaNameValue {
+                ref path, ref lit, ..
+            })) => (path, lit),
+            _ => continue,
+        };
+        match path.get_ident().unwrap().to_string().as_str() {
+            "bootstrap" => {
+                if let Some(ref module_path) = parse_lit_as_string(lit) {
+                    return resolve_module_path_token(module_path);
+                }
+            }
+            _ => continue,
+        }
+    }
+    panic!("bootstrap module not found")
 }

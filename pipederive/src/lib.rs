@@ -92,3 +92,14 @@ pub fn bootstrap(
     let expanded = bootstrap::impl_bootstrap_macro(args, function);
     proc_macro::TokenStream::from(expanded)
 }
+
+#[proc_macro_attribute]
+pub fn main(
+    args: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    let args = parse_macro_input!(args as AttributeArgs);
+    let function = parse_macro_input!(item as ItemFn);
+    let expanded = bootstrap::impl_bootstrap_main_macro(args, function);
+    proc_macro::TokenStream::from(expanded)
+}
