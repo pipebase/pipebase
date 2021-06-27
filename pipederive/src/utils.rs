@@ -4,14 +4,15 @@ use syn::{Attribute, ItemFn, Lit, Meta, MetaList, MetaNameValue, NestedMeta};
 use syn::{Data, Field, Fields, FieldsNamed};
 
 // traversal tree with full path
-pub fn find_meta_value_by_meta_path(full_path: &Vec<&str>, i: usize, meta: &Meta) -> Option<Lit> {
+pub fn find_meta_value_by_meta_path(full_path: &[&str], meta: &Meta) -> Option<Lit> {
+    assert!(full_path.len() > 0);
     // reach last segment of full path
-    if i == full_path.len() - 1 {
+    if full_path.len() == 1 {
         if let Meta::NameValue(MetaNameValue {
             ref path, ref lit, ..
         }) = meta
         {
-            let last_segment = full_path[i];
+            let last_segment = full_path[0];
             let path = path.get_ident().unwrap().to_string();
             if path.eq(last_segment) {
                 // we find the meta
@@ -22,7 +23,7 @@ pub fn find_meta_value_by_meta_path(full_path: &Vec<&str>, i: usize, meta: &Meta
         return None;
     }
     if let Meta::List(ref meta_list) = meta {
-        let expected_path = full_path[i];
+        let expected_path = full_path[0];
         let actual_path = meta_list.path.get_ident().unwrap().to_string();
         if !actual_path.eq(expected_path) {
             return None;
@@ -30,7 +31,7 @@ pub fn find_meta_value_by_meta_path(full_path: &Vec<&str>, i: usize, meta: &Meta
         let ref nested_metas = meta_list.nested;
         for nested_meta in nested_metas.into_iter() {
             if let NestedMeta::Meta(ref nested) = nested_meta {
-                match find_meta_value_by_meta_path(full_path, i + 1, nested) {
+                match find_meta_value_by_meta_path(&full_path[1..], nested) {
                     Some(lit) => return Some(lit),
                     None => continue,
                 }
@@ -41,9 +42,10 @@ pub fn find_meta_value_by_meta_path(full_path: &Vec<&str>, i: usize, meta: &Meta
     return None;
 }
 
-pub fn is_meta_with_prefix(prefix_path: &Vec<&str>, i: usize, meta: &Meta) -> bool {
-    if i == prefix_path.len() - 1 {
-        let last_segment = prefix_path[i];
+pub fn is_meta_with_prefix(prefix_path: &[&str], meta: &Meta) -> bool {
+    assert!(prefix_path.len() > 0);
+    if prefix_path.len() == 1 {
+        let last_segment = prefix_path[0];
         match meta {
             Meta::Path(ref path) => {
                 let path = path.get_ident().unwrap().to_string();
@@ -72,7 +74,7 @@ pub fn is_meta_with_prefix(prefix_path: &Vec<&str>, i: usize, meta: &Meta) -> bo
         }
     }
     if let Meta::List(ref meta_list) = meta {
-        let expected_path = prefix_path[i];
+        let expected_path = prefix_path[0];
         let actual_path = meta_list.path.get_ident().unwrap().to_string();
         if !actual_path.eq(expected_path) {
             return false;
@@ -80,7 +82,7 @@ pub fn is_meta_with_prefix(prefix_path: &Vec<&str>, i: usize, meta: &Meta) -> bo
         let ref nested_metas = meta_list.nested;
         for nested_meta in nested_metas.into_iter() {
             if let NestedMeta::Meta(ref nested) = nested_meta {
-                if is_meta_with_prefix(prefix_path, i + 1, nested) {
+                if is_meta_with_prefix(&prefix_path[1..], nested) {
                     return true;
                 }
             }
@@ -111,7 +113,7 @@ pub fn get_any_attribute_by_meta_prefix(
 ) -> Option<Attribute> {
     let prefix_path = prefix.split(".").collect::<Vec<&str>>();
     for attribute in attributes {
-        if is_meta_with_prefix(&prefix_path, 0, &attribute.parse_meta().unwrap()) {
+        if is_meta_with_prefix(&prefix_path, &attribute.parse_meta().unwrap()) {
             return Some(attribute.clone());
         }
     }
@@ -128,7 +130,7 @@ pub fn get_all_attributes_by_meta_prefix(
     let prefix_path = prefix.split(".").collect::<Vec<&str>>();
     let mut hits: Vec<Attribute> = vec![];
     for attribute in attributes {
-        if is_meta_with_prefix(&prefix_path, 0, &attribute.parse_meta().unwrap()) {
+        if is_meta_with_prefix(&prefix_path, &attribute.parse_meta().unwrap()) {
             hits.push(attribute.clone());
         }
     }
@@ -142,7 +144,7 @@ pub fn get_meta_string_value_by_meta_path(
 ) -> Option<String> {
     let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
     if let Some(ref lit) =
-        find_meta_value_by_meta_path(full_path_vec, 0, &attribute.parse_meta().unwrap())
+        find_meta_value_by_meta_path(full_path_vec, &attribute.parse_meta().unwrap())
     {
         if let Some(value) = parse_lit_as_string(lit) {
             return Some(value);
@@ -164,7 +166,7 @@ pub fn get_meta_number_value_by_meta_path(
 ) -> Option<String> {
     let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
     if let Some(ref lit) =
-        find_meta_value_by_meta_path(full_path_vec, 0, &attribute.parse_meta().unwrap())
+        find_meta_value_by_meta_path(full_path_vec, &attribute.parse_meta().unwrap())
     {
         if let Some(value) = parse_lit_as_number(lit) {
             return Some(value);
