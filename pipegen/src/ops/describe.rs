@@ -174,7 +174,7 @@ impl AppDescriber {
         self.app.as_ref().unwrap()
     }
 
-    pub fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(
+    fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(
         entities: &Vec<T>,
     ) -> A {
         let mut describer = A::new();

@@ -90,7 +90,7 @@ impl Generate<App> for AppGenerator {
 }
 
 impl AppGenerator {
-    pub fn generate_entity<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
+    fn generate_entity<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
         entity: &T,
         indent: usize,
     ) -> String {
@@ -99,7 +99,7 @@ impl AppGenerator {
         generator.generate()
     }
 
-    pub fn generate_entities<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
+    fn generate_entities<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
         entities: &Vec<T>,
         indent: usize,
         join_sep: &str,
@@ -111,37 +111,37 @@ impl AppGenerator {
         lits.join(join_sep)
     }
 
-    pub fn get_app(&self) -> &App {
+    fn get_app(&self) -> &App {
         self.app.as_ref().unwrap()
     }
 
-    pub fn generate_objects(&self, indent: usize) -> String {
+    fn generate_objects(&self, indent: usize) -> String {
         let objects = self.get_app().get_objects();
         let objects_lit =
             Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n");
         objects_lit
     }
 
-    pub fn generate_pipes(&self, indent: usize) -> String {
+    fn generate_pipes(&self, indent: usize) -> String {
         let pipes = self.get_app().get_pipes();
         let pipes_lit = Self::generate_entities::<Pipe, PipeGenerator>(pipes, indent, "\n");
         pipes_lit
     }
 
-    pub fn generate_app_object(&self, indent: usize) -> String {
+    fn generate_app_object(&self, indent: usize) -> String {
         self.get_app().to_literal(indent)
     }
 
-    pub fn generate_bootstrap_app_function(&self, indent: usize) -> String {
+    fn generate_bootstrap_app_function(&self, indent: usize) -> String {
         self.get_app().get_bootstrap_function_literal(indent)
     }
 
-    pub fn generate_main_function(&self, indent: usize) -> String {
+    fn generate_main_function(&self, indent: usize) -> String {
         self.get_app().get_main_function_literal(indent)
     }
 
     // module paths
-    pub fn generate_use_modules(&self, indent: usize) -> String {
+    fn generate_use_modules(&self, indent: usize) -> String {
         self.get_app().get_use_modules_literal(indent)
     }
 
@@ -159,7 +159,7 @@ impl AppGenerator {
         format!("{}\n\n{}", module_lit, main_function_lit)
     }
 
-    pub fn generate_module(module: &str, sections: &Vec<String>) -> String {
+    fn generate_module(module: &str, sections: &Vec<String>) -> String {
         format!("mod {} {{\n{}\n}}", module, sections.join("\n\n"))
     }
 }
