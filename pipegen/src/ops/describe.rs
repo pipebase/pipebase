@@ -169,14 +169,11 @@ impl Describe for AppDescriber {
 }
 
 impl AppDescriber {
-
     fn get_app(&self) -> &App {
         self.app.as_ref().unwrap()
     }
 
-    fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(
-        entities: &Vec<T>,
-    ) -> A {
+    fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(entities: &Vec<T>) -> A {
         let mut describer = A::new();
         for entity in entities {
             entity.accept(&mut describer);

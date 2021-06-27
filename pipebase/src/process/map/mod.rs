@@ -34,12 +34,12 @@ where
     M: Map<T, U, C>,
     C: ConfigInto<M> + Send + Sync,
 {
-    pub name: &'a str,
-    pub rx: Receiver<T>,
-    pub txs: HashMap<usize, Arc<Sender<U>>>,
-    pub config: C,
-    pub mapper: PhantomData<M>,
-    pub context: Arc<RwLock<Context>>,
+    name: &'a str,
+    config: C,
+    rx: Receiver<T>,
+    txs: HashMap<usize, Arc<Sender<U>>>,
+    mapper: PhantomData<M>,
+    context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
@@ -52,6 +52,7 @@ where
 {
     async fn run(&mut self) -> Result<()> {
         let mut mapper = self.config.config_into().await.unwrap();
+        log::info!("mapper {} run ...", self.name);
         loop {
             Self::inc_total_run(&self.context).await;
             Self::set_state(&self.context, State::Receive).await;
@@ -89,6 +90,7 @@ where
             Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
             Self::inc_success_run(&self.context).await;
         }
+        log::info!("mapper {} exit ...", self.name);
         Self::set_state(&self.context, State::Done).await;
         Ok(())
     }
@@ -103,6 +105,25 @@ where
     }
 }
 
+impl<'a, T, U, M, C> Mapper<'a, T, U, M, C>
+where
+    T: Send + Sync,
+    U: Clone + Debug + Send + 'static,
+    M: Map<T, U, C>,
+    C: ConfigInto<M> + Send + Sync,
+{
+    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+        Mapper {
+            name: name,
+            config: config,
+            rx: rx,
+            txs: HashMap::new(),
+            mapper: std::marker::PhantomData,
+            context: Default::default(),
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! mapper {
     (
@@ -110,14 +131,7 @@ macro_rules! mapper {
     ) => {
         {
             let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Mapper {
-                name: $name,
-                rx: $rx,
-                txs: std::collections::HashMap::new(),
-                config: config,
-                mapper: std::marker::PhantomData,
-                context: Default::default()
-            };
+            let mut pipe = Mapper::new($name, config, $rx);
             $(
                 pipe.add_sender($tx);
             )*

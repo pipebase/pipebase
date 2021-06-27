@@ -29,11 +29,11 @@ where
     E: Export<T, C>,
     C: ConfigInto<E>,
 {
-    pub name: &'a str,
-    pub rx: Receiver<T>,
-    pub config: C,
-    pub exporter: PhantomData<E>,
-    pub context: Arc<RwLock<Context>>,
+    name: &'a str,
+    config: C,
+    rx: Receiver<T>,
+    exporter: PhantomData<E>,
+    context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
@@ -45,7 +45,7 @@ where
 {
     async fn run(&mut self) -> Result<()> {
         let mut exporter = self.config.config_into().await.unwrap();
-
+        log::info!("exporter {} run ...", self.name);
         loop {
             Self::inc_total_run(&self.context).await;
             Self::set_state(&self.context, State::Receive).await;
@@ -62,18 +62,35 @@ where
                     Self::inc_success_run(&self.context).await;
                 }
                 Err(err) => {
-                    error!("export error {}", err);
+                    error!("exporter error {}", err);
                     break;
                 }
             }
         }
+        log::info!("exporter {} exit ...", self.name);
         Self::set_state(&self.context, State::Done).await;
-
         Ok(())
     }
 
     fn get_context(&self) -> Arc<RwLock<Context>> {
         self.context.to_owned()
+    }
+}
+
+impl<'a, T, E, C> Exporter<'a, T, E, C>
+where
+    T: Send + Sync + 'static,
+    E: Export<T, C>,
+    C: ConfigInto<E>,
+{
+    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+        Exporter {
+            name: name,
+            config: config,
+            rx: rx,
+            exporter: std::marker::PhantomData,
+            context: Default::default(),
+        }
     }
 }
 
@@ -84,13 +101,7 @@ macro_rules! exporter {
     ) => {{
         let config =
             <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-        let pipe = Exporter {
-            name: $name,
-            rx: $rx,
-            config: config,
-            exporter: std::marker::PhantomData,
-            context: Default::default(),
-        };
+        let pipe = Exporter::new($name, config, $rx);
         pipe
     }};
     (

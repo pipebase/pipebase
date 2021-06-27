@@ -41,13 +41,13 @@ where
     V: Collect<T, U, C> + 'static,
     C: ConfigInto<V> + Send + Sync,
 {
-    pub name: &'a str,
-    pub rx: Arc<Mutex<Receiver<T>>>,
-    pub txs: HashMap<usize, Arc<Sender<U>>>,
-    pub config: C,
-    pub collector: PhantomData<V>,
-    pub collection: PhantomData<U>,
-    pub context: Arc<RwLock<Context>>,
+    name: &'a str,
+    config: C,
+    rx: Arc<Mutex<Receiver<T>>>,
+    txs: HashMap<usize, Arc<Sender<U>>>,
+    collector: PhantomData<V>,
+    collection: PhantomData<U>,
+    context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
@@ -84,11 +84,13 @@ where
         let mut txs = self.txs.to_owned();
         let is_end_clone = is_end.to_owned();
         let context = self.get_context();
+        let name = self.name.to_owned();
         let join_flush = tokio::spawn(async move {
             let mut interval = {
                 let c = collector_clone.lock().await;
                 c.get_flush_interval()
             };
+            log::info!("collector {} run ...", name);
             loop {
                 Self::set_state(&context, State::Receive).await;
                 Self::inc_total_run(&context).await;
@@ -118,6 +120,7 @@ where
                     break;
                 }
             }
+            log::info!("collector {} exit ...", name);
             Self::set_state(&context, State::Done).await;
         });
         let join_all = tokio::spawn(async move { tokio::join!(join_event, join_flush) });
@@ -137,6 +140,26 @@ where
     }
 }
 
+impl<'a, T, U, V, C> Collector<'a, T, U, V, C>
+where
+    T: Clone + Send + Sync + 'static,
+    U: FromIterator<T> + Clone + Send + 'static,
+    V: Collect<T, U, C> + 'static,
+    C: ConfigInto<V> + Send + Sync,
+{
+    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+        Collector {
+            name: name,
+            config: config,
+            rx: std::sync::Arc::new(tokio::sync::Mutex::new(rx)),
+            txs: HashMap::new(),
+            collector: std::marker::PhantomData,
+            collection: std::marker::PhantomData,
+            context: Default::default(),
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! collector {
     (
@@ -144,15 +167,7 @@ macro_rules! collector {
     ) => {
         {
             let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Collector {
-                name: $name,
-                rx: std::sync::Arc::new(tokio::sync::Mutex::new($rx)),
-                txs: std::collections::HashMap::new(),
-                config: config,
-                collector: std::marker::PhantomData,
-                collection: std::marker::PhantomData,
-                context: Default::default()
-            };
+            let mut pipe = Collector::new($name, config, $rx);
             $(
                 pipe.add_sender($tx);
             )*
