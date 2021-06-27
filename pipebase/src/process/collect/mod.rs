@@ -41,13 +41,13 @@ where
     V: Collect<T, U, C> + 'static,
     C: ConfigInto<V> + Send + Sync,
 {
-    pub name: &'a str,
-    pub rx: Arc<Mutex<Receiver<T>>>,
-    pub txs: HashMap<usize, Arc<Sender<U>>>,
-    pub config: C,
-    pub collector: PhantomData<V>,
-    pub collection: PhantomData<U>,
-    pub context: Arc<RwLock<Context>>,
+    name: &'a str,
+    config: C,
+    rx: Arc<Mutex<Receiver<T>>>,
+    txs: HashMap<usize, Arc<Sender<U>>>,
+    collector: PhantomData<V>,
+    collection: PhantomData<U>,
+    context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
@@ -137,6 +137,26 @@ where
     }
 }
 
+impl<'a, T, U, V, C> Collector<'a, T, U, V, C>
+where
+    T: Clone + Send + Sync + 'static,
+    U: FromIterator<T> + Clone + Send + 'static,
+    V: Collect<T, U, C> + 'static,
+    C: ConfigInto<V> + Send + Sync,
+{
+    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+        Collector {
+            name: name,
+            config: config,
+            rx: std::sync::Arc::new(tokio::sync::Mutex::new(rx)),
+            txs: HashMap::new(),
+            collector: std::marker::PhantomData,
+            collection: std::marker::PhantomData,
+            context: Default::default(),
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! collector {
     (
@@ -144,15 +164,7 @@ macro_rules! collector {
     ) => {
         {
             let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Collector {
-                name: $name,
-                rx: std::sync::Arc::new(tokio::sync::Mutex::new($rx)),
-                txs: std::collections::HashMap::new(),
-                config: config,
-                collector: std::marker::PhantomData,
-                collection: std::marker::PhantomData,
-                context: Default::default()
-            };
+            let mut pipe = Collector::new($name, config, $rx);
             $(
                 pipe.add_sender($tx);
             )*
