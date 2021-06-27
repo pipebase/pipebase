@@ -2,7 +2,7 @@ use crate::api::{App, Entity, EntityAccept, Object, Pipe, VisitEntity};
 
 pub trait Generate<T> {
     fn new(indent: usize) -> Self;
-    fn generate(&self) -> Option<String>;
+    fn generate(&self) -> String;
 }
 
 pub struct PipeGenerator {
@@ -24,12 +24,14 @@ impl Generate<Pipe> for PipeGenerator {
         }
     }
 
-    fn generate(&self) -> Option<String> {
-        let pipe = match self.pipe {
-            Some(ref p) => p,
-            None => return None,
-        };
-        Some(pipe.to_literal(self.indent))
+    fn generate(&self) -> String {
+        self.get_pipe().to_literal(self.indent)
+    }
+}
+
+impl PipeGenerator {
+    pub fn get_pipe(&self) -> &Pipe {
+        self.pipe.as_ref().unwrap()
     }
 }
 
@@ -52,12 +54,14 @@ impl Generate<Object> for ObjectGenerator {
         }
     }
 
-    fn generate(&self) -> Option<String> {
-        let object = match self.object {
-            Some(ref o) => o,
-            None => return None,
-        };
-        Some(object.to_literal(self.indent))
+    fn generate(&self) -> String {
+        self.get_object().to_literal(self.indent)
+    }
+}
+
+impl ObjectGenerator {
+    fn get_object(&self) -> &Object {
+        self.object.as_ref().unwrap()
     }
 }
 
@@ -80,7 +84,7 @@ impl Generate<App> for AppGenerator {
         }
     }
 
-    fn generate(&self) -> Option<String> {
+    fn generate(&self) -> String {
         self.generate_all()
     }
 }
@@ -89,7 +93,7 @@ impl AppGenerator {
     pub fn generate_entity<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
         entity: &T,
         indent: usize,
-    ) -> Option<String> {
+    ) -> String {
         let mut generator = G::new(indent);
         entity.accept(&mut generator);
         generator.generate()
@@ -102,95 +106,57 @@ impl AppGenerator {
     ) -> String {
         let mut lits: Vec<String> = vec![];
         for entity in entities.as_slice() {
-            match Self::generate_entity(entity, indent) {
-                Some(lit) => lits.push(lit),
-                None => continue,
-            }
+            lits.push(Self::generate_entity(entity, indent));
         }
         lits.join(join_sep)
     }
 
-    pub fn generate_objects(&self, indent: usize) -> Option<String> {
-        let objects = match self.app {
-            Some(ref app) => app.get_objects(),
-            None => return None,
-        };
+    pub fn get_app(&self) -> &App {
+        self.app.as_ref().unwrap()
+    }
+
+    pub fn generate_objects(&self, indent: usize) -> String {
+        let objects = self.get_app().get_objects();
         let objects_lit =
             Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n");
-        Some(objects_lit)
+        objects_lit
     }
 
-    pub fn generate_pipes(&self, indent: usize) -> Option<String> {
-        let pipes = match self.app {
-            Some(ref app) => app.get_pipes(),
-            None => return None,
-        };
+    pub fn generate_pipes(&self, indent: usize) -> String {
+        let pipes = self.get_app().get_pipes();
         let pipes_lit = Self::generate_entities::<Pipe, PipeGenerator>(pipes, indent, "\n");
-        Some(pipes_lit)
+        pipes_lit
     }
 
-    pub fn generate_app_object(&self, indent: usize) -> Option<String> {
-        match self.app {
-            Some(ref app) => Some(app.to_literal(indent)),
-            None => None,
-        }
+    pub fn generate_app_object(&self, indent: usize) -> String {
+        self.get_app().to_literal(indent)
     }
 
-    pub fn generate_bootstrap_app_function(&self, indent: usize) -> Option<String> {
-        match self.app {
-            Some(ref app) => Some(app.get_bootstrap_function_literal(indent)),
-            None => None,
-        }
+    pub fn generate_bootstrap_app_function(&self, indent: usize) -> String {
+        self.get_app().get_bootstrap_function_literal(indent)
     }
 
-    pub fn generate_main_function(&self, indent: usize) -> Option<String> {
-        match self.app {
-            Some(ref app) => Some(app.get_main_function_literal(indent)),
-            None => None,
-        }
+    pub fn generate_main_function(&self, indent: usize) -> String {
+        self.get_app().get_main_function_literal(indent)
     }
 
     // module paths
-    pub fn generate_use_modules(&self, indent: usize) -> Option<String> {
-        let app = match self.app {
-            Some(ref app) => app,
-            None => return None,
-        };
-        Some(app.get_use_modules_literal(indent))
+    pub fn generate_use_modules(&self, indent: usize) -> String {
+        self.get_app().get_use_modules_literal(indent)
     }
 
-    pub fn generate_all(&self) -> Option<String> {
-        let module_name = match self.app {
-            Some(ref app) => app.get_id(),
-            None => return None,
-        };
+    pub fn generate_all(&self) -> String {
+        let module_name = self.get_app().get_id();
         let mut sections: Vec<String> = vec![];
         let indent: usize = self.indent + 1;
-        match self.generate_use_modules(indent) {
-            Some(use_module_lits) => sections.push(use_module_lits),
-            None => (),
-        };
-        match self.generate_objects(indent) {
-            Some(objects_lit) => sections.push(objects_lit),
-            None => (),
-        };
-        match self.generate_pipes(indent) {
-            Some(pipes_lit) => sections.push(pipes_lit),
-            None => (),
-        };
-        match self.generate_app_object(indent) {
-            Some(app_object_lit) => sections.push(app_object_lit),
-            None => (),
-        };
-        match self.generate_bootstrap_app_function(indent) {
-            Some(bootstrap_app_function_lit) => sections.push(bootstrap_app_function_lit),
-            None => (),
-        };
+        sections.push(self.generate_use_modules(indent));
+        sections.push(self.generate_objects(indent));
+        sections.push(self.generate_pipes(indent));
+        sections.push(self.generate_app_object(indent));
+        sections.push(self.generate_bootstrap_app_function(indent));
         let module_lit = Self::generate_module(&module_name, &sections);
-        match self.generate_main_function(self.indent) {
-            Some(main_function_lit) => Some(format!("{}\n\n{}", module_lit, main_function_lit)),
-            None => Some(module_lit),
-        }
+        let main_function_lit = self.generate_main_function(self.indent);
+        format!("{}\n\n{}", module_lit, main_function_lit)
     }
 
     pub fn generate_module(module: &str, sections: &Vec<String>) -> String {

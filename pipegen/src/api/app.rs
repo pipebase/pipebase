@@ -219,13 +219,10 @@ impl App {
     }
 
     pub fn print(&self) {
-        match self.generate() {
-            Some(lit) => println!("{}", lit),
-            None => (),
-        }
+        println!("{}", self.generate())
     }
 
-    pub fn generate(&self) -> Option<String> {
+    pub fn generate(&self) -> String {
         let mut app_generator = AppGenerator::new(0);
         self.accept(&mut app_generator);
         app_generator.generate()
