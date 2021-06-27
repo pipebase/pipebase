@@ -56,14 +56,14 @@ impl ErrorImpl {
     }
 }
 
-pub fn api_error<E: Display>(detail: E) -> Error {
+pub(crate) fn api_error<E: Display>(detail: E) -> Error {
     Error(Box::new(ErrorImpl::Api(format!("{}", detail))))
 }
 
-pub fn io_error(err: std::io::Error) -> Error {
+pub(crate) fn io_error(err: std::io::Error) -> Error {
     Error(Box::new(ErrorImpl::IO(err)))
 }
 
-pub fn yaml_error(err: serde_yaml::Error) -> Error {
+pub(crate) fn yaml_error(err: serde_yaml::Error) -> Error {
     Error(Box::new(ErrorImpl::Yaml(err)))
 }

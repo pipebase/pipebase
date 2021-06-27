@@ -1,3 +1,3 @@
 pub mod api;
-pub mod error;
-pub mod ops;
+pub(crate) mod error;
+pub(crate) mod ops;

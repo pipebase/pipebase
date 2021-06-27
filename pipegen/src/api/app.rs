@@ -1,84 +1,24 @@
+use super::context::ContextStore;
+use super::constants::{APP_OBJECT_NAME, DEFAULT_APP_OBJECT, BOOTSTRAP_FUNCTION_META, BOOTSTRAP_FUNCTION_NAME, BOOTSTRAP_MODULE_META_PATH, DEFAULT_CONTEXT_STORE_NAME, PIPEBASE_MAIN};
+use super::dependency::Dependency;
 use super::meta::{Meta, MetaValue};
-use super::{DataType, Entity, EntityAccept, Object, VisitEntity};
-use crate::api::pipe::Pipe;
-use crate::api::DataField;
+use super::pipe::Pipe;
+use super::utils::indent_literal;
+use super::{Entity, EntityAccept, Object, VisitEntity};
+use crate::api::{Block, DataType, Function, Rhs, Statement};
 use crate::error::*;
 use crate::ops::AppValidator;
 use crate::ops::{AppDescriber, AppGenerator};
 use crate::ops::{Describe, Generate, Validate};
 use serde::Deserialize;
-use std::collections::HashMap;
 use std::path::Path;
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct ContextStore {
-    name: String,
-    methods: HashMap<String, String>,
-    data_ty: DataType,
-}
-
-impl ContextStore {
-    pub fn new(name: String) -> Self {
-        let mut methods = HashMap::new();
-        methods.insert("get".to_owned(), "get".to_owned());
-        methods.insert("insert".to_owned(), "insert".to_owned());
-        let data_ty = DataType::HashMap {
-            key_data_ty: Box::new(DataType::String),
-            value_data_ty: Box::new(DataType::Object("Arc<RwLock<Context>>".to_owned())),
-        };
-        ContextStore {
-            name: name,
-            methods: methods,
-            data_ty: data_ty,
-        }
-    }
-
-    pub fn get_name(&self) -> &String {
-        &self.name
-    }
-
-    pub fn get_methods(&self) -> &HashMap<String, String> {
-        &self.methods
-    }
-
-    fn methods_as_meta(&self) -> Meta {
-        let mut method_metas = vec![];
-        for (name, value) in &self.methods {
-            method_metas.push(Meta::Value {
-                name: name.to_owned(),
-                meta: MetaValue::Str(value.to_owned()),
-            });
-        }
-        Meta::List {
-            name: "method".to_owned(),
-            metas: method_metas,
-        }
-    }
-
-    fn get_meta(&self) -> Meta {
-        Meta::List {
-            name: "cstore".to_owned(),
-            metas: vec![self.methods_as_meta()],
-        }
-    }
-
-    pub fn as_data_field(&self) -> DataField {
-        DataField::new_named_field(
-            self.data_ty.to_owned(),
-            self.name.to_owned(),
-            vec![self.get_meta()],
-            false,
-            false,
-        )
-    }
-}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct App {
     name: String,
     metas: Option<Vec<Meta>>,
     cstore: Option<ContextStore>,
-    dependencies: Option<Vec<String>>,
+    dependencies: Option<Vec<Dependency>>,
     pipes: Vec<Pipe>,
     objects: Option<Vec<Object>>,
 }
@@ -89,10 +29,12 @@ impl Entity for App {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        match self.dependencies {
-            Some(ref dependencies) => dependencies.to_owned(),
-            None => vec![],
+        let dependencies = self.get_dependency();
+        let mut modules: Vec<String> = Vec::new();
+        for dependency in dependencies {
+            modules.extend(dependency.get_modules().to_owned());
         }
+        modules
     }
 
     fn to_literal(&self, indent: usize) -> String {
@@ -101,7 +43,7 @@ impl Entity for App {
         // app object fields
         let cstore = self.get_context_store().as_data_field();
         // create app object
-        let app = Object::new("App".to_owned(), metas, vec![cstore]);
+        let app = Object::new(APP_OBJECT_NAME.to_owned(), metas.to_owned(), vec![cstore]);
         app.to_literal(indent)
     }
 }
@@ -114,53 +56,179 @@ impl App {
             Ok(file) => file,
             Err(err) => return Err(io_error(err)),
         };
-        let app = match serde_yaml::from_reader::<std::fs::File, Self>(file) {
+        let mut app = match serde_yaml::from_reader::<std::fs::File, Self>(file) {
             Ok(app) => app,
             Err(err) => return Err(yaml_error(err)),
         };
+        app.init();
         Ok(app)
     }
 
-    pub fn get_metas(&self) -> Vec<Meta> {
-        match self.metas {
-            Some(ref metas) => metas.to_owned(),
-            None => vec![Meta::List {
-                name: "derive".to_owned(),
-                metas: vec![
-                    Meta::Path {
-                        name: "Boostrap".to_owned(),
-                    },
-                    Meta::Path {
-                        name: "ContextStore".to_owned(),
-                    },
-                ],
-            }],
+    fn init(&mut self) {
+        // init all fields as Some
+        // init app dependencies
+        match self.dependencies {
+            Some(_) => (),
+            None => self.dependencies = Some(Vec::new()),
+        };
+        for default_dependency in Self::default_dependencies() {
+            if !self.has_dependency(&default_dependency) {
+                self.add_dependency(default_dependency)
+            }
         }
-    }
-
-    pub fn get_context_store(&self) -> ContextStore {
+        // init context store
         match self.cstore {
-            Some(ref cstore) => cstore.to_owned(),
-            None => ContextStore::new("pipe_contexts".to_owned()),
+            Some(_) => (),
+            None => self.cstore = Some(ContextStore::new(DEFAULT_CONTEXT_STORE_NAME.to_owned())),
+        };
+        // init metas
+        match self.metas {
+            Some(_) => (),
+            None => {
+                self.metas = Some(vec![Meta::List {
+                    name: "derive".to_owned(),
+                    metas: vec![
+                        Meta::Path {
+                            name: "Bootstrap".to_owned(),
+                        },
+                        Meta::Path {
+                            name: "ContextStore".to_owned(),
+                        },
+                        Meta::Path {
+                            name: "Default".to_owned(),
+                        },
+                    ],
+                }])
+            }
+        };
+        // init objects
+        match self.objects {
+            Some(_) => (),
+            None => self.objects = Some(vec![]),
         }
     }
 
-    pub fn get_objects(&self) -> Option<&Vec<Object>> {
-        self.objects.as_ref()
+    fn has_dependency(&self, other: &Dependency) -> bool {
+        let dependencies = self.dependencies.as_ref().unwrap();
+        for dependency in dependencies {
+            if dependency.eq(other) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    pub fn get_pipes(&self) -> &Vec<Pipe> {
+    fn add_dependency(&mut self, dependency: Dependency) {
+        let dependencies = self.dependencies.as_mut().unwrap();
+        dependencies.push(dependency);
+    }
+
+    fn get_dependency(&self) -> &Vec<Dependency> {
+        self.dependencies.as_ref().unwrap()
+    }
+
+    fn default_dependencies() -> Vec<Dependency> {
+        vec![
+            Dependency::new(
+                "pipebase".to_owned(),
+                Some("0.1.0".to_owned()),
+                None,
+                None,
+                vec!["pipebase::*".to_owned()],
+            ),
+            Dependency::new(
+                "tokio".to_owned(),
+                Some("1.6.1".to_owned()),
+                None,
+                Some(vec!["full".to_owned()]),
+                vec![],
+            ),
+            Dependency::new(
+                "log".to_owned(),
+                Some("0.4.14".to_owned()),
+                None,
+                None,
+                vec![],
+            ),
+        ]
+    }
+
+    pub(crate) fn get_use_modules_literal(&self, indent: usize) -> String {
+        let indent_lit = indent_literal(indent);
+        let mut use_module_lits: Vec<String> = Vec::new();
+        for module_lit in self.list_dependency() {
+            use_module_lits.push(format!("{}use {}", indent_lit, module_lit));
+        }
+        use_module_lits.push("".to_owned());
+        use_module_lits.join(";\n")
+    }
+
+    pub(crate) fn get_bootstrap_function_literal(&self, indent: usize) -> String {
+        let meta = Meta::Path {
+            name: BOOTSTRAP_FUNCTION_META.to_owned(),
+        };
+        let rtype = DataType::Object(APP_OBJECT_NAME.to_owned());
+        let block = Block::new(vec![Statement::new(
+            None,
+            Rhs::Expr(DEFAULT_APP_OBJECT.to_owned()),
+        )]);
+        let function = Function::new(
+            BOOTSTRAP_FUNCTION_NAME.to_owned(),
+            Some(meta),
+            true,
+            true,
+            vec![],
+            block,
+            Some(rtype),
+        );
+        function.to_literal(indent)
+    }
+
+    pub(crate) fn get_main_function_literal(&self, indent: usize) -> String {
+        let meta = Meta::List {
+            name: PIPEBASE_MAIN.to_owned(),
+            metas: vec![Meta::Value {
+                name: BOOTSTRAP_MODULE_META_PATH.to_owned(),
+                meta: MetaValue::Str(self.get_app_module_name()),
+            }],
+        };
+        let function = Function::new(
+            "main".to_owned(),
+            Some(meta),
+            false,
+            true,
+            vec![],
+            Block::new(vec![]),
+            None,
+        );
+        function.to_literal(indent)
+    }
+
+    fn get_metas(&self) -> &Vec<Meta> {
+        self.metas.as_ref().unwrap()
+    }
+
+    fn get_context_store(&self) -> &ContextStore {
+        self.cstore.as_ref().unwrap()
+    }
+
+    pub(crate) fn get_objects(&self) -> &Vec<Object> {
+        self.objects.as_ref().unwrap()
+    }
+
+    pub(crate) fn get_pipes(&self) -> &Vec<Pipe> {
         &self.pipes.as_ref()
     }
 
-    pub fn print(&self) {
-        match self.generate() {
-            Some(lit) => println!("{}", lit),
-            None => (),
-        }
+    pub(crate) fn get_app_module_name(&self) -> String {
+        self.get_id()
     }
 
-    pub fn generate(&self) -> Option<String> {
+    pub fn print(&self) {
+        println!("{}", self.generate())
+    }
+
+    pub fn generate(&self) -> String {
         let mut app_generator = AppGenerator::new(0);
         self.accept(&mut app_generator);
         app_generator.generate()

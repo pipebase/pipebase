@@ -7,14 +7,12 @@ mod sink;
 mod source;
 
 pub use bootstrap::*;
+pub use context::*;
 pub use fanout::*;
 pub use pipederive::*;
 pub use process::*;
 pub use sink::*;
 pub use source::*;
-
-use context::Context;
-use context::State;
 
 use async_trait::async_trait;
 use log::error;

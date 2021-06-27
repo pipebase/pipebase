@@ -3,7 +3,8 @@ use crate::constants::{
     CONTEXT_STORE_METHOD_INSERT, CONTEXT_STORE_METHOD_INSERT_DEFAULT,
 };
 use crate::utils::{
-    get_any_attribute_by_meta_prefix, get_meta_string_value_by_meta_path, resolve_first_field,
+    get_any_attribute_by_meta_prefix, get_meta, get_meta_string_value_by_meta_path,
+    resolve_first_field,
 };
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
@@ -18,10 +19,10 @@ pub fn impl_context_store(ident: &Ident, data: &Data, generics: &Generics) -> To
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
         impl #impl_generics ContextStore for #ident #type_generics #where_clause {
-            fn add_pipe_context(&mut self, pipe_name: String, context: Arc<RwLock<Context>>) {
+            fn add_pipe_context(&mut self, pipe_name: String, context: std::sync::Arc<tokio::sync::RwLock<Context>>) {
                 self.#field_ident.#insert_method_token(pipe_name, context);
             }
-            fn get_pipe_context(&self, pipe_name: &str) -> Option<Arc<RwLock<Context>>> {
+            fn get_pipe_context(&self, pipe_name: &str) -> Option<std::sync::Arc<tokio::sync::RwLock<Context>>> {
                 match self.#field_ident.#get_method_token(pipe_name) {
                     Some(context) => Some(context.to_owned()),
                     None => None,
@@ -47,11 +48,14 @@ fn get_context_store_insert_method_token(attribute: Option<&Attribute>) -> Token
         Some(attribute) => attribute,
         None => return CONTEXT_STORE_METHOD_INSERT_DEFAULT.parse().unwrap(),
     };
-    let insert_method =
-        match get_meta_string_value_by_meta_path(CONTEXT_STORE_METHOD_INSERT, attribute, false) {
-            Some(insert_method) => insert_method,
-            None => CONTEXT_STORE_METHOD_INSERT_DEFAULT.to_owned(),
-        };
+    let insert_method = match get_meta_string_value_by_meta_path(
+        CONTEXT_STORE_METHOD_INSERT,
+        &get_meta(attribute),
+        false,
+    ) {
+        Some(insert_method) => insert_method,
+        None => CONTEXT_STORE_METHOD_INSERT_DEFAULT.to_owned(),
+    };
     insert_method.parse().unwrap()
 }
 
@@ -60,10 +64,13 @@ fn get_context_store_get_method_token(attribute: Option<&Attribute>) -> TokenStr
         Some(attribute) => attribute,
         None => return CONTEXT_STORE_METHOD_GET_DEFAULT.parse().unwrap(),
     };
-    let get_method =
-        match get_meta_string_value_by_meta_path(CONTEXT_STORE_METHOD_GET, attribute, false) {
-            Some(get_method) => get_method,
-            None => CONTEXT_STORE_METHOD_GET_DEFAULT.to_owned(),
-        };
+    let get_method = match get_meta_string_value_by_meta_path(
+        CONTEXT_STORE_METHOD_GET,
+        &get_meta(attribute),
+        false,
+    ) {
+        Some(get_method) => get_method,
+        None => CONTEXT_STORE_METHOD_GET_DEFAULT.to_owned(),
+    };
     get_method.parse().unwrap()
 }

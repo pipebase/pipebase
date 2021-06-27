@@ -104,7 +104,7 @@ impl Pipe {
         Some(meta)
     }
 
-    pub fn get_output_data_type_meta(&self) -> Option<Meta> {
+    fn get_output_data_type_meta(&self) -> Option<Meta> {
         let output = match self.output {
             Some(ref output) => output,
             None => return None,

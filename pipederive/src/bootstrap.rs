@@ -1,11 +1,12 @@
-use crate::utils::get_all_attributes_by_meta_prefix;
-use crate::{
-    constants::BOOTSTRAP_PIPE,
-    pipemeta::{ChannelExpr, PipeExpr, PipeMetas, SpawnJoinExpr},
+use crate::constants::{BOOTSTRAP_FUNCTION, BOOTSTRAP_MODULE, BOOTSTRAP_PIPE};
+use crate::pipemeta::{ChannelExpr, PipeExpr, PipeMetas, SpawnJoinExpr};
+use crate::utils::{
+    get_all_attributes_by_meta_prefix, get_last_stmt_span, get_meta_string_value_by_meta_path,
+    resolve_ident, resolve_module_path_token,
 };
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
-use syn::{Attribute, Generics};
+use quote::{quote, quote_spanned};
+use syn::{Attribute, Generics, ItemFn, NestedMeta};
 
 pub fn impl_bootstrap(
     ident: &Ident,
@@ -35,7 +36,7 @@ pub fn impl_bootstrap(
                 println!("{}", exprs)
             }
 
-            fn bootstrap(&mut self) -> Pin<Box<dyn Future<Output = ()> + Send + Sync>> {
+            fn bootstrap(&mut self) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + Sync>> {
                 #channel_expr_tokens
                 ;
                 #pipe_expr_tokens
@@ -105,4 +106,69 @@ fn resolve_pipe_context(pipe_name: &str) -> TokenStream {
 
 fn get_all_pipe_attributes(attributes: &Vec<Attribute>) -> Vec<Attribute> {
     get_all_attributes_by_meta_prefix(BOOTSTRAP_PIPE, attributes)
+}
+
+pub fn impl_bootstrap_macro(_args: Vec<NestedMeta>, mut function: ItemFn) -> TokenStream {
+    if function.sig.asyncness.is_none() {
+        panic!("the `async` keyword is missing from the function declaration")
+    }
+    // convert function name as bootstrap
+    function.sig.ident = resolve_ident(BOOTSTRAP_FUNCTION);
+    let (_, end) = get_last_stmt_span(&function);
+    let body = &function.block;
+    let brace_token = function.block.brace_token;
+    function.block = syn::parse2(quote_spanned! { end =>
+        {
+            let mut app = {
+                #body
+            };
+            app.bootstrap().await;
+            app
+        }
+    })
+    .unwrap();
+    function.block.brace_token = brace_token;
+    quote! {
+        #function
+    }
+}
+
+pub fn impl_bootstrap_main_macro(args: Vec<NestedMeta>, mut function: ItemFn) -> TokenStream {
+    if function.sig.asyncness.is_none() {
+        panic!("the `async` keyword is missing from the function declaration")
+    }
+    let modult_path_token = find_bootstrap_module(&args);
+    let bootstrap = resolve_ident(BOOTSTRAP_FUNCTION);
+    let (_, end) = get_last_stmt_span(&function);
+    let body = &function.block;
+    let brace_token = function.block.brace_token;
+    function.block = syn::parse2(quote_spanned! { end =>
+        {
+            #body
+            #modult_path_token::#bootstrap().await;
+        }
+    })
+    .unwrap();
+    function.block.brace_token = brace_token;
+    let tokio_header = quote! {
+        #[tokio::main]
+    };
+    quote! {
+        #tokio_header
+        #function
+    }
+}
+
+fn find_bootstrap_module(args: &Vec<NestedMeta>) -> TokenStream {
+    for arg in args {
+        let meta = match arg {
+            NestedMeta::Meta(meta) => meta,
+            _ => continue,
+        };
+        match get_meta_string_value_by_meta_path(BOOTSTRAP_MODULE, meta, false) {
+            Some(ref module_path) => return resolve_module_path_token(module_path),
+            None => continue,
+        }
+    }
+    panic!("bootstrap module not found")
 }

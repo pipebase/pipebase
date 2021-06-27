@@ -3,6 +3,6 @@ mod generate;
 mod utils;
 mod validate;
 
-pub use describe::*;
-pub use generate::*;
-pub use validate::*;
+pub(crate) use describe::*;
+pub(crate) use generate::*;
+pub(crate) use validate::*;
