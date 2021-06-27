@@ -3,7 +3,9 @@ use quote::quote;
 use syn::{Attribute, Generics};
 
 use crate::constants::{FILTER, FILTER_ALIAS, FILTER_ALIAS_DEFAULT, FILTER_PREDICATE};
-use crate::utils::{get_any_attribute_by_meta_prefix, get_meta_string_value_by_meta_path};
+use crate::utils::{
+    get_any_attribute_by_meta_prefix, get_meta, get_meta_string_value_by_meta_path,
+};
 
 pub fn impl_filter(ident: &Ident, attributes: &Vec<Attribute>, generics: &Generics) -> TokenStream {
     let ref attribute = get_filter_attribute(attributes);
@@ -37,14 +39,12 @@ fn get_filter_attribute(attributes: &Vec<Attribute>) -> Attribute {
 }
 
 fn get_filter_alias(attribute: &Attribute) -> String {
-    match get_meta_string_value_by_meta_path(FILTER_ALIAS, &attribute.parse_meta().unwrap(), false)
-    {
+    match get_meta_string_value_by_meta_path(FILTER_ALIAS, &get_meta(attribute), false) {
         Some(alias) => alias,
         None => FILTER_ALIAS_DEFAULT.to_owned(),
     }
 }
 
 fn get_filter_predicate(attribute: &Attribute) -> String {
-    get_meta_string_value_by_meta_path(FILTER_PREDICATE, &attribute.parse_meta().unwrap(), true)
-        .unwrap()
+    get_meta_string_value_by_meta_path(FILTER_PREDICATE, &get_meta(attribute), true).unwrap()
 }

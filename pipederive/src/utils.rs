@@ -241,3 +241,7 @@ pub fn get_last_stmt_span(function: &ItemFn) -> (Span, Span) {
     let end = last_stmt.last().map_or(start, |t| t.span());
     (start, end)
 }
+
+pub fn get_meta(attribute: &Attribute) -> Meta {
+    attribute.parse_meta().unwrap()
+}

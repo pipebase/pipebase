@@ -10,7 +10,7 @@ use crate::constants::{
     BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH, BOOTSTRAP_PIPE_CONFIG_TYPE,
     BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE, BOOTSTRAP_PIPE_UPSTREAM,
 };
-use crate::utils::get_meta_string_value_by_meta_path;
+use crate::utils::{get_meta, get_meta_string_value_by_meta_path};
 
 /// Pipe configuration type name and path
 #[derive(Clone)]
@@ -109,27 +109,17 @@ impl PipeMeta {
     }
 
     fn parse_name(attribute: &Attribute) -> String {
-        get_meta_string_value_by_meta_path(
-            BOOTSTRAP_PIPE_NAME,
-            &attribute.parse_meta().unwrap(),
-            true,
-        )
-        .unwrap()
+        get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_NAME, &get_meta(attribute), true).unwrap()
     }
 
     fn parse_ty(attribute: &Attribute) -> String {
-        get_meta_string_value_by_meta_path(
-            BOOTSTRAP_PIPE_TYPE,
-            &attribute.parse_meta().unwrap(),
-            true,
-        )
-        .unwrap()
+        get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_TYPE, &get_meta(attribute), true).unwrap()
     }
 
     fn parse_upstream_names(attribute: &Attribute) -> Vec<String> {
         match get_meta_string_value_by_meta_path(
             BOOTSTRAP_PIPE_UPSTREAM,
-            &attribute.parse_meta().unwrap(),
+            &get_meta(attribute),
             false,
         ) {
             Some(upstream_names) => {
@@ -151,24 +141,21 @@ impl PipeMeta {
     fn parse_config_meta(attribute: &Attribute) -> PipeConfigMeta {
         let ty = get_meta_string_value_by_meta_path(
             BOOTSTRAP_PIPE_CONFIG_TYPE,
-            &attribute.parse_meta().unwrap(),
+            &get_meta(attribute),
             true,
         )
         .unwrap();
         let path = get_meta_string_value_by_meta_path(
             BOOTSTRAP_PIPE_CONFIG_PATH,
-            &attribute.parse_meta().unwrap(),
+            &get_meta(attribute),
             false,
         );
         PipeConfigMeta { ty: ty, path: path }
     }
 
     fn parse_output_meta(attribute: &Attribute) -> Option<String> {
-        match get_meta_string_value_by_meta_path(
-            BOOTSTRAP_PIPE_OUTPUT,
-            &attribute.parse_meta().unwrap(),
-            false,
-        ) {
+        match get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_OUTPUT, &get_meta(attribute), false)
+        {
             Some(ty) => Some(ty),
             None => None,
         }

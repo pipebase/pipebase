@@ -3,7 +3,8 @@ use crate::constants::{
     CONTEXT_STORE_METHOD_INSERT, CONTEXT_STORE_METHOD_INSERT_DEFAULT,
 };
 use crate::utils::{
-    get_any_attribute_by_meta_prefix, get_meta_string_value_by_meta_path, resolve_first_field,
+    get_any_attribute_by_meta_prefix, get_meta, get_meta_string_value_by_meta_path,
+    resolve_first_field,
 };
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
@@ -49,7 +50,7 @@ fn get_context_store_insert_method_token(attribute: Option<&Attribute>) -> Token
     };
     let insert_method = match get_meta_string_value_by_meta_path(
         CONTEXT_STORE_METHOD_INSERT,
-        &attribute.parse_meta().unwrap(),
+        &get_meta(attribute),
         false,
     ) {
         Some(insert_method) => insert_method,
@@ -65,7 +66,7 @@ fn get_context_store_get_method_token(attribute: Option<&Attribute>) -> TokenStr
     };
     let get_method = match get_meta_string_value_by_meta_path(
         CONTEXT_STORE_METHOD_GET,
-        &attribute.parse_meta().unwrap(),
+        &get_meta(attribute),
         false,
     ) {
         Some(get_method) => get_method,

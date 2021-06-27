@@ -6,8 +6,8 @@ use crate::constants::{
     PROJECT, PROJECT_ALIAS, PROJECT_ALIAS_DEFAULT, PROJECT_EXPR, PROJECT_FROM, PROJECT_INPUT,
 };
 use crate::utils::{
-    get_any_attribute_by_meta_prefix, get_meta_string_value_by_meta_path, get_type_name_token,
-    resolve_field_path_token,
+    get_any_attribute_by_meta_prefix, get_meta, get_meta_string_value_by_meta_path,
+    get_type_name_token, resolve_field_path_token,
 };
 
 pub fn impl_project(
@@ -110,8 +110,7 @@ fn handle_project_expr(
 }
 
 fn get_project_alias(attribute: &Attribute) -> String {
-    match get_meta_string_value_by_meta_path(PROJECT_ALIAS, &attribute.parse_meta().unwrap(), false)
-    {
+    match get_meta_string_value_by_meta_path(PROJECT_ALIAS, &get_meta(attribute), false) {
         Some(alias) => alias,
         None => PROJECT_ALIAS_DEFAULT.to_owned(),
     }
@@ -122,9 +121,9 @@ fn get_any_project_attribute(attributes: &Vec<Attribute>) -> Attribute {
 }
 
 fn get_project_from(attribute: &Attribute) -> Option<String> {
-    get_meta_string_value_by_meta_path(PROJECT_FROM, &attribute.parse_meta().unwrap(), false)
+    get_meta_string_value_by_meta_path(PROJECT_FROM, &get_meta(attribute), false)
 }
 
 fn get_project_expr(attribute: &Attribute) -> Option<String> {
-    get_meta_string_value_by_meta_path(PROJECT_EXPR, &attribute.parse_meta().unwrap(), false)
+    get_meta_string_value_by_meta_path(PROJECT_EXPR, &get_meta(attribute), false)
 }
