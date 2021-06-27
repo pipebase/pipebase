@@ -187,7 +187,7 @@ impl App {
             name: "pipebase::main".to_owned(),
             metas: vec![Meta::Value {
                 name: "bootstrap".to_owned(),
-                meta: MetaValue::Str(self.get_id()),
+                meta: MetaValue::Str(self.get_app_module_name()),
             }],
         };
         let function = Function::new(
@@ -216,6 +216,10 @@ impl App {
 
     pub fn get_pipes(&self) -> &Vec<Pipe> {
         &self.pipes.as_ref()
+    }
+
+    pub fn get_app_module_name(&self) -> String {
+        self.get_id()
     }
 
     pub fn print(&self) {

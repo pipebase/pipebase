@@ -146,7 +146,7 @@ impl AppGenerator {
     }
 
     pub fn generate_all(&self) -> String {
-        let module_name = self.get_app().get_id();
+        let module_name = self.get_app().get_app_module_name();
         let mut sections: Vec<String> = vec![];
         let indent: usize = self.indent + 1;
         sections.push(self.generate_use_modules(indent));
