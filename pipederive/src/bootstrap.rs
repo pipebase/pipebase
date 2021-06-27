@@ -1,5 +1,6 @@
+use crate::constants::BOOTSTRAP_MODULE;
 use crate::utils::{
-    get_all_attributes_by_meta_prefix, get_last_stmt_span, parse_lit_as_string,
+    get_all_attributes_by_meta_prefix, get_last_stmt_span, get_meta_string_value_by_meta_path,
     resolve_module_path_token,
 };
 use crate::{
@@ -8,7 +9,7 @@ use crate::{
 };
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, quote_spanned};
-use syn::{Attribute, Generics, ItemFn, Meta, MetaNameValue, NestedMeta};
+use syn::{Attribute, Generics, ItemFn, NestedMeta};
 
 pub fn impl_bootstrap(
     ident: &Ident,
@@ -160,19 +161,13 @@ pub fn impl_bootstrap_main_macro(args: Vec<NestedMeta>, mut function: ItemFn) ->
 
 fn find_bootstrap_module(args: &Vec<NestedMeta>) -> TokenStream {
     for arg in args {
-        let (path, lit) = match arg {
-            NestedMeta::Meta(Meta::NameValue(MetaNameValue {
-                ref path, ref lit, ..
-            })) => (path, lit),
+        let meta = match arg {
+            NestedMeta::Meta(meta) => meta,
             _ => continue,
         };
-        match path.get_ident().unwrap().to_string().as_str() {
-            "bootstrap" => {
-                if let Some(ref module_path) = parse_lit_as_string(lit) {
-                    return resolve_module_path_token(module_path);
-                }
-            }
-            _ => continue,
+        match get_meta_string_value_by_meta_path(BOOTSTRAP_MODULE, meta, false) {
+            Some(ref module_path) => return resolve_module_path_token(module_path),
+            None => continue,
         }
     }
     panic!("bootstrap module not found")
