@@ -69,6 +69,7 @@ where
         let context = self.context.clone();
         let name = self.name.to_owned();
         let join_event_loop = tokio::spawn(async move {
+            log::info!("listener {} run ...", name);
             loop {
                 Self::inc_total_run(&context).await;
                 Self::set_state(&context, State::Receive).await;

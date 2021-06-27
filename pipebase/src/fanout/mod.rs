@@ -59,6 +59,7 @@ where
             }
             _ => (),
         }
+        log::info!("selector {} run ...", self.name);
         loop {
             Self::inc_total_run(&self.context).await;
             Self::set_state(&self.context, State::Receive).await;

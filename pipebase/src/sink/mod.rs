@@ -45,7 +45,7 @@ where
 {
     async fn run(&mut self) -> Result<()> {
         let mut exporter = self.config.config_into().await.unwrap();
-
+        log::info!("exporter {} run ...", self.name);
         loop {
             Self::inc_total_run(&self.context).await;
             Self::set_state(&self.context, State::Receive).await;

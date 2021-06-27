@@ -41,6 +41,7 @@ where
 {
     async fn run(&mut self) -> Result<()> {
         let mut poller = self.config.config_into().await.unwrap();
+        info!("source {} run ...", self.name);
         loop {
             Self::inc_total_run(&self.context).await;
             Self::set_state(&self.context, State::Poll).await;

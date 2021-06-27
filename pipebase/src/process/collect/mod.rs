@@ -90,6 +90,7 @@ where
                 let c = collector_clone.lock().await;
                 c.get_flush_interval()
             };
+            log::info!("collector {} run ...", name);
             loop {
                 Self::set_state(&context, State::Receive).await;
                 Self::inc_total_run(&context).await;
