@@ -25,11 +25,11 @@ where
     P: Poll<T, C>,
     C: ConfigInto<P> + Send + Sync,
 {
-    pub name: &'a str,
-    pub txs: HashMap<usize, Arc<Sender<T>>>,
-    pub config: C,
-    pub poller: PhantomData<P>,
-    pub context: Arc<RwLock<Context>>,
+    name: &'a str,
+    txs: HashMap<usize, Arc<Sender<T>>>,
+    config: C,
+    poller: PhantomData<P>,
+    context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
@@ -92,6 +92,23 @@ where
     }
 }
 
+impl<'a, T, P, C> Poller<'a, T, P, C>
+where
+    T: Clone + Send + 'static,
+    P: Poll<T, C>,
+    C: ConfigInto<P> + Send + Sync,
+{
+    pub fn new(name: &'a str, config: C) -> Self {
+        Poller {
+            name: name,
+            txs: HashMap::new(),
+            config: config,
+            poller: std::marker::PhantomData,
+            context: Default::default(),
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! poller {
     (
@@ -99,13 +116,7 @@ macro_rules! poller {
     ) => {
         {
             let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Poller {
-                name: $name,
-                txs: std::collections::HashMap::new(),
-                config: config,
-                poller: std::marker::PhantomData,
-                context: Default::default()
-            };
+            let mut pipe = Poller::new($name, config);
             $(
                 pipe.add_sender($tx);
             )*
