@@ -1,11 +1,8 @@
-use crate::constants::BOOTSTRAP_MODULE;
+use crate::constants::{BOOTSTRAP_FUNCTION, BOOTSTRAP_MODULE, BOOTSTRAP_PIPE};
+use crate::pipemeta::{ChannelExpr, PipeExpr, PipeMetas, SpawnJoinExpr};
 use crate::utils::{
     get_all_attributes_by_meta_prefix, get_last_stmt_span, get_meta_string_value_by_meta_path,
-    resolve_module_path_token,
-};
-use crate::{
-    constants::BOOTSTRAP_PIPE,
-    pipemeta::{ChannelExpr, PipeExpr, PipeMetas, SpawnJoinExpr},
+    resolve_ident, resolve_module_path_token,
 };
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, quote_spanned};
@@ -115,6 +112,8 @@ pub fn impl_bootstrap_macro(_args: Vec<NestedMeta>, mut function: ItemFn) -> Tok
     if function.sig.asyncness.is_none() {
         panic!("the `async` keyword is missing from the function declaration")
     }
+    // convert function name as bootstrap
+    function.sig.ident = resolve_ident(BOOTSTRAP_FUNCTION);
     let (_, end) = get_last_stmt_span(&function);
     let body = &function.block;
     let brace_token = function.block.brace_token;
@@ -139,13 +138,14 @@ pub fn impl_bootstrap_main_macro(args: Vec<NestedMeta>, mut function: ItemFn) ->
         panic!("the `async` keyword is missing from the function declaration")
     }
     let modult_path_token = find_bootstrap_module(&args);
+    let bootstrap = resolve_ident(BOOTSTRAP_FUNCTION);
     let (_, end) = get_last_stmt_span(&function);
     let body = &function.block;
     let brace_token = function.block.brace_token;
     function.block = syn::parse2(quote_spanned! { end =>
         {
             #body
-            #modult_path_token::bootstrap().await;
+            #modult_path_token::#bootstrap().await;
         }
     })
     .unwrap();
