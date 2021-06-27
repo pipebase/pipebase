@@ -29,11 +29,11 @@ where
     E: Export<T, C>,
     C: ConfigInto<E>,
 {
-    pub name: &'a str,
-    pub rx: Receiver<T>,
-    pub config: C,
-    pub exporter: PhantomData<E>,
-    pub context: Arc<RwLock<Context>>,
+    name: &'a str,
+    config: C,
+    rx: Receiver<T>,
+    exporter: PhantomData<E>,
+    context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
@@ -77,6 +77,23 @@ where
     }
 }
 
+impl<'a, T, E, C> Exporter<'a, T, E, C>
+where
+    T: Send + Sync + 'static,
+    E: Export<T, C>,
+    C: ConfigInto<E>,
+{
+    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+        Exporter {
+            name: name,
+            config: config,
+            rx: rx,
+            exporter: std::marker::PhantomData,
+            context: Default::default(),
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! exporter {
     (
@@ -84,13 +101,7 @@ macro_rules! exporter {
     ) => {{
         let config =
             <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-        let pipe = Exporter {
-            name: $name,
-            rx: $rx,
-            config: config,
-            exporter: std::marker::PhantomData,
-            context: Default::default(),
-        };
+        let pipe = Exporter::new($name, config, $rx);
         pipe
     }};
     (
