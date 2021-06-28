@@ -9,7 +9,7 @@ pub trait Aggregate<I, T, U>
 where
     T: IntoIterator<Item = I>,
 {
-    fn aggregate(&self, t: T) -> U;
+    fn aggregate(t: T) -> U;
 }
 
 #[derive(Deserialize)]
@@ -41,7 +41,7 @@ where
     I: std::ops::AddAssign<I> + Default,
     T: IntoIterator<Item = I>,
 {
-    fn aggregate(&self, t: T) -> I {
+    fn aggregate(t: T) -> I {
         let mut sum: I = Default::default();
         for item in t.into_iter() {
             sum += item;
@@ -57,7 +57,7 @@ where
     T: IntoIterator<Item = I> + Send + 'static,
 {
     async fn map(&mut self, data: T) -> anyhow::Result<I> {
-        Ok(self.aggregate(data))
+        Ok(Self::aggregate(data))
     }
 }
 
@@ -92,7 +92,7 @@ where
     I: Hash + Eq + PartialEq,
     T: IntoIterator<Item = I>,
 {
-    fn group_aggregate(&self, t: T) -> U;
+    fn group_aggregate(t: T) -> U;
 }
 
 #[derive(Deserialize)]
@@ -124,7 +124,7 @@ where
     I: Hash + Eq + PartialEq + std::ops::AddAssign<I> + Clone,
     T: IntoIterator<Item = I>,
 {
-    fn group_aggregate(&self, t: T) -> HashMap<I, I> {
+    fn group_aggregate(t: T) -> HashMap<I, I> {
         let mut group_sum: HashMap<I, I> = HashMap::new();
         for ref item in t {
             match group_sum.get_mut(item) {
@@ -145,7 +145,7 @@ where
     T: IntoIterator<Item = I> + Send + 'static,
 {
     async fn map(&mut self, data: T) -> anyhow::Result<HashMap<I, I>> {
-        Ok(self.group_aggregate(data))
+        Ok(Self::group_aggregate(data))
     }
 }
 
