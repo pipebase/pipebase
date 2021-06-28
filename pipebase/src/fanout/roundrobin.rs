@@ -3,36 +3,37 @@ use async_trait::async_trait;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct RoundRobinConfig {
-    pub n: usize,
-}
+pub struct RoundRobinConfig {}
 
-impl FromPath for RoundRobinConfig {}
+impl FromPath for RoundRobinConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<std::path::Path>,
+    {
+        Ok(RoundRobinConfig {})
+    }
+}
 
 #[async_trait]
 impl ConfigInto<RoundRobin> for RoundRobinConfig {}
 
 pub struct RoundRobin {
     pub i: usize,
-    pub n: usize,
 }
 
 #[async_trait]
 impl FromConfig<RoundRobinConfig> for RoundRobin {
-    async fn from_config(config: &RoundRobinConfig) -> anyhow::Result<Self> {
-        Ok(RoundRobin { i: 0, n: config.n })
+    async fn from_config(_config: &RoundRobinConfig) -> anyhow::Result<Self> {
+        Ok(RoundRobin { i: 0 })
     }
 }
 
 impl<T> Select<T, RoundRobinConfig> for RoundRobin {
-    fn select(&mut self, _t: &T) -> Vec<usize> {
-        let i = self.i;
-        let selected = vec![i];
-        self.i = (i + 1) % self.n;
+    fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
+        let i = self.i % candidates.len();
+        let selected = vec![candidates[i].clone()];
+        self.i = i + 1;
         selected
-    }
-    fn get_range(&mut self) -> usize {
-        self.n
     }
 }
 

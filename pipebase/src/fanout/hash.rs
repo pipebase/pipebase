@@ -5,37 +5,36 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
 #[derive(Deserialize)]
-pub struct DefaultHashSelectConfig {
-    pub n: usize,
-}
+pub struct DefaultHashSelectConfig {}
 
-impl FromPath for DefaultHashSelectConfig {}
+impl FromPath for DefaultHashSelectConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<std::path::Path>,
+    {
+        Ok(DefaultHashSelectConfig {})
+    }
+}
 
 #[async_trait]
 impl ConfigInto<DefaultHashSelect> for DefaultHashSelectConfig {}
 
-pub struct DefaultHashSelect {
-    pub n: usize,
-}
+pub struct DefaultHashSelect {}
 
 #[async_trait]
 impl FromConfig<DefaultHashSelectConfig> for DefaultHashSelect {
-    async fn from_config(config: &DefaultHashSelectConfig) -> anyhow::Result<Self> {
-        Ok(DefaultHashSelect { n: config.n })
+    async fn from_config(_config: &DefaultHashSelectConfig) -> anyhow::Result<Self> {
+        Ok(DefaultHashSelect {})
     }
 }
 
 impl<T: Hash> Select<T, DefaultHashSelectConfig> for DefaultHashSelect {
-    fn select(&mut self, t: &T) -> Vec<usize> {
+    fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize> {
         let mut hasher = DefaultHasher::new();
         t.hash(&mut hasher);
         let h = hasher.finish();
-        let i = h % (self.n as u64);
-        vec![i as usize]
-    }
-
-    fn get_range(&mut self) -> usize {
-        self.n
+        let i = h % (candidates.len() as u64);
+        vec![candidates[i as usize].to_owned()]
     }
 }
 
@@ -102,13 +101,7 @@ mod tests {
         let f0 = populate_records(&mut tx0, records);
         let f1 = receive_records(&mut rx1, 1);
         let f2 = receive_records(&mut rx2, 2);
-        let mut pipe = selector!(
-            "hash_select",
-            "resources/catalogs/default_hash_selector.yml",
-            DefaultHashSelectConfig,
-            rx0,
-            [tx1, tx2]
-        );
+        let mut pipe = selector!("hash_select", DefaultHashSelectConfig, rx0, [tx1, tx2]);
         f0.await;
         drop(tx0);
         spawn_join!(pipe);
