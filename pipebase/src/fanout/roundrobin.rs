@@ -29,11 +29,10 @@ impl FromConfig<RoundRobinConfig> for RoundRobin {
 }
 
 impl<T> Select<T, RoundRobinConfig> for RoundRobin {
-    fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
+    fn select<'a>(&mut self, _t: &T, candidates: &'a [&'a usize]) -> &'a [&'a usize] {
         let i = self.i % candidates.len();
-        let selected = vec![candidates[i].clone()];
         self.i = i + 1;
-        selected
+        &candidates[i..i + 1]
     }
 }
 
