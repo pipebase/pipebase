@@ -21,7 +21,7 @@ use crate::context::{Context, State};
 use crate::error::Result;
 
 pub trait Select<T, C>: Send + Sync + FromConfig<C> {
-    fn select<'a>(&mut self, t: &T, candidates: &'a [&'a usize]) -> &'a [&'a usize];
+    fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize>;
 }
 
 pub struct Selector<'a, T, S, C>
@@ -70,10 +70,10 @@ where
             Self::set_state(&self.context, State::Send).await;
             let candidates = self.txs.keys().collect::<Vec<&usize>>();
             let mut jhs = HashMap::new();
-            for i in selector.select(&t, &candidates).to_owned() {
-                let tx = self.txs.get(i).unwrap();
+            for i in selector.select(&t, &candidates) {
+                let tx = self.txs.get(&i).unwrap();
                 let t_clone = t.to_owned();
-                jhs.insert(i.to_owned(), Self::spawn_send(tx.to_owned(), t_clone));
+                jhs.insert(i, Self::spawn_send(tx.to_owned(), t_clone));
             }
             let drop_sender_indices = Self::wait_join_handles(jhs).await;
             Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);

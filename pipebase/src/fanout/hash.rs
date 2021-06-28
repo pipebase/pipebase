@@ -29,13 +29,12 @@ impl FromConfig<DefaultHashSelectConfig> for DefaultHashSelect {
 }
 
 impl<T: Hash> Select<T, DefaultHashSelectConfig> for DefaultHashSelect {
-    fn select<'a>(&mut self, t: &T, candidates: &'a [&'a usize]) -> &'a [&'a usize] {
+    fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize> {
         let mut hasher = DefaultHasher::new();
         t.hash(&mut hasher);
         let h = hasher.finish();
         let i = h % (candidates.len() as u64);
-        let i = i as usize;
-        &candidates[i..i + 1]
+        vec![candidates[i as usize].to_owned()]
     }
 }
 

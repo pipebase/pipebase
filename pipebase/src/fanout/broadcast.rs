@@ -27,8 +27,12 @@ impl FromConfig<BroadcastConfig> for Broadcast {
 }
 
 impl<T> Select<T, BroadcastConfig> for Broadcast {
-    fn select<'a>(&mut self, _t: &T, candidates: &'a [&'a usize]) -> &'a [&'a usize] {
-        &candidates[..]
+    fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
+        let mut all: Vec<usize> = Vec::new();
+        for i in 0..candidates.len() {
+            all.push(candidates[i].to_owned())
+        }
+        all
     }
 }
 
