@@ -3,12 +3,14 @@ mod echo;
 mod field;
 mod filter;
 mod project;
+mod split;
 
 pub use aggregate::*;
 pub use echo::*;
 pub use field::*;
 pub use filter::*;
 pub use project::*;
+pub use split::*;
 
 use std::fmt::Debug;
 use std::marker::PhantomData;
