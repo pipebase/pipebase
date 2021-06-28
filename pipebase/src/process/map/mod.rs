@@ -1,8 +1,10 @@
+mod aggregate;
 mod echo;
 mod field;
 mod filter;
 mod project;
 
+pub use aggregate::*;
 pub use echo::*;
 pub use field::*;
 pub use filter::*;
@@ -24,7 +26,7 @@ use tokio::sync::RwLock;
 
 #[async_trait]
 pub trait Map<T, U, C>: Send + Sync + FromConfig<C> {
-    async fn map(&mut self, data: &T) -> anyhow::Result<U>;
+    async fn map(&mut self, data: T) -> anyhow::Result<U>;
 }
 
 pub struct Mapper<'a, T, U, M, C>
@@ -73,7 +75,7 @@ where
                 }
             };
             Self::set_state(&self.context, State::Process).await;
-            let u = match mapper.map(&t).await {
+            let u = match mapper.map(t).await {
                 Ok(u) => u,
                 Err(e) => {
                     error!("process {} error {}", self.name, e);
