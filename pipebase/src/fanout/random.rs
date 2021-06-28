@@ -28,10 +28,10 @@ impl FromConfig<RandomConfig> for Random {
 }
 
 impl<T> Select<T, RandomConfig> for Random {
-    fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
+    fn select<'a>(&mut self, _t: &T, candidates: &'a [&'a usize]) -> &'a [&'a usize] {
         let mut rng = rand::thread_rng();
         let i = rng.gen_range(0..candidates.len());
-        vec![candidates[i].to_owned()]
+        &candidates[i..i + 1]
     }
 }
 
