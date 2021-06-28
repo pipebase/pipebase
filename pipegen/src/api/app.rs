@@ -153,6 +153,13 @@ impl App {
                 None,
                 vec![],
             ),
+            Dependency::new(
+                "env_logger".to_owned(),
+                Some("0.8.4".to_owned()),
+                None,
+                None,
+                vec![],
+            ),
         ]
     }
 
@@ -195,13 +202,17 @@ impl App {
                 meta: MetaValue::Str(self.get_app_module_name()),
             }],
         };
+        let block = Block::new(vec![Statement::new(
+            None,
+            Rhs::Expr("env_logger::init();".to_owned()),
+        )]);
         let function = Function::new(
             "main".to_owned(),
             Some(meta),
             false,
             true,
             vec![],
-            Block::new(vec![]),
+            block,
             None,
         );
         function.to_literal(indent)
