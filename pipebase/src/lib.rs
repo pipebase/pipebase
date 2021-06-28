@@ -19,7 +19,6 @@ use log::error;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::mpsc::error::SendError;
 use tokio::sync::mpsc::Sender;
@@ -31,7 +30,7 @@ use error::Result;
 pub trait FromPath: Sized + DeserializeOwned {
     fn from_path<P>(path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<Path>,
+        P: AsRef<std::path::Path>,
     {
         let file = std::fs::File::open(path)?;
         let config = serde_yaml::from_reader::<std::fs::File, Self>(file)?;

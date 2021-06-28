@@ -4,35 +4,34 @@ use rand::Rng;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct RandomConfig {
-    pub n: usize,
-}
+pub struct RandomConfig {}
 
-impl FromPath for RandomConfig {}
+impl FromPath for RandomConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<std::path::Path>,
+    {
+        Ok(RandomConfig {})
+    }
+}
 
 #[async_trait]
 impl ConfigInto<Random> for RandomConfig {}
 
-pub struct Random {
-    n: usize,
-}
+pub struct Random {}
 
 #[async_trait]
 impl FromConfig<RandomConfig> for Random {
-    async fn from_config(config: &RandomConfig) -> anyhow::Result<Self> {
-        Ok(Random { n: config.n })
+    async fn from_config(_config: &RandomConfig) -> anyhow::Result<Self> {
+        Ok(Random {})
     }
 }
 
 impl<T> Select<T, RandomConfig> for Random {
-    fn select(&mut self, _t: &T) -> Vec<usize> {
+    fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
         let mut rng = rand::thread_rng();
-        let i = rng.gen_range(0..self.n);
-        vec![i]
-    }
-
-    fn get_range(&mut self) -> usize {
-        self.n
+        let i = rng.gen_range(0..candidates.len());
+        vec![candidates[i].to_owned()]
     }
 }
 
@@ -62,13 +61,7 @@ mod tests {
         let (tx1, mut rx1) = channel!(u128, 1024);
         let (tx2, mut rx2) = channel!(u128, 1024);
         let mut source = poller!("timer", "resources/catalogs/timer.yml", TimerConfig, [tx0]);
-        let mut selector = selector!(
-            "random_select",
-            "resources/catalogs/random_selector.yml",
-            RandomConfig,
-            rx0,
-            [tx1, tx2]
-        );
+        let mut selector = selector!("random_select", RandomConfig, rx0, [tx1, tx2]);
         crate::spawn_join!(source, selector);
         let c1 = count_tick(&mut rx1, 0).await;
         let c2 = count_tick(&mut rx2, 1).await;

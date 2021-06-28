@@ -18,11 +18,10 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::RwLock;
 
 use crate::context::{Context, State};
-use crate::error::{select_range_error, Result};
+use crate::error::Result;
 
 pub trait Select<T, C>: Send + Sync + FromConfig<C> {
-    fn select(&mut self, t: &T) -> Vec<usize>;
-    fn get_range(&mut self) -> usize;
+    fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize>;
 }
 
 pub struct Selector<'a, T, S, C>
@@ -48,17 +47,6 @@ where
 {
     async fn run(&mut self) -> Result<()> {
         let mut selector = self.config.config_into().await.unwrap();
-        let selector_range = selector.get_range();
-        let sender_range = self.txs.len();
-        match selector_range == sender_range {
-            false => {
-                return Err(select_range_error(&format!(
-                    "selector/sender range not equal {} != {}",
-                    selector_range, sender_range
-                )))
-            }
-            _ => (),
-        }
         log::info!("selector {} run ...", self.name);
         loop {
             Self::inc_total_run(&self.context).await;
@@ -80,8 +68,9 @@ where
                 }
             };
             Self::set_state(&self.context, State::Send).await;
+            let candidates = self.txs.keys().collect::<Vec<&usize>>();
             let mut jhs = HashMap::new();
-            for i in selector.select(&t) {
+            for i in selector.select(&t, &candidates) {
                 let tx = self.txs.get(&i).unwrap();
                 let t_clone = t.to_owned();
                 jhs.insert(i, Self::spawn_send(tx.to_owned(), t_clone));
