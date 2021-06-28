@@ -35,11 +35,11 @@ impl FromConfig<EchoConfig> for Echo {
 #[async_trait]
 impl<T> Map<T, T, EchoConfig> for Echo
 where
-    T: Clone + Debug + Sync,
+    T: Clone + Debug + Send + 'static,
 {
-    async fn map(&mut self, t: &T) -> anyhow::Result<T> {
+    async fn map(&mut self, t: T) -> anyhow::Result<T> {
         info!("{:#?}", t);
-        Ok(t.to_owned())
+        Ok(t)
     }
 }
 

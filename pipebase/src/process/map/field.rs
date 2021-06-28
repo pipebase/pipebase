@@ -49,10 +49,10 @@ impl FromConfig<FieldVisitConfig> for FieldVisit {
 #[async_trait]
 impl<T, U> Map<T, U, FieldVisitConfig> for FieldVisit
 where
-    T: FieldAccept<U> + Sync,
+    T: FieldAccept<U> + Send + 'static,
     U: Clone,
 {
-    async fn map(&mut self, t: &T) -> anyhow::Result<U> {
+    async fn map(&mut self, t: T) -> anyhow::Result<U> {
         let mut visitor = FieldVisitor::<U> { value: None };
         t.accept(&mut visitor);
         Ok(visitor.get_value().unwrap().to_owned())

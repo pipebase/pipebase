@@ -175,10 +175,10 @@ impl FromConfig<ProjectionConfig> for Projection {
 #[async_trait]
 impl<T, U> Map<T, U, ProjectionConfig> for Projection
 where
-    T: Sync,
+    T: Send + 'static,
     U: Project<T>,
 {
-    async fn map(&mut self, data: &T) -> anyhow::Result<U> {
+    async fn map(&mut self, data: T) -> anyhow::Result<U> {
         Ok(U::project(&data))
     }
 }

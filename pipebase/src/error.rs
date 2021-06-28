@@ -25,7 +25,6 @@ impl Debug for Error {
 }
 #[derive(Debug)]
 pub enum ErrorImpl {
-    SelectRange(String),
     IO(std::io::Error),
     Join(tokio::task::JoinError),
 }
@@ -35,13 +34,11 @@ impl ErrorImpl {
         match self {
             ErrorImpl::IO(err) => Some(err),
             ErrorImpl::Join(err) => Some(err),
-            _ => None,
         }
     }
 
     fn display(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ErrorImpl::SelectRange(msg) => Display::fmt(msg, f),
             ErrorImpl::IO(err) => Display::fmt(err, f),
             ErrorImpl::Join(err) => Display::fmt(err, f),
         }
@@ -49,18 +46,10 @@ impl ErrorImpl {
 
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ErrorImpl::SelectRange(msg) => f.debug_tuple("SelectRange").field(msg).finish(),
             ErrorImpl::IO(err) => f.debug_tuple("Io").field(err).finish(),
             ErrorImpl::Join(err) => f.debug_tuple("Join").field(err).finish(),
         }
     }
-}
-
-pub fn select_range_error(msg: &str) -> Error {
-    Error(Box::new(ErrorImpl::SelectRange(format!(
-        "[Select Range Error] {}",
-        msg
-    ))))
 }
 
 pub fn io_error(err: std::io::Error) -> Error {

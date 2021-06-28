@@ -39,12 +39,11 @@ impl FromConfig<FilterMapConfig> for FilterMap {
 impl<T, U, V> Map<U, V, FilterMapConfig> for FilterMap
 where
     T: Filter + Clone + Sync,
-    U: IntoIterator<Item = T> + Sync + Clone,
+    U: IntoIterator<Item = T> + Send + Clone + 'static,
     V: FromIterator<T> + Send,
 {
-    async fn map(&mut self, data: &U) -> anyhow::Result<V> {
+    async fn map(&mut self, data: U) -> anyhow::Result<V> {
         Ok(data
-            .to_owned()
             .into_iter()
             .filter_map(|item| T::filter(&item))
             .collect::<V>())
