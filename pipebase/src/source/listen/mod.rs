@@ -1,3 +1,6 @@
+mod file;
+pub use file::*;
+
 use async_trait::async_trait;
 use log::error;
 use log::info;
@@ -19,17 +22,6 @@ where
 {
     async fn run(&mut self) -> anyhow::Result<()>;
     async fn set_sender(&mut self, sender: Arc<Sender<T>>);
-    // send data and return true if succeed
-    async fn send_data(sender: Option<Arc<Sender<T>>>, t: T) -> bool {
-        let sender = match sender {
-            Some(sender) => sender,
-            None => return false,
-        };
-        match sender.send(t).await {
-            Ok(_) => true,
-            Err(_) => false,
-        }
-    }
 }
 
 pub struct Listener<'a, T, L, C>
