@@ -39,9 +39,12 @@ impl Ser for JsonSer {
 }
 
 #[async_trait]
-impl<T: Serialize + Sync> Map<T, Vec<u8>, JsonSerConfig> for JsonSer {
-    async fn map(&mut self, t: &T) -> anyhow::Result<Vec<u8>> {
-        JsonSer::serialize(t)
+impl<T> Map<T, Vec<u8>, JsonSerConfig> for JsonSer
+where
+    T: Serialize + Send + Sync + 'static,
+{
+    async fn map(&mut self, t: T) -> anyhow::Result<Vec<u8>> {
+        JsonSer::serialize(&t)
     }
 }
 
@@ -79,8 +82,11 @@ impl Deser for JsonDeser {
 }
 
 #[async_trait]
-impl<T: DeserializeOwned + Sync> Map<Vec<u8>, T, JsonDeserConfig> for JsonDeser {
-    async fn map(&mut self, bytes: &Vec<u8>) -> anyhow::Result<T> {
+impl<T> Map<Vec<u8>, T, JsonDeserConfig> for JsonDeser
+where
+    T: DeserializeOwned + Sync,
+{
+    async fn map(&mut self, bytes: Vec<u8>) -> anyhow::Result<T> {
         JsonDeser::deserialize(bytes.as_slice())
     }
 }

@@ -91,8 +91,8 @@ where
                 Self::set_state(&context, State::Send).await;
                 let mut jhs = HashMap::new();
                 for (idx, tx) in &txs {
-                    let u_clone: T = t.to_owned();
-                    jhs.insert(idx.to_owned(), Self::spawn_send(tx.clone(), u_clone));
+                    let t_clone: T = t.to_owned();
+                    jhs.insert(idx.to_owned(), Self::spawn_send(tx.clone(), t_clone));
                 }
                 let drop_sender_indices = Self::wait_join_handles(jhs).await;
                 Self::filter_senders_by_indices(&mut txs, drop_sender_indices);
