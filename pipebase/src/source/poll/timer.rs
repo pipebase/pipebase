@@ -2,13 +2,31 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use std::time::Duration;
 use std::u128;
-use tokio::time::Interval;
+use tokio::time::{sleep, Interval};
 
 use crate::{ConfigInto, FromConfig, FromPath, Poll};
 
+#[derive(Clone, Deserialize)]
+pub enum Period {
+    Millis(u64),
+    Secs(u64),
+    Hours(u64),
+    Days(u64),
+}
+
+pub fn period_to_duration(period: Period) -> Duration {
+    match period {
+        Period::Millis(m) => Duration::from_millis(m),
+        Period::Secs(s) => Duration::from_secs(s),
+        Period::Hours(h) => Duration::from_secs(h * 3600),
+        Period::Days(d) => Duration::from_secs(d * 3600 * 3600),
+    }
+}
+
 #[derive(Deserialize)]
 pub struct TimerConfig {
-    pub period_in_millis: u64,
+    pub interval: Period,
+    pub delay: Option<Period>,
     pub ticks: u128,
 }
 
@@ -18,7 +36,10 @@ impl FromPath for TimerConfig {}
 impl ConfigInto<Timer> for TimerConfig {}
 
 pub struct Timer {
+    // interval between ticks
     pub interval: Interval,
+    // initial delay
+    pub delay: Duration,
     pub ticks: u128,
     pub tick: u128,
 }
@@ -26,8 +47,13 @@ pub struct Timer {
 #[async_trait]
 impl FromConfig<TimerConfig> for Timer {
     async fn from_config(config: &TimerConfig) -> anyhow::Result<Timer> {
+        let delay = match config.delay {
+            Some(ref period) => period_to_duration(period.to_owned()),
+            None => Duration::from_micros(0),
+        };
         Ok(Timer {
-            interval: tokio::time::interval(Duration::from_millis(config.period_in_millis)),
+            interval: tokio::time::interval(period_to_duration(config.interval.to_owned())),
+            delay: delay,
             ticks: config.ticks,
             tick: 0,
         })
@@ -37,16 +63,17 @@ impl FromConfig<TimerConfig> for Timer {
 #[async_trait]
 impl Poll<u128, TimerConfig> for Timer {
     async fn poll(&mut self) -> anyhow::Result<Option<u128>> {
-        self.interval.tick().await;
         let tick = match self.ticks > 0 {
-            true => {
-                let tick = self.tick;
-                self.tick += 1;
-                self.ticks -= 1;
-                tick
-            }
+            true => self.tick,
             false => return Ok(None),
         };
+        if tick == 0 {
+            // apply initial deplay
+            sleep(self.delay).await;
+        }
+        self.interval.tick().await;
+        self.tick += 1;
+        self.ticks -= 1;
         Ok(Some(tick))
     }
 }
