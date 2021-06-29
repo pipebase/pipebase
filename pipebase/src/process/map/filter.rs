@@ -8,7 +8,7 @@ use serde::Deserialize;
 use std::path::Path;
 
 pub trait Filter<Rhs = Self>: Clone {
-    fn filter(rhs: &Rhs) -> Option<Rhs>;
+    fn filter(rhs: &Rhs) -> bool;
 }
 
 #[derive(Deserialize)]
@@ -45,7 +45,10 @@ where
     async fn map(&mut self, data: U) -> anyhow::Result<V> {
         Ok(data
             .into_iter()
-            .filter_map(|item| T::filter(&item))
+            .filter_map(|item| match T::filter(&item) {
+                true => Some(item),
+                false => None,
+            })
             .collect::<V>())
     }
 }
@@ -67,18 +70,10 @@ mod tests {
     #[test]
     fn test_filter() {
         let mut r = Record { r0: 1, r1: 1 };
-        let maybe: Option<Record> = Record::filter(&r);
-        match maybe {
-            Some(_) => panic!("expect None"),
-            None => (),
-        }
+        assert!(!Record::filter(&r));
         r.r0 = 0;
         r.r1 = 0;
-        let maybe: Option<Record> = Record::filter(&r);
-        match maybe {
-            Some(_) => (),
-            None => panic!("expect Some"),
-        }
+        assert!(Record::filter(&r));
     }
 
     use tokio::sync::mpsc::Sender;
