@@ -21,6 +21,8 @@ pub enum PipeType {
     Selector,
     #[strum(to_string = "exporter")]
     Exporter,
+    #[strum(to_string = "streamer")]
+    Streamer,
 }
 
 #[derive(Deserialize, Debug, Clone)]
