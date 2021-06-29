@@ -1,11 +1,13 @@
-use crate::Listen;
+use crate::{period_to_duration, Listen, Period};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::fs::{self, DirEntry};
 use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::mpsc::Sender;
+use tokio::time::sleep;
 
 use crate::{ConfigInto, FromConfig, FromPath};
 
@@ -19,40 +21,53 @@ pub trait ListFile {
 }
 
 #[derive(Clone, Deserialize)]
-pub struct LocalFileVisitorConfig {
-    // root directory path
-    pub root: String,
+pub enum FilePathVisitMode {
+    Once,
+    Cron(Period),
 }
 
-impl FromPath for LocalFileVisitorConfig {}
+#[derive(Clone, Deserialize)]
+pub struct LocalFilePathVisitorConfig {
+    // root directory path
+    pub root: String,
+    pub mode: Option<FilePathVisitMode>,
+}
+
+impl FromPath for LocalFilePathVisitorConfig {}
 
 #[async_trait]
-impl ConfigInto<LocalFileVisitor> for LocalFileVisitorConfig {}
+impl ConfigInto<LocalFilePathVisitor> for LocalFilePathVisitorConfig {}
 
-pub struct LocalFileVisitor {
+pub struct LocalFilePathVisitor {
     // root directory path
-    pub root: PathBuf,
+    root: PathBuf,
+    mode: FilePathVisitMode,
     tx: Option<Arc<Sender<PathBuf>>>,
 }
 
-impl LocalFileVisitor {
-    pub fn new(config: &LocalFileVisitorConfig) -> Self {
-        LocalFileVisitor {
+impl LocalFilePathVisitor {
+    pub fn new(config: &LocalFilePathVisitorConfig) -> Self {
+        let mode = match config.mode {
+            Some(ref mode) => mode.to_owned(),
+            None => FilePathVisitMode::Once,
+        };
+        LocalFilePathVisitor {
             root: PathBuf::from(&config.root),
+            mode: mode,
             tx: None,
         }
     }
 }
 
 #[async_trait]
-impl FromConfig<LocalFileVisitorConfig> for LocalFileVisitor {
-    async fn from_config(config: &LocalFileVisitorConfig) -> anyhow::Result<Self> {
-        Ok(LocalFileVisitor::new(config))
+impl FromConfig<LocalFilePathVisitorConfig> for LocalFilePathVisitor {
+    async fn from_config(config: &LocalFilePathVisitorConfig) -> anyhow::Result<Self> {
+        Ok(LocalFilePathVisitor::new(config))
     }
 }
 
 #[async_trait]
-impl ListFile for LocalFileVisitor {
+impl ListFile for LocalFilePathVisitor {
     async fn list(&self) -> io::Result<Vec<PathBuf>> {
         let dir = match self.root.is_dir() {
             true => self.root.to_owned(),
@@ -84,14 +99,30 @@ impl ListFile for LocalFileVisitor {
     }
 }
 
-#[async_trait]
-impl Listen<PathBuf, LocalFileVisitorConfig> for LocalFileVisitor {
-    async fn run(&mut self) -> anyhow::Result<()> {
-        // list once
+impl LocalFilePathVisitor {
+    async fn run_once(&mut self) -> anyhow::Result<()> {
         for path in self.list().await? {
             self.tx.as_ref().unwrap().send(path).await?;
         }
         Ok(())
+    }
+
+    async fn run_cron(&mut self, delay: Duration) -> anyhow::Result<()> {
+        loop {
+            self.run_once().await?;
+            sleep(delay).await;
+        }
+    }
+}
+
+#[async_trait]
+impl Listen<PathBuf, LocalFilePathVisitorConfig> for LocalFilePathVisitor {
+    async fn run(&mut self) -> anyhow::Result<()> {
+        let period = match self.mode {
+            FilePathVisitMode::Once => return self.run_once().await,
+            FilePathVisitMode::Cron(ref period) => period.to_owned(),
+        };
+        self.run_cron(period_to_duration(period)).await
     }
 
     async fn set_sender(&mut self, sender: std::sync::Arc<tokio::sync::mpsc::Sender<PathBuf>>) {
@@ -111,7 +142,7 @@ mod tests {
         let mut pipe = listener!(
             "file_visitor",
             "resources/catalogs/local_file_visitor.yml",
-            LocalFileVisitorConfig,
+            LocalFilePathVisitorConfig,
             [tx]
         );
         spawn_join!(pipe);
