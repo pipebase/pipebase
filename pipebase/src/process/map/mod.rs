@@ -1,7 +1,6 @@
 mod aggregate;
 mod echo;
 mod field;
-mod file;
 mod filter;
 mod project;
 mod split;
@@ -9,7 +8,6 @@ mod split;
 pub use aggregate::*;
 pub use echo::*;
 pub use field::*;
-pub use file::*;
 pub use filter::*;
 pub use project::*;
 pub use split::*;
