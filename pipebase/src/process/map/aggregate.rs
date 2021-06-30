@@ -1,4 +1,4 @@
-use std::{fmt::Debug, hash::Hash, ops::AddAssign};
+use std::{cmp::Ordering, fmt::Debug, hash::Hash, ops::AddAssign};
 
 use super::Map;
 use crate::{ConfigInto, FromConfig, FromPath};
@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use std::collections::HashMap;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq)]
 pub struct Count32(u32);
 
 impl Count32 {
@@ -22,6 +22,24 @@ impl Count32 {
 impl AddAssign<Self> for Count32 {
     fn add_assign(&mut self, rhs: Self) {
         self.0 += rhs.0
+    }
+}
+
+impl Ord for Count32 {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+
+impl PartialOrd for Count32 {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.0.cmp(&other.0))
+    }
+}
+
+impl PartialEq for Count32 {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(&other.0)
     }
 }
 
@@ -41,16 +59,19 @@ impl Init for Count32 {
     }
 }
 
-pub trait AggregateAs<T>
-where
-    T: Init,
-{
+pub trait AggregateAs<T> {
     fn aggregate_value(&self) -> T;
 }
 
 impl AggregateAs<u32> for u32 {
     fn aggregate_value(&self) -> u32 {
         *self
+    }
+}
+
+impl AggregateAs<Vec<u32>> for u32 {
+    fn aggregate_value(&self) -> Vec<u32> {
+        vec![*self]
     }
 }
 
@@ -70,9 +91,8 @@ pub trait Aggregate<I, T, U>
 where
     I: AggregateAs<U>,
     T: IntoIterator<Item = I>,
-    U: Init,
 {
-    fn aggregate(t: T) -> U;
+    fn aggregate(&self, t: T) -> U;
 }
 
 #[derive(Deserialize)]
@@ -102,10 +122,10 @@ impl FromConfig<SumAggregatorConfig> for SumAggregator {
 impl<I, T, U> Aggregate<I, T, U> for SumAggregator
 where
     I: AggregateAs<U>,
-    U: std::ops::AddAssign<U> + Init + Default,
+    U: std::ops::AddAssign<U> + Init,
     T: IntoIterator<Item = I>,
 {
-    fn aggregate(t: T) -> U {
+    fn aggregate(&self, t: T) -> U {
         let mut sum: U = U::init();
         for item in t.into_iter() {
             sum += item.aggregate_value();
@@ -122,12 +142,12 @@ where
     T: IntoIterator<Item = I> + Send + 'static,
 {
     async fn map(&mut self, data: T) -> anyhow::Result<U> {
-        Ok(Self::aggregate(data))
+        Ok(self.aggregate(data))
     }
 }
 
 #[cfg(test)]
-mod aggregator_tests {
+mod sum_aggregator_tests {
     use crate::*;
     use tokio::sync::mpsc::Sender;
 
@@ -149,6 +169,151 @@ mod aggregator_tests {
         assert_eq!(16, odd);
         let even = rx1.recv().await.unwrap();
         assert_eq!(20, even);
+    }
+}
+
+#[derive(Deserialize)]
+pub struct TopAggregatorConfig {
+    pub n: usize,
+    pub desc: bool,
+}
+
+impl FromPath for TopAggregatorConfig {}
+
+#[async_trait]
+impl ConfigInto<TopAggregator> for TopAggregatorConfig {}
+
+pub struct TopAggregator {
+    n: usize,
+    desc: bool,
+}
+
+impl TopAggregator {
+    fn top<U>(v: &mut [U], n: usize, desc: bool)
+    where
+        U: Ord + Clone,
+    {
+        let n = n.min(v.len());
+        let mut l = 0;
+        let mut r = v.len() - 1;
+        while l < r {
+            let p = Self::partition(v, l, r, desc);
+            if p + 1 == n {
+                return;
+            }
+            if p + 1 > n {
+                r = p - 1;
+                continue;
+            }
+            l = p + 1
+        }
+    }
+
+    fn partition<U>(v: &mut [U], l: usize, mut r: usize, desc: bool) -> usize
+    where
+        U: Ord + Clone,
+    {
+        let pivot = v[l].to_owned();
+        let mut j = l;
+        let mut i = l + 1;
+        while i <= r {
+            let u = v[i].to_owned();
+            if (u >= pivot && desc) || (u <= pivot && !desc) {
+                j += 1;
+                v.swap(i, j);
+                i += 1;
+                continue;
+            }
+            v.swap(i, r);
+            r -= 1;
+        }
+        v.swap(l, j);
+        j
+    }
+}
+
+#[async_trait]
+impl FromConfig<TopAggregatorConfig> for TopAggregator {
+    async fn from_config(config: &TopAggregatorConfig) -> anyhow::Result<Self> {
+        Ok(TopAggregator {
+            n: config.n,
+            desc: config.desc,
+        })
+    }
+}
+
+impl<I, T, U> Aggregate<I, T, Vec<U>> for TopAggregator
+where
+    I: AggregateAs<Vec<U>>,
+    U: Ord + Clone,
+    T: IntoIterator<Item = I>,
+{
+    fn aggregate(&self, t: T) -> Vec<U> {
+        let mut buffer: Vec<U> = Vec::new();
+        for item in t {
+            buffer.extend(item.aggregate_value())
+        }
+        // apply n and desc
+        Self::top(&mut buffer, self.n, self.desc);
+        let n = self.n;
+        while buffer.len() > n {
+            buffer.pop();
+        }
+        buffer.sort_by(|a, b| match self.desc {
+            true => b.partial_cmp(a).unwrap(),
+            false => a.partial_cmp(b).unwrap(),
+        });
+        buffer
+    }
+}
+
+#[async_trait]
+impl<I, T, U> Map<T, Vec<U>, TopAggregatorConfig> for TopAggregator
+where
+    I: AggregateAs<Vec<U>>,
+    U: Ord + Clone,
+    T: IntoIterator<Item = I> + Send + 'static,
+{
+    async fn map(&mut self, data: T) -> anyhow::Result<Vec<U>> {
+        Ok(self.aggregate(data))
+    }
+}
+
+#[cfg(test)]
+mod top_aggregator_tests {
+
+    use crate::*;
+    use tokio::sync::mpsc::Sender;
+
+    async fn populate_record(tx: Sender<Vec<u32>>, records: Vec<Vec<u32>>) {
+        for record in records {
+            let _ = tx.send(record).await;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_top_aggregator() {
+        let (tx0, rx0) = channel!(Vec<u32>, 1023);
+        let (tx1, mut rx1) = channel!(Vec<u32>, 1024);
+        let mut pipe = mapper!(
+            "top",
+            "resources/catalogs/top_aggregator.yml",
+            TopAggregatorConfig,
+            rx0,
+            [tx1]
+        );
+        let f0 = populate_record(
+            tx0,
+            vec![vec![1, 2, 2, 3], vec![1, 1, 2, 1], vec![2, 2, 2, 2]],
+        );
+        f0.await;
+        spawn_join!(pipe);
+        let r = rx1.recv().await.unwrap();
+        assert_eq!(vec![3, 2, 2], r);
+        let r = rx1.recv().await.unwrap();
+        assert_eq!(vec![2, 1, 1], r);
+        let r = rx1.recv().await.unwrap();
+        assert_eq!(vec![2, 2, 2], r);
     }
 }
 
@@ -176,10 +341,9 @@ where
     I: GroupAs<K> + AggregateAs<V>,
     T: IntoIterator<Item = I>,
     K: Hash + Eq + PartialEq,
-    V: Init,
     U: IntoIterator<Item = Pair<K, V>>,
 {
-    fn group_aggregate(t: T) -> U;
+    fn group_aggregate(&self, t: T) -> U;
 }
 
 #[derive(Deserialize)]
@@ -213,7 +377,7 @@ where
     K: Hash + Eq + PartialEq,
     V: std::ops::AddAssign<V> + Init + Clone,
 {
-    fn group_aggregate(t: T) -> Vec<Pair<K, V>> {
+    fn group_aggregate(&self, t: T) -> Vec<Pair<K, V>> {
         let mut group_sum: HashMap<K, V> = HashMap::new();
         for ref item in t {
             if !group_sum.contains_key(&item.group_key()) {
@@ -235,7 +399,7 @@ where
     T: IntoIterator<Item = I> + Send + 'static,
 {
     async fn map(&mut self, data: T) -> anyhow::Result<Vec<Pair<K, V>>> {
-        Ok(Self::group_aggregate(data))
+        Ok(self.group_aggregate(data))
     }
 }
 
@@ -332,7 +496,7 @@ where
 
 impl<K, V> AggregateAs<V> for Pair<K, V>
 where
-    V: Init + Clone,
+    V: Clone,
 {
     fn aggregate_value(&self) -> V {
         self.1.to_owned()
