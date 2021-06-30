@@ -73,10 +73,7 @@ impl Listen<Vec<u8>, RabbitMQConsumerConfig> for RabbitMQConsumer {
                 }
                 Err(err) => return Err(err.into()),
             };
-            match Self::send_data(self.sender.to_owned(), data).await {
-                true => (),
-                false => break,
-            }
+            self.sender.as_ref().unwrap().send(data).await?;
         }
         Ok(())
     }

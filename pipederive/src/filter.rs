@@ -15,12 +15,9 @@ pub fn impl_filter(ident: &Ident, attributes: &Vec<Attribute>, generics: &Generi
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
         impl #impl_generics Filter<#ident> for #ident #type_generics #where_clause {
-            fn filter(item: &#ident) -> Option<#ident> {
+            fn filter(item: &#ident) -> bool {
                 let do_filter = #do_filter;
-                match do_filter(item) {
-                    true => Some(item.to_owned()),
-                    false => None
-                }
+                do_filter(item)
             }
         }
     }
