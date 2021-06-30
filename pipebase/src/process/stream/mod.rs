@@ -20,7 +20,7 @@ where
     U: Send + 'static,
 {
     async fn stream(&mut self, t: T) -> anyhow::Result<()>;
-    async fn set_sender(&mut self, sender: Sender<U>);
+    fn set_sender(&mut self, sender: Sender<U>);
 }
 
 pub struct Streamer<'a, T, U, S, C>
@@ -49,7 +49,7 @@ where
     async fn run(&mut self) -> crate::error::Result<()> {
         let (tx0, mut rx0) = channel::<U>(1024);
         let mut streamer = self.config.config_into().await.unwrap();
-        streamer.set_sender(tx0).await;
+        streamer.set_sender(tx0);
         let rx = self.rx.to_owned();
         let name = self.name.to_owned();
         let streamer_loop = tokio::spawn(async move {

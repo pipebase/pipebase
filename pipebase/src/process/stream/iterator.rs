@@ -47,7 +47,7 @@ where
         Ok(())
     }
 
-    async fn set_sender(&mut self, sender: Sender<U>) {
+    fn set_sender(&mut self, sender: Sender<U>) {
         self.tx = Some(sender)
     }
 }

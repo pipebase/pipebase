@@ -102,7 +102,7 @@ where
         self.stream_file(path).await
     }
 
-    async fn set_sender(&mut self, sender: Sender<Vec<u8>>) {
+    fn set_sender(&mut self, sender: Sender<Vec<u8>>) {
         self.tx = Some(sender)
     }
 }
@@ -208,7 +208,7 @@ where
         self.stream_file(path).await
     }
 
-    async fn set_sender(&mut self, sender: Sender<String>) {
+    fn set_sender(&mut self, sender: Sender<String>) {
         self.tx = Some(sender)
     }
 }

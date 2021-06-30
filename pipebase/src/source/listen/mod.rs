@@ -21,7 +21,7 @@ where
     T: Send + 'static,
 {
     async fn run(&mut self) -> anyhow::Result<()>;
-    async fn set_sender(&mut self, sender: Arc<Sender<T>>);
+    fn set_sender(&mut self, sender: Sender<T>);
 }
 
 pub struct Listener<'a, T, L, C>
@@ -48,9 +48,9 @@ where
         // connect listener
         let (tx, mut rx) = channel::<T>(1024);
         let mut listener = self.config.config_into().await.unwrap();
+        listener.set_sender(tx);
         // start listener
         let join_listener = tokio::spawn(async move {
-            listener.set_sender(tx.into()).await;
             match listener.run().await {
                 Ok(_) => info!("listener exit ..."),
                 Err(e) => error!("listenr exit with error {}", e),
