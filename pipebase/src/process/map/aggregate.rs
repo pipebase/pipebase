@@ -6,19 +6,44 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use std::collections::HashMap;
 
-pub trait ZeroValue {
-    fn zero_value() -> Self;
+#[derive(Clone, Debug)]
+pub struct Count32(u32);
+
+impl Count32 {
+    pub fn new(c: u32) -> Self {
+        Count32(c)
+    }
+
+    pub fn get(&self) -> u32 {
+        self.0
+    }
 }
 
-impl ZeroValue for u32 {
-    fn zero_value() -> u32 {
+impl AddAssign<Self> for Count32 {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0
+    }
+}
+
+pub trait Init {
+    fn init() -> Self;
+}
+
+impl Init for u32 {
+    fn init() -> u32 {
         0
+    }
+}
+
+impl Init for Count32 {
+    fn init() -> Count32 {
+        Count32(0)
     }
 }
 
 pub trait AggregateAs<T>
 where
-    T: ZeroValue,
+    T: Init,
 {
     fn aggregate_value(&self) -> T;
 }
@@ -29,11 +54,23 @@ impl AggregateAs<u32> for u32 {
     }
 }
 
+impl AggregateAs<Count32> for u32 {
+    fn aggregate_value(&self) -> Count32 {
+        Count32::new(1)
+    }
+}
+
+impl AggregateAs<Count32> for String {
+    fn aggregate_value(&self) -> Count32 {
+        Count32::new(1)
+    }
+}
+
 pub trait Aggregate<I, T, U>
 where
     I: AggregateAs<U>,
     T: IntoIterator<Item = I>,
-    U: ZeroValue,
+    U: Init,
 {
     fn aggregate(t: T) -> U;
 }
@@ -65,11 +102,11 @@ impl FromConfig<SumAggregatorConfig> for SumAggregator {
 impl<I, T, U> Aggregate<I, T, U> for SumAggregator
 where
     I: AggregateAs<U>,
-    U: std::ops::AddAssign<U> + ZeroValue + Default,
+    U: std::ops::AddAssign<U> + Init + Default,
     T: IntoIterator<Item = I>,
 {
     fn aggregate(t: T) -> U {
-        let mut sum: U = U::zero_value();
+        let mut sum: U = U::init();
         for item in t.into_iter() {
             sum += item.aggregate_value();
         }
@@ -81,7 +118,7 @@ where
 impl<I, T, U> Map<T, U, SumAggregatorConfig> for SumAggregator
 where
     I: AggregateAs<U>,
-    U: std::ops::AddAssign<U> + Default + ZeroValue,
+    U: std::ops::AddAssign<U> + Default + Init,
     T: IntoIterator<Item = I> + Send + 'static,
 {
     async fn map(&mut self, data: T) -> anyhow::Result<U> {
@@ -128,12 +165,18 @@ impl GroupAs<u32> for u32 {
     }
 }
 
+impl GroupAs<String> for String {
+    fn group_key(&self) -> String {
+        self.to_owned()
+    }
+}
+
 pub trait GroupAggregate<I, T, K, V, U>
 where
     I: GroupAs<K> + AggregateAs<V>,
     T: IntoIterator<Item = I>,
     K: Hash + Eq + PartialEq,
-    V: ZeroValue,
+    V: Init,
     U: IntoIterator<Item = Pair<K, V>>,
 {
     fn group_aggregate(t: T) -> U;
@@ -168,13 +211,13 @@ where
     I: GroupAs<K> + AggregateAs<V>,
     T: IntoIterator<Item = I>,
     K: Hash + Eq + PartialEq,
-    V: std::ops::AddAssign<V> + ZeroValue + Clone,
+    V: std::ops::AddAssign<V> + Init + Clone,
 {
     fn group_aggregate(t: T) -> Vec<Pair<K, V>> {
         let mut group_sum: HashMap<K, V> = HashMap::new();
         for ref item in t {
             if !group_sum.contains_key(&item.group_key()) {
-                group_sum.insert(item.group_key(), V::zero_value());
+                group_sum.insert(item.group_key(), V::init());
             }
             let sum = group_sum.get_mut(&item.group_key()).unwrap();
             *sum += item.aggregate_value();
@@ -188,7 +231,7 @@ impl<I, T, K, V> Map<T, Vec<Pair<K, V>>, GroupSumAggregatorConfig> for GroupSumA
 where
     I: GroupAs<K> + AggregateAs<V>,
     K: Hash + Eq + PartialEq,
-    V: std::ops::AddAssign<V> + ZeroValue + Clone,
+    V: std::ops::AddAssign<V> + Init + Clone,
     T: IntoIterator<Item = I> + Send + 'static,
 {
     async fn map(&mut self, data: T) -> anyhow::Result<Vec<Pair<K, V>>> {
@@ -201,14 +244,14 @@ mod test_group_aggregator {
     use crate::*;
     use tokio::sync::mpsc::Sender;
 
-    async fn populate_record(tx: Sender<Vec<u32>>, records: Vec<Vec<u32>>) {
+    async fn populate_record<T>(tx: Sender<T>, records: Vec<T>) {
         for record in records {
             let _ = tx.send(record).await;
         }
     }
 
     #[tokio::test]
-    async fn test_group_sum_aggregator() {
+    async fn test_u32_group_sum_aggregator() {
         let (tx0, rx0) = channel!(Vec<u32>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<u32, u32>>, 1024);
         let mut pipe = mapper!("group_summation", GroupSumAggregatorConfig, rx0, [tx1]);
@@ -220,6 +263,35 @@ mod test_group_aggregator {
             match p.left() {
                 &2 => assert_eq!(&6, p.right()),
                 &3 => assert_eq!(&9, p.right()),
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_word_group_count_aggregate() {
+        let (tx0, rx0) = channel!(Vec<String>, 1024);
+        let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
+        let mut pipe = mapper!("word_count", GroupSumAggregatorConfig, rx0, [tx1]);
+        let f0 = populate_record(
+            tx0,
+            vec![vec![
+                "foo".to_owned(),
+                "foo".to_owned(),
+                "bar".to_owned(),
+                "buz".to_owned(),
+                "buz".to_owned(),
+                "buz".to_owned(),
+            ]],
+        );
+        f0.await;
+        spawn_join!(pipe);
+        let wcs = rx2.recv().await.unwrap();
+        for wc in wcs {
+            match wc.left().as_str() {
+                "foo" => assert_eq!(2, wc.right().get()),
+                "bar" => assert_eq!(1, wc.right().get()),
+                "buz" => assert_eq!(3, wc.right().get()),
                 _ => unreachable!(),
             }
         }
@@ -260,7 +332,7 @@ where
 
 impl<K, V> AggregateAs<V> for Pair<K, V>
 where
-    V: ZeroValue + Clone,
+    V: Init + Clone,
 {
     fn aggregate_value(&self) -> V {
         self.1.to_owned()
