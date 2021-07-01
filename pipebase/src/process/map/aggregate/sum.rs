@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 
 use crate::{
     Aggregate, AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Map,
-    Pair,
+    OrderedGroupAggregate, Pair,
 };
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -198,5 +198,111 @@ mod test_group_aggregator {
                 _ => unreachable!(),
             }
         }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct OrderedGroupSumAggregatorConfig {}
+
+impl FromPath for OrderedGroupSumAggregatorConfig {
+    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    where
+        P: AsRef<std::path::Path>,
+    {
+        Ok(OrderedGroupSumAggregatorConfig {})
+    }
+}
+
+#[async_trait]
+impl ConfigInto<OrderedGroupSumAggregator> for OrderedGroupSumAggregatorConfig {}
+
+#[async_trait]
+impl FromConfig<OrderedGroupSumAggregatorConfig> for OrderedGroupSumAggregator {
+    async fn from_config(_config: &OrderedGroupSumAggregatorConfig) -> anyhow::Result<Self> {
+        Ok(OrderedGroupSumAggregator {})
+    }
+}
+
+pub struct OrderedGroupSumAggregator {}
+
+impl<I, T, K, V> OrderedGroupAggregate<I, T, K, V, Vec<Pair<K, V>>> for OrderedGroupSumAggregator
+where
+    I: GroupAs<K> + AggregateAs<V>,
+    T: IntoIterator<Item = I>,
+    K: Ord,
+    V: std::ops::AddAssign<V> + Init + Clone,
+{
+    fn group_aggregate(&self, t: T) -> Vec<Pair<K, V>> {
+        let mut group_sum: BTreeMap<K, V> = BTreeMap::new();
+        for ref item in t {
+            if !group_sum.contains_key(&item.group_key()) {
+                group_sum.insert(item.group_key(), V::init());
+            }
+            let sum = group_sum.get_mut(&item.group_key()).unwrap();
+            *sum += item.aggregate_value();
+        }
+        group_sum.into_iter().map(|t| Pair::from(t)).collect()
+    }
+}
+
+#[async_trait]
+impl<I, T, K, V> Map<T, Vec<Pair<K, V>>, OrderedGroupSumAggregatorConfig>
+    for OrderedGroupSumAggregator
+where
+    I: GroupAs<K> + AggregateAs<V>,
+    K: Ord,
+    V: std::ops::AddAssign<V> + Init + Clone,
+    T: IntoIterator<Item = I> + Send + 'static,
+{
+    async fn map(&mut self, data: T) -> anyhow::Result<Vec<Pair<K, V>>> {
+        Ok(self.group_aggregate(data))
+    }
+}
+
+#[cfg(test)]
+mod test_ordered_group_aggregator {
+    use crate::*;
+    use tokio::sync::mpsc::Sender;
+
+    async fn populate_record<T>(tx: Sender<T>, records: Vec<T>) {
+        for record in records {
+            let _ = tx.send(record).await;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_word_group_count_aggregate() {
+        let (tx0, rx0) = channel!(Vec<String>, 1024);
+        let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
+        let mut pipe = mapper!(
+            "ordered_word_count",
+            OrderedGroupSumAggregatorConfig,
+            rx0,
+            [tx1]
+        );
+        let f0 = populate_record(
+            tx0,
+            vec![vec![
+                "foo".to_owned(),
+                "foo".to_owned(),
+                "bar".to_owned(),
+                "buz".to_owned(),
+                "buz".to_owned(),
+                "buz".to_owned(),
+            ]],
+        );
+        f0.await;
+        spawn_join!(pipe);
+        let wcs = rx2.recv().await.unwrap();
+        let mut wcs_iter = wcs.into_iter();
+        let bar = wcs_iter.next().unwrap();
+        assert_eq!("bar", bar.left());
+        assert_eq!(1, bar.right().get());
+        let buz = wcs_iter.next().unwrap();
+        assert_eq!("buz", buz.left());
+        assert_eq!(3, buz.right().get());
+        let foo = wcs_iter.next().unwrap();
+        assert_eq!("foo", foo.left());
+        assert_eq!(2, foo.right().get());
     }
 }

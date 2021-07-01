@@ -40,6 +40,16 @@ where
     fn group_aggregate(&self, t: T) -> U;
 }
 
+pub trait OrderedGroupAggregate<I, T, K, V, U>
+where
+    I: GroupAs<K> + AggregateAs<V>,
+    T: IntoIterator<Item = I>,
+    K: Ord,
+    U: IntoIterator<Item = Pair<K, V>>,
+{
+    fn group_aggregate(&self, t: T) -> U;
+}
+
 impl Init for u32 {
     fn init() -> u32 {
         0
