@@ -64,23 +64,6 @@ impl FileStreamer for FileSplitStreamer {
         }
         Ok(())
     }
-    /*
-    async fn stream_lines<P>(&self, path: P) -> anyhow::Result<()>
-    where
-        P: AsRef<Path>,
-    {
-        let reader = Self::new_reader(path)?;
-        let mut lines_iter = reader.lines();
-        let tx = self.tx.as_ref().unwrap();
-        loop {
-            let line = match lines_iter.next() {
-                Some(line) => line?,
-                None => return self.stream_eof().await
-            };
-            let bin: Vec<u8> = line.as_bytes().into_iter().collect();
-        }
-    }
-    */
 }
 
 #[async_trait]
