@@ -9,7 +9,6 @@ use pipebase::ConfigInto;
 use pipebase::Listen;
 use pipebase::{FromConfig, FromPath};
 use serde::Deserialize;
-use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use tokio_amqp::*;
 
@@ -20,7 +19,7 @@ pub struct RabbitMQConsumer {
     options: BasicConsumeOptions,
     args: FieldTable,
     channel: Channel,
-    sender: Option<Arc<Sender<Vec<u8>>>>,
+    sender: Option<Sender<Vec<u8>>>,
 }
 
 #[derive(Deserialize)]
@@ -78,7 +77,7 @@ impl Listen<Vec<u8>, RabbitMQConsumerConfig> for RabbitMQConsumer {
         Ok(())
     }
 
-    async fn set_sender(&mut self, sender: Arc<Sender<Vec<u8>>>) {
+    fn set_sender(&mut self, sender: Sender<Vec<u8>>) {
         self.sender = Some(sender)
     }
 }

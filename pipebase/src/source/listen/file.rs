@@ -4,7 +4,6 @@ use serde::Deserialize;
 use std::fs::{self, DirEntry};
 use std::io;
 use std::path::PathBuf;
-use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::time::sleep;
@@ -42,7 +41,7 @@ pub struct LocalFilePathVisitor {
     // root directory path
     root: PathBuf,
     mode: FilePathVisitMode,
-    tx: Option<Arc<Sender<PathBuf>>>,
+    tx: Option<Sender<PathBuf>>,
 }
 
 impl LocalFilePathVisitor {
@@ -125,7 +124,7 @@ impl Listen<PathBuf, LocalFilePathVisitorConfig> for LocalFilePathVisitor {
         self.run_cron(period_to_duration(period)).await
     }
 
-    async fn set_sender(&mut self, sender: std::sync::Arc<tokio::sync::mpsc::Sender<PathBuf>>) {
+    fn set_sender(&mut self, sender: Sender<PathBuf>) {
         self.tx = Some(sender)
     }
 }

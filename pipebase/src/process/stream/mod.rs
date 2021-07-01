@@ -1,66 +1,116 @@
+mod file;
+mod iterator;
+
+pub use file::*;
+pub use iterator::*;
+
 use crate::context::{Context, State};
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::iter::FromIterator;
+use std::marker::PhantomData;
 use std::sync::Arc;
-use tokio::sync::mpsc::{Receiver, Sender};
-use tokio::sync::RwLock;
+use tokio::sync::mpsc::{channel, Receiver, Sender};
+use tokio::sync::{Mutex, RwLock};
 
-use crate::Pipe;
+use crate::{ConfigInto, FromConfig, Pipe};
 
-pub struct Streamer<'a, T, U>
+#[async_trait]
+pub trait Stream<T, U, C>: Send + Sync + FromConfig<C>
 where
-    T: IntoIterator<Item = U> + Send,
+    U: Send + 'static,
+{
+    async fn stream(&mut self, t: T) -> anyhow::Result<()>;
+    fn set_sender(&mut self, sender: Sender<U>);
+}
+
+pub struct Streamer<'a, T, U, S, C>
+where
+    T: Send,
     U: Clone + Send + 'static,
+    S: Stream<T, U, C>,
+    C: ConfigInto<S> + Send + Sync,
 {
     name: &'a str,
-    rx: Receiver<T>,
+    config: C,
+    rx: Arc<Mutex<Receiver<T>>>,
     txs: HashMap<usize, Arc<Sender<U>>>,
+    streamer: PhantomData<S>,
     context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, T, U> Pipe<U> for Streamer<'a, T, U>
+impl<'a, T, U, S, C> Pipe<U> for Streamer<'a, T, U, S, C>
 where
-    T: IntoIterator<Item = U> + Send,
+    T: Send + 'static,
     U: Clone + Send + 'static,
+    S: Stream<T, U, C> + 'static,
+    C: ConfigInto<S> + Send + Sync,
 {
     async fn run(&mut self) -> crate::error::Result<()> {
-        log::info!("streamer {} run ...", self.name);
-        loop {
-            Self::inc_total_run(&self.context).await;
-            Self::set_state(&self.context, State::Receive).await;
-            // if all receiver dropped, sender drop as well
-            match self.txs.is_empty() {
-                true => {
-                    Self::inc_success_run(&self.context).await;
-                    break;
+        let (tx0, mut rx0) = channel::<U>(1024);
+        let mut streamer = self.config.config_into().await.unwrap();
+        streamer.set_sender(tx0);
+        let rx = self.rx.to_owned();
+        let name = self.name.to_owned();
+        let streamer_loop = tokio::spawn(async move {
+            let mut rx = rx.lock().await;
+            log::info!("streamer {} run ...", name);
+            loop {
+                let t = match (*rx).recv().await {
+                    Some(t) => t,
+                    None => break,
+                };
+                match streamer.stream(t).await {
+                    Ok(_) => continue,
+                    Err(err) => {
+                        log::error!("streamer error {}", err);
+                        break;
+                    }
                 }
-                false => (),
             }
-            let t = self.rx.recv().await;
-            let t = match t {
-                Some(t) => t,
-                None => {
-                    Self::inc_success_run(&self.context).await;
-                    break;
+            log::info!("streamer {} exit ...", name);
+        });
+        let mut txs = self.txs.to_owned();
+        let context = self.context.clone();
+        let sender_loop = tokio::spawn(async move {
+            loop {
+                Self::inc_total_run(&context).await;
+                Self::set_state(&context, State::Receive).await;
+                // if all receiver dropped, sender drop as well
+                match txs.is_empty() {
+                    true => {
+                        Self::inc_success_run(&context).await;
+                        break;
+                    }
+                    false => (),
                 }
-            };
-            Self::set_state(&self.context, State::Send).await;
-            // avoid `Send` is not implemented for `< as IntoIterator>::IntoIter
-            let items: Vec<U> = Vec::from_iter(t);
-            for item in items {
+                let u = match rx0.recv().await {
+                    Some(u) => u,
+                    None => {
+                        Self::inc_success_run(&context).await;
+                        // streamer loop break
+                        break;
+                    }
+                };
+                Self::set_state(&context, State::Send).await;
                 let mut jhs = HashMap::new();
-                for (idx, tx) in &self.txs {
-                    let item_clone = item.to_owned();
-                    jhs.insert(idx.to_owned(), Self::spawn_send(tx.to_owned(), item_clone));
+                for (idx, tx) in &txs {
+                    let u_clone: U = u.to_owned();
+                    jhs.insert(idx.to_owned(), Self::spawn_send(tx.clone(), u_clone));
                 }
                 let drop_sender_indices = Self::wait_join_handles(jhs).await;
-                Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
+                Self::filter_senders_by_indices(&mut txs, drop_sender_indices);
+                Self::inc_success_run(&context).await;
+            }
+            Self::set_state(&context, State::Done).await;
+        });
+        // join listener and loop
+        match tokio::spawn(async move { tokio::join!(streamer_loop, sender_loop) }).await {
+            Ok(_) => (),
+            Err(err) => {
+                log::error!("streamer join error {:#?}", err)
             }
         }
-        log::info!("streamer {} exit ...", self.name);
-        Self::set_state(&self.context, State::Done).await;
         Ok(())
     }
 
@@ -74,16 +124,20 @@ where
     }
 }
 
-impl<'a, T, U> Streamer<'a, T, U>
+impl<'a, T, U, S, C> Streamer<'a, T, U, S, C>
 where
-    T: IntoIterator<Item = U> + Send,
+    T: Send,
     U: Clone + Send + 'static,
+    S: Stream<T, U, C>,
+    C: ConfigInto<S> + Send + Sync,
 {
-    pub fn new(name: &'a str, rx: Receiver<T>) -> Self {
+    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
         Streamer {
             name: name,
-            rx: rx,
+            config: config,
+            rx: Arc::new(Mutex::new(rx)),
             txs: HashMap::new(),
+            streamer: PhantomData,
             context: Default::default(),
         }
     }
@@ -92,10 +146,11 @@ where
 #[macro_export]
 macro_rules! streamer {
     (
-        $name:expr, $rx:expr, [$( $tx:expr ), *]
+        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
         {
-            let mut pipe = Streamer::new($name, $rx);
+            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
+            let mut pipe = Streamer::new($name, config, $rx);
             $(
                 pipe.add_sender($tx);
             )*
@@ -105,44 +160,6 @@ macro_rules! streamer {
     (
         $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
     ) => {
-        streamer!($name, $rx, [$( $tx ), *])
+        streamer!($name, "", $config, $rx, [$( $tx ), *])
     };
-    (
-        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        streamer!($name, $rx, [$( $tx ), *])
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    use crate::*;
-
-    use std::collections::HashMap;
-    use tokio::sync::mpsc::Sender;
-
-    async fn populate_records(tx: Sender<HashMap<String, u32>>, records: HashMap<String, u32>) {
-        let _ = tx.send(records).await;
-    }
-
-    #[tokio::test]
-    async fn test_streamer() {
-        let (tx0, rx0) = channel!(HashMap<String, u32>, 1024);
-        let (tx1, mut rx1) = channel!((String, u32), 1024);
-        let mut pipe = streamer!("tuple_streamer", rx0, [tx1]);
-        let mut records: HashMap<String, u32> = HashMap::new();
-        records.insert("one".to_owned(), 1);
-        records.insert("two".to_owned(), 2);
-        let f0 = populate_records(tx0, records);
-        f0.await;
-        spawn_join!(pipe);
-        let mut records: HashMap<String, u32> = HashMap::new();
-        let (left, right) = rx1.recv().await.unwrap();
-        records.insert(left, right);
-        let (left, right) = rx1.recv().await.unwrap();
-        records.insert(left, right);
-        assert_eq!(&1, records.get("one").unwrap());
-        assert_eq!(&2, records.get("two").unwrap())
-    }
 }
