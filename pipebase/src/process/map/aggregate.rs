@@ -201,7 +201,7 @@ pub struct TopAggregator {
 }
 
 impl TopAggregator {
-    fn top<U>(v: &mut [U], n: usize, desc: bool)
+    fn qsort<U>(v: &mut [U], n: usize, desc: bool)
     where
         U: Ord + Clone,
     {
@@ -266,11 +266,8 @@ where
             buffer.extend(item.aggregate_value())
         }
         // apply n and desc
-        Self::top(&mut buffer, self.n, self.desc);
-        let n = self.n;
-        while buffer.len() > n {
-            buffer.pop();
-        }
+        Self::qsort(&mut buffer, self.n, self.desc);
+        buffer.truncate(self.n.min(buffer.len()));
         buffer.sort_by(|a, b| match self.desc {
             true => b.partial_cmp(a).unwrap(),
             false => a.partial_cmp(b).unwrap(),
