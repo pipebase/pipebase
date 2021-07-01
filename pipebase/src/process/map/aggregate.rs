@@ -581,7 +581,7 @@ mod pair_tests {
     use crate::*;
     use tokio::sync::mpsc::Sender;
 
-    async fn populate_records(tx: Sender<Vec<Pair<String, u32>>>, records: Vec<Pair<String, u32>>) {
+    async fn populate_records<T>(tx: Sender<T>, records: T) {
         let _ = tx.send(records).await;
     }
 
@@ -608,5 +608,41 @@ mod pair_tests {
                 _ => unreachable!(),
             }
         }
+    }
+
+    #[tokio::test]
+    async fn test_top_pair() {
+        let (tx0, rx0) = channel!(Vec<Pair<String, Count32>>, 1024);
+        let (tx1, mut rx1) = channel!(Vec<Pair<String, Count32>>, 1024);
+        let mut pipe = mapper!(
+            "top_word",
+            "resources/catalogs/top_aggregator.yml",
+            TopAggregatorConfig,
+            rx0,
+            [tx1]
+        );
+        let f0 = populate_records(
+            tx0,
+            vec![
+                Pair::new("d".to_owned(), Count32::new(4)),
+                Pair::new("a".to_owned(), Count32::new(1)),
+                Pair::new("e".to_owned(), Count32::new(5)),
+                Pair::new("b".to_owned(), Count32::new(2)),
+                Pair::new("c".to_owned(), Count32::new(3)),
+            ],
+        );
+        f0.await;
+        spawn_join!(pipe);
+        let top = rx1.recv().await.unwrap();
+        assert_eq!(3, top.len());
+        let top1 = top.get(0).unwrap();
+        assert_eq!(5, top1.right().get());
+        assert_eq!("e", top1.left());
+        let top2 = top.get(1).unwrap();
+        assert_eq!(4, top2.right().get());
+        assert_eq!("d", top2.left());
+        let top3 = top.get(2).unwrap();
+        assert_eq!(3, top3.right().get());
+        assert_eq!("c", top3.left());
     }
 }
