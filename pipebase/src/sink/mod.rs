@@ -37,7 +37,7 @@ where
 }
 
 #[async_trait]
-impl<'a, T, E, C> Pipe<()> for Exporter<'a, T, E, C>
+impl<'a, T, E, C> Pipe<T, (), E, C> for Exporter<'a, T, E, C>
 where
     T: Send + Sync + 'static,
     E: Export<T, C> + 'static,

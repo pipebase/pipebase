@@ -33,10 +33,10 @@ where
 }
 
 #[async_trait]
-impl<'a, T, P, C> Pipe<T> for Poller<'a, T, P, C>
+impl<'a, U, P, C> Pipe<(), U, P, C> for Poller<'a, U, P, C>
 where
-    T: Clone + Send + 'static,
-    P: Poll<T, C>,
+    U: Clone + Send + 'static,
+    P: Poll<U, C>,
     C: ConfigInto<P> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
@@ -53,16 +53,16 @@ where
                 }
                 false => (),
             }
-            let t = poller.poll().await;
-            let t = match t {
-                Ok(t) => t,
+            let u = poller.poll().await;
+            let u = match u {
+                Ok(u) => u,
                 Err(e) => {
                     error!("{} poll error {:#?}", self.name, e);
                     break;
                 }
             };
-            let t = match t {
-                Some(t) => t,
+            let u = match u {
+                Some(u) => u,
                 None => {
                     Self::inc_success_run(&self.context).await;
                     break;
@@ -71,8 +71,8 @@ where
             Self::set_state(&self.context, State::Send).await;
             let mut jhs = HashMap::new();
             for (idx, tx) in &self.txs {
-                let t_clone = t.to_owned();
-                jhs.insert(idx.to_owned(), Self::spawn_send(tx.to_owned(), t_clone));
+                let u_clone = u.to_owned();
+                jhs.insert(idx.to_owned(), Self::spawn_send(tx.to_owned(), u_clone));
             }
             let drop_sender_indices = Self::wait_join_handles(jhs).await;
             Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
@@ -83,7 +83,7 @@ where
         Ok(())
     }
 
-    fn add_sender(&mut self, tx: Sender<T>) {
+    fn add_sender(&mut self, tx: Sender<U>) {
         let idx = self.txs.len();
         self.txs.insert(idx, Arc::new(tx));
     }

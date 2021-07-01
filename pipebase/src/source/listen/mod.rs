@@ -38,15 +38,15 @@ where
 }
 
 #[async_trait]
-impl<'a, T, L, C> Pipe<T> for Listener<'a, T, L, C>
+impl<'a, U, L, C> Pipe<(), U, L, C> for Listener<'a, U, L, C>
 where
-    T: Clone + Send + 'static,
-    L: Listen<T, C> + 'static,
+    U: Clone + Send + 'static,
+    L: Listen<U, C> + 'static,
     C: ConfigInto<L> + Send + Sync,
 {
     async fn run(&mut self) -> Result<()> {
         // connect listener
-        let (tx, mut rx) = channel::<T>(1024);
+        let (tx, mut rx) = channel::<U>(1024);
         let mut listener = self.config.config_into().await.unwrap();
         listener.set_sender(tx);
         // start listener
@@ -73,8 +73,8 @@ where
                     }
                     false => (),
                 }
-                let t = match rx.recv().await {
-                    Some(t) => t,
+                let u = match rx.recv().await {
+                    Some(u) => u,
                     None => {
                         Self::inc_success_run(&context).await;
                         break;
@@ -83,8 +83,8 @@ where
                 Self::set_state(&context, State::Send).await;
                 let mut jhs = HashMap::new();
                 for (idx, tx) in &txs {
-                    let t_clone: T = t.to_owned();
-                    jhs.insert(idx.to_owned(), Self::spawn_send(tx.clone(), t_clone));
+                    let u_clone: U = u.to_owned();
+                    jhs.insert(idx.to_owned(), Self::spawn_send(tx.clone(), u_clone));
                 }
                 let drop_sender_indices = Self::wait_join_handles(jhs).await;
                 Self::filter_senders_by_indices(&mut txs, drop_sender_indices);
@@ -103,7 +103,7 @@ where
         Ok(())
     }
 
-    fn add_sender(&mut self, tx: Sender<T>) {
+    fn add_sender(&mut self, tx: Sender<U>) {
         let idx = self.txs.len();
         self.txs.insert(idx, Arc::new(tx));
     }

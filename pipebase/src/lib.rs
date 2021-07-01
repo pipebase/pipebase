@@ -51,12 +51,17 @@ pub trait ConfigInto<T: FromConfig<Self>>: Sized {
 }
 
 #[async_trait]
-pub trait Pipe<T: Send + 'static> {
+pub trait Pipe<T, U, R, C>
+where
+    U: Send + 'static,
+    R: FromConfig<C>,
+    C: ConfigInto<R>,
+{
     async fn run(&mut self) -> Result<()>;
 
-    fn add_sender(&mut self, _tx: Sender<T>) {}
+    fn add_sender(&mut self, _tx: Sender<U>) {}
 
-    fn spawn_send(tx: Arc<Sender<T>>, t: T) -> JoinHandle<core::result::Result<(), SendError<T>>> {
+    fn spawn_send(tx: Arc<Sender<U>>, t: U) -> JoinHandle<core::result::Result<(), SendError<U>>> {
         tokio::spawn(async move {
             match tx.send(t).await {
                 Ok(()) => Ok(()),
@@ -69,7 +74,7 @@ pub trait Pipe<T: Send + 'static> {
     }
 
     async fn wait_join_handles(
-        join_handles: HashMap<usize, JoinHandle<core::result::Result<(), SendError<T>>>>,
+        join_handles: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>>,
     ) -> Vec<usize> {
         let mut drop_sender_indices = Vec::new();
         for (idx, jh) in join_handles {
@@ -93,7 +98,7 @@ pub trait Pipe<T: Send + 'static> {
     }
 
     fn filter_senders_by_indices(
-        senders: &mut HashMap<usize, Arc<Sender<T>>>,
+        senders: &mut HashMap<usize, Arc<Sender<U>>>,
         remove_indices: Vec<usize>,
     ) {
         for idx in remove_indices {
@@ -102,10 +107,10 @@ pub trait Pipe<T: Send + 'static> {
     }
 
     fn filter_sender_by_dropped_receiver_idx(
-        senders: &Vec<Arc<Sender<T>>>,
+        senders: &Vec<Arc<Sender<U>>>,
         dropped_receiver_idxs: HashSet<usize>,
-    ) -> Vec<Arc<Sender<T>>> {
-        let mut healthy_senders: Vec<Arc<Sender<T>>> = vec![];
+    ) -> Vec<Arc<Sender<U>>> {
+        let mut healthy_senders: Vec<Arc<Sender<U>>> = vec![];
         let mut i: usize = 0;
         let len = senders.len();
         while i < len {

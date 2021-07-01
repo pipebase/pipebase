@@ -39,7 +39,7 @@ where
 }
 
 #[async_trait]
-impl<'a, T, U, S, C> Pipe<U> for Streamer<'a, T, U, S, C>
+impl<'a, T, U, S, C> Pipe<T, U, S, C> for Streamer<'a, T, U, S, C>
 where
     T: Send + 'static,
     U: Clone + Send + 'static,

@@ -47,7 +47,7 @@ where
 }
 
 #[async_trait]
-impl<'a, T, U, M, C> Pipe<U> for Mapper<'a, T, U, M, C>
+impl<'a, T, U, M, C> Pipe<T, U, M, C> for Mapper<'a, T, U, M, C>
 where
     T: Send + Sync,
     U: Clone + Debug + Send + 'static,

@@ -51,7 +51,7 @@ where
 }
 
 #[async_trait]
-impl<'a, T, U, V, C> Pipe<U> for Collector<'a, T, U, V, C>
+impl<'a, T, U, V, C> Pipe<T, U, V, C> for Collector<'a, T, U, V, C>
 where
     T: Clone + Send + Sync + 'static,
     U: FromIterator<T> + Clone + Send + 'static,

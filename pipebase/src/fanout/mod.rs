@@ -37,7 +37,7 @@ where
 }
 
 #[async_trait]
-impl<'a, T, S, C> Pipe<T> for Selector<'a, T, S, C>
+impl<'a, T, S, C> Pipe<T, T, S, C> for Selector<'a, T, S, C>
 where
     T: Clone + Send + 'static,
     S: Select<T, C>,
