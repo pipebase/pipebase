@@ -3,12 +3,16 @@ mod pair;
 mod sort;
 mod sum;
 
+use std::{
+    collections::{BTreeMap, HashMap},
+    hash::Hash,
+    iter::FromIterator,
+};
+
 pub use count::*;
 pub use pair::*;
 pub use sort::*;
 pub use sum::*;
-
-use std::hash::Hash;
 
 pub trait Init {
     fn init() -> Self;
@@ -30,14 +34,33 @@ pub trait GroupAs<T> {
     fn group_key(&self) -> T;
 }
 
-pub trait GroupAggregate<I, T, K, V, U>
+pub trait GroupTable<K, V>: IntoIterator<Item = (K, V)> {
+    fn contains_group(&self, gid: &K) -> bool;
+    fn insert_group(&mut self, gid: K, v: V) -> Option<V>;
+    fn get_group_mut(&mut self, gid: &K) -> Option<&mut V>;
+    fn get_group(&mut self, gid: &K) -> Option<&V>;
+}
+
+pub trait GroupSumAggregate<I, T, K, V, U, G>
 where
     I: GroupAs<K> + AggregateAs<V>,
+    V: std::ops::AddAssign<V> + Init + Clone,
     T: IntoIterator<Item = I>,
-    K: Hash + Eq + PartialEq,
-    U: IntoIterator<Item = Pair<K, V>>,
+    U: FromIterator<Pair<K, V>>,
+    G: GroupTable<K, V>,
 {
-    fn group_aggregate(&self, t: T) -> U;
+    fn new_group_table(&self) -> G;
+    fn group_aggregate(&self, t: T) -> U {
+        let mut group_sum = self.new_group_table();
+        for ref item in t {
+            if !group_sum.contains_group(&item.group_key()) {
+                group_sum.insert_group(item.group_key(), V::init());
+            }
+            let sum = group_sum.get_group_mut(&item.group_key()).unwrap();
+            *sum += item.aggregate_value();
+        }
+        group_sum.into_iter().map(|t| Pair::from(t)).collect()
+    }
 }
 
 impl Init for u32 {
@@ -79,5 +102,47 @@ impl GroupAs<u32> for u32 {
 impl GroupAs<String> for String {
     fn group_key(&self) -> String {
         self.to_owned()
+    }
+}
+
+impl<K, V> GroupTable<K, V> for HashMap<K, V>
+where
+    K: Eq + Hash,
+{
+    fn contains_group(&self, gid: &K) -> bool {
+        self.contains_key(gid)
+    }
+
+    fn get_group(&mut self, gid: &K) -> Option<&V> {
+        self.get(gid)
+    }
+
+    fn get_group_mut(&mut self, gid: &K) -> Option<&mut V> {
+        self.get_mut(gid)
+    }
+
+    fn insert_group(&mut self, gid: K, v: V) -> Option<V> {
+        self.insert(gid, v)
+    }
+}
+
+impl<K, V> GroupTable<K, V> for BTreeMap<K, V>
+where
+    K: Ord,
+{
+    fn contains_group(&self, gid: &K) -> bool {
+        self.contains_key(gid)
+    }
+
+    fn get_group(&mut self, gid: &K) -> Option<&V> {
+        self.get(gid)
+    }
+
+    fn get_group_mut(&mut self, gid: &K) -> Option<&mut V> {
+        self.get_mut(gid)
+    }
+
+    fn insert_group(&mut self, gid: K, v: V) -> Option<V> {
+        self.insert(gid, v)
     }
 }

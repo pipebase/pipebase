@@ -123,7 +123,12 @@ mod pair_tests {
     async fn test_pair_group_sum() {
         let (tx0, rx0) = channel!(Vec<Pair<String, u32>>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
-        let mut pipe = mapper!("pair_group_summation", GroupSumAggregatorConfig, rx0, [tx1]);
+        let mut pipe = mapper!(
+            "pair_group_summation",
+            UnorderedGroupSumAggregatorConfig,
+            rx0,
+            [tx1]
+        );
         let f0 = populate_records(
             tx0,
             vec![
