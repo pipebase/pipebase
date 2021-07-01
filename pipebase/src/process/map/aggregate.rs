@@ -486,6 +486,14 @@ impl<K, V> Pair<K, V> {
     pub fn right(&self) -> &V {
         &self.1
     }
+
+    pub fn swap(&self) -> Pair<V, K> 
+    where
+        K: Clone,
+        V: Clone,
+    {
+        Pair(self.1.to_owned(), self.0.to_owned())
+    }
 }
 
 impl<K, V> From<(K, V)> for Pair<K, V> {
