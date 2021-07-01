@@ -75,6 +75,18 @@ impl AggregateAs<Vec<u32>> for u32 {
     }
 }
 
+impl AggregateAs<Count32> for Count32 {
+    fn aggregate_value(&self) -> Count32 {
+        self.to_owned()
+    }
+}
+
+impl AggregateAs<Vec<Count32>> for Count32 {
+    fn aggregate_value(&self) -> Vec<Count32> {
+        vec![self.to_owned()]
+    }
+}
+
 impl AggregateAs<Count32> for u32 {
     fn aggregate_value(&self) -> Count32 {
         Count32::new(1)
@@ -500,6 +512,16 @@ where
 {
     fn aggregate_value(&self) -> V {
         self.1.to_owned()
+    }
+}
+
+impl<K, V> AggregateAs<Vec<Pair<K, V>>> for Pair<K, V>
+where
+    K: Clone,
+    V: Clone,
+{
+    fn aggregate_value(&self) -> Vec<Pair<K, V>> {
+        vec![self.to_owned()]
     }
 }
 
