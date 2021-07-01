@@ -471,7 +471,7 @@ mod test_group_aggregator {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq)]
 pub struct Pair<K, V>(K, V);
 
 impl<K, V> Pair<K, V> {
@@ -487,12 +487,41 @@ impl<K, V> Pair<K, V> {
         &self.1
     }
 
-    pub fn swap(&self) -> Pair<V, K> 
+    pub fn swap(&self) -> Pair<V, K>
     where
         K: Clone,
         V: Clone,
     {
         Pair(self.1.to_owned(), self.0.to_owned())
+    }
+}
+
+impl<K, V> Ord for Pair<K, V>
+where
+    K: Eq,
+    V: Ord,
+{
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.1.cmp(&other.1)
+    }
+}
+
+impl<K, V> PartialOrd for Pair<K, V>
+where
+    K: Eq,
+    V: Ord,
+{
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<K, V> PartialEq for Pair<K, V>
+where
+    V: Eq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.1 == other.1
     }
 }
 
