@@ -65,7 +65,7 @@ mod tests {
         let mut pipe = mapper!("echo");
         let f1 = populate_message(tx0, Message { m0: 'a', m1: 1 });
         f1.await;
-        run_pipes!([(pipe, EchoConfig, "", Some(rx0), [tx1])]);
+        join_pipes!([run_pipe!(pipe, EchoConfig, [tx1], rx0)]);
         let message = rx1.recv().await.unwrap();
         assert_eq!('a', message.m0);
         assert_eq!(1, message.m1);

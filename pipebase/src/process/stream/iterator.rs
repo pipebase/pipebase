@@ -74,7 +74,7 @@ mod tests {
         records.insert("two".to_owned(), 2);
         let f0 = populate_records(tx0, records);
         f0.await;
-        run_pipes!([(pipe, IteratorStreamerConfig, "", Some(rx0), [tx1])]);
+        join_pipes!([run_pipe!(pipe, IteratorStreamerConfig, [tx1], rx0)]);
         let mut records: HashMap<String, u32> = HashMap::new();
         let (left, right) = rx1.recv().await.unwrap();
         records.insert(left, right);

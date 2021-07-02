@@ -1,5 +1,5 @@
 use crate::constants::{BOOTSTRAP_FUNCTION, BOOTSTRAP_MODULE, BOOTSTRAP_PIPE};
-use crate::pipemeta::{ChannelExpr, PipeExpr, PipeMetas, RunPipeExpr, RunPipesExpr};
+use crate::pipemeta::{ChannelExpr, JoinPipesExpr, PipeExpr, PipeMetas, RunPipeExpr};
 use crate::utils::{
     get_all_attributes_by_meta_prefix, get_last_stmt_span, get_meta_string_value_by_meta_path,
     resolve_ident, resolve_module_path_token,
@@ -22,11 +22,11 @@ pub fn impl_bootstrap(
     let channel_exprs = resolve_channel_exprs(&metas);
     let pipe_exprs = resolve_pipe_exprs(&metas);
     let run_pipe_exprs = resolve_run_pipe_exprs(&metas);
-    let run_pipes_expr = resolve_run_pipes_expr(&metas);
+    let join_pipes_expr = resolve_join_pipes_expr(&metas);
     let channel_expr_tokens = parse_exprs(&channel_exprs);
     let pipe_expr_tokens = parse_exprs(&pipe_exprs);
     let run_pipe_expr_tokens = parse_exprs(&run_pipe_exprs);
-    let run_pipes_expr_tokens = parse_exprs(&run_pipes_expr);
+    let join_pipes_expr_tokens = parse_exprs(&join_pipes_expr);
     // pipe context
     let pipe_names = metas.list_pipe_name();
     let add_pipe_contexts = resolve_pipe_contexts(&pipe_names);
@@ -48,7 +48,7 @@ pub fn impl_bootstrap(
                 #run_pipe_expr_tokens
                 ;
                 let run = async move {
-                    #run_pipes_expr_tokens
+                    #join_pipes_expr_tokens
                     ;
                 };
                 Box::pin(run)
@@ -66,7 +66,7 @@ fn resolve_all_exprs(metas: &PipeMetas) -> Vec<String> {
     all_exprs.extend(resolve_channel_exprs(&metas));
     all_exprs.extend(resolve_pipe_exprs(&metas));
     all_exprs.extend(resolve_run_pipe_exprs(&metas));
-    all_exprs.extend(resolve_run_pipes_expr(&metas));
+    all_exprs.extend(resolve_join_pipes_expr(&metas));
     all_exprs
 }
 
@@ -82,8 +82,8 @@ fn resolve_run_pipe_exprs(metas: &PipeMetas) -> Vec<String> {
     metas.generate_pipe_meta_exprs::<RunPipeExpr>()
 }
 
-fn resolve_run_pipes_expr(metas: &PipeMetas) -> Vec<String> {
-    metas.generate_pipe_metas_expr::<RunPipesExpr>()
+fn resolve_join_pipes_expr(metas: &PipeMetas) -> Vec<String> {
+    metas.generate_pipe_metas_expr::<JoinPipesExpr>()
 }
 
 fn parse_exprs(exprs: &Vec<String>) -> TokenStream {

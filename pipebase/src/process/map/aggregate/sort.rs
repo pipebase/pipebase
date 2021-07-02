@@ -121,12 +121,12 @@ mod top_aggregator_tests {
             vec![vec![1, 2, 2, 3], vec![1, 1, 2, 1], vec![2, 2, 2, 2]],
         );
         f0.await;
-        run_pipes!([(
+        join_pipes!([run_pipe!(
             pipe,
             TopAggregatorConfig,
             "resources/catalogs/top_aggregator.yml",
-            Some(rx0),
-            [tx1]
+            [tx1],
+            rx0
         )]);
         let r = rx1.recv().await.unwrap();
         assert_eq!(vec![3, 2, 2], r);

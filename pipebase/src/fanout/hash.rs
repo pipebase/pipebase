@@ -101,7 +101,7 @@ mod tests {
         let f2 = receive_records(rx2, 2);
         let mut pipe = selector!("hash_select");
         f0.await;
-        run_pipes!([(pipe, DefaultHashSelectConfig, "", Some(rx0), [tx1, tx2])]);
+        join_pipes!([run_pipe!(pipe, DefaultHashSelectConfig, [tx1, tx2], rx0)]);
         let c1 = f1.await;
         let c2 = f2.await;
         assert_eq!(4, c1 + c2)

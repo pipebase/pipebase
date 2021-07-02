@@ -96,7 +96,7 @@ mod tests {
         );
         f1.await;
         drop(tx0);
-        run_pipes!([(pipe, FilterMapConfig, "", Some(rx0), [tx1])]);
+        join_pipes!([run_pipe!(pipe, FilterMapConfig, [tx1], rx0)]);
         let filtered_records = rx1.recv().await.unwrap();
         assert_eq!(1, filtered_records.len());
         assert_eq!(0, filtered_records[0].r0);

@@ -48,15 +48,9 @@ mod tests {
         let (tx, rx) = channel!(u128, 10);
         let mut timer = poller!("timer");
         let mut printer = exporter!("printer");
-        run_pipes!([
-            (
-                timer,
-                TimerConfig,
-                "resources/catalogs/timer.yml",
-                None,
-                [tx]
-            ),
-            (printer, PrinterConfig, "", Some(rx), [])
+        join_pipes!([
+            run_pipe!(timer, TimerConfig, "resources/catalogs/timer.yml", [tx]),
+            run_pipe!(printer, PrinterConfig, [], rx)
         ]);
     }
 }

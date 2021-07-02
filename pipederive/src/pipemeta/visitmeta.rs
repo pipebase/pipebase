@@ -1,6 +1,6 @@
 use super::meta::PipeMeta;
 use crate::constants::{
-    BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, CHANNEL_MACRO, RUN_PIPES_MACRO, RUN_PIPE_MACRO,
+    BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, CHANNEL_MACRO, JOIN_PIPES_MACRO, RUN_PIPE_MACRO,
 };
 
 pub trait VisitPipeMeta: Default {
@@ -119,19 +119,21 @@ impl VisitPipeMeta for RunPipeExpr {
         let downstream_pipe_names = meta.get_downstream_names();
         let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
         // reveiver is optional for source pipe
-        let receiver_expr = match upstream_output_type_name {
+        let rhs = match upstream_output_type_name {
             Some(_) => {
-                let expr = Self::gen_recevier_expr(&pipe_name);
-                format!("Some({})", expr)
+                let receiver_expr = Self::gen_recevier_expr(&pipe_name);
+                format!(
+                    r#"{}({}, {}, "{}", {}, {})"#,
+                    RUN_PIPE_MACRO, pipe_name, config_ty, config_path, senders_expr, receiver_expr
+                )
             }
-            None => "None".to_owned(),
+            None => format!(
+                r#"{}({}, {}, "{}", {})"#,
+                RUN_PIPE_MACRO, pipe_name, config_ty, config_path, senders_expr
+            ),
         };
-        let expr = format!(
-            r#"{}({}, {}, "{}", {}, {})"#,
-            RUN_PIPE_MACRO, pipe_name, config_ty, config_path, receiver_expr, senders_expr
-        );
         self.lhs = Some(pipe_name.to_owned());
-        self.rhs = Some(expr);
+        self.rhs = Some(rhs);
     }
 }
 
@@ -160,20 +162,20 @@ impl RunPipeExpr {
 }
 
 #[derive(Default)]
-pub struct RunPipesExpr {
+pub struct JoinPipesExpr {
     pipe_names: Vec<String>,
 }
 
-impl VisitPipeMeta for RunPipesExpr {
+impl VisitPipeMeta for JoinPipesExpr {
     fn visit(&mut self, meta: &PipeMeta) {
         self.pipe_names.push(meta.get_name().to_owned());
     }
 }
 
-impl Expr for RunPipesExpr {
+impl Expr for JoinPipesExpr {
     fn get_expr(&self) -> Option<String> {
         let all_exprs = self.pipe_names.join(", ");
-        let all_exprs = format!("{}([{}])", RUN_PIPES_MACRO, all_exprs);
+        let all_exprs = format!("{}([{}])", JOIN_PIPES_MACRO, all_exprs);
         Some(all_exprs)
     }
 }

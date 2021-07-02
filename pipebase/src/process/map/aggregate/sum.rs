@@ -70,7 +70,7 @@ mod sum_aggregator_tests {
         let mut pipe = mapper!("summation");
         let f0 = populate_records(tx0, vec![vec![1, 3, 5, 7], vec![2, 4, 6, 8]]);
         f0.await;
-        run_pipes!([(pipe, SumAggregatorConfig, "", Some(rx0), [tx1])]);
+        join_pipes!([run_pipe!(pipe, SumAggregatorConfig, [tx1], rx0)]);
         let odd = rx1.recv().await.unwrap();
         assert_eq!(16, odd);
         let even = rx1.recv().await.unwrap();
@@ -99,7 +99,7 @@ mod sum_aggregator_tests {
             vec![vec![Record::new(1), Record::new(2), Record::new(3)]],
         );
         f0.await;
-        let run_pipe = run_pipe!(pipe, SumAggregatorConfig, "", Some(rx0), [tx1]);
+        let run_pipe = run_pipe!(pipe, SumAggregatorConfig, [tx1], rx0);
         let _ = run_pipe.await;
         let sum = rx1.recv().await.unwrap();
         assert_eq!(6, sum)
@@ -191,12 +191,11 @@ mod test_group_aggregator {
         let mut pipe = mapper!("group_summation");
         let f0 = populate_records(tx0, vec![vec![2, 3, 2, 3, 2, 3]]);
         f0.await;
-        run_pipes!([(
+        join_pipes!([run_pipe!(
             pipe,
             UnorderedGroupSumAggregatorConfig,
-            "",
-            Some(rx0),
-            [tx1]
+            [tx1],
+            rx0
         )]);
         let gs = rx1.recv().await.unwrap();
         for p in gs {
@@ -225,12 +224,11 @@ mod test_group_aggregator {
             ]],
         );
         f0.await;
-        run_pipes!([(
+        join_pipes!([run_pipe!(
             pipe,
             UnorderedGroupSumAggregatorConfig,
-            "",
-            Some(rx0),
-            [tx1]
+            [tx1],
+            rx0
         )]);
         let wcs = rx2.recv().await.unwrap();
         for wc in wcs {
@@ -274,13 +272,7 @@ mod test_group_aggregator {
             ]],
         );
         f0.await;
-        let pipe_run = run_pipe!(
-            pipe,
-            UnorderedGroupSumAggregatorConfig,
-            "",
-            Some(rx0),
-            [tx1]
-        );
+        let pipe_run = run_pipe!(pipe, UnorderedGroupSumAggregatorConfig, [tx1], rx0);
         let _ = pipe_run.await;
         let gs = rx1.recv().await.unwrap();
         assert_eq!(2, gs.len());
@@ -367,7 +359,7 @@ mod test_ordered_group_aggregator {
             ]],
         );
         f0.await;
-        run_pipes!([(pipe, OrderedGroupSumAggregatorConfig, "", Some(rx0), [tx1])]);
+        join_pipes!([run_pipe!(pipe, OrderedGroupSumAggregatorConfig, [tx1], rx0)]);
         let wcs = rx2.recv().await.unwrap();
         let mut wcs_iter = wcs.into_iter();
         let bar = wcs_iter.next().unwrap();

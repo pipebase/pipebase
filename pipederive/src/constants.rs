@@ -39,7 +39,7 @@ pub const BOOTSTRAP_FUNCTION: &str = "bootstrap";
 
 pub const CHANNEL_MACRO: &str = "channel!";
 pub const RUN_PIPE_MACRO: &str = "run_pipe!";
-pub const RUN_PIPES_MACRO: &str = "run_pipes!";
+pub const JOIN_PIPES_MACRO: &str = "join_pipes!";
 
 pub const AGGREGATE_SUM: &str = "agg.sum";
 pub const AGGREGATE_SORT: &str = "agg.sort";

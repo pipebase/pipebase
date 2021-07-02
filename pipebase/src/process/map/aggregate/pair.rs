@@ -165,12 +165,11 @@ mod pair_tests {
             ]],
         );
         f0.await;
-        run_pipes!([(
+        join_pipes!([run_pipe!(
             pipe,
             UnorderedGroupSumAggregatorConfig,
-            "",
-            Some(rx0),
-            [tx1]
+            [tx1],
+            rx0
         )]);
         let gs = rx1.recv().await.unwrap();
         for p in gs {
@@ -198,12 +197,12 @@ mod pair_tests {
             ]],
         );
         f0.await;
-        run_pipes!([(
+        join_pipes!([run_pipe!(
             pipe,
             TopAggregatorConfig,
             "resources/catalogs/top_aggregator.yml",
-            Some(rx0),
-            [tx1]
+            [tx1],
+            rx0
         )]);
         let top = rx1.recv().await.unwrap();
         assert_eq!(3, top.len());
