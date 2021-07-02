@@ -55,20 +55,14 @@ where
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use std::{cmp::Ordering, collections::BTreeSet};
-    use tokio::sync::mpsc::{Receiver, Sender};
+    use std::collections::BTreeSet;
+    use tokio::sync::mpsc::Receiver;
 
-    #[derive(Clone, Debug, Eq, OrderKey)]
+    #[derive(Clone, Debug, Eq, OrderedBy)]
     struct Record {
-        #[okey]
+        #[order]
         pub key: String,
         pub val: i32,
-    }
-
-    async fn populate_record(tx: Sender<Record>, records: Vec<Record>) {
-        for r in records {
-            let _ = tx.send(r).await;
-        }
     }
 
     async fn receive_records(rx: &mut Receiver<BTreeSet<Record>>) -> Vec<Record> {
@@ -87,7 +81,7 @@ mod tests {
         let (tx1, mut rx1) = channel!(BTreeSet<Record>, 10);
         let mut pipe = collector!("set_collector");
         let context = pipe.get_context();
-        let ph = populate_record(
+        let ph = populate_records(
             tx0,
             vec![
                 Record {

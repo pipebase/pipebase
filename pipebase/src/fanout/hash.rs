@@ -42,12 +42,11 @@ impl<T: Hash> Select<T, DefaultHashSelectConfig> for DefaultHashSelect {
 mod tests {
 
     use crate::*;
-    use std::hash::{Hash, Hasher};
     use tokio::sync::mpsc::{Receiver, Sender};
 
-    #[derive(Clone, Debug, HashKey)]
+    #[derive(Clone, Debug, HashedBy)]
     struct Record {
-        #[hkey]
+        #[hash]
         pub key: String,
         pub value: i32,
     }
