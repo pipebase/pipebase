@@ -237,7 +237,7 @@ mod tests {
         let context = pipe.get_context();
         let f1 = populate_record(tx0, Record { r0: 0, r1: 1 });
         f1.await;
-        run_pipes!([(pipe, ProjectionConfig, "", Some(rx0), [tx1])]);
+        join_pipes!([run_pipe!(pipe, ProjectionConfig, [tx1], rx0)]);
         let reversed_record = rx1.recv().await.unwrap();
         assert_eq!(1, reversed_record.r0);
         assert_eq!(0, reversed_record.r1);

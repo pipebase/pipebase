@@ -13,8 +13,8 @@ where
     async fn run(
         &mut self,
         config: C,
-        mut rx: Option<Receiver<T>>,
         txs: Vec<Sender<U>>,
+        mut rx: Option<Receiver<T>>,
     ) -> Result<()>;
 }
 
@@ -24,21 +24,28 @@ pub trait HasContext {
 
 #[macro_export]
 macro_rules! run_pipe {
-    (
-        $pipe:expr, $config:expr, $rx:expr, $txs:expr
-    ) => {
-        tokio::spawn(async move {
-            match $pipe.run($config, $rx, $txs).await {
-                Ok(context) => Ok(context),
-                Err(err) => {
-                    log::error!("pipe exit with error {:#?}", err);
-                    Err(err)
-                }
-            }
-        })
+    {
+        $pipe:ident, $config:ty, [$( $tx:expr ), *]
+    } => {
+        run_pipe!($pipe, $config, "", [$( $tx ), *], { None })
     };
     {
-        $pipe:expr, $config:ty, $path:expr, $rx:expr, [$( $tx:expr ), *]
+        $pipe:ident, $config:ty, [$( $tx:expr ), *], $rx:ident
+    } => {
+        run_pipe!($pipe, $config, "", [$( $tx ), *], { Some($rx) })
+    };
+    {
+        $pipe:ident, $config:ty, $path:expr, [$( $tx:expr ), *]
+    } => {
+        run_pipe!($pipe, $config, $path, [$( $tx ), *], { None })
+    };
+    {
+        $pipe:ident, $config:ty, $path:expr, [$( $tx:expr ), *], $rx:ident
+    } => {
+        run_pipe!($pipe, $config, $path, [$( $tx ), *], { Some($rx) })
+    };
+    {
+        $pipe:ident, $config:ty, $path:expr, [$( $tx:expr ), *], $rx:expr
     } => {
         {
             let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
@@ -46,27 +53,21 @@ macro_rules! run_pipe {
             $(
                 txs.push($tx);
             )*
-            run_pipe!($pipe, config, $rx, txs)
+            tokio::spawn(async move {
+                match $pipe.run(config, txs, $rx).await {
+                    Ok(context) => Ok(context),
+                    Err(err) => {
+                        log::error!("pipe exit with error {:#?}", err);
+                        Err(err)
+                    }
+                }
+            })
         }
-    }
+    };
 }
 
 #[macro_export]
-macro_rules! run_pipes {
-    (
-        [$( ($pipe:expr, $config:ty, $path:expr, $rx:expr, [$( $tx:expr ), *]) ), *]
-    ) => {
-        let _ = tokio::join!($(
-            {
-                let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-                let mut txs = vec![];
-                $(
-                    txs.push($tx);
-                )*
-                run_pipe!($pipe, config, $rx, txs)
-            }
-        ),*);
-    };
+macro_rules! join_pipes {
     (
         [$( $run_pipe:expr ), *]
     ) => {

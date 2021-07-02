@@ -105,12 +105,12 @@ mod tests {
             ],
         );
         ph.await;
-        run_pipes!([(
+        join_pipes!([run_pipe!(
             pipe,
             SetCollectorConfig,
             "resources/catalogs/set_collector.yml",
-            Some(rx0),
-            [tx1]
+            [tx1],
+            rx0
         )]);
         let records = receive_records(&mut rx1).await;
         assert_eq!(1, records.len());

@@ -42,8 +42,8 @@ where
     async fn run(
         &mut self,
         config: C,
-        rx: Option<Receiver<()>>,
         txs: Vec<Sender<U>>,
+        rx: Option<Receiver<()>>,
     ) -> Result<()> {
         assert!(rx.is_none());
         // connect listener

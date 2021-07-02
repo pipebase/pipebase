@@ -93,7 +93,7 @@ mod tests {
         let mut pipe = mapper!("field_visit");
         let f1 = populate_records(tx0, Records { records: [1, 2, 3] });
         f1.await;
-        run_pipes!([(pipe, FieldVisitConfig, "", Some(rx0), [tx1])]);
+        join_pipes!([run_pipe!(pipe, FieldVisitConfig, [tx1], rx0)]);
         let received_records = rx1.recv().await.unwrap();
         assert_eq!([1, 2, 3], received_records)
     }

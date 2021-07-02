@@ -97,11 +97,10 @@ mod tests {
     async fn test_timer() {
         let (tx, mut rx) = channel!(u128, 1024);
         let mut source = Poller::new("timer");
-        run_pipes!([(
+        join_pipes!([run_pipe!(
             source,
             TimerConfig,
             "resources/catalogs/timer.yml",
-            None,
             [tx]
         )]);
         on_receive(&mut rx, 10).await;
@@ -113,11 +112,10 @@ mod tests {
         let mut source = poller!("timer");
         drop(rx);
         let start_millis = std::time::SystemTime::now();
-        run_pipes!([(
+        join_pipes!([run_pipe!(
             source,
             TimerConfig,
             "resources/catalogs/timer.yml",
-            None,
             [tx]
         )]);
         // poller should exit since receiver gone

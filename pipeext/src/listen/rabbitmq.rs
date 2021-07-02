@@ -121,9 +121,12 @@ mod tests {
     async fn test_listen_rabbitmq() {
         let (tx, rx) = channel!(Vec<u8>, 1024);
         let mut pipe = Listener::new("rbmq_consumer");
-        let config =
-            RabbitMQConsumerConfig::from_path("resources/catalogs/rabbitmq_consumer.yml").unwrap();
-        let run_pipe = run_pipe!(pipe, config, None, vec![tx]);
+        let run_pipe = run_pipe!(
+            pipe,
+            RabbitMQConsumerConfig,
+            "resources/catalogs/rabbitmq_consumer.yml",
+            [tx]
+        );
         let jh1 = on_receive(rx);
         let _ = tokio::join!(run_pipe, jh1);
     }

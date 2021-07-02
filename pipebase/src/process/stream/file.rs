@@ -114,12 +114,12 @@ mod file_split_streamer_tests {
             vec![PathBuf::from("resources/test_file_stream/test_file_0.txt")],
         );
         f0.await;
-        run_pipes!([(
+        join_pipes!([run_pipe!(
             pipe,
             FileSplitStreamerConfig,
             "resources/catalogs/file_split_streamer.yml",
-            Some(rx0),
-            [tx1]
+            [tx1],
+            rx0
         )]);
         let word = rx1.recv().await.unwrap();
         assert_eq!("foo", String::from_utf8(word).unwrap());
@@ -220,7 +220,7 @@ mod file_line_streamer_tests {
             vec![PathBuf::from("resources/test_file_stream/test_file_1.txt")],
         );
         f0.await;
-        run_pipes!([(pipe, FileLineStreamerConfig, "", Some(rx0), [tx1])]);
+        join_pipes!([run_pipe!(pipe, FileLineStreamerConfig, "", [tx1], rx0)]);
         let line = rx1.recv().await.unwrap();
         assert_eq!("foo1 bar1", &line);
         let line = rx1.recv().await.unwrap();

@@ -71,12 +71,12 @@ mod tests {
         let mut pipe = mapper!("text_splitter");
         let f0 = populate_records(tx0, vec!["foo bar".to_owned()]);
         f0.await;
-        run_pipes!([(
+        join_pipes!([run_pipe!(
             pipe,
             StringSplitterConfig,
             "resources/catalogs/text_splitter.yml",
-            Some(rx0),
-            [tx1]
+            [tx1],
+            rx0
         )]);
         let splitted: &[String] = &rx1.recv().await.unwrap();
         assert_eq!(2, splitted.len());

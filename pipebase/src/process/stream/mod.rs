@@ -42,8 +42,8 @@ where
     async fn run(
         &mut self,
         config: C,
-        mut rx: Option<Receiver<T>>,
         txs: Vec<Sender<U>>,
+        mut rx: Option<Receiver<T>>,
     ) -> crate::error::Result<()> {
         assert!(rx.is_some());
         assert!(!txs.is_empty());
