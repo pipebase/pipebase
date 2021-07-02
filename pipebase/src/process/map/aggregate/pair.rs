@@ -112,6 +112,16 @@ where
 #[cfg(test)]
 mod pair_tests {
 
+    #[test]
+    fn test_pair_cmp() {
+        let p0 = Pair::new("foo".to_owned(), 1);
+        let p1 = Pair::new("foo".to_owned(), 2);
+        assert!(p0 < p1);
+        let p2 = Pair::new("bar".to_owned(), 2);
+        assert_eq!(p1, p2);
+        assert!(p0 < p2);
+    }
+
     use crate::*;
     use tokio::sync::mpsc::Sender;
 
