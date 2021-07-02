@@ -110,20 +110,13 @@ where
 mod top_aggregator_tests {
 
     use crate::*;
-    use tokio::sync::mpsc::Sender;
-
-    async fn populate_record(tx: Sender<Vec<u32>>, records: Vec<Vec<u32>>) {
-        for record in records {
-            let _ = tx.send(record).await;
-        }
-    }
 
     #[tokio::test]
     async fn test_top_aggregator() {
         let (tx0, rx0) = channel!(Vec<u32>, 1023);
         let (tx1, mut rx1) = channel!(Vec<u32>, 1024);
         let mut pipe = mapper!("top");
-        let f0 = populate_record(
+        let f0 = populate_records(
             tx0,
             vec![vec![1, 2, 2, 3], vec![1, 1, 2, 1], vec![2, 2, 2, 2]],
         );

@@ -46,7 +46,7 @@ where
     I: GroupAs<K> + AggregateAs<V>,
     V: std::ops::AddAssign<V> + Init + Clone,
     T: IntoIterator<Item = I>,
-    U: FromIterator<Pair<K, V>>,
+    U: FromIterator<RightValuedPair<K, V>>,
     G: GroupTable<K, V>,
 {
     fn new_group_table(&self) -> G;
@@ -59,7 +59,10 @@ where
             let sum = group_sum.get_group_mut(&item.group_key()).unwrap();
             *sum += item.aggregate_value();
         }
-        group_sum.into_iter().map(|t| Pair::from(t)).collect()
+        group_sum
+            .into_iter()
+            .map(|t| RightValuedPair::from(t))
+            .collect()
     }
 }
 

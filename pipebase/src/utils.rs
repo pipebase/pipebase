@@ -6,6 +6,7 @@ use tokio::sync::mpsc::Sender;
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
 
+// Sender Operations
 pub(crate) fn senders_as_map<U>(txs: Vec<Sender<U>>) -> HashMap<usize, Sender<U>> {
     let mut i: usize = 0;
     let mut txs_map: HashMap<usize, Sender<U>> = HashMap::new();
@@ -67,6 +68,7 @@ pub(crate) fn filter_senders_by_indices<U>(
     }
 }
 
+// Context Operations
 pub(crate) async fn set_state(context: &Arc<RwLock<Context>>, state: State) {
     let mut ctx = context.write().await;
     ctx.set_state(state)
@@ -80,4 +82,14 @@ pub(crate) async fn inc_total_run(context: &Arc<RwLock<Context>>) {
 pub(crate) async fn inc_success_run(context: &Arc<RwLock<Context>>) {
     let mut ctx = context.write().await;
     ctx.inc_success_run()
+}
+
+// Test Operations
+pub(crate) async fn populate_records<T, U>(tx: Sender<T>, records: U)
+where
+    U: IntoIterator<Item = T>,
+{
+    for record in records {
+        let _ = tx.send(record).await;
+    }
 }

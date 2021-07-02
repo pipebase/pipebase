@@ -62,26 +62,47 @@ where
 #[cfg(test)]
 mod sum_aggregator_tests {
     use crate::*;
-    use tokio::sync::mpsc::Sender;
-
-    async fn populate_record(tx: Sender<Vec<u32>>, records: Vec<Vec<u32>>) {
-        for record in records {
-            let _ = tx.send(record).await;
-        }
-    }
 
     #[tokio::test]
     async fn test_sum_aggregator() {
         let (tx0, rx0) = channel!(Vec<u32>, 1023);
         let (tx1, mut rx1) = channel!(u32, 1024);
         let mut pipe = mapper!("summation");
-        let f0 = populate_record(tx0, vec![vec![1, 3, 5, 7], vec![2, 4, 6, 8]]);
+        let f0 = populate_records(tx0, vec![vec![1, 3, 5, 7], vec![2, 4, 6, 8]]);
         f0.await;
         run_pipes!([(pipe, SumAggregatorConfig, "", Some(rx0), [tx1])]);
         let odd = rx1.recv().await.unwrap();
         assert_eq!(16, odd);
         let even = rx1.recv().await.unwrap();
         assert_eq!(20, even);
+    }
+
+    #[derive(AggregateAs)]
+    struct Record {
+        #[agg(sum)]
+        value: u32,
+    }
+
+    impl Record {
+        pub fn new(value: u32) -> Self {
+            Record { value: value }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_record_sum() {
+        let (tx0, rx0) = channel!(Vec<Record>, 1024);
+        let (tx1, mut rx1) = channel!(u32, 1024);
+        let mut pipe = mapper!("record_sum");
+        let f0 = populate_records(
+            tx0,
+            vec![vec![Record::new(1), Record::new(2), Record::new(3)]],
+        );
+        f0.await;
+        let run_pipe = run_pipe!(pipe, SumAggregatorConfig, "", Some(rx0), [tx1]);
+        let _ = run_pipe.await;
+        let sum = rx1.recv().await.unwrap();
+        assert_eq!(6, sum)
     }
 }
 
@@ -129,6 +150,7 @@ impl FromConfig<UnorderedGroupSumAggregatorConfig> for UnorderedGroupSumAggregat
     }
 }
 
+// Group key is hashed but not ordered
 pub struct UnorderedGroupSumAggregator {}
 
 impl<I, T, K, V> GroupSumAggregate<I, T, K, V, Vec<Pair<K, V>>, HashMap<K, V>>
@@ -161,20 +183,13 @@ where
 #[cfg(test)]
 mod test_group_aggregator {
     use crate::*;
-    use tokio::sync::mpsc::Sender;
-
-    async fn populate_record<T>(tx: Sender<T>, records: Vec<T>) {
-        for record in records {
-            let _ = tx.send(record).await;
-        }
-    }
 
     #[tokio::test]
     async fn test_u32_group_sum_aggregator() {
         let (tx0, rx0) = channel!(Vec<u32>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<u32, u32>>, 1024);
         let mut pipe = mapper!("group_summation");
-        let f0 = populate_record(tx0, vec![vec![2, 3, 2, 3, 2, 3]]);
+        let f0 = populate_records(tx0, vec![vec![2, 3, 2, 3, 2, 3]]);
         f0.await;
         run_pipes!([(
             pipe,
@@ -198,7 +213,7 @@ mod test_group_aggregator {
         let (tx0, rx0) = channel!(Vec<String>, 1024);
         let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
         let mut pipe = mapper!("word_count");
-        let f0 = populate_record(
+        let f0 = populate_records(
             tx0,
             vec![vec![
                 "foo".to_owned(),
@@ -227,6 +242,56 @@ mod test_group_aggregator {
             }
         }
     }
+
+    #[derive(AggregateAs, GroupAs)]
+    struct Record {
+        #[gkey]
+        id: String,
+        #[agg(sum)]
+        value: u32,
+    }
+
+    impl Record {
+        pub fn new(id: &str, value: u32) -> Self {
+            Record {
+                id: id.to_owned(),
+                value: value,
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_record_group_sum() {
+        let (tx0, rx0) = channel!(Vec<Record>, 1024);
+        let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
+        let mut pipe = mapper!("record_sum");
+        let f0 = populate_records(
+            tx0,
+            vec![vec![
+                Record::new("foo", 1),
+                Record::new("foo", 2),
+                Record::new("bar", 3),
+            ]],
+        );
+        f0.await;
+        let pipe_run = run_pipe!(
+            pipe,
+            UnorderedGroupSumAggregatorConfig,
+            "",
+            Some(rx0),
+            [tx1]
+        );
+        let _ = pipe_run.await;
+        let gs = rx1.recv().await.unwrap();
+        assert_eq!(2, gs.len());
+        for sum in gs {
+            match sum.left().as_str() {
+                "foo" => assert_eq!(&3, sum.right()),
+                "bar" => assert_eq!(&3, sum.right()),
+                _ => unreachable!(),
+            }
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -251,6 +316,7 @@ impl FromConfig<OrderedGroupSumAggregatorConfig> for OrderedGroupSumAggregator {
     }
 }
 
+// Group key is ordered
 pub struct OrderedGroupSumAggregator {}
 
 impl<I, T, K, V> GroupSumAggregate<I, T, K, V, Vec<Pair<K, V>>, BTreeMap<K, V>>
@@ -283,20 +349,13 @@ where
 #[cfg(test)]
 mod test_ordered_group_aggregator {
     use crate::*;
-    use tokio::sync::mpsc::Sender;
-
-    async fn populate_record<T>(tx: Sender<T>, records: Vec<T>) {
-        for record in records {
-            let _ = tx.send(record).await;
-        }
-    }
 
     #[tokio::test]
     async fn test_word_group_count_aggregate() {
         let (tx0, rx0) = channel!(Vec<String>, 1024);
         let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
         let mut pipe = mapper!("ordered_word_count");
-        let f0 = populate_record(
+        let f0 = populate_records(
             tx0,
             vec![vec![
                 "foo".to_owned(),

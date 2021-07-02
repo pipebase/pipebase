@@ -8,7 +8,7 @@ use crate::{
 };
 
 pub fn impl_field_visit(ident: &Ident, data: &Data, generics: &Generics) -> TokenStream {
-    let field = resolve_first_field(data, &is_visit_field);
+    let field = resolve_first_field(data, &is_visit_field, true).unwrap();
     let field_type = field.ty;
     let field_ident = field.ident;
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
