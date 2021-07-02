@@ -5,8 +5,8 @@ mod context;
 mod field;
 mod filter;
 mod group;
-mod hashkey;
-mod orderkey;
+mod hashedby;
+mod orderedby;
 mod pipemeta;
 mod project;
 mod utils;
@@ -44,23 +44,23 @@ pub fn derive_field_accept(_tokens: proc_macro::TokenStream) -> proc_macro::Toke
     proc_macro::TokenStream::from(expanded)
 }
 
-#[proc_macro_derive(HashKey, attributes(hkey))]
-pub fn derive_hashkey(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(HashedBy, attributes(hash))]
+pub fn derive_hashby(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ref tokens = parse_macro_input!(_tokens as DeriveInput);
     let ref ident = tokens.ident;
     let ref data = tokens.data;
     let ref generics = tokens.generics;
-    let expanded = hashkey::impl_hashkey(ident, data, generics);
+    let expanded = hashedby::impl_hashed_by(ident, data, generics);
     proc_macro::TokenStream::from(expanded)
 }
 
-#[proc_macro_derive(OrderKey, attributes(okey))]
-pub fn derive_orderkey(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(OrderedBy, attributes(order))]
+pub fn derive_orderby(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ref tokens = parse_macro_input!(_tokens as DeriveInput);
     let ref ident = tokens.ident;
     let ref data = tokens.data;
     let ref generics = tokens.generics;
-    let expanded = orderkey::impl_orderkey(ident, data, generics);
+    let expanded = orderedby::impl_ordered_by(ident, data, generics);
     proc_macro::TokenStream::from(expanded)
 }
 
@@ -87,10 +87,11 @@ pub fn derive_context_store(_tokens: proc_macro::TokenStream) -> proc_macro::Tok
 #[proc_macro_derive(AggregateAs, attributes(agg))]
 pub fn derive_aggregate_as(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ref tokens = parse_macro_input!(_tokens as DeriveInput);
+    let ref attributes = tokens.attrs;
     let ref ident = tokens.ident;
     let ref data = tokens.data;
     let ref generics = tokens.generics;
-    let expanded = aggregate::impl_aggregate_as(ident, data, generics);
+    let expanded = aggregate::impl_aggregate_as(ident, attributes, data, generics);
     proc_macro::TokenStream::from(expanded)
 }
 

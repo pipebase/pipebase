@@ -200,7 +200,7 @@ mod pair_tests {
         join_pipes!([run_pipe!(
             pipe,
             TopAggregatorConfig,
-            "resources/catalogs/top_aggregator.yml",
+            "resources/catalogs/top_aggregator_desc.yml",
             [tx1],
             rx0
         )]);

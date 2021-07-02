@@ -12,9 +12,9 @@ pub const FILTER_ALIAS_DEFAULT: &str = "a";
 
 pub const FIELD_VISIT: &str = "visit";
 
-pub const HASH_KEY: &str = "hkey";
+pub const HASH: &str = "hash";
 
-pub const ORDER_KEY: &str = "okey";
+pub const ORDER: &str = "order";
 
 pub const CONTEXT_STORE: &str = "cstore";
 

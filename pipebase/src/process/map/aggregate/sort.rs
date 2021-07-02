@@ -124,7 +124,7 @@ mod top_aggregator_tests {
         join_pipes!([run_pipe!(
             pipe,
             TopAggregatorConfig,
-            "resources/catalogs/top_aggregator.yml",
+            "resources/catalogs/top_aggregator_desc.yml",
             [tx1],
             rx0
         )]);
@@ -134,5 +134,59 @@ mod top_aggregator_tests {
         assert_eq!(vec![2, 1, 1], r);
         let r = rx1.recv().await.unwrap();
         assert_eq!(vec![2, 2, 2], r);
+    }
+
+    #[derive(AggregateAs, Clone, Debug, Eq, OrderedBy)]
+    #[agg(sort)]
+    struct Record {
+        pub id: String,
+        #[order]
+        pub value: u32,
+    }
+
+    impl Record {
+        pub fn new(id: &str, value: u32) -> Self {
+            Record {
+                id: id.to_owned(),
+                value: value,
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_top_record() {
+        let (tx0, rx0) = channel!(Vec<Record>, 1024);
+        let (tx1, mut rx1) = channel!(Vec<Record>, 1024);
+        let f0 = populate_records(
+            tx0,
+            vec![vec![
+                Record::new("five", 5),
+                Record::new("four", 4),
+                Record::new("two", 2),
+                Record::new("one", 1),
+                Record::new("three", 3),
+            ]],
+        );
+        f0.await;
+        let mut pipe = mapper!("top_record");
+        let pipe = run_pipe!(
+            pipe,
+            TopAggregatorConfig,
+            "resources/catalogs/top_aggregator_asc.yml",
+            [tx1],
+            rx0
+        );
+        let _ = pipe.await;
+        let mut sorted_records = rx1.recv().await.unwrap();
+        assert_eq!(3, sorted_records.len());
+        let record = sorted_records.pop().unwrap();
+        assert_eq!("three", &record.id);
+        assert_eq!(3, record.value);
+        let record = sorted_records.pop().unwrap();
+        assert_eq!("two", &record.id);
+        assert_eq!(2, record.value);
+        let record = sorted_records.pop().unwrap();
+        assert_eq!("one", &record.id);
+        assert_eq!(1, record.value);
     }
 }
