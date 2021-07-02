@@ -5,7 +5,7 @@ use quote::quote;
 use syn::{Data, Field, Generics};
 
 pub fn impl_orderkey(ident: &Ident, data: &Data, generics: &Generics) -> TokenStream {
-    let field = resolve_first_field(data, &is_ord_key_field);
+    let field = resolve_first_field(data, &is_ord_key_field, true).unwrap();
     let field_ident = field.ident;
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {

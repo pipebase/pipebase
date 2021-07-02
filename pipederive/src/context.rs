@@ -11,7 +11,7 @@ use quote::quote;
 use syn::{Attribute, Data, Field, Generics};
 
 pub fn impl_context_store(ident: &Ident, data: &Data, generics: &Generics) -> TokenStream {
-    let field = resolve_first_field(data, &is_context_store_field);
+    let field = resolve_first_field(data, &is_context_store_field, true).unwrap();
     let field_ident = field.ident;
     let attribute = get_context_store_attribute(&field.attrs);
     let get_method_token = get_context_store_get_method_token(attribute.as_ref());

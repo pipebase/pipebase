@@ -207,26 +207,46 @@ pub fn resolve_ident(field: &str) -> Ident {
     Ident::new(field, Span::call_site())
 }
 
-pub fn resolve_first_field(data: &Data, predicate: &dyn Fn(&Field) -> bool) -> Field {
+pub fn resolve_first_field(
+    data: &Data,
+    predicate: &dyn Fn(&Field) -> bool,
+    required: bool,
+) -> Option<Field> {
+    let fields = resolve_all_fields(data, predicate);
+    let field = fields.into_iter().next();
+    match field {
+        Some(field) => Some(field),
+        None => {
+            if required {
+                panic!("required field not found")
+            }
+            None
+        }
+    }
+}
+
+pub fn resolve_all_fields(data: &Data, predicate: &dyn Fn(&Field) -> bool) -> Vec<Field> {
     let data_struct = match *data {
         Data::Struct(ref data_struct) => data_struct,
         Data::Enum(_) | Data::Union(_) => unimplemented!(),
     };
-    let field = match data_struct.fields {
-        Fields::Named(ref fields) => find_first_field(fields, predicate),
+    let fields = match data_struct.fields {
+        Fields::Named(ref fields) => find_all_fields(fields, predicate),
         Fields::Unnamed(_) | Fields::Unit => unimplemented!(),
     };
-    match field {
-        Some(field) => field.to_owned(),
-        None => panic!("no field to visit"),
-    }
+    fields
 }
 
-pub fn find_first_field<'a>(
+pub fn find_all_fields<'a>(
     fields: &'a FieldsNamed,
     predicate: &dyn Fn(&Field) -> bool,
-) -> Option<&'a Field> {
-    fields.named.iter().filter(|&field| predicate(field)).next()
+) -> Vec<Field> {
+    fields
+        .named
+        .iter()
+        .filter(|&field| predicate(field))
+        .map(|f| f.to_owned())
+        .collect()
 }
 
 pub fn get_last_stmt_span(function: &ItemFn) -> (Span, Span) {
