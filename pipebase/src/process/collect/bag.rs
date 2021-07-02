@@ -52,10 +52,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        channel, collector, context::State, spawn_join, BagCollectorConfig, Collector, FromPath,
-        Pipe,
-    };
+    use crate::*;
     use tokio::sync::mpsc::{Receiver, Sender};
 
     #[derive(Clone, Debug)]
@@ -84,13 +81,7 @@ mod tests {
     async fn test_bag_collector() {
         let (tx0, rx0) = channel!(Record, 10);
         let (tx1, mut rx1) = channel!(Vec<Record>, 10);
-        let mut pipe = collector!(
-            "bag",
-            "resources/catalogs/bag_collector.yml",
-            BagCollectorConfig,
-            rx0,
-            [tx1]
-        );
+        let mut pipe = collector!("bag_collector");
         let context = pipe.get_context();
         let ph = populate_record(
             tx0,
@@ -110,7 +101,13 @@ mod tests {
             ],
         );
         ph.await;
-        spawn_join!(pipe);
+        run_pipes!([(
+            pipe,
+            BagCollectorConfig,
+            "resources/catalogs/bag_collector.yml",
+            Some(rx0),
+            [tx1]
+        )]);
         let records = receive_records(&mut rx1).await;
         assert_eq!(3, records.len());
         assert_eq!(0, records.get(0).unwrap().val);

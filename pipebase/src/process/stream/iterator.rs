@@ -68,13 +68,13 @@ mod tests {
     async fn test_streamer() {
         let (tx0, rx0) = channel!(HashMap<String, u32>, 1024);
         let (tx1, mut rx1) = channel!((String, u32), 1024);
-        let mut pipe = streamer!("tuple_streamer", IteratorStreamerConfig, rx0, [tx1]);
+        let mut pipe = streamer!("tuple_streamer");
         let mut records: HashMap<String, u32> = HashMap::new();
         records.insert("one".to_owned(), 1);
         records.insert("two".to_owned(), 2);
         let f0 = populate_records(tx0, records);
         f0.await;
-        spawn_join!(pipe);
+        run_pipes!([(pipe, IteratorStreamerConfig, "", Some(rx0), [tx1])]);
         let mut records: HashMap<String, u32> = HashMap::new();
         let (left, right) = rx1.recv().await.unwrap();
         records.insert(left, right);

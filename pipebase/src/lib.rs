@@ -5,6 +5,7 @@ mod fanout;
 mod process;
 mod sink;
 mod source;
+mod utils;
 
 pub use bootstrap::*;
 pub use context::*;
@@ -13,17 +14,13 @@ pub use pipederive::*;
 pub use process::*;
 pub use sink::*;
 pub use source::*;
+pub(crate) use utils::*;
 
 use async_trait::async_trait;
-use log::error;
 use serde::de::DeserializeOwned;
-use std::collections::HashMap;
-use std::collections::HashSet;
 use std::sync::Arc;
-use tokio::sync::mpsc::error::SendError;
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::RwLock;
-use tokio::task::JoinHandle;
 
 use error::Result;
 
@@ -51,108 +48,76 @@ pub trait ConfigInto<T: FromConfig<Self>>: Sized {
 }
 
 #[async_trait]
-pub trait Pipe<T: Send + 'static> {
-    async fn run(&mut self) -> Result<()>;
+pub trait Pipe<T, U, R, C>
+where
+    U: Send + 'static,
+    R: FromConfig<C>,
+    C: ConfigInto<R>,
+{
+    async fn run(
+        &mut self,
+        config: C,
+        mut rx: Option<Receiver<T>>,
+        txs: Vec<Sender<U>>,
+    ) -> Result<()>;
+}
 
-    fn add_sender(&mut self, _tx: Sender<T>) {}
-
-    fn spawn_send(tx: Arc<Sender<T>>, t: T) -> JoinHandle<core::result::Result<(), SendError<T>>> {
-        tokio::spawn(async move {
-            match tx.send(t).await {
-                Ok(()) => Ok(()),
-                Err(err) => {
-                    error!("selector send error {}", err.to_string());
-                    Err(err)
-                }
-            }
-        })
-    }
-
-    async fn wait_join_handles(
-        join_handles: HashMap<usize, JoinHandle<core::result::Result<(), SendError<T>>>>,
-    ) -> Vec<usize> {
-        let mut drop_sender_indices = Vec::new();
-        for (idx, jh) in join_handles {
-            let result = match jh.await {
-                Ok(res) => res,
-                Err(err) => {
-                    error!("join error in pipe err: {:#?}", err);
-                    drop_sender_indices.push(idx);
-                    continue;
-                }
-            };
-            match result {
-                Ok(()) => (),
-                Err(err) => {
-                    error!("send error {}", err);
-                    drop_sender_indices.push(idx);
-                }
-            }
-        }
-        drop_sender_indices
-    }
-
-    fn filter_senders_by_indices(
-        senders: &mut HashMap<usize, Arc<Sender<T>>>,
-        remove_indices: Vec<usize>,
-    ) {
-        for idx in remove_indices {
-            senders.remove(&idx);
-        }
-    }
-
-    fn filter_sender_by_dropped_receiver_idx(
-        senders: &Vec<Arc<Sender<T>>>,
-        dropped_receiver_idxs: HashSet<usize>,
-    ) -> Vec<Arc<Sender<T>>> {
-        let mut healthy_senders: Vec<Arc<Sender<T>>> = vec![];
-        let mut i: usize = 0;
-        let len = senders.len();
-        while i < len {
-            if !dropped_receiver_idxs.contains(&i) {
-                healthy_senders.push(senders.get(i).unwrap().to_owned());
-            }
-            i += 1;
-        }
-        healthy_senders
-    }
-
-    async fn set_state(context: &Arc<RwLock<Context>>, state: State) {
-        let mut ctx = context.write().await;
-        ctx.set_state(state)
-    }
-
-    async fn inc_total_run(context: &Arc<RwLock<Context>>) {
-        let mut ctx = context.write().await;
-        ctx.inc_total_run()
-    }
-
-    async fn inc_success_run(context: &Arc<RwLock<Context>>) {
-        let mut ctx = context.write().await;
-        ctx.inc_success_run()
-    }
-
+pub trait HasContext {
     fn get_context(&self) -> Arc<RwLock<Context>>;
 }
 
 #[macro_export]
-macro_rules! spawn_join {
+macro_rules! run_pipe {
     (
-        $( $pipe:expr ), *
+        $pipe:expr, $config:expr, $rx:expr, $txs:expr
     ) => {
-
-            let _ = tokio::join!($(
-                tokio::spawn(async move {
-                    match $pipe.run().await {
-                        Ok(context) => Ok(context),
-                        Err(err) => {
-                            log::error!("pipe exit with error {:#?}", err);
-                            Err(err)
-                        }
-                    }
-                })
-            ),*);
+        tokio::spawn(async move {
+            match $pipe.run($config, $rx, $txs).await {
+                Ok(context) => Ok(context),
+                Err(err) => {
+                    log::error!("pipe exit with error {:#?}", err);
+                    Err(err)
+                }
+            }
+        })
     };
+    {
+        $pipe:expr, $config:ty, $path:expr, $rx:expr, [$( $tx:expr ), *]
+    } => {
+        {
+            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
+            let mut txs = vec![];
+            $(
+                txs.push($tx);
+            )*
+            run_pipe!($pipe, config, $rx, txs)
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! run_pipes {
+    (
+        [$( ($pipe:expr, $config:ty, $path:expr, $rx:expr, [$( $tx:expr ), *]) ), *]
+    ) => {
+        let _ = tokio::join!($(
+            {
+                let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
+                let mut txs = vec![];
+                $(
+                    txs.push($tx);
+                )*
+                run_pipe!($pipe, config, $rx, txs)
+            }
+        ),*);
+    };
+    (
+        [$( $run_pipe:expr ), *]
+    ) => {
+        let _ = tokio::join!($(
+            $run_pipe
+        ),*);
+    }
 }
 
 #[macro_export]

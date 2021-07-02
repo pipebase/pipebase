@@ -54,10 +54,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        channel, collector, context::State, spawn_join, Collector, FromPath, OrderKey, Pipe,
-        SetCollectorConfig,
-    };
+    use crate::*;
     use std::{cmp::Ordering, collections::BTreeSet};
     use tokio::sync::mpsc::{Receiver, Sender};
 
@@ -88,13 +85,7 @@ mod tests {
     async fn test_set_collector() {
         let (tx0, rx0) = channel!(Record, 10);
         let (tx1, mut rx1) = channel!(BTreeSet<Record>, 10);
-        let mut pipe = collector!(
-            "bag",
-            "resources/catalogs/set_collector.yml",
-            SetCollectorConfig,
-            rx0,
-            [tx1]
-        );
+        let mut pipe = collector!("set_collector");
         let context = pipe.get_context();
         let ph = populate_record(
             tx0,
@@ -114,7 +105,13 @@ mod tests {
             ],
         );
         ph.await;
-        spawn_join!(pipe);
+        run_pipes!([(
+            pipe,
+            SetCollectorConfig,
+            "resources/catalogs/set_collector.yml",
+            Some(rx0),
+            [tx1]
+        )]);
         let records = receive_records(&mut rx1).await;
         assert_eq!(1, records.len());
         assert_eq!(0, records.get(0).unwrap().val);

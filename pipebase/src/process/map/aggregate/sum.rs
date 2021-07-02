@@ -74,10 +74,10 @@ mod sum_aggregator_tests {
     async fn test_sum_aggregator() {
         let (tx0, rx0) = channel!(Vec<u32>, 1023);
         let (tx1, mut rx1) = channel!(u32, 1024);
-        let mut pipe = mapper!("summation", SumAggregatorConfig, rx0, [tx1]);
+        let mut pipe = mapper!("summation");
         let f0 = populate_record(tx0, vec![vec![1, 3, 5, 7], vec![2, 4, 6, 8]]);
         f0.await;
-        spawn_join!(pipe);
+        run_pipes!([(pipe, SumAggregatorConfig, "", Some(rx0), [tx1])]);
         let odd = rx1.recv().await.unwrap();
         assert_eq!(16, odd);
         let even = rx1.recv().await.unwrap();
@@ -173,15 +173,16 @@ mod test_group_aggregator {
     async fn test_u32_group_sum_aggregator() {
         let (tx0, rx0) = channel!(Vec<u32>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<u32, u32>>, 1024);
-        let mut pipe = mapper!(
-            "group_summation",
-            UnorderedGroupSumAggregatorConfig,
-            rx0,
-            [tx1]
-        );
+        let mut pipe = mapper!("group_summation");
         let f0 = populate_record(tx0, vec![vec![2, 3, 2, 3, 2, 3]]);
         f0.await;
-        spawn_join!(pipe);
+        run_pipes!([(
+            pipe,
+            UnorderedGroupSumAggregatorConfig,
+            "",
+            Some(rx0),
+            [tx1]
+        )]);
         let gs = rx1.recv().await.unwrap();
         for p in gs {
             match p.left() {
@@ -196,7 +197,7 @@ mod test_group_aggregator {
     async fn test_word_group_count_aggregate() {
         let (tx0, rx0) = channel!(Vec<String>, 1024);
         let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
-        let mut pipe = mapper!("word_count", UnorderedGroupSumAggregatorConfig, rx0, [tx1]);
+        let mut pipe = mapper!("word_count");
         let f0 = populate_record(
             tx0,
             vec![vec![
@@ -209,7 +210,13 @@ mod test_group_aggregator {
             ]],
         );
         f0.await;
-        spawn_join!(pipe);
+        run_pipes!([(
+            pipe,
+            UnorderedGroupSumAggregatorConfig,
+            "",
+            Some(rx0),
+            [tx1]
+        )]);
         let wcs = rx2.recv().await.unwrap();
         for wc in wcs {
             match wc.left().as_str() {
@@ -288,12 +295,7 @@ mod test_ordered_group_aggregator {
     async fn test_word_group_count_aggregate() {
         let (tx0, rx0) = channel!(Vec<String>, 1024);
         let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
-        let mut pipe = mapper!(
-            "ordered_word_count",
-            OrderedGroupSumAggregatorConfig,
-            rx0,
-            [tx1]
-        );
+        let mut pipe = mapper!("ordered_word_count");
         let f0 = populate_record(
             tx0,
             vec![vec![
@@ -306,7 +308,7 @@ mod test_ordered_group_aggregator {
             ]],
         );
         f0.await;
-        spawn_join!(pipe);
+        run_pipes!([(pipe, OrderedGroupSumAggregatorConfig, "", Some(rx0), [tx1])]);
         let wcs = rx2.recv().await.unwrap();
         let mut wcs_iter = wcs.into_iter();
         let bar = wcs_iter.next().unwrap();

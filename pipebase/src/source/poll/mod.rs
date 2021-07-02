@@ -4,14 +4,18 @@ pub use timer::*;
 
 use async_trait::async_trait;
 use log::{error, info};
+use tokio::sync::mpsc::Receiver;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::RwLock;
 
 use crate::context::{Context, State};
 use crate::error::Result;
-use crate::{ConfigInto, FromConfig, Pipe};
+use crate::HasContext;
+use crate::{
+    filter_senders_by_indices, inc_success_run, inc_total_run, senders_as_map, set_state,
+    spawn_send, wait_join_handles, ConfigInto, FromConfig, Pipe,
+};
 use std::collections::HashMap;
-use std::marker::PhantomData;
 use std::sync::Arc;
 
 #[async_trait]
@@ -19,92 +23,80 @@ pub trait Poll<T, C>: Send + Sync + FromConfig<C> {
     async fn poll(&mut self) -> anyhow::Result<Option<T>>;
 }
 
-pub struct Poller<'a, T, P, C>
-where
-    T: Clone + Send + 'static,
-    P: Poll<T, C>,
-    C: ConfigInto<P> + Send + Sync,
-{
+pub struct Poller<'a> {
     name: &'a str,
-    config: C,
-    txs: HashMap<usize, Arc<Sender<T>>>,
-    poller: PhantomData<P>,
     context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, T, P, C> Pipe<T> for Poller<'a, T, P, C>
+impl<'a, U, P, C> Pipe<(), U, P, C> for Poller<'a>
 where
-    T: Clone + Send + 'static,
-    P: Poll<T, C>,
-    C: ConfigInto<P> + Send + Sync,
+    U: Clone + Send + 'static,
+    P: Poll<U, C>,
+    C: ConfigInto<P> + Send + Sync + 'static,
 {
-    async fn run(&mut self) -> Result<()> {
-        let mut poller = self.config.config_into().await.unwrap();
+    async fn run(
+        &mut self,
+        config: C,
+        rx: Option<Receiver<()>>,
+        txs: Vec<Sender<U>>,
+    ) -> Result<()> {
+        assert!(rx.is_none());
+        let mut poller = config.config_into().await.unwrap();
+        let mut txs = senders_as_map(txs);
         info!("source {} run ...", self.name);
         loop {
-            Self::inc_total_run(&self.context).await;
-            Self::set_state(&self.context, State::Poll).await;
+            inc_total_run(&self.context).await;
+            set_state(&self.context, State::Poll).await;
             // if all receiver dropped, sender drop as well
-            match self.txs.is_empty() {
+            match txs.is_empty() {
                 true => {
-                    Self::inc_success_run(&self.context).await;
+                    // Self::inc_success_run(&self.context).await;
                     break;
                 }
                 false => (),
             }
-            let t = poller.poll().await;
-            let t = match t {
-                Ok(t) => t,
+            let u = poller.poll().await;
+            let u = match u {
+                Ok(u) => u,
                 Err(e) => {
                     error!("{} poll error {:#?}", self.name, e);
                     break;
                 }
             };
-            let t = match t {
-                Some(t) => t,
+            let u = match u {
+                Some(u) => u,
                 None => {
-                    Self::inc_success_run(&self.context).await;
+                    inc_success_run(&self.context).await;
                     break;
                 }
             };
-            Self::set_state(&self.context, State::Send).await;
+            set_state(&self.context, State::Send).await;
             let mut jhs = HashMap::new();
-            for (idx, tx) in &self.txs {
-                let t_clone = t.to_owned();
-                jhs.insert(idx.to_owned(), Self::spawn_send(tx.to_owned(), t_clone));
+            for (idx, tx) in &txs {
+                let u_clone = u.to_owned();
+                jhs.insert(idx.to_owned(), spawn_send(tx.to_owned(), u_clone));
             }
-            let drop_sender_indices = Self::wait_join_handles(jhs).await;
-            Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
-            Self::inc_success_run(&self.context).await;
+            let drop_sender_indices = wait_join_handles(jhs).await;
+            filter_senders_by_indices(&mut txs, drop_sender_indices);
+            inc_success_run(&self.context).await;
         }
         info!("source {} exit ...", self.name);
-        Self::set_state(&self.context, State::Done).await;
+        set_state(&self.context, State::Done).await;
         Ok(())
     }
+}
 
-    fn add_sender(&mut self, tx: Sender<T>) {
-        let idx = self.txs.len();
-        self.txs.insert(idx, Arc::new(tx));
-    }
-
+impl<'a> HasContext for Poller<'a> {
     fn get_context(&self) -> Arc<RwLock<Context>> {
         self.context.clone()
     }
 }
 
-impl<'a, T, P, C> Poller<'a, T, P, C>
-where
-    T: Clone + Send + 'static,
-    P: Poll<T, C>,
-    C: ConfigInto<P> + Send + Sync,
-{
-    pub fn new(name: &'a str, config: C) -> Self {
+impl<'a> Poller<'a> {
+    pub fn new(name: &'a str) -> Self {
         Poller {
             name: name,
-            txs: HashMap::new(),
-            config: config,
-            poller: std::marker::PhantomData,
             context: Default::default(),
         }
     }
@@ -113,30 +105,8 @@ where
 #[macro_export]
 macro_rules! poller {
     (
-        $name:expr, $path:expr, $config:ty, [$( $tx:expr ), *]
-    ) => {
-        {
-            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Poller::new($name, config);
-            $(
-                pipe.add_sender($tx);
-            )*
-            pipe
-        }
-    };
-    (
-        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        poller!($name, $path, $config, [$( $tx ), *])
-    };
-    (
-        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        poller!($name, "", $config, [$( $tx ), *])
-    };
-    (
-        $name:expr, $config:ty, [$( $tx:expr ), *]
-    ) => {
-        poller!($name, "", $config, [$( $tx ), *])
-    };
+        $name:expr
+    ) => {{
+        Poller::new($name)
+    }};
 }

@@ -1,5 +1,7 @@
 use super::meta::PipeMeta;
-use crate::constants::{BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, CHANNEL_MACRO, SPAWN_JOIN_MACRO};
+use crate::constants::{
+    BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, CHANNEL_MACRO, RUN_PIPES_MACRO, RUN_PIPE_MACRO,
+};
 
 pub trait VisitPipeMeta: Default {
     fn visit(&mut self, meta: &PipeMeta);
@@ -80,25 +82,7 @@ impl VisitPipeMeta for PipeExpr {
     fn visit(&mut self, meta: &PipeMeta) {
         let pipe_name = meta.get_name();
         let ty = meta.get_ty();
-        let config_meta = meta.get_config_meta();
-        let config_ty = config_meta.get_ty();
-        let config_path = config_meta.get_path();
-        let upstream_output_type_name = meta.get_upstream_output_type_name();
-        let downstream_pipe_names = meta.get_downstream_names();
-        let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
-        let receiver_expr = match upstream_output_type_name {
-            Some(_) => Self::gen_recevier_expr(&pipe_name),
-            None => "dummy".to_owned(),
-        };
-        let rhs = format!(
-            r#"{}("{}", "{}", {}, {}, {})"#,
-            Self::pipe_type_macro(&ty),
-            pipe_name,
-            config_path,
-            config_ty,
-            receiver_expr,
-            senders_expr
-        );
+        let rhs = format!(r#"{}("{}")"#, Self::pipe_type_macro(&ty), pipe_name,);
         self.lhs = Some(Self::as_mut(&pipe_name));
         self.rhs = Some(rhs);
     }
@@ -117,7 +101,50 @@ impl PipeExpr {
     fn pipe_type_macro(ty: &str) -> String {
         format!("{}!", ty)
     }
+}
 
+#[derive(Default)]
+pub struct RunPipeExpr {
+    pub lhs: Option<String>,
+    pub rhs: Option<String>,
+}
+
+impl VisitPipeMeta for RunPipeExpr {
+    fn visit(&mut self, meta: &PipeMeta) {
+        let pipe_name = meta.get_name();
+        let config_meta = meta.get_config_meta();
+        let config_ty = config_meta.get_ty();
+        let config_path = config_meta.get_path();
+        let upstream_output_type_name = meta.get_upstream_output_type_name();
+        let downstream_pipe_names = meta.get_downstream_names();
+        let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
+        // reveiver is optional for source pipe
+        let receiver_expr = match upstream_output_type_name {
+            Some(_) => {
+                let expr = Self::gen_recevier_expr(&pipe_name);
+                format!("Some({})", expr)
+            }
+            None => "None".to_owned(),
+        };
+        let expr = format!(
+            r#"{}({}, {}, "{}", {}, {})"#,
+            RUN_PIPE_MACRO, pipe_name, config_ty, config_path, receiver_expr, senders_expr
+        );
+        self.lhs = Some(pipe_name.to_owned());
+        self.rhs = Some(expr);
+    }
+}
+
+impl Expr for RunPipeExpr {
+    fn get_lhs(&self) -> Option<String> {
+        self.lhs.to_owned()
+    }
+    fn get_rhs(&self) -> Option<String> {
+        self.rhs.to_owned()
+    }
+}
+
+impl RunPipeExpr {
     fn gen_recevier_expr(pipe_name: &str) -> String {
         ChannelExpr::gen_receiver_name(pipe_name)
     }
@@ -133,21 +160,20 @@ impl PipeExpr {
 }
 
 #[derive(Default)]
-pub struct SpawnJoinExpr {
-    pub pipe_names: Vec<String>,
-    pub expr: Option<String>,
+pub struct RunPipesExpr {
+    pipe_names: Vec<String>,
 }
 
-impl VisitPipeMeta for SpawnJoinExpr {
+impl VisitPipeMeta for RunPipesExpr {
     fn visit(&mut self, meta: &PipeMeta) {
-        self.pipe_names.push(meta.get_name().to_owned())
+        self.pipe_names.push(meta.get_name().to_owned());
     }
 }
 
-impl Expr for SpawnJoinExpr {
+impl Expr for RunPipesExpr {
     fn get_expr(&self) -> Option<String> {
-        let pipe_names = self.pipe_names.join(", ");
-        let expr = format!("{}({})", SPAWN_JOIN_MACRO, pipe_names);
-        Some(expr)
+        let all_exprs = self.pipe_names.join(", ");
+        let all_exprs = format!("{}([{}])", RUN_PIPES_MACRO, all_exprs);
+        Some(all_exprs)
     }
 }

@@ -5,14 +5,17 @@ pub use file::*;
 pub use iterator::*;
 
 use crate::context::{Context, State};
+use crate::{
+    filter_senders_by_indices, inc_success_run, inc_total_run, senders_as_map, set_state,
+    spawn_send, wait_join_handles,
+};
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::marker::PhantomData;
 use std::sync::Arc;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 
-use crate::{ConfigInto, FromConfig, Pipe};
+use crate::{ConfigInto, FromConfig, HasContext, Pipe};
 
 #[async_trait]
 pub trait Stream<T, U, C>: Send + Sync + FromConfig<C>
@@ -23,37 +26,33 @@ where
     fn set_sender(&mut self, sender: Sender<U>);
 }
 
-pub struct Streamer<'a, T, U, S, C>
-where
-    T: Send,
-    U: Clone + Send + 'static,
-    S: Stream<T, U, C>,
-    C: ConfigInto<S> + Send + Sync,
-{
+pub struct Streamer<'a> {
     name: &'a str,
-    config: C,
-    rx: Arc<Mutex<Receiver<T>>>,
-    txs: HashMap<usize, Arc<Sender<U>>>,
-    streamer: PhantomData<S>,
     context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, T, U, S, C> Pipe<U> for Streamer<'a, T, U, S, C>
+impl<'a, T, U, S, C> Pipe<T, U, S, C> for Streamer<'a>
 where
     T: Send + 'static,
     U: Clone + Send + 'static,
     S: Stream<T, U, C> + 'static,
-    C: ConfigInto<S> + Send + Sync,
+    C: ConfigInto<S> + Send + Sync + 'static,
 {
-    async fn run(&mut self) -> crate::error::Result<()> {
+    async fn run(
+        &mut self,
+        config: C,
+        mut rx: Option<Receiver<T>>,
+        txs: Vec<Sender<U>>,
+    ) -> crate::error::Result<()> {
+        assert!(rx.is_some());
+        assert!(!txs.is_empty());
         let (tx0, mut rx0) = channel::<U>(1024);
-        let mut streamer = self.config.config_into().await.unwrap();
+        let mut streamer = config.config_into().await.unwrap();
         streamer.set_sender(tx0);
-        let rx = self.rx.to_owned();
         let name = self.name.to_owned();
         let streamer_loop = tokio::spawn(async move {
-            let mut rx = rx.lock().await;
+            let rx = rx.as_mut().unwrap();
             log::info!("streamer {} run ...", name);
             loop {
                 let t = match (*rx).recv().await {
@@ -70,16 +69,16 @@ where
             }
             log::info!("streamer {} exit ...", name);
         });
-        let mut txs = self.txs.to_owned();
+        let mut txs = senders_as_map(txs);
         let context = self.context.clone();
         let sender_loop = tokio::spawn(async move {
             loop {
-                Self::inc_total_run(&context).await;
-                Self::set_state(&context, State::Receive).await;
+                inc_total_run(&context).await;
+                set_state(&context, State::Receive).await;
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        Self::inc_success_run(&context).await;
+                        inc_success_run(&context).await;
                         break;
                     }
                     false => (),
@@ -87,22 +86,22 @@ where
                 let u = match rx0.recv().await {
                     Some(u) => u,
                     None => {
-                        Self::inc_success_run(&context).await;
+                        inc_success_run(&context).await;
                         // streamer loop break
                         break;
                     }
                 };
-                Self::set_state(&context, State::Send).await;
+                set_state(&context, State::Send).await;
                 let mut jhs = HashMap::new();
                 for (idx, tx) in &txs {
                     let u_clone: U = u.to_owned();
-                    jhs.insert(idx.to_owned(), Self::spawn_send(tx.clone(), u_clone));
+                    jhs.insert(idx.to_owned(), spawn_send(tx.clone(), u_clone));
                 }
-                let drop_sender_indices = Self::wait_join_handles(jhs).await;
-                Self::filter_senders_by_indices(&mut txs, drop_sender_indices);
-                Self::inc_success_run(&context).await;
+                let drop_sender_indices = wait_join_handles(jhs).await;
+                filter_senders_by_indices(&mut txs, drop_sender_indices);
+                inc_success_run(&context).await;
             }
-            Self::set_state(&context, State::Done).await;
+            set_state(&context, State::Done).await;
         });
         // join listener and loop
         match tokio::spawn(async move { tokio::join!(streamer_loop, sender_loop) }).await {
@@ -113,31 +112,18 @@ where
         }
         Ok(())
     }
+}
 
-    fn add_sender(&mut self, tx: Sender<U>) {
-        let idx = self.txs.len();
-        self.txs.insert(idx, Arc::new(tx));
-    }
-
-    fn get_context(&self) -> Arc<tokio::sync::RwLock<crate::Context>> {
-        self.context.to_owned()
+impl<'a> HasContext for Streamer<'a> {
+    fn get_context(&self) -> Arc<RwLock<Context>> {
+        self.context.clone()
     }
 }
 
-impl<'a, T, U, S, C> Streamer<'a, T, U, S, C>
-where
-    T: Send,
-    U: Clone + Send + 'static,
-    S: Stream<T, U, C>,
-    C: ConfigInto<S> + Send + Sync,
-{
-    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+impl<'a> Streamer<'a> {
+    pub fn new(name: &'a str) -> Self {
         Streamer {
             name: name,
-            config: config,
-            rx: Arc::new(Mutex::new(rx)),
-            txs: HashMap::new(),
-            streamer: PhantomData,
             context: Default::default(),
         }
     }
@@ -146,20 +132,8 @@ where
 #[macro_export]
 macro_rules! streamer {
     (
-        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        {
-            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Streamer::new($name, config, $rx);
-            $(
-                pipe.add_sender($tx);
-            )*
-            pipe
-        }
-    };
-    (
-        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        streamer!($name, "", $config, $rx, [$( $tx ), *])
-    };
+        $name:expr
+    ) => {{
+        Streamer::new($name)
+    }};
 }
