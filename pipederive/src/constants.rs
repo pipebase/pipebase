@@ -38,4 +38,5 @@ pub const BOOTSTRAP_MODULE: &str = "bootstrap";
 pub const BOOTSTRAP_FUNCTION: &str = "bootstrap";
 
 pub const CHANNEL_MACRO: &str = "channel!";
-pub const SPAWN_JOIN_MACRO: &str = "spawn_join!";
+pub const RUN_PIPE_MACRO: &str = "run_pipe!";
+pub const RUN_PIPES_MACRO: &str = "run_pipes!";

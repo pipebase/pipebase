@@ -186,7 +186,7 @@ impl PipeMetas {
                 pipe_name.to_owned(),
                 pipe_meta.get_output_type_name().to_owned(),
             );
-            // collect upstream pipe for input loopup - channel rx
+            // collect upstream pipe for input lookup - channel rx
             upstream_pipe_names.insert(
                 pipe_name.to_owned(),
                 HashSet::from_iter(pipe_meta.get_upstream_names().to_owned()),

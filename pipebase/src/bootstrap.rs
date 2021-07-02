@@ -18,7 +18,6 @@ pub trait Bootstrap: ContextStore {
     ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + Sync>>;
 }
 
-/*
 #[cfg(test)]
 mod tests {
     use crate::*;
@@ -68,4 +67,3 @@ mod tests {
         assert_eq!(21, printer_context.get_success_run());
     }
 }
-*/

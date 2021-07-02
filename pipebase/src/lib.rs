@@ -81,6 +81,18 @@ macro_rules! run_pipe {
             }
         })
     };
+    {
+        $pipe:expr, $config:ty, $path:expr, $rx:expr, [$( $tx:expr ), *]
+    } => {
+        {
+            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
+            let mut txs = vec![];
+            $(
+                txs.push($tx);
+            )*
+            run_pipe!($pipe, config, $rx, txs)
+        }
+    }
 }
 
 #[macro_export]
@@ -97,6 +109,13 @@ macro_rules! run_pipes {
                 )*
                 run_pipe!($pipe, config, $rx, txs)
             }
+        ),*);
+    };
+    (
+        [$( $run_pipe:expr ), *]
+    ) => {
+        let _ = tokio::join!($(
+            $run_pipe
         ),*);
     }
 }
