@@ -45,8 +45,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{channel, mapper, spawn_join, EchoConfig, FromPath, Mapper, Pipe};
-    // use std::println as info;
+    use crate::*;
     use tokio::sync::mpsc::Sender;
 
     #[derive(Clone, Debug)]
@@ -55,19 +54,18 @@ mod tests {
         m1: i32,
     }
 
-    async fn populate_message(tx0: &mut Sender<Message>, message: Message) {
+    async fn populate_message(tx0: Sender<Message>, message: Message) {
         let _ = tx0.send(message).await;
     }
 
     #[tokio::test]
     async fn test_echo() {
-        let (mut tx0, rx0) = channel!(Message, 1024);
+        let (tx0, rx0) = channel!(Message, 1024);
         let (tx1, mut rx1) = channel!(Message, 1024);
-        let mut p = mapper!("echo", EchoConfig, rx0, [tx1]);
-        let f1 = populate_message(&mut tx0, Message { m0: 'a', m1: 1 });
+        let mut pipe = mapper!("echo");
+        let f1 = populate_message(tx0, Message { m0: 'a', m1: 1 });
         f1.await;
-        drop(tx0);
-        spawn_join!(p);
+        run_pipes!([(pipe, EchoConfig, "", Some(rx0), [tx1])]);
         let message = rx1.recv().await.unwrap();
         assert_eq!('a', message.m0);
         assert_eq!(1, message.m1);

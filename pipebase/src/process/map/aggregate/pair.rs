@@ -123,12 +123,7 @@ mod pair_tests {
     async fn test_pair_group_sum() {
         let (tx0, rx0) = channel!(Vec<Pair<String, u32>>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
-        let mut pipe = mapper!(
-            "pair_group_summation",
-            UnorderedGroupSumAggregatorConfig,
-            rx0,
-            [tx1]
-        );
+        let mut pipe = mapper!("pair_group_summation");
         let f0 = populate_records(
             tx0,
             vec![
@@ -138,7 +133,13 @@ mod pair_tests {
             ],
         );
         f0.await;
-        spawn_join!(pipe);
+        run_pipes!([(
+            pipe,
+            UnorderedGroupSumAggregatorConfig,
+            "",
+            Some(rx0),
+            [tx1]
+        )]);
         let gs = rx1.recv().await.unwrap();
         for p in gs {
             match p.left().as_str() {
@@ -153,13 +154,7 @@ mod pair_tests {
     async fn test_top_pair() {
         let (tx0, rx0) = channel!(Vec<Pair<String, Count32>>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Count32>>, 1024);
-        let mut pipe = mapper!(
-            "top_word",
-            "resources/catalogs/top_aggregator.yml",
-            TopAggregatorConfig,
-            rx0,
-            [tx1]
-        );
+        let mut pipe = Mapper::new("top_word");
         let f0 = populate_records(
             tx0,
             vec![
@@ -171,7 +166,13 @@ mod pair_tests {
             ],
         );
         f0.await;
-        spawn_join!(pipe);
+        run_pipes!([(
+            pipe,
+            TopAggregatorConfig,
+            "resources/catalogs/top_aggregator.yml",
+            Some(rx0),
+            [tx1]
+        )]);
         let top = rx1.recv().await.unwrap();
         assert_eq!(3, top.len());
         let top1 = top.get(0).unwrap();

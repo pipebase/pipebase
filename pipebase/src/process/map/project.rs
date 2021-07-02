@@ -186,9 +186,7 @@ where
 #[cfg(test)]
 mod tests {
 
-    use crate::{
-        channel, mapper, spawn_join, FromPath, Mapper, Pipe, Project, ProjectionConfig, State,
-    };
+    use crate::*;
     use tokio::sync::mpsc::Sender;
 
     #[derive(Debug)]
@@ -228,19 +226,18 @@ mod tests {
         assert_eq!(3, sum.s);
     }
 
-    async fn populate_record(tx: &mut Sender<Record>, r: Record) {
+    async fn populate_record(tx: Sender<Record>, r: Record) {
         tx.send(r).await.unwrap();
     }
     #[tokio::test]
     async fn test_reverse_processor() {
-        let (mut tx0, rx0) = channel!(Record, 1024);
+        let (tx0, rx0) = channel!(Record, 1024);
         let (tx1, mut rx1) = channel!(self::ReversedRecord, 1024);
-        let mut pipe = mapper!("reverse", ProjectionConfig, rx0, [tx1]);
+        let mut pipe = mapper!("reversed");
         let context = pipe.get_context();
-        let f1 = populate_record(&mut tx0, Record { r0: 0, r1: 1 });
+        let f1 = populate_record(tx0, Record { r0: 0, r1: 1 });
         f1.await;
-        drop(tx0);
-        spawn_join!(pipe);
+        run_pipes!([(pipe, ProjectionConfig, "", Some(rx0), [tx1])]);
         let reversed_record = rx1.recv().await.unwrap();
         assert_eq!(1, reversed_record.r0);
         assert_eq!(0, reversed_record.r1);

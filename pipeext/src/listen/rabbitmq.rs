@@ -98,14 +98,12 @@ impl RabbitMQConsumer {
 #[cfg(test)]
 mod tests {
 
-    use pipebase::{listener, FromPath, Listener, Pipe};
-    use tokio::sync::mpsc::channel;
+    use pipebase::*;
     use tokio::sync::mpsc::Receiver;
 
     use super::RabbitMQConsumerConfig;
-    // use std::{println as info, println as error};
 
-    async fn on_receive(rx: &mut Receiver<Vec<u8>>) {
+    async fn on_receive(mut rx: Receiver<Vec<u8>>) {
         let mut i: i32 = 0;
         while i < 10 {
             let message = rx.recv().await;
@@ -121,18 +119,12 @@ mod tests {
     #[ignore]
     #[tokio::test]
     async fn test_listen_rabbitmq() {
-        let (tx, mut rx) = channel::<Vec<u8>>(1024);
-        let mut s = listener!(
-            "rbmq_consumer",
-            "resources/catalogs/rabbitmq_consumer.yml",
-            RabbitMQConsumerConfig,
-            [tx]
-        );
-        println!("consumer built ...");
-        let jh0 = tokio::spawn(async move {
-            let _ = s.run().await;
-        });
-        let jh1 = on_receive(&mut rx);
-        let _ = tokio::join!(jh0, jh1);
+        let (tx, rx) = channel!(Vec<u8>, 1024);
+        let mut pipe = Listener::new("rbmq_consumer");
+        let config =
+            RabbitMQConsumerConfig::from_path("resources/catalogs/rabbitmq_consumer.yml").unwrap();
+        let run_pipe = run_pipe!(pipe, config, None, vec![tx]);
+        let jh1 = on_receive(rx);
+        let _ = tokio::join!(run_pipe, jh1);
     }
 }

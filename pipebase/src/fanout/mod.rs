@@ -6,10 +6,12 @@ pub use hash::*;
 pub use random::*;
 pub use roundrobin::*;
 
-use crate::{ConfigInto, FromConfig, Pipe};
+use crate::{
+    filter_senders_by_indices, inc_success_run, inc_total_run, senders_as_map, set_state,
+    spawn_send, wait_join_handles, ConfigInto, FromConfig, HasContext, Pipe,
+};
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::marker::PhantomData;
 
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
@@ -22,89 +24,77 @@ pub trait Select<T, C>: Send + Sync + FromConfig<C> {
     fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize>;
 }
 
-pub struct Selector<'a, T, S, C>
-where
-    T: Clone + Send + 'static,
-    S: Select<T, C>,
-    C: ConfigInto<S> + Send + Sync,
-{
+pub struct Selector<'a> {
     name: &'a str,
-    config: C,
-    rx: Receiver<T>,
-    txs: HashMap<usize, Arc<Sender<T>>>,
-    selector: PhantomData<S>,
     context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, T, S, C> Pipe<T, T, S, C> for Selector<'a, T, S, C>
+impl<'a, T, S, C> Pipe<T, T, S, C> for Selector<'a>
 where
     T: Clone + Send + 'static,
     S: Select<T, C>,
-    C: ConfigInto<S> + Send + Sync,
+    C: ConfigInto<S> + Send + Sync + 'static,
 {
-    async fn run(&mut self) -> Result<()> {
-        let mut selector = self.config.config_into().await.unwrap();
+    async fn run(
+        &mut self,
+        config: C,
+        mut rx: Option<Receiver<T>>,
+        txs: Vec<Sender<T>>,
+    ) -> Result<()> {
+        assert!(rx.is_some());
+        assert!(!txs.is_empty());
+        let mut selector = config.config_into().await.unwrap();
+        let rx = rx.as_mut().unwrap();
+        let mut txs = senders_as_map(txs);
         log::info!("selector {} run ...", self.name);
         loop {
-            Self::inc_total_run(&self.context).await;
-            Self::set_state(&self.context, State::Receive).await;
+            inc_total_run(&self.context).await;
+            set_state(&self.context, State::Receive).await;
             // if all receiver dropped, sender drop as well
-            match self.txs.is_empty() {
+            match txs.is_empty() {
                 true => {
-                    Self::inc_success_run(&self.context).await;
+                    inc_success_run(&self.context).await;
                     break;
                 }
                 false => (),
             }
-            let t = self.rx.recv().await;
+            let t = rx.recv().await;
             let t = match t {
                 Some(t) => t,
                 None => {
-                    Self::inc_success_run(&self.context).await;
+                    inc_success_run(&self.context).await;
                     break;
                 }
             };
-            Self::set_state(&self.context, State::Send).await;
-            let candidates = self.txs.keys().collect::<Vec<&usize>>();
+            set_state(&self.context, State::Send).await;
+            let candidates = txs.keys().collect::<Vec<&usize>>();
             let mut jhs = HashMap::new();
             for i in selector.select(&t, &candidates) {
-                let tx = self.txs.get(&i).unwrap();
+                let tx = txs.get(&i).unwrap();
                 let t_clone = t.to_owned();
-                jhs.insert(i, Self::spawn_send(tx.to_owned(), t_clone));
+                jhs.insert(i, spawn_send(tx.to_owned(), t_clone));
             }
-            let drop_sender_indices = Self::wait_join_handles(jhs).await;
-            Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
-            Self::inc_success_run(&self.context).await;
+            let drop_sender_indices = wait_join_handles(jhs).await;
+            filter_senders_by_indices(&mut txs, drop_sender_indices);
+            inc_success_run(&self.context).await;
         }
         log::info!("selector {} exit ...", self.name);
-        Self::set_state(&self.context, State::Done).await;
+        set_state(&self.context, State::Done).await;
         Ok(())
     }
+}
 
-    fn add_sender(&mut self, tx: Sender<T>) {
-        let idx = self.txs.len();
-        self.txs.insert(idx, Arc::new(tx));
-    }
-
+impl<'a> HasContext for Selector<'a> {
     fn get_context(&self) -> Arc<RwLock<Context>> {
         self.context.clone()
     }
 }
 
-impl<'a, T, S, C> Selector<'a, T, S, C>
-where
-    T: Clone + Send + 'static,
-    S: Select<T, C>,
-    C: ConfigInto<S> + Send + Sync,
-{
-    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+impl<'a> Selector<'a> {
+    pub fn new(name: &'a str) -> Self {
         Selector {
             name: name,
-            config: config,
-            rx: rx,
-            txs: HashMap::new(),
-            selector: std::marker::PhantomData,
             context: Default::default(),
         }
     }
@@ -113,20 +103,8 @@ where
 #[macro_export]
 macro_rules! selector {
     (
-        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        {
-            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Selector::new($name, config, $rx);
-            $(
-                pipe.add_sender($tx);
-            )*
-            pipe
-        }
-    };
-    (
-        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        selector!($name, "", $config, $rx, [$( $tx ), *])
-    };
+        $name:expr
+    ) => {{
+        Selector::new($name)
+    }};
 }

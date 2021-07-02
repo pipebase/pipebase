@@ -4,14 +4,17 @@ pub use file::*;
 use async_trait::async_trait;
 use log::error;
 use log::info;
+use tokio::sync::mpsc::Receiver;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::RwLock;
 
 use crate::context::{Context, State};
 use crate::error::Result;
-use crate::{ConfigInto, FromConfig, Pipe};
+use crate::{
+    filter_senders_by_indices, inc_success_run, inc_total_run, senders_as_map, set_state,
+    spawn_send, wait_join_handles, ConfigInto, FromConfig, HasContext, Pipe,
+};
 use std::collections::HashMap;
-use std::marker::PhantomData;
 use std::sync::Arc;
 use tokio::sync::mpsc::channel;
 
@@ -24,31 +27,29 @@ where
     fn set_sender(&mut self, sender: Sender<T>);
 }
 
-pub struct Listener<'a, T, L, C>
-where
-    T: Clone + Send + 'static,
-    L: Listen<T, C> + 'static,
-    C: ConfigInto<L> + Send + Sync,
-{
+pub struct Listener<'a> {
     name: &'a str,
-    config: C,
-    txs: HashMap<usize, Arc<Sender<T>>>,
-    listener: PhantomData<L>,
     context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, U, L, C> Pipe<(), U, L, C> for Listener<'a, U, L, C>
+impl<'a, U, L, C> Pipe<(), U, L, C> for Listener<'a>
 where
     U: Clone + Send + 'static,
     L: Listen<U, C> + 'static,
-    C: ConfigInto<L> + Send + Sync,
+    C: ConfigInto<L> + Send + Sync + 'static,
 {
-    async fn run(&mut self) -> Result<()> {
+    async fn run(
+        &mut self,
+        config: C,
+        rx: Option<Receiver<()>>,
+        txs: Vec<Sender<U>>,
+    ) -> Result<()> {
+        assert!(rx.is_none());
         // connect listener
-        let (tx, mut rx) = channel::<U>(1024);
-        let mut listener = self.config.config_into().await.unwrap();
-        listener.set_sender(tx);
+        let (tx0, mut rx0) = channel::<U>(1024);
+        let mut listener = config.config_into().await.unwrap();
+        listener.set_sender(tx0);
         // start listener
         let join_listener = tokio::spawn(async move {
             match listener.run().await {
@@ -57,41 +58,41 @@ where
             };
         });
         // start event loop
-        let mut txs = self.txs.to_owned();
+        let mut txs = senders_as_map(txs);
         let context = self.context.clone();
         let name = self.name.to_owned();
         let join_event_loop = tokio::spawn(async move {
             log::info!("listener {} run ...", name);
             loop {
-                Self::inc_total_run(&context).await;
-                Self::set_state(&context, State::Receive).await;
+                inc_total_run(&context).await;
+                set_state(&context, State::Receive).await;
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        Self::inc_success_run(&context).await;
+                        inc_success_run(&context).await;
                         break;
                     }
                     false => (),
                 }
-                let u = match rx.recv().await {
+                let u = match rx0.recv().await {
                     Some(u) => u,
                     None => {
-                        Self::inc_success_run(&context).await;
+                        inc_success_run(&context).await;
                         break;
                     }
                 };
-                Self::set_state(&context, State::Send).await;
+                set_state(&context, State::Send).await;
                 let mut jhs = HashMap::new();
                 for (idx, tx) in &txs {
                     let u_clone: U = u.to_owned();
-                    jhs.insert(idx.to_owned(), Self::spawn_send(tx.clone(), u_clone));
+                    jhs.insert(idx.to_owned(), spawn_send(tx.clone(), u_clone));
                 }
-                let drop_sender_indices = Self::wait_join_handles(jhs).await;
-                Self::filter_senders_by_indices(&mut txs, drop_sender_indices);
-                Self::inc_success_run(&context).await;
+                let drop_sender_indices = wait_join_handles(jhs).await;
+                filter_senders_by_indices(&mut txs, drop_sender_indices);
+                inc_success_run(&context).await;
             }
             log::info!("listener {} exit ...", name);
-            Self::set_state(&context, State::Done).await;
+            set_state(&context, State::Done).await;
         });
         // join listener and loop
         match tokio::spawn(async move { tokio::join!(join_listener, join_event_loop) }).await {
@@ -102,29 +103,18 @@ where
         }
         Ok(())
     }
+}
 
-    fn add_sender(&mut self, tx: Sender<U>) {
-        let idx = self.txs.len();
-        self.txs.insert(idx, Arc::new(tx));
-    }
-
+impl<'a> HasContext for Listener<'a> {
     fn get_context(&self) -> Arc<RwLock<Context>> {
         self.context.clone()
     }
 }
 
-impl<'a, T, L, C> Listener<'a, T, L, C>
-where
-    T: Clone + Send + 'static,
-    L: Listen<T, C> + 'static,
-    C: ConfigInto<L> + Send + Sync,
-{
-    pub fn new(name: &'a str, config: C) -> Self {
+impl<'a> Listener<'a> {
+    pub fn new(name: &'a str) -> Self {
         Listener {
             name: name,
-            config: config,
-            txs: HashMap::new(),
-            listener: std::marker::PhantomData,
             context: Default::default(),
         }
     }
@@ -133,30 +123,8 @@ where
 #[macro_export]
 macro_rules! listener {
     (
-        $name:expr, $path:expr, $config:ty, [$( $tx:expr ), *]
-    ) => {
-        {
-            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Listener::new($name, config);
-            $(
-                pipe.add_sender($tx);
-            )*
-            pipe
-        }
-    };
-    (
-        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        listener!($name, $path, $config, [$( $tx ), *])
-    };
-    (
-        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        listener!($name, "", $config, [$( $tx ), *])
-    };
-    (
-        $name:expr, $config:ty, $rx:expr
-    ) => {
-        listener!($name, "", $config, [$( $tx ), *])
-    };
+        $name:expr
+    ) => {{
+        Listener::new($name)
+    }};
 }

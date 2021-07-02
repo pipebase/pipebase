@@ -81,7 +81,7 @@ impl Poll<u128, TimerConfig> for Timer {
 #[cfg(test)]
 mod tests {
 
-    use crate::{channel, poller, spawn_join, FromPath, Pipe, Poller, TimerConfig};
+    use crate::*;
     use tokio::sync::mpsc::Receiver;
 
     async fn on_receive(rx: &mut Receiver<u128>, ticks: u128) {
@@ -96,24 +96,30 @@ mod tests {
     #[tokio::test]
     async fn test_timer() {
         let (tx, mut rx) = channel!(u128, 1024);
-        let mut source = poller!(
-            "timer",
-            "resources/catalogs/timer.yml",
+        let mut source = Poller::new("timer");
+        run_pipes!([(
+            source,
             TimerConfig,
-            dummy, // dummy receiver ignored
+            "resources/catalogs/timer.yml",
+            None,
             [tx]
-        );
-        spawn_join!(source);
+        )]);
         on_receive(&mut rx, 10).await;
     }
 
     #[tokio::test]
     async fn test_receiver_drop() {
         let (tx, rx) = channel!(u128, 1024);
-        let mut source = poller!("timer", "resources/catalogs/timer.yml", TimerConfig, [tx]);
+        let mut source = poller!("timer");
         drop(rx);
         let start_millis = std::time::SystemTime::now();
-        spawn_join!(source);
+        run_pipes!([(
+            source,
+            TimerConfig,
+            "resources/catalogs/timer.yml",
+            None,
+            [tx]
+        )]);
         // poller should exit since receiver gone
         let now_millis = std::time::SystemTime::now();
         // poller should exit asap

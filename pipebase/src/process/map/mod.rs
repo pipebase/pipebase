@@ -13,7 +13,6 @@ pub use project::*;
 pub use split::*;
 
 use std::fmt::Debug;
-use std::marker::PhantomData;
 
 use async_trait::async_trait;
 use log::error;
@@ -21,7 +20,10 @@ use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::context::{Context, State};
 use crate::error::Result;
-use crate::{ConfigInto, FromConfig, Pipe};
+use crate::{
+    filter_senders_by_indices, inc_success_run, inc_total_run, senders_as_map, set_state,
+    spawn_send, wait_join_handles, ConfigInto, FromConfig, HasContext, Pipe,
+};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -31,52 +33,51 @@ pub trait Map<T, U, C>: Send + Sync + FromConfig<C> {
     async fn map(&mut self, data: T) -> anyhow::Result<U>;
 }
 
-pub struct Mapper<'a, T, U, M, C>
-where
-    T: Send + Sync,
-    U: Clone + Debug + Send + 'static,
-    M: Map<T, U, C>,
-    C: ConfigInto<M> + Send + Sync,
-{
+pub struct Mapper<'a> {
     name: &'a str,
-    config: C,
-    rx: Receiver<T>,
-    txs: HashMap<usize, Arc<Sender<U>>>,
-    mapper: PhantomData<M>,
     context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, T, U, M, C> Pipe<T, U, M, C> for Mapper<'a, T, U, M, C>
+impl<'a, T, U, M, C> Pipe<T, U, M, C> for Mapper<'a>
 where
-    T: Send + Sync,
+    T: Send + Sync + 'static,
     U: Clone + Debug + Send + 'static,
     M: Map<T, U, C>,
-    C: ConfigInto<M> + Send + Sync,
+    C: ConfigInto<M> + Send + Sync + 'static,
 {
-    async fn run(&mut self) -> Result<()> {
-        let mut mapper = self.config.config_into().await.unwrap();
+    async fn run(
+        &mut self,
+        config: C,
+        mut rx: Option<Receiver<T>>,
+        txs: Vec<Sender<U>>,
+    ) -> Result<()> {
+        assert!(rx.is_some());
+        assert!(!txs.is_empty());
+        let mut mapper = config.config_into().await.unwrap();
+        let mut txs = senders_as_map(txs);
+        let rx = rx.as_mut().unwrap();
         log::info!("mapper {} run ...", self.name);
         loop {
-            Self::inc_total_run(&self.context).await;
-            Self::set_state(&self.context, State::Receive).await;
+            inc_total_run(&self.context).await;
+            set_state(&self.context, State::Receive).await;
             // if all receiver dropped, sender drop as well
-            match self.txs.is_empty() {
+            match txs.is_empty() {
                 true => {
-                    Self::inc_success_run(&self.context).await;
+                    inc_success_run(&self.context).await;
                     break;
                 }
                 false => (),
             }
-            let t = self.rx.recv().await;
+            let t = rx.recv().await;
             let t = match t {
                 Some(t) => t,
                 None => {
-                    Self::inc_success_run(&self.context).await;
+                    inc_success_run(&self.context).await;
                     break;
                 }
             };
-            Self::set_state(&self.context, State::Process).await;
+            set_state(&self.context, State::Process).await;
             let u = match mapper.map(t).await {
                 Ok(u) => u,
                 Err(e) => {
@@ -84,45 +85,32 @@ where
                     break;
                 }
             };
-            Self::set_state(&self.context, State::Send).await;
+            set_state(&self.context, State::Send).await;
             let mut jhs = HashMap::new();
-            for (idx, tx) in &self.txs {
+            for (idx, tx) in &txs {
                 let u_clone: U = u.to_owned();
-                jhs.insert(idx.to_owned(), Self::spawn_send(tx.to_owned(), u_clone));
+                jhs.insert(idx.to_owned(), spawn_send(tx.to_owned(), u_clone));
             }
-            let drop_sender_indices = Self::wait_join_handles(jhs).await;
-            Self::filter_senders_by_indices(&mut self.txs, drop_sender_indices);
-            Self::inc_success_run(&self.context).await;
+            let drop_sender_indices = wait_join_handles(jhs).await;
+            filter_senders_by_indices(&mut txs, drop_sender_indices);
+            inc_success_run(&self.context).await;
         }
         log::info!("mapper {} exit ...", self.name);
-        Self::set_state(&self.context, State::Done).await;
+        set_state(&self.context, State::Done).await;
         Ok(())
     }
+}
 
-    fn add_sender(&mut self, tx: Sender<U>) {
-        let idx = self.txs.len();
-        self.txs.insert(idx, Arc::new(tx));
-    }
-
+impl<'a> HasContext for Mapper<'a> {
     fn get_context(&self) -> Arc<RwLock<Context>> {
         self.context.clone()
     }
 }
 
-impl<'a, T, U, M, C> Mapper<'a, T, U, M, C>
-where
-    T: Send + Sync,
-    U: Clone + Debug + Send + 'static,
-    M: Map<T, U, C>,
-    C: ConfigInto<M> + Send + Sync,
-{
-    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+impl<'a> Mapper<'a> {
+    pub fn new(name: &'a str) -> Self {
         Mapper {
             name: name,
-            config: config,
-            rx: rx,
-            txs: HashMap::new(),
-            mapper: std::marker::PhantomData,
             context: Default::default(),
         }
     }
@@ -131,20 +119,8 @@ where
 #[macro_export]
 macro_rules! mapper {
     (
-        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        {
-            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-            let mut pipe = Mapper::new($name, config, $rx);
-            $(
-                pipe.add_sender($tx);
-            )*
-            pipe
-        }
-    };
-    (
-        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        mapper!($name, "", $config, $rx, [$( $tx ), *])
-    };
+        $name:expr
+    ) => {{
+        Mapper::new($name)
+    }};
 }

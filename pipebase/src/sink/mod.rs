@@ -1,8 +1,7 @@
 mod print;
 
 pub use print::*;
-
-use std::marker::PhantomData;
+use tokio::sync::mpsc::Sender;
 
 use async_trait::async_trait;
 use log::error;
@@ -13,7 +12,9 @@ use tokio::sync::RwLock;
 use crate::context::State;
 use crate::Pipe;
 use crate::Result;
-use crate::{context::Context, ConfigInto, FromConfig};
+use crate::{
+    inc_success_run, inc_total_run, set_state, ConfigInto, Context, FromConfig, HasContext,
+};
 
 #[async_trait]
 pub trait Export<T, C>: Send + Sync + FromConfig<C>
@@ -23,43 +24,43 @@ where
     async fn export(&mut self, t: &T) -> anyhow::Result<()>;
 }
 
-pub struct Exporter<'a, T, E, C>
-where
-    T: Send + Sync + 'static,
-    E: Export<T, C>,
-    C: ConfigInto<E>,
-{
+pub struct Exporter<'a> {
     name: &'a str,
-    config: C,
-    rx: Receiver<T>,
-    exporter: PhantomData<E>,
     context: Arc<RwLock<Context>>,
 }
 
 #[async_trait]
-impl<'a, T, E, C> Pipe<T, (), E, C> for Exporter<'a, T, E, C>
+impl<'a, T, E, C> Pipe<T, (), E, C> for Exporter<'a>
 where
     T: Send + Sync + 'static,
     E: Export<T, C> + 'static,
-    C: ConfigInto<E> + Send + Sync,
+    C: ConfigInto<E> + Send + Sync + 'static,
 {
-    async fn run(&mut self) -> Result<()> {
-        let mut exporter = self.config.config_into().await.unwrap();
+    async fn run(
+        &mut self,
+        config: C,
+        mut rx: Option<Receiver<T>>,
+        txs: Vec<Sender<()>>,
+    ) -> Result<()> {
+        assert!(rx.is_some());
+        assert!(txs.is_empty());
+        let mut exporter = config.config_into().await.unwrap();
+        let rx = rx.as_mut().unwrap();
         log::info!("exporter {} run ...", self.name);
         loop {
-            Self::inc_total_run(&self.context).await;
-            Self::set_state(&self.context, State::Receive).await;
-            let t = match self.rx.recv().await {
+            inc_total_run(&self.context).await;
+            set_state(&self.context, State::Receive).await;
+            let t = match rx.recv().await {
                 Some(t) => t,
                 None => {
-                    Self::inc_success_run(&self.context).await;
+                    inc_success_run(&self.context).await;
                     break;
                 }
             };
-            Self::set_state(&self.context, State::Export).await;
+            set_state(&self.context, State::Export).await;
             match exporter.export(&t).await {
                 Ok(_) => {
-                    Self::inc_success_run(&self.context).await;
+                    inc_success_run(&self.context).await;
                 }
                 Err(err) => {
                     error!("exporter error {}", err);
@@ -68,27 +69,21 @@ where
             }
         }
         log::info!("exporter {} exit ...", self.name);
-        Self::set_state(&self.context, State::Done).await;
+        set_state(&self.context, State::Done).await;
         Ok(())
-    }
-
-    fn get_context(&self) -> Arc<RwLock<Context>> {
-        self.context.to_owned()
     }
 }
 
-impl<'a, T, E, C> Exporter<'a, T, E, C>
-where
-    T: Send + Sync + 'static,
-    E: Export<T, C>,
-    C: ConfigInto<E>,
-{
-    pub fn new(name: &'a str, config: C, rx: Receiver<T>) -> Self {
+impl<'a> HasContext for Exporter<'a> {
+    fn get_context(&self) -> Arc<RwLock<Context>> {
+        self.context.clone()
+    }
+}
+
+impl<'a> Exporter<'a> {
+    pub fn new(name: &'a str) -> Self {
         Exporter {
             name: name,
-            config: config,
-            rx: rx,
-            exporter: std::marker::PhantomData,
             context: Default::default(),
         }
     }
@@ -97,26 +92,8 @@ where
 #[macro_export]
 macro_rules! exporter {
     (
-        $name:expr, $path:expr, $config:ty, $rx:expr
+        $name:expr
     ) => {{
-        let config =
-            <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
-        let pipe = Exporter::new($name, config, $rx);
-        pipe
+        Exporter::new($name)
     }};
-    (
-        $name:expr, $config:ty, $rx:expr
-    ) => {
-        exporter!($name, "", $config, $rx)
-    };
-    (
-        $name:expr, $path:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        exporter!($name, $path, $config, $rx)
-    };
-    (
-        $name:expr, $config:ty, $rx:expr, [$( $tx:expr ), *]
-    ) => {
-        exporter!($name, "", $config, $rx)
-    };
 }

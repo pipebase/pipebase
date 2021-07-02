@@ -41,9 +41,7 @@ impl<T: Hash> Select<T, DefaultHashSelectConfig> for DefaultHashSelect {
 #[cfg(test)]
 mod tests {
 
-    use super::DefaultHashSelectConfig;
-    use crate::HashKey;
-    use crate::{channel, selector, spawn_join, FromPath, Pipe, Selector};
+    use crate::*;
     use std::hash::{Hash, Hasher};
     use tokio::sync::mpsc::{Receiver, Sender};
 
@@ -54,13 +52,13 @@ mod tests {
         pub value: i32,
     }
 
-    async fn populate_records(tx: &mut Sender<Record>, records: Vec<Record>) {
+    async fn populate_records(tx: Sender<Record>, records: Vec<Record>) {
         for record in records {
             tx.send(record).await.unwrap();
         }
     }
 
-    async fn receive_records(rx: &mut Receiver<Record>, id: usize) -> usize {
+    async fn receive_records(mut rx: Receiver<Record>, id: usize) -> usize {
         let mut c: usize = 0;
         loop {
             match rx.recv().await {
@@ -75,9 +73,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_hash_select() {
-        let (mut tx0, rx0) = channel!(Record, 1024);
-        let (tx1, mut rx1) = channel!(Record, 1024);
-        let (tx2, mut rx2) = channel!(Record, 1024);
+        let (tx0, rx0) = channel!(Record, 1024);
+        let (tx1, rx1) = channel!(Record, 1024);
+        let (tx2, rx2) = channel!(Record, 1024);
         // 123 -> id1, abc -> id2 if hashkey is "key" only
         // abc, 1 -> id1, others -> id2 if hashkey is (key, value) combined
         let records = vec![
@@ -98,13 +96,12 @@ mod tests {
                 value: 2,
             },
         ];
-        let f0 = populate_records(&mut tx0, records);
-        let f1 = receive_records(&mut rx1, 1);
-        let f2 = receive_records(&mut rx2, 2);
-        let mut pipe = selector!("hash_select", DefaultHashSelectConfig, rx0, [tx1, tx2]);
+        let f0 = populate_records(tx0, records);
+        let f1 = receive_records(rx1, 1);
+        let f2 = receive_records(rx2, 2);
+        let mut pipe = selector!("hash_select");
         f0.await;
-        drop(tx0);
-        spawn_join!(pipe);
+        run_pipes!([(pipe, DefaultHashSelectConfig, "", Some(rx0), [tx1, tx2])]);
         let c1 = f1.await;
         let c2 = f2.await;
         assert_eq!(4, c1 + c2)

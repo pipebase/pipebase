@@ -122,19 +122,19 @@ mod top_aggregator_tests {
     async fn test_top_aggregator() {
         let (tx0, rx0) = channel!(Vec<u32>, 1023);
         let (tx1, mut rx1) = channel!(Vec<u32>, 1024);
-        let mut pipe = mapper!(
-            "top",
-            "resources/catalogs/top_aggregator.yml",
-            TopAggregatorConfig,
-            rx0,
-            [tx1]
-        );
+        let mut pipe = mapper!("top");
         let f0 = populate_record(
             tx0,
             vec![vec![1, 2, 2, 3], vec![1, 1, 2, 1], vec![2, 2, 2, 2]],
         );
         f0.await;
-        spawn_join!(pipe);
+        run_pipes!([(
+            pipe,
+            TopAggregatorConfig,
+            "resources/catalogs/top_aggregator.yml",
+            Some(rx0),
+            [tx1]
+        )]);
         let r = rx1.recv().await.unwrap();
         assert_eq!(vec![3, 2, 2], r);
         let r = rx1.recv().await.unwrap();

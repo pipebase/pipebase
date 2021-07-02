@@ -108,19 +108,19 @@ mod file_split_streamer_tests {
     async fn test_file_split_streamer() {
         let (tx0, rx0) = channel!(PathBuf, 1024);
         let (tx1, mut rx1) = channel!(Vec<u8>, 1024);
-        let mut pipe = streamer!(
-            "file_space_split_streamer",
-            "resources/catalogs/file_split_streamer.yml",
-            FileSplitStreamerConfig,
-            rx0,
-            [tx1]
-        );
+        let mut pipe = Streamer::new("file_space_split_streamer");
         let f0 = populate_records(
             tx0,
             vec![PathBuf::from("resources/test_file_stream/test_file_0.txt")],
         );
         f0.await;
-        spawn_join!(pipe);
+        run_pipes!([(
+            pipe,
+            FileSplitStreamerConfig,
+            "resources/catalogs/file_split_streamer.yml",
+            Some(rx0),
+            [tx1]
+        )]);
         let word = rx1.recv().await.unwrap();
         assert_eq!("foo", String::from_utf8(word).unwrap());
         let word = rx1.recv().await.unwrap();
@@ -214,13 +214,13 @@ mod file_line_streamer_tests {
     async fn test_file_line_streamer() {
         let (tx0, rx0) = channel!(PathBuf, 1024);
         let (tx1, mut rx1) = channel!(String, 1024);
-        let mut pipe = streamer!("file_line_streamer", FileLineStreamerConfig, rx0, [tx1]);
+        let mut pipe = streamer!("file_line_streamer");
         let f0 = populate_records(
             tx0,
             vec![PathBuf::from("resources/test_file_stream/test_file_1.txt")],
         );
         f0.await;
-        spawn_join!(pipe);
+        run_pipes!([(pipe, FileLineStreamerConfig, "", Some(rx0), [tx1])]);
         let line = rx1.recv().await.unwrap();
         assert_eq!("foo1 bar1", &line);
         let line = rx1.recv().await.unwrap();

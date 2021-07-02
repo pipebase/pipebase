@@ -55,7 +55,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{channel, mapper, spawn_join, FilterMapConfig, FromPath, Mapper, Pipe};
+    use crate::*;
     use pipederive::Filter;
 
     use super::Filter;
@@ -85,7 +85,7 @@ mod tests {
     async fn test_filter_map() {
         let (mut tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<self::Record>, 1024);
-        let mut pipe = mapper!("filter_map", FilterMapConfig, rx0, [tx1]);
+        let mut pipe = mapper!("filter_map");
         let f1 = populate_records(
             &mut tx0,
             vec![
@@ -96,7 +96,7 @@ mod tests {
         );
         f1.await;
         drop(tx0);
-        spawn_join!(pipe);
+        run_pipes!([(pipe, FilterMapConfig, "", Some(rx0), [tx1])]);
         let filtered_records = rx1.recv().await.unwrap();
         assert_eq!(1, filtered_records.len());
         assert_eq!(0, filtered_records[0].r0);

@@ -37,9 +37,7 @@ impl<T> Select<T, RandomConfig> for Random {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{channel, poller, selector, Pipe};
-    use crate::{Poller, Selector, TimerConfig};
+    use crate::*;
     use tokio::sync::mpsc::Receiver;
 
     async fn count_tick(rx: &mut Receiver<u128>, id: usize) -> usize {
@@ -60,9 +58,18 @@ mod tests {
         let (tx0, rx0) = channel!(u128, 1024);
         let (tx1, mut rx1) = channel!(u128, 1024);
         let (tx2, mut rx2) = channel!(u128, 1024);
-        let mut source = poller!("timer", "resources/catalogs/timer.yml", TimerConfig, [tx0]);
-        let mut selector = selector!("random_select", RandomConfig, rx0, [tx1, tx2]);
-        crate::spawn_join!(source, selector);
+        let mut source = poller!("timer");
+        let mut selector = selector!("random_select");
+        run_pipes!([
+            (
+                source,
+                TimerConfig,
+                "resources/catalogs/timer.yml",
+                None,
+                [tx0]
+            ),
+            (selector, RandomConfig, "", Some(rx0), [tx1, tx2])
+        ]);
         let c1 = count_tick(&mut rx1, 0).await;
         let c2 = count_tick(&mut rx2, 1).await;
         assert_eq!(10, c1 + c2);
