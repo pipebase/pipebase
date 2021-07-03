@@ -19,7 +19,7 @@ impl ContextStore {
         let data_ty = DataType::HashMap {
             key_data_ty: Box::new(DataType::String),
             value_data_ty: Box::new(DataType::Object(
-                "std::sync::Arc<tokio::sync::RwLock<Context>>".to_owned(),
+                "std::sync::Arc<Context>".to_owned(),
             )),
         };
         ContextStore {
