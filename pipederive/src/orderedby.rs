@@ -20,12 +20,6 @@ pub fn impl_ordered_by(ident: &Ident, data: &Data, generics: &Generics) -> Token
                 Some(self.cmp(other))
             }
         }
-
-        impl #impl_generics std::cmp::PartialEq for #ident #type_generics #where_clause {
-            fn eq(&self, other: &Self) -> bool {
-                self.#field_ident == other.#field_ident
-            }
-        }
     }
 }
 

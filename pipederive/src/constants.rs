@@ -45,3 +45,5 @@ pub const AGGREGATE_SUM: &str = "agg.sum";
 pub const AGGREGATE_TOP: &str = "agg.top";
 
 pub const GROUP: &str = "group";
+
+pub const EQUAL: &str = "equal";

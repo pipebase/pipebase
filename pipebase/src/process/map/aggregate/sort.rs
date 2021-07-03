@@ -136,10 +136,11 @@ mod top_aggregator_tests {
         assert_eq!(vec![2, 2, 2], r);
     }
 
-    #[derive(AggregateAs, Clone, Debug, Eq, OrderedBy)]
+    #[derive(AggregateAs, Clone, Debug, Equal, Eq, OrderedBy)]
     #[agg(top)]
     struct Record {
         pub id: String,
+        #[equal]
         #[order]
         pub value: u32,
     }

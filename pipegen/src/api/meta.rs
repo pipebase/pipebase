@@ -23,6 +23,7 @@ pub enum DeriveMeta {
     Serialize,
     Deserialize,
     Eq,
+    Equal,
     PartialEq,
     Project,
     Filter,
@@ -39,6 +40,7 @@ pub enum Tag {
     Group,
     Order,
     Visit,
+    Equal,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -88,6 +90,7 @@ fn expand_derive(derive: &DeriveMeta) -> Meta {
         DeriveMeta::Serialize => "Serialize",
         DeriveMeta::Deserialize => "Deserialize",
         DeriveMeta::Eq => "Eq",
+        DeriveMeta::Equal => "Equal",
         DeriveMeta::PartialEq => "PartialEq",
         DeriveMeta::Project => "Project",
         DeriveMeta::Filter => "Filter",
@@ -154,6 +157,7 @@ fn expand_tag(tag: &Tag) -> Meta {
         Tag::Group => new_path("group".to_owned()),
         Tag::Order => new_path("order".to_owned()),
         Tag::Visit => new_path("visit".to_owned()),
+        Tag::Equal => new_path("equal".to_owned()),
     }
 }
 
