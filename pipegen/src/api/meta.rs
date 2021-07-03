@@ -1,6 +1,51 @@
 use crate::api::utils::indent_literal;
 use serde::Deserialize;
-use std::collections::HashMap;
+
+#[derive(Clone, PartialEq, Debug, Deserialize)]
+pub struct ProjectMeta {
+    pub input: Option<String>,
+    pub from: Option<String>,
+    pub expr: Option<String>,
+    pub alias: Option<String>,
+}
+
+#[derive(Clone, PartialEq, Debug, Deserialize)]
+pub struct FilterMeta {
+    pub predicate: String,
+    pub alias: Option<String>,
+}
+
+#[derive(Clone, PartialEq, Debug, Deserialize)]
+pub enum Derive {
+    Clone,
+    Debug,
+    Display,
+    Serialize,
+    Deserialize,
+    Eq,
+    PartialEq,
+    Project,
+    Filter,
+    FieldAccess,
+    HashedBy,
+    OrderedBy,
+    AggregateAs,
+    GroupAs,
+}
+
+#[derive(Clone, PartialEq, Debug, Deserialize)]
+pub enum Tag {
+    Hash,
+    GroupBy,
+    Order,
+    Visit,
+}
+
+#[derive(Clone, PartialEq, Debug, Deserialize)]
+pub enum Aggregate {
+    Top,
+    Sum,
+}
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
 #[serde(untagged)]
@@ -17,11 +62,11 @@ pub enum Meta {
     List { name: String, metas: Vec<Meta> },
     Path { name: String },
     // Extended Meta
-    Derive { derives: Vec<String> },
-    Project { project: HashMap<String, String> },
-    Filter { filter: HashMap<String, String> },
-    AggregateAs { agg: String },
-    Tag { tag: String },
+    Derive { derives: Vec<Derive> },
+    Project { project: ProjectMeta },
+    Filter { filter: FilterMeta },
+    AggregateAs { agg: Aggregate },
+    Tag { tag: Tag },
 }
 
 fn meta_value_str(name: &str, value: &str) -> Meta {
@@ -35,25 +80,92 @@ fn new_path(name: String) -> Meta {
     Meta::Path { name: name }
 }
 
-fn expand_paths(name: &str, paths: &Vec<String>) -> Meta {
-    let mut path_metas: Vec<Meta> = Vec::new();
-    for path in paths {
-        path_metas.push(new_path(path.to_owned()));
-    }
+fn expand_derive(derive: &Derive) -> Meta {
+    let name = match derive {
+        Derive::Clone => "Clone",
+        Derive::Debug => "Debug",
+        Derive::Display => "Display",
+        Derive::Serialize => "Serialize",
+        Derive::Deserialize => "Deserialize",
+        Derive::Eq => "Eq",
+        Derive::PartialEq => "PartialEq",
+        Derive::Project => "Project",
+        Derive::Filter => "Filter",
+        Derive::FieldAccess => "FieldAccess",
+        Derive::HashedBy => "HashedBy",
+        Derive::OrderedBy => "OrderedBy",
+        Derive::AggregateAs => "AggregateAs",
+        Derive::GroupAs => "GroupAs",
+    };
+    new_path(name.to_owned())
+}
+
+fn expand_derives(derives: &Vec<Derive>) -> Meta {
+    let metas: Vec<Meta> = derives
+        .into_iter()
+        .map(|derive| expand_derive(derive))
+        .collect();
     Meta::List {
-        name: name.to_owned(),
-        metas: path_metas,
+        name: "derive".to_owned(),
+        metas: metas,
     }
 }
 
-fn expand_str_values(name: &str, values: &HashMap<String, String>) -> Meta {
-    let mut value_metas: Vec<Meta> = Vec::new();
-    for (name, value) in values {
-        value_metas.push(meta_value_str(name, value));
-    }
+fn expand_project_meta(meta: &ProjectMeta) -> Meta {
+    let mut metas: Vec<Meta> = Vec::new();
+    match meta.input {
+        Some(ref input) => metas.push(meta_value_str("input", input)),
+        None => (),
+    };
+    match meta.from {
+        Some(ref from) => metas.push(meta_value_str("from", from)),
+        None => (),
+    };
+    match meta.expr {
+        Some(ref expr) => metas.push(meta_value_str("expr", expr)),
+        None => (),
+    };
+    match meta.alias {
+        Some(ref alias) => metas.push(meta_value_str("alias", alias)),
+        None => (),
+    };
     Meta::List {
-        name: name.to_owned(),
-        metas: value_metas,
+        name: "project".to_owned(),
+        metas: metas,
+    }
+}
+
+fn expand_filter_meta(meta: &FilterMeta) -> Meta {
+    let mut metas: Vec<Meta> = Vec::new();
+    metas.push(meta_value_str("predicate", &meta.predicate));
+    match meta.alias {
+        Some(ref alias) => metas.push(meta_value_str("alias", alias)),
+        None => (),
+    };
+    Meta::List {
+        name: "filter".to_owned(),
+        metas: metas,
+    }
+}
+
+fn expand_tag(tag: &Tag) -> Meta {
+    match tag {
+        Tag::Hash => new_path("hash".to_owned()),
+        Tag::GroupBy => new_path("gkey".to_owned()),
+        Tag::Order => new_path("order".to_owned()),
+        Tag::Visit => new_path("visit".to_owned()),
+    }
+}
+
+fn expand_aggregate(agg: &Aggregate) -> Meta {
+    let op = match agg {
+        Aggregate::Sum => "sum",
+        Aggregate::Top => "top",
+    };
+    let meta = new_path(op.to_owned());
+    Meta::List {
+        name: "agg".to_owned(),
+        metas: vec![meta],
     }
 }
 
@@ -66,23 +178,23 @@ fn expand_meta_lit(meta: &Meta, indent: usize) -> String {
             MetaValue::Int(value) => return format!("{}{} = {}", indent_lit, name, value),
         },
         Meta::Derive { derives } => {
-            let meta = expand_paths("derive", derives);
+            let meta = expand_derives(derives);
             return expand_meta_lit(&meta, indent);
         }
         Meta::Project { project } => {
-            let meta = expand_str_values("project", project);
+            let meta = expand_project_meta(project);
             return expand_meta_lit(&meta, indent);
         }
         Meta::Filter { filter } => {
-            let meta = expand_str_values("filter", filter);
+            let meta = expand_filter_meta(filter);
             return expand_meta_lit(&meta, indent);
         }
         Meta::AggregateAs { agg } => {
-            let meta = expand_paths("agg", &vec![agg.to_owned()]);
+            let meta = expand_aggregate(agg);
             return expand_meta_lit(&meta, indent);
         }
         Meta::Tag { tag } => {
-            let meta = new_path(tag.to_owned());
+            let meta = expand_tag(tag);
             return expand_meta_lit(&meta, indent);
         }
         Meta::List { name, metas } => (name, metas),
