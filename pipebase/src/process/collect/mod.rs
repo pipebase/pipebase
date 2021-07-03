@@ -26,12 +26,11 @@ use tokio::{
 };
 
 #[async_trait]
-pub trait Collect<T, U, C>: Send + Sync + FromConfig<C>
+pub trait Collect<T, U, C>: Send + FromConfig<C>
 where
-    T: Clone,
     U: FromIterator<T> + Clone,
 {
-    async fn collect(&mut self, t: &T);
+    async fn collect(&mut self, t: T);
     async fn flush(&mut self) -> U;
     fn get_flush_interval(&self) -> Interval;
 }
@@ -72,7 +71,7 @@ where
                     }
                 };
                 let mut c = collector_clone.lock().await;
-                (*c).collect(&t).await;
+                (*c).collect(t).await;
             }
         });
         let mut txs = senders_as_map(txs);

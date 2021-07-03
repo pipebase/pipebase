@@ -5,25 +5,66 @@ use tokio::time::Interval;
 use crate::{Collect, ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 
+#[async_trait]
+pub trait Bag<T> {
+    async fn collect(&mut self, t: T);
+    async fn flush(&mut self) -> Vec<T>;
+}
+
+#[async_trait]
+impl<T> Bag<T> for Vec<T>
+where
+    T: Clone + Send,
+{
+    async fn collect(&mut self, t: T) {
+        self.push(t);
+    }
+
+    async fn flush(&mut self) -> Vec<T> {
+        let buffer = self.to_owned();
+        self.clear();
+        buffer
+    }
+}
+
+#[async_trait]
+pub trait BagCollect<T, B>
+where
+    T: Send + 'static,
+    B: Bag<T> + Send,
+{
+    fn get_bag(&mut self) -> &mut B;
+
+    async fn bag_collect(&mut self, t: T) {
+        let b = self.get_bag();
+        b.collect(t).await;
+    }
+
+    async fn flush_bag(&mut self) -> Vec<T> {
+        let b = self.get_bag();
+        b.flush().await
+    }
+}
+
 #[derive(Deserialize)]
-pub struct BagCollectorConfig {
+pub struct InMemoryBagCollectorConfig {
     pub flush_period_in_millis: u64,
 }
 
-impl FromPath for BagCollectorConfig {}
+impl FromPath for InMemoryBagCollectorConfig {}
 
 #[async_trait]
-impl<T> ConfigInto<BagCollector<T>> for BagCollectorConfig {}
+impl<T> ConfigInto<InMemoryBagCollector<T>> for InMemoryBagCollectorConfig {}
 
-pub struct BagCollector<T> {
+pub struct InMemoryBagCollector<T> {
     pub flush_period_in_millis: u64,
     pub buffer: Vec<T>,
 }
 
 #[async_trait]
-impl<T> FromConfig<BagCollectorConfig> for BagCollector<T> {
-    async fn from_config(config: &BagCollectorConfig) -> anyhow::Result<Self> {
-        Ok(BagCollector {
+impl<T> FromConfig<InMemoryBagCollectorConfig> for InMemoryBagCollector<T> {
+    async fn from_config(config: &InMemoryBagCollectorConfig) -> anyhow::Result<Self> {
+        Ok(InMemoryBagCollector {
             flush_period_in_millis: config.flush_period_in_millis,
             buffer: vec![],
         })
@@ -31,18 +72,26 @@ impl<T> FromConfig<BagCollectorConfig> for BagCollector<T> {
 }
 
 #[async_trait]
-impl<T> Collect<T, Vec<T>, BagCollectorConfig> for BagCollector<T>
+impl<T> BagCollect<T, Vec<T>> for InMemoryBagCollector<T>
 where
-    T: Clone + Send + Sync,
+    T: Clone + Send + 'static,
 {
-    async fn collect(&mut self, t: &T) {
-        self.buffer.push(t.to_owned())
+    fn get_bag(&mut self) -> &mut Vec<T> {
+        &mut self.buffer
+    }
+}
+
+#[async_trait]
+impl<T> Collect<T, Vec<T>, InMemoryBagCollectorConfig> for InMemoryBagCollector<T>
+where
+    T: Clone + Send + 'static,
+{
+    async fn collect(&mut self, t: T) {
+        self.bag_collect(t).await
     }
 
     async fn flush(&mut self) -> Vec<T> {
-        let buffer = self.buffer.to_owned();
-        self.buffer.clear();
-        buffer
+        self.flush_bag().await
     }
 
     fn get_flush_interval(&self) -> Interval {
@@ -53,18 +102,12 @@ where
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use tokio::sync::mpsc::{Receiver, Sender};
+    use tokio::sync::mpsc::Receiver;
 
     #[derive(Clone, Debug)]
     struct Record {
         pub key: String,
         pub val: i32,
-    }
-
-    async fn populate_record(tx: Sender<Record>, records: Vec<Record>) {
-        for r in records {
-            let _ = tx.send(r).await;
-        }
     }
 
     async fn receive_records(rx: &mut Receiver<Vec<Record>>) -> Vec<Record> {
@@ -78,12 +121,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_bag_collector() {
+    async fn test_in_mem_bag_collector() {
         let (tx0, rx0) = channel!(Record, 10);
         let (tx1, mut rx1) = channel!(Vec<Record>, 10);
         let mut pipe = collector!("bag_collector");
         let context = pipe.get_context();
-        let ph = populate_record(
+        let ph = populate_records(
             tx0,
             vec![
                 Record {
@@ -103,7 +146,7 @@ mod tests {
         ph.await;
         join_pipes!([run_pipe!(
             pipe,
-            BagCollectorConfig,
+            InMemoryBagCollectorConfig,
             "resources/catalogs/bag_collector.yml",
             [tx1],
             rx0

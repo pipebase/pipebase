@@ -1,50 +1,102 @@
 use serde::Deserialize;
-use std::collections::BTreeSet;
+use std::collections::HashSet;
+use std::hash::Hash;
 use std::time::Duration;
 use tokio::time::Interval;
 
 use crate::{Collect, ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 
+#[async_trait]
+pub trait Set<T> {
+    async fn collect(&mut self, t: T);
+    async fn flush(&mut self) -> Vec<T>;
+}
+
+#[async_trait]
+impl<T> Set<T> for HashSet<T>
+where
+    T: Hash + Eq + Clone + Send,
+{
+    async fn collect(&mut self, t: T) {
+        self.insert(t);
+    }
+
+    async fn flush(&mut self) -> Vec<T> {
+        let mut buffer: Vec<T> = Vec::new();
+        for item in self.iter() {
+            buffer.push(item.to_owned())
+        }
+        self.clear();
+        buffer
+    }
+}
+
+#[async_trait]
+pub trait SetCollect<T, S>
+where
+    T: Send + 'static,
+    S: Set<T> + Send,
+{
+    fn get_set(&mut self) -> &mut S;
+
+    async fn set_collect(&mut self, t: T) {
+        let set = self.get_set();
+        set.collect(t).await;
+    }
+
+    async fn flush_set(&mut self) -> Vec<T> {
+        let set = self.get_set();
+        set.flush().await
+    }
+}
+
 #[derive(Deserialize)]
-pub struct SetCollectorConfig {
+pub struct InMemorySetCollectorConfig {
     pub flush_period_in_millis: u64,
 }
 
-impl FromPath for SetCollectorConfig {}
+impl FromPath for InMemorySetCollectorConfig {}
 
 #[async_trait]
-impl<T: Ord> ConfigInto<SetCollector<T>> for SetCollectorConfig {}
+impl<T> ConfigInto<InMemorySetCollector<T>> for InMemorySetCollectorConfig {}
 
-pub struct SetCollector<T: Ord> {
+pub struct InMemorySetCollector<T> {
     pub flush_period_in_millis: u64,
-    pub buffer: Vec<T>,
+    pub buffer: HashSet<T>,
 }
 
 #[async_trait]
-impl<T: Ord> FromConfig<SetCollectorConfig> for SetCollector<T> {
-    async fn from_config(config: &SetCollectorConfig) -> anyhow::Result<Self> {
-        Ok(SetCollector {
+impl<T> FromConfig<InMemorySetCollectorConfig> for InMemorySetCollector<T> {
+    async fn from_config(config: &InMemorySetCollectorConfig) -> anyhow::Result<Self> {
+        Ok(InMemorySetCollector {
             flush_period_in_millis: config.flush_period_in_millis,
-            buffer: Vec::new(),
+            buffer: HashSet::new(),
         })
     }
 }
 
 #[async_trait]
-impl<T> Collect<T, BTreeSet<T>, SetCollectorConfig> for SetCollector<T>
+impl<T> SetCollect<T, HashSet<T>> for InMemorySetCollector<T>
 where
-    T: Clone + Send + Sync + Ord,
+    T: Hash + Eq + Clone + Send + 'static,
 {
-    async fn collect(&mut self, t: &T) {
-        self.buffer.push(t.to_owned());
+    fn get_set(&mut self) -> &mut HashSet<T> {
+        &mut self.buffer
+    }
+}
+
+#[async_trait]
+impl<T> Collect<T, Vec<T>, InMemorySetCollectorConfig> for InMemorySetCollector<T>
+where
+    T: Clone + Send + Hash + Eq + 'static,
+{
+    async fn collect(&mut self, t: T) {
+        self.set_collect(t).await;
     }
 
-    async fn flush(&mut self) -> BTreeSet<T> {
-        let buffer_clone = self.buffer.to_owned();
-        self.buffer.clear();
-        let set: BTreeSet<T> = buffer_clone.into_iter().collect();
-        set
+    async fn flush(&mut self) -> Vec<T> {
+        self.flush_set().await
     }
 
     fn get_flush_interval(&self) -> Interval {
@@ -55,30 +107,19 @@ where
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use std::collections::BTreeSet;
-    use tokio::sync::mpsc::Receiver;
 
-    #[derive(Clone, Debug, Eq, OrderedBy)]
+    #[derive(Clone, Debug, Eq, HashedBy, OrderedBy)]
     struct Record {
+        #[hash]
         #[order]
         pub key: String,
         pub val: i32,
     }
 
-    async fn receive_records(rx: &mut Receiver<BTreeSet<Record>>) -> Vec<Record> {
-        let mut all_records: Vec<Record> = Vec::new();
-        loop {
-            match rx.recv().await {
-                Some(records) => all_records.extend(records),
-                None => return all_records,
-            }
-        }
-    }
-
     #[tokio::test]
     async fn test_set_collector() {
         let (tx0, rx0) = channel!(Record, 10);
-        let (tx1, mut rx1) = channel!(BTreeSet<Record>, 10);
+        let (tx1, mut rx1) = channel!(Vec<Record>, 10);
         let mut pipe = collector!("set_collector");
         let context = pipe.get_context();
         let ph = populate_records(
@@ -101,12 +142,12 @@ mod tests {
         ph.await;
         join_pipes!([run_pipe!(
             pipe,
-            SetCollectorConfig,
+            InMemorySetCollectorConfig,
             "resources/catalogs/set_collector.yml",
             [tx1],
             rx0
         )]);
-        let records = receive_records(&mut rx1).await;
+        let records = rx1.recv().await.unwrap();
         assert_eq!(1, records.len());
         assert_eq!(0, records.get(0).unwrap().val);
         let context = context.read().await;
