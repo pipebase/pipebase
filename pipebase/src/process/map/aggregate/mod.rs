@@ -31,7 +31,7 @@ where
 }
 
 pub trait GroupAs<T> {
-    fn group_key(&self) -> T;
+    fn group(&self) -> T;
 }
 
 pub trait GroupTable<K, V>: IntoIterator<Item = (K, V)> {
@@ -53,10 +53,10 @@ where
     fn group_aggregate(&self, t: T) -> U {
         let mut group_sum = self.new_group_table();
         for ref item in t {
-            if !group_sum.contains_group(&item.group_key()) {
-                group_sum.insert_group(item.group_key(), V::init());
+            if !group_sum.contains_group(&item.group()) {
+                group_sum.insert_group(item.group(), V::init());
             }
-            let sum = group_sum.get_group_mut(&item.group_key()).unwrap();
+            let sum = group_sum.get_group_mut(&item.group()).unwrap();
             *sum += item.aggregate_value();
         }
         group_sum
@@ -97,13 +97,13 @@ impl AggregateAs<Count32> for String {
 }
 
 impl GroupAs<u32> for u32 {
-    fn group_key(&self) -> u32 {
+    fn group(&self) -> u32 {
         *self
     }
 }
 
 impl GroupAs<String> for String {
-    fn group_key(&self) -> String {
+    fn group(&self) -> String {
         self.to_owned()
     }
 }

@@ -96,7 +96,7 @@ impl<L, R> GroupAs<L> for RightValuedPair<L, R>
 where
     L: Clone + Hash + Eq + PartialEq,
 {
-    fn group_key(&self) -> L {
+    fn group(&self) -> L {
         self.0.to_owned()
     }
 }

@@ -95,7 +95,7 @@ pub fn derive_aggregate_as(_tokens: proc_macro::TokenStream) -> proc_macro::Toke
     proc_macro::TokenStream::from(expanded)
 }
 
-#[proc_macro_derive(GroupAs, attributes(gkey))]
+#[proc_macro_derive(GroupAs, attributes(group))]
 pub fn derive_group_as(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ref tokens = parse_macro_input!(_tokens as DeriveInput);
     let ref ident = tokens.ident;
