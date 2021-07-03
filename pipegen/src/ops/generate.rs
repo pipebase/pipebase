@@ -192,4 +192,12 @@ mod tests {
         app.validate().expect("expect valid");
         app.print()
     }
+
+    #[test]
+    fn test_object_metas() {
+        let manifest_path = Path::new("resources/manifest/object_metas.yml");
+        let app = App::parse(manifest_path).unwrap();
+        app.validate().expect("expect valid");
+        app.print()
+    }
 }
