@@ -6,13 +6,12 @@ use log::error;
 use log::info;
 use tokio::sync::mpsc::Receiver;
 use tokio::sync::mpsc::Sender;
-use tokio::sync::RwLock;
 
 use crate::context::{Context, State};
 use crate::error::Result;
 use crate::{
-    filter_senders_by_indices, inc_success_run, inc_total_run, senders_as_map, set_state,
-    spawn_send, wait_join_handles, ConfigInto, FromConfig, HasContext, Pipe,
+    filter_senders_by_indices, senders_as_map, spawn_send, wait_join_handles, ConfigInto,
+    FromConfig, HasContext, Pipe,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -29,7 +28,7 @@ where
 
 pub struct Listener<'a> {
     name: &'a str,
-    context: Arc<RwLock<Context>>,
+    context: Arc<Context>,
 }
 
 #[async_trait]
@@ -64,12 +63,12 @@ where
         let join_event_loop = tokio::spawn(async move {
             log::info!("listener {} run ...", name);
             loop {
-                inc_total_run(&context).await;
-                set_state(&context, State::Receive).await;
+                context.inc_total_run();
+                context.set_state(State::Receive);
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        inc_success_run(&context).await;
+                        context.inc_success_run();
                         break;
                     }
                     false => (),
@@ -77,11 +76,11 @@ where
                 let u = match rx0.recv().await {
                     Some(u) => u,
                     None => {
-                        inc_success_run(&context).await;
+                        context.inc_success_run();
                         break;
                     }
                 };
-                set_state(&context, State::Send).await;
+                context.set_state(State::Send);
                 let mut jhs = HashMap::new();
                 for (idx, tx) in &txs {
                     let u_clone: U = u.to_owned();
@@ -89,10 +88,10 @@ where
                 }
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
-                inc_success_run(&context).await;
+                context.inc_success_run();
             }
             log::info!("listener {} exit ...", name);
-            set_state(&context, State::Done).await;
+            context.set_state(State::Done);
         });
         // join listener and loop
         match tokio::spawn(async move { tokio::join!(join_listener, join_event_loop) }).await {
@@ -106,7 +105,7 @@ where
 }
 
 impl<'a> HasContext for Listener<'a> {
-    fn get_context(&self) -> Arc<RwLock<Context>> {
+    fn get_context(&self) -> Arc<Context> {
         self.context.clone()
     }
 }

@@ -241,7 +241,6 @@ mod tests {
         let reversed_record = rx1.recv().await.unwrap();
         assert_eq!(1, reversed_record.r0);
         assert_eq!(0, reversed_record.r1);
-        let ctx = context.read().await;
-        (*ctx).validate(State::Done, 2, 2);
+        context.validate(State::Done, 2, 2);
     }
 }

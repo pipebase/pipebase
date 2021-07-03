@@ -7,14 +7,11 @@ use async_trait::async_trait;
 use log::error;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
-use tokio::sync::RwLock;
 
 use crate::context::State;
 use crate::Pipe;
 use crate::Result;
-use crate::{
-    inc_success_run, inc_total_run, set_state, ConfigInto, Context, FromConfig, HasContext,
-};
+use crate::{ConfigInto, Context, FromConfig, HasContext};
 
 #[async_trait]
 pub trait Export<T, C>: Send + Sync + FromConfig<C>
@@ -26,7 +23,7 @@ where
 
 pub struct Exporter<'a> {
     name: &'a str,
-    context: Arc<RwLock<Context>>,
+    context: Arc<Context>,
 }
 
 #[async_trait]
@@ -48,19 +45,19 @@ where
         let rx = rx.as_mut().unwrap();
         log::info!("exporter {} run ...", self.name);
         loop {
-            inc_total_run(&self.context).await;
-            set_state(&self.context, State::Receive).await;
+            self.context.inc_total_run();
+            self.context.set_state(State::Receive);
             let t = match rx.recv().await {
                 Some(t) => t,
                 None => {
-                    inc_success_run(&self.context).await;
+                    self.context.inc_success_run();
                     break;
                 }
             };
-            set_state(&self.context, State::Export).await;
+            self.context.set_state(State::Export);
             match exporter.export(&t).await {
                 Ok(_) => {
-                    inc_success_run(&self.context).await;
+                    self.context.inc_success_run();
                 }
                 Err(err) => {
                     error!("exporter error {}", err);
@@ -69,13 +66,13 @@ where
             }
         }
         log::info!("exporter {} exit ...", self.name);
-        set_state(&self.context, State::Done).await;
+        self.context.set_state(State::Done);
         Ok(())
     }
 }
 
 impl<'a> HasContext for Exporter<'a> {
-    fn get_context(&self) -> Arc<RwLock<Context>> {
+    fn get_context(&self) -> Arc<Context> {
         self.context.clone()
     }
 }

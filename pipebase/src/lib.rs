@@ -7,7 +7,6 @@ mod pipe;
 mod process;
 mod sink;
 mod source;
-mod utils;
 
 pub use bootstrap::*;
 pub use config::*;
@@ -18,6 +17,5 @@ pub use pipederive::*;
 pub use process::*;
 pub use sink::*;
 pub use source::*;
-pub(crate) use utils::*;
 
 use error::Result;
