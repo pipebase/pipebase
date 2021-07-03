@@ -137,7 +137,7 @@ mod top_aggregator_tests {
     }
 
     #[derive(AggregateAs, Clone, Debug, Eq, OrderedBy)]
-    #[agg(sort)]
+    #[agg(top)]
     struct Record {
         pub id: String,
         #[order]

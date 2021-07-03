@@ -1,4 +1,4 @@
-use crate::constants::{AGGREGATE_SORT, AGGREGATE_SUM};
+use crate::constants::{AGGREGATE_SUM, AGGREGATE_TOP};
 
 use crate::utils::{get_any_attribute_by_meta_prefix, resolve_first_field};
 use proc_macro2::{Ident, TokenStream};
@@ -30,7 +30,7 @@ fn is_sum_field(field: &Field) -> bool {
 }
 
 fn is_sort(attributes: &Vec<Attribute>) -> bool {
-    get_any_attribute_by_meta_prefix(AGGREGATE_SORT, attributes, false).is_some()
+    get_any_attribute_by_meta_prefix(AGGREGATE_TOP, attributes, false).is_some()
 }
 
 fn aggregate_as_scalar(field: Option<Field>, ident: &Ident, generics: &Generics) -> TokenStream {
