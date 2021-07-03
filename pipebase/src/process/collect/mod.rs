@@ -4,6 +4,7 @@ pub use bag::*;
 pub use set::*;
 
 use std::iter::FromIterator;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::HasContext;
 use crate::{
@@ -58,7 +59,7 @@ where
         assert!(!txs.is_empty());
         let collector: Arc<Mutex<V>> = Arc::new(Mutex::new(config.config_into().await.unwrap()));
         let collector_clone = collector.to_owned();
-        let is_end = Arc::new(Mutex::new(false));
+        let is_end = Arc::new(AtomicBool::new(false));
         let is_end_clone = is_end.to_owned();
         let join_event = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
@@ -66,8 +67,7 @@ where
                 let t = match (*rx).recv().await {
                     Some(t) => t,
                     None => {
-                        let mut is_end = is_end_clone.lock().await;
-                        *is_end = true;
+                        is_end_clone.store(true, Ordering::Release);
                         break;
                     }
                 };
@@ -75,14 +75,12 @@ where
                 (*c).collect(&t).await;
             }
         });
-        let collector_clone = collector.to_owned();
         let mut txs = senders_as_map(txs);
-        let is_end_clone = is_end.to_owned();
         let context = self.get_context();
         let name = self.name.to_owned();
         let join_flush = tokio::spawn(async move {
             let mut interval = {
-                let c = collector_clone.lock().await;
+                let c = collector.lock().await;
                 c.get_flush_interval()
             };
             log::info!("collector {} run ...", name);
@@ -98,8 +96,10 @@ where
                     false => (),
                 }
                 interval.tick().await;
-                let mut c = collector_clone.lock().await;
-                let data = c.flush().await;
+                let data = {
+                    let mut c = collector.lock().await;
+                    c.flush().await
+                };
                 set_state(&context, State::Send).await;
                 let mut jhs = HashMap::new();
                 for (idx, tx) in &txs {
@@ -110,8 +110,7 @@ where
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
                 inc_success_run(&context).await;
-                let is_end = { *(is_end_clone.lock().await) };
-                if is_end {
+                if is_end.load(Ordering::Acquire) {
                     break;
                 }
             }
