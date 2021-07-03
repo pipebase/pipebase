@@ -2,6 +2,7 @@ mod aggregate;
 mod bootstrap;
 mod constants;
 mod context;
+mod equal;
 mod field;
 mod filter;
 mod group;
@@ -84,27 +85,6 @@ pub fn derive_context_store(_tokens: proc_macro::TokenStream) -> proc_macro::Tok
     proc_macro::TokenStream::from(expanded)
 }
 
-#[proc_macro_derive(AggregateAs, attributes(agg))]
-pub fn derive_aggregate_as(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ref tokens = parse_macro_input!(_tokens as DeriveInput);
-    let ref attributes = tokens.attrs;
-    let ref ident = tokens.ident;
-    let ref data = tokens.data;
-    let ref generics = tokens.generics;
-    let expanded = aggregate::impl_aggregate_as(ident, attributes, data, generics);
-    proc_macro::TokenStream::from(expanded)
-}
-
-#[proc_macro_derive(GroupAs, attributes(gkey))]
-pub fn derive_group_as(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ref tokens = parse_macro_input!(_tokens as DeriveInput);
-    let ref ident = tokens.ident;
-    let ref data = tokens.data;
-    let ref generics = tokens.generics;
-    let expanded = group::impl_group_as(ident, data, generics);
-    proc_macro::TokenStream::from(expanded)
-}
-
 #[proc_macro_attribute]
 pub fn bootstrap(
     args: proc_macro::TokenStream,
@@ -124,5 +104,36 @@ pub fn main(
     let args = parse_macro_input!(args as AttributeArgs);
     let function = parse_macro_input!(item as ItemFn);
     let expanded = bootstrap::impl_bootstrap_main_macro(args, function);
+    proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(AggregateAs, attributes(agg))]
+pub fn derive_aggregate_as(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ref tokens = parse_macro_input!(_tokens as DeriveInput);
+    let ref attributes = tokens.attrs;
+    let ref ident = tokens.ident;
+    let ref data = tokens.data;
+    let ref generics = tokens.generics;
+    let expanded = aggregate::impl_aggregate_as(ident, attributes, data, generics);
+    proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(GroupAs, attributes(group))]
+pub fn derive_group_as(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ref tokens = parse_macro_input!(_tokens as DeriveInput);
+    let ref ident = tokens.ident;
+    let ref data = tokens.data;
+    let ref generics = tokens.generics;
+    let expanded = group::impl_group_as(ident, data, generics);
+    proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(Equal, attributes(equal))]
+pub fn derive_equal(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ref tokens = parse_macro_input!(_tokens as DeriveInput);
+    let ref ident = tokens.ident;
+    let ref data = tokens.data;
+    let ref generics = tokens.generics;
+    let expanded = equal::impl_equal(ident, data, generics);
     proc_macro::TokenStream::from(expanded)
 }

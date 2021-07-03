@@ -44,4 +44,6 @@ pub const JOIN_PIPES_MACRO: &str = "join_pipes!";
 pub const AGGREGATE_SUM: &str = "agg.sum";
 pub const AGGREGATE_TOP: &str = "agg.top";
 
-pub const GROUP_KEY: &str = "gkey";
+pub const GROUP: &str = "group";
+
+pub const EQUAL: &str = "equal";

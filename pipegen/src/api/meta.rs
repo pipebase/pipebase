@@ -16,13 +16,14 @@ pub struct FilterMeta {
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
-pub enum Derive {
+pub enum DeriveMeta {
     Clone,
     Debug,
     Display,
     Serialize,
     Deserialize,
     Eq,
+    Equal,
     PartialEq,
     Project,
     Filter,
@@ -36,13 +37,14 @@ pub enum Derive {
 #[derive(Clone, PartialEq, Debug, Deserialize)]
 pub enum Tag {
     Hash,
-    GroupBy,
+    Group,
     Order,
     Visit,
+    Equal,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
-pub enum Aggregate {
+pub enum AggregateMeta {
     Top,
     Sum,
 }
@@ -62,10 +64,10 @@ pub enum Meta {
     List { name: String, metas: Vec<Meta> },
     Path { name: String },
     // Extended Meta
-    Derive { derives: Vec<Derive> },
+    Derive { derives: Vec<DeriveMeta> },
     Project { project: ProjectMeta },
     Filter { filter: FilterMeta },
-    AggregateAs { agg: Aggregate },
+    Aggregate { agg: AggregateMeta },
     Tag { tag: Tag },
 }
 
@@ -80,27 +82,28 @@ fn new_path(name: String) -> Meta {
     Meta::Path { name: name }
 }
 
-fn expand_derive(derive: &Derive) -> Meta {
+fn expand_derive(derive: &DeriveMeta) -> Meta {
     let name = match derive {
-        Derive::Clone => "Clone",
-        Derive::Debug => "Debug",
-        Derive::Display => "Display",
-        Derive::Serialize => "Serialize",
-        Derive::Deserialize => "Deserialize",
-        Derive::Eq => "Eq",
-        Derive::PartialEq => "PartialEq",
-        Derive::Project => "Project",
-        Derive::Filter => "Filter",
-        Derive::FieldAccess => "FieldAccess",
-        Derive::HashedBy => "HashedBy",
-        Derive::OrderedBy => "OrderedBy",
-        Derive::AggregateAs => "AggregateAs",
-        Derive::GroupAs => "GroupAs",
+        DeriveMeta::Clone => "Clone",
+        DeriveMeta::Debug => "Debug",
+        DeriveMeta::Display => "Display",
+        DeriveMeta::Serialize => "Serialize",
+        DeriveMeta::Deserialize => "Deserialize",
+        DeriveMeta::Eq => "Eq",
+        DeriveMeta::Equal => "Equal",
+        DeriveMeta::PartialEq => "PartialEq",
+        DeriveMeta::Project => "Project",
+        DeriveMeta::Filter => "Filter",
+        DeriveMeta::FieldAccess => "FieldAccess",
+        DeriveMeta::HashedBy => "HashedBy",
+        DeriveMeta::OrderedBy => "OrderedBy",
+        DeriveMeta::AggregateAs => "AggregateAs",
+        DeriveMeta::GroupAs => "GroupAs",
     };
     new_path(name.to_owned())
 }
 
-fn expand_derives(derives: &Vec<Derive>) -> Meta {
+fn expand_derives(derives: &Vec<DeriveMeta>) -> Meta {
     let metas: Vec<Meta> = derives
         .into_iter()
         .map(|derive| expand_derive(derive))
@@ -151,16 +154,17 @@ fn expand_filter_meta(meta: &FilterMeta) -> Meta {
 fn expand_tag(tag: &Tag) -> Meta {
     match tag {
         Tag::Hash => new_path("hash".to_owned()),
-        Tag::GroupBy => new_path("gkey".to_owned()),
+        Tag::Group => new_path("group".to_owned()),
         Tag::Order => new_path("order".to_owned()),
         Tag::Visit => new_path("visit".to_owned()),
+        Tag::Equal => new_path("equal".to_owned()),
     }
 }
 
-fn expand_aggregate(agg: &Aggregate) -> Meta {
+fn expand_aggregate(agg: &AggregateMeta) -> Meta {
     let op = match agg {
-        Aggregate::Sum => "sum",
-        Aggregate::Top => "top",
+        AggregateMeta::Sum => "sum",
+        AggregateMeta::Top => "top",
     };
     let meta = new_path(op.to_owned());
     Meta::List {
@@ -189,7 +193,7 @@ fn expand_meta_lit(meta: &Meta, indent: usize) -> String {
             let meta = expand_filter_meta(filter);
             return expand_meta_lit(&meta, indent);
         }
-        Meta::AggregateAs { agg } => {
+        Meta::Aggregate { agg } => {
             let meta = expand_aggregate(agg);
             return expand_meta_lit(&meta, indent);
         }

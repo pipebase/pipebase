@@ -108,10 +108,10 @@ where
 mod tests {
     use crate::*;
 
-    #[derive(Clone, Debug, Eq, HashedBy, OrderedBy)]
+    #[derive(Clone, Debug, Eq, HashedBy, Equal)]
     struct Record {
         #[hash]
-        #[order]
+        #[equal]
         pub key: String,
         pub val: i32,
     }
