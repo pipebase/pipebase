@@ -1,15 +1,8 @@
 use crate::Context;
 
 pub trait ContextStore {
-    fn add_pipe_context(
-        &mut self,
-        pipe_name: String,
-        context: std::sync::Arc<tokio::sync::RwLock<Context>>,
-    );
-    fn get_pipe_context(
-        &self,
-        pipe_name: &str,
-    ) -> Option<std::sync::Arc<tokio::sync::RwLock<Context>>>;
+    fn add_pipe_context(&mut self, pipe_name: String, context: std::sync::Arc<Context>);
+    fn get_pipe_context(&self, pipe_name: &str) -> Option<std::sync::Arc<Context>>;
 }
 pub trait Bootstrap: ContextStore {
     fn print();
@@ -21,7 +14,6 @@ pub trait Bootstrap: ContextStore {
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use std::ops::Deref;
 
     #[derive(Bootstrap, ContextStore)]
     #[pipe(
@@ -44,8 +36,7 @@ mod tests {
     )]
     struct App {
         #[cstore(method(get = "get", insert = "insert"))]
-        pipe_contexts:
-            std::collections::HashMap<String, std::sync::Arc<tokio::sync::RwLock<Context>>>,
+        pipe_contexts: std::collections::HashMap<String, std::sync::Arc<Context>>,
     }
 
     #[tokio::test]
@@ -56,9 +47,7 @@ mod tests {
         };
         app.bootstrap().await;
         let timer_context = app.get_pipe_context("timer1").unwrap();
-        let timer_context = timer_context.deref().read().await;
         let printer_context = app.get_pipe_context("printer").unwrap();
-        let printer_context = printer_context.deref().read().await;
         assert_eq!(State::Done, timer_context.get_state());
         assert_eq!(State::Done, printer_context.get_state());
         assert_eq!(11, timer_context.get_total_run());

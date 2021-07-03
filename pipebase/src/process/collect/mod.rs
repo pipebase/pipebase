@@ -10,8 +10,8 @@ use crate::HasContext;
 use crate::{
     context::{Context, State},
     error::join_error,
-    filter_senders_by_indices, inc_success_run, inc_total_run, senders_as_map, set_state,
-    spawn_send, wait_join_handles, ConfigInto, FromConfig, Pipe, Result,
+    filter_senders_by_indices, senders_as_map, spawn_send, wait_join_handles, ConfigInto,
+    FromConfig, Pipe, Result,
 };
 
 use async_trait::async_trait;
@@ -20,7 +20,7 @@ use std::sync::Arc;
 use tokio::{
     sync::{
         mpsc::{Receiver, Sender},
-        Mutex, RwLock,
+        Mutex,
     },
     time::Interval,
 };
@@ -37,7 +37,7 @@ where
 
 pub struct Collector<'a> {
     name: &'a str,
-    context: Arc<RwLock<Context>>,
+    context: Arc<Context>,
 }
 
 #[async_trait]
@@ -84,12 +84,12 @@ where
             };
             log::info!("collector {} run ...", name);
             loop {
-                set_state(&context, State::Receive).await;
-                inc_total_run(&context).await;
+                context.set_state(State::Receive);
+                context.inc_total_run();
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        inc_success_run(&context).await;
+                        context.inc_success_run();
                         break;
                     }
                     false => (),
@@ -99,7 +99,7 @@ where
                     let mut c = collector.lock().await;
                     c.flush().await
                 };
-                set_state(&context, State::Send).await;
+                context.set_state(State::Send);
                 let mut jhs = HashMap::new();
                 for (idx, tx) in &txs {
                     let tx_clone = tx.to_owned();
@@ -108,13 +108,13 @@ where
                 }
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
-                inc_success_run(&context).await;
+                context.inc_success_run();
                 if is_end.load(Ordering::Acquire) {
                     break;
                 }
             }
             log::info!("collector {} exit ...", name);
-            set_state(&context, State::Done).await;
+            context.set_state(State::Done);
         });
         let join_all = tokio::spawn(async move { tokio::join!(join_event, join_flush) });
         match join_all.await {
@@ -125,7 +125,7 @@ where
 }
 
 impl<'a> HasContext for Collector<'a> {
-    fn get_context(&self) -> Arc<RwLock<Context>> {
+    fn get_context(&self) -> Arc<Context> {
         self.context.to_owned()
     }
 }

@@ -156,7 +156,6 @@ mod tests {
         assert_eq!(0, records.get(0).unwrap().val);
         assert_eq!(1, records.get(1).unwrap().val);
         assert_eq!(2, records.get(2).unwrap().val);
-        let context = context.read().await;
         assert_eq!(State::Done, context.get_state());
     }
 }

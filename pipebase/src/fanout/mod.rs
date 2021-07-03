@@ -7,15 +7,14 @@ pub use random::*;
 pub use roundrobin::*;
 
 use crate::{
-    filter_senders_by_indices, inc_success_run, inc_total_run, senders_as_map, set_state,
-    spawn_send, wait_join_handles, ConfigInto, FromConfig, HasContext, Pipe,
+    filter_senders_by_indices, senders_as_map, spawn_send, wait_join_handles, ConfigInto,
+    FromConfig, HasContext, Pipe,
 };
 use async_trait::async_trait;
 use std::collections::HashMap;
 
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
-use tokio::sync::RwLock;
 
 use crate::context::{Context, State};
 use crate::error::Result;
@@ -26,7 +25,7 @@ pub trait Select<T, C>: Send + Sync + FromConfig<C> {
 
 pub struct Selector<'a> {
     name: &'a str,
-    context: Arc<RwLock<Context>>,
+    context: Arc<Context>,
 }
 
 #[async_trait]
@@ -49,12 +48,12 @@ where
         let mut txs = senders_as_map(txs);
         log::info!("selector {} run ...", self.name);
         loop {
-            inc_total_run(&self.context).await;
-            set_state(&self.context, State::Receive).await;
+            self.context.inc_total_run();
+            self.context.set_state(State::Receive);
             // if all receiver dropped, sender drop as well
             match txs.is_empty() {
                 true => {
-                    inc_success_run(&self.context).await;
+                    self.context.inc_success_run();
                     break;
                 }
                 false => (),
@@ -63,11 +62,11 @@ where
             let t = match t {
                 Some(t) => t,
                 None => {
-                    inc_success_run(&self.context).await;
+                    self.context.inc_success_run();
                     break;
                 }
             };
-            set_state(&self.context, State::Send).await;
+            self.context.set_state(State::Send);
             let candidates = txs.keys().collect::<Vec<&usize>>();
             let mut jhs = HashMap::new();
             for i in selector.select(&t, &candidates) {
@@ -77,16 +76,16 @@ where
             }
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
-            inc_success_run(&self.context).await;
+            self.context.inc_success_run();
         }
         log::info!("selector {} exit ...", self.name);
-        set_state(&self.context, State::Done).await;
+        self.context.set_state(State::Done);
         Ok(())
     }
 }
 
 impl<'a> HasContext for Selector<'a> {
-    fn get_context(&self) -> Arc<RwLock<Context>> {
+    fn get_context(&self) -> Arc<Context> {
         self.context.clone()
     }
 }

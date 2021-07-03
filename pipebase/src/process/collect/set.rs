@@ -150,7 +150,6 @@ mod tests {
         let records = rx1.recv().await.unwrap();
         assert_eq!(1, records.len());
         assert_eq!(0, records.get(0).unwrap().val);
-        let context = context.read().await;
         assert_eq!(State::Done, context.get_state());
     }
 }
