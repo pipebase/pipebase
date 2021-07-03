@@ -45,7 +45,7 @@ pub fn derive_field_accept(_tokens: proc_macro::TokenStream) -> proc_macro::Toke
 }
 
 #[proc_macro_derive(HashedBy, attributes(hash))]
-pub fn derive_hashby(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn derive_hashedby(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ref tokens = parse_macro_input!(_tokens as DeriveInput);
     let ref ident = tokens.ident;
     let ref data = tokens.data;

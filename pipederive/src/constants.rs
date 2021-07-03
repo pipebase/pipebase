@@ -42,6 +42,6 @@ pub const RUN_PIPE_MACRO: &str = "run_pipe!";
 pub const JOIN_PIPES_MACRO: &str = "join_pipes!";
 
 pub const AGGREGATE_SUM: &str = "agg.sum";
-pub const AGGREGATE_SORT: &str = "agg.sort";
+pub const AGGREGATE_TOP: &str = "agg.top";
 
 pub const GROUP_KEY: &str = "gkey";
