@@ -9,15 +9,15 @@ objects:
         data_ty: String
   - ty: ProjectedBar
     metas:
-      - derives: ["Clone", "Debug", "Project"]
+      - derives: [Clone, Debug, Project]
       - project: 
-          input: "Bar"
+          input: Bar
     fields:
       - name: bar1
         data_ty: Integer
         metas:
           - project:
-              from: "bar1"
+              from: bar1
       - name: bar2
         data_ty: String
         metas:
@@ -26,25 +26,25 @@ objects:
               alias: "b"
   - ty: FilteredBar
     metas:
-      - derives: ["Clone", "Debug", "Filter"]
+      - derives: [Clone, Debug, Filter]
       - filter:
           predicate: "b.bar1 > 3"
-          alias: "b"
+          alias: b
     fields:
       - name: bar1
         data_ty: Integer
   - ty: TopBar
     metas:
-      - derives: ["Clone", "Debug", "AggregateAs"]
-      - agg: "top"
+      - derives: [Clone, Debug, AggregateAs]
+      - agg: Top
     fields:
       - name: bar1
         data_ty: Integer
   - ty: HashedBar
     metas:
-      - derives: ["Clone", "Debug", "HashedBy"]
+      - derives: [Clone, Debug, HashedBy]
     fields:
       - name: bar1
         data_ty: Integer
         metas:
-          - tag: hash
+          - tag: Hash
