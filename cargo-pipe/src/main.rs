@@ -21,6 +21,7 @@ fn main() {
 }
 
 fn run() -> CmdResult {
+    // setup args and subcommands (including subcommand args)
     let matches = clap::App::new("cargo-pipe")
         .arg(clap::Arg::new("pipe").index(1))
         .arg(
@@ -32,6 +33,7 @@ fn run() -> CmdResult {
         .subcommands(commands::cmds())
         .get_matches();
 
+    // setup CLI configuration
     let config = match matches.value_of("directory") {
         Some(directory) => Config::new(Some(directory)),
         None => Config::new(None),
@@ -40,10 +42,12 @@ fn run() -> CmdResult {
         Ok(config) => config,
         Err(err) => return Err(err.into()),
     };
+    // find subcommand and args for subcommand
     let (cmd, args) = match matches.subcommand() {
         Some((cmd, args)) => (cmd, args),
         None => return Ok(()),
     };
+    // execute subcommand
     match commands::exec(cmd) {
         Some(f) => f(&config, args)?,
         None => (),

@@ -16,5 +16,6 @@ pub fn do_exec(config: &Config, opts: &DescribeOptions) -> anyhow::Result<()> {
             printer.result(description)?;
         }
     }
+    // TODO: Describe object
     Ok(())
 }

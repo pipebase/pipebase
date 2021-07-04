@@ -4,8 +4,6 @@ use crate::print::Printer;
 use crate::Config;
 use pipegen::api::App;
 
-fn check_cargo_toml() {}
-
 pub fn do_check(app: &App, printer: &mut Printer, opts: &CheckOptions) -> anyhow::Result<()> {
     if opts.check_pipe() {
         printer.status(&"Check", "Pipes")?;

@@ -1,6 +1,7 @@
 use std::{env::current_dir, path::PathBuf};
 
 const DEFAULT_PIPE_MANIFEST: &'static str = "pipe.yml";
+const DEFAULT_INIT_DIRECTORY: &'static str = "app/";
 pub struct Config {
     working_drectory: PathBuf,
 }
@@ -22,5 +23,11 @@ impl Config {
         let mut manifest_path = self.working_drectory.to_owned();
         manifest_path.push(DEFAULT_PIPE_MANIFEST);
         manifest_path
+    }
+
+    pub fn get_init_directory(&self) -> PathBuf {
+        let mut init_directory = self.working_drectory.to_owned();
+        init_directory.push(DEFAULT_INIT_DIRECTORY);
+        init_directory
     }
 }

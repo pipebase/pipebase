@@ -11,6 +11,7 @@ mod utils;
 pub use app::*;
 pub(crate) use constants::*;
 pub(crate) use data::*;
+pub use dependency::*;
 pub(crate) use function::*;
 pub(crate) use pipe::*;
 

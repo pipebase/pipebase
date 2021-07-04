@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct Dependency {
+pub struct PackageDependency {
     package: String,
     version: Option<String>,
     path: Option<String>,
@@ -10,15 +10,15 @@ pub struct Dependency {
     modules: Vec<String>,
 }
 
-impl PartialEq for Dependency {
+impl PartialEq for PackageDependency {
     fn eq(&self, other: &Self) -> bool {
-        self.package.eq(other.get_package())
+        self.package.eq(&other.get_package())
     }
 }
 
-impl Eq for Dependency {}
+impl Eq for PackageDependency {}
 
-impl Dependency {
+impl PackageDependency {
     pub(crate) fn new(
         package: String,
         version: Option<String>,
@@ -26,25 +26,29 @@ impl Dependency {
         features: Option<Vec<String>>,
         modules: Vec<String>,
     ) -> Self {
-        Dependency {
-            package: package,
-            version: version,
-            path: path,
-            features: features,
-            modules: modules,
+        PackageDependency {
+            package,
+            version,
+            path,
+            features,
+            modules,
         }
     }
 
-    pub(crate) fn get_package(&self) -> &String {
-        &self.package
+    pub fn get_package(&self) -> String {
+        self.package.to_owned()
     }
 
-    pub(crate) fn get_version(&self) -> Option<&String> {
-        self.version.as_ref()
+    pub fn get_version(&self) -> Option<String> {
+        self.version.to_owned()
     }
 
-    pub(crate) fn get_path(&self) -> Option<&String> {
-        self.path.as_ref()
+    pub fn get_path(&self) -> Option<String> {
+        self.path.to_owned()
+    }
+
+    pub fn get_features(&self) -> Option<Vec<String>> {
+        self.features.to_owned()
     }
 
     pub(crate) fn get_modules(&self) -> &Vec<String> {
