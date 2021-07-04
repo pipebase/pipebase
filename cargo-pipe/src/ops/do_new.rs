@@ -25,7 +25,7 @@ fn do_apply_additional_dependency(
     toml_path: &Path,
     printer: &mut Printer,
 ) -> anyhow::Result<()> {
-    printer.status("Manifest", "add dependencies")?;
+    printer.status("New", "add manifest dependencies")?;
     // fetch package dependency
     let additionals = app.get_package_dependency();
     let toml_content = fs::read_to_string(toml_path)?;
@@ -36,7 +36,7 @@ fn do_apply_additional_dependency(
     }
     let toml_content = toml::to_string(&manifest)?;
     fs::write(toml_path, toml_content)?;
-    printer.status("Manifest", "add dependencies succeed")?;
+    printer.status("New", "manifest dependencies added")?;
     Ok(())
 }
 

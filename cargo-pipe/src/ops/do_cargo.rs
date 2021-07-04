@@ -49,7 +49,30 @@ pub fn do_cargo_fmt(manifest_path: &Path, printer: &mut Printer) -> anyhow::Resu
     let (err_code, out) = run_cmd(cmd)?;
     match err_code {
         0 => printer.status(&"Cargo", "fmt succeed")?,
-        _ => printer.status(&"Cargo", format!("fmt failed, stderr: {}", out))?,
+        _ => printer.error(format!("fmt failed, stderr: {}", out))?,
+    };
+    Ok(err_code)
+}
+
+pub fn do_cargo_check(
+    manifest_path: &Path,
+    warning: bool,
+    verbose: bool,
+    printer: &mut Printer,
+) -> anyhow::Result<i32> {
+    printer.status(&"Cargo", "check")?;
+    let mut cmd = Command::new(cargo_binary());
+    cmd.arg("check").arg("--manifest-path").arg(manifest_path);
+    if verbose {
+        cmd.arg("--verbose");
+    }
+    if !warning {
+        std::env::set_var("RUSTFLAGS", "-Awarnings");
+    };
+    let (err_code, out) = run_cmd(cmd)?;
+    match err_code {
+        0 => printer.status(&"Cargo", "check succeed")?,
+        _ => printer.error(format!("{}", out))?,
     };
     Ok(err_code)
 }

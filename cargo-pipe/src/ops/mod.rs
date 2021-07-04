@@ -4,4 +4,5 @@ pub(crate) mod do_describe;
 pub(crate) mod do_generate;
 pub(crate) mod do_new;
 pub(crate) mod do_remove;
+pub(crate) mod do_validate;
 mod utils;

@@ -16,20 +16,9 @@ pub fn cmd() -> Cmd {
 }
 
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
-    let opts = match (args.is_present("pipe"), args.is_present("object")) {
-        (true, false) => DescribeOptions {
-            pipe: true,
-            object: false,
-        },
-        (false, true) => DescribeOptions {
-            pipe: false,
-            object: true,
-        },
-        (_, _) => DescribeOptions {
-            pipe: true,
-            object: true,
-        },
-    };
+    let pipe = args.is_present("pipe");
+    let object = args.is_present("object");
+    let opts = DescribeOptions::new(pipe, object);
     do_exec(config, &opts)?;
     Ok(())
 }
@@ -40,6 +29,13 @@ pub struct DescribeOptions {
 }
 
 impl DescribeOptions {
+    pub fn new(pipe: bool, object: bool) -> Self {
+        DescribeOptions {
+            pipe: pipe,
+            object: object,
+        }
+    }
+
     pub fn describe_pipe(&self) -> bool {
         self.pipe
     }
