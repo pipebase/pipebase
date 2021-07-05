@@ -13,6 +13,10 @@ pub fn cmd() -> Cmd {
         Arg::new("partial")
             .short('p')
             .about("Allow partial pipelines"),
+        Arg::new("out")
+            .short('o')
+            .about("Specify output binary path")
+            .takes_value(true),
     ])
 }
 
@@ -22,7 +26,11 @@ pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
         None => None,
     };
     let partial = args.is_present("partial");
-    let opts = BuildOptions::new(app_name, partial);
+    let out = match args.value_of("out") {
+        Some(out) => Some(out.to_owned()),
+        None => None,
+    };
+    let opts = BuildOptions::new(app_name, partial, out);
     do_exec(config, &opts)?;
     Ok(())
 }
@@ -30,11 +38,16 @@ pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
 pub struct BuildOptions {
     app_name: Option<String>,
     partial: bool,
+    out: Option<String>,
 }
 
 impl BuildOptions {
-    pub fn new(app_name: Option<String>, partial: bool) -> Self {
-        BuildOptions { app_name, partial }
+    pub fn new(app_name: Option<String>, partial: bool, out: Option<String>) -> Self {
+        BuildOptions {
+            app_name,
+            partial,
+            out,
+        }
     }
 
     pub fn get_app_name(&self) -> Option<&String> {
@@ -43,5 +56,9 @@ impl BuildOptions {
 
     pub fn partial(&self) -> bool {
         self.partial
+    }
+
+    pub fn out(&self) -> Option<&String> {
+        self.out.as_ref()
     }
 }

@@ -41,6 +41,9 @@ pub fn do_exec(config: &Config, opts: &BuildOptions) -> anyhow::Result<()> {
         &mut printer,
     )?;
     let from = config.get_target_release_app_binary(opts.get_app_name());
-    let to = config.get_run_app_binary(opts.get_app_name());
+    let to = match opts.out() {
+        Some(path) => PathBuf::from(path),
+        None => config.get_run_app_binary(opts.get_app_name()),
+    };
     do_copy_binary(from, to, &mut printer)
 }

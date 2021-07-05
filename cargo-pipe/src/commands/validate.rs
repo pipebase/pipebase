@@ -6,14 +6,14 @@ use clap::Arg;
 
 pub fn cmd() -> Cmd {
     Cmd::new("validate")
-        .about("Validate pipes and objects in app manifest")
+        .about("Validate pipes and objects in pipe manifest")
         .args(vec![
             Arg::new("pipe")
                 .short('p')
-                .about("Validate pipes in app manifest"),
+                .about("Validate pipes in pipe manifest"),
             Arg::new("object")
                 .short('o')
-                .about("Validate objects in app manifest"),
+                .about("Validate objects in pipe manifest"),
         ])
 }
 
@@ -31,11 +31,11 @@ pub struct ValidateOptions {
 }
 
 impl ValidateOptions {
-    pub fn validate_pipe(&self) -> bool {
+    pub fn pipe(&self) -> bool {
         self.pipe
     }
 
-    pub fn validate_object(&self) -> bool {
+    pub fn object(&self) -> bool {
         self.object
     }
 

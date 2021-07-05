@@ -12,8 +12,8 @@ pub fn cmd() -> Cmd {
                 .short('n')
                 .about("Specify the app name")
                 .takes_value(true),
-            Arg::new("pipe")
-                .short('p')
+            Arg::new("line")
+                .short('l')
                 .about("Specify the pipe name, so that only pipelines contain pipe generated")
                 .takes_value(true),
         ])
@@ -24,7 +24,7 @@ pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
         Some(app_name) => Some(app_name.to_owned()),
         None => None,
     };
-    let pipe_name = match args.value_of("pipe") {
+    let pipe_name = match args.value_of("line") {
         Some(pipe_name) => Some(pipe_name.to_owned()),
         None => None,
     };
