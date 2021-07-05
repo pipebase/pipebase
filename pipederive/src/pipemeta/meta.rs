@@ -217,7 +217,10 @@ impl PipeMetas {
                 let upstream_output_type_name = match pipe_output_type_names.get(upstream_pipe_name)
                 {
                     Some(upstream_output_type_name) => upstream_output_type_name,
-                    None => panic!("upstream pipe {} does not exists", upstream_pipe_name),
+                    None => {
+                        eprintln!("upstream pipe {} does not exists, this may due to partial generated pipelines", upstream_pipe_name);
+                        continue;
+                    }
                 };
                 match upstream_output_type_name {
                     Some(upstream_output_type_name) => pipe_meta

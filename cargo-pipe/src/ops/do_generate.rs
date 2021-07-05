@@ -11,12 +11,15 @@ use std::process;
 pub fn do_generate(
     app: &App,
     mut path_buf: PathBuf,
-    _opts: &GenerateOptions,
+    opts: &GenerateOptions,
     printer: &mut Printer,
 ) -> anyhow::Result<()> {
     let main_path = path_buf.as_path();
     printer.status(&"Generate", main_path.to_str().unwrap())?;
-    let contents = app.generate();
+    let contents = match opts.get_pipe_name() {
+        Some(pipe_name) => app.generate_pipes(pipe_name),
+        None => app.generate(),
+    };
     fs::write(main_path, contents)?;
     // cargo format
     // pop main.rs
