@@ -5,54 +5,64 @@ use crate::ops::do_check::do_exec;
 use clap::Arg;
 
 pub fn cmd() -> Cmd {
-    Cmd::new("check").args(vec![
-        Arg::new("pipe")
-            .short('p')
-            .about("validate pipes in manifest"),
-        Arg::new("object")
-            .short('o')
-            .about("validate objects in manifest"),
-    ])
+    Cmd::new("check")
+        .about("Cargo check pipe app code")
+        .args(vec![
+            Arg::new("name")
+                .short('n')
+                .about("Specify app name")
+                .takes_value(true),
+            Arg::new("warning").short('w').about("Enable warning"),
+            Arg::new("verbose").short('v').about("Enable verbose"),
+            Arg::new("partial")
+                .short('p')
+                .about("Allow partial pipelines"),
+        ])
 }
 
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
-    let opts = match (args.is_present("pipe"), args.is_present("object")) {
-        (true, false) => CheckOptions {
-            pipe: true,
-            object: false,
-        },
-        (false, true) => CheckOptions {
-            pipe: false,
-            object: true,
-        },
-        (_, _) => CheckOptions {
-            pipe: true,
-            object: true,
-        },
+    let app_name = match args.value_of("name") {
+        Some(app_name) => Some(app_name.to_owned()),
+        None => None,
     };
+    let warning = args.is_present("warning");
+    let verbose = args.is_present("verbose");
+    let partial = args.is_present("partial");
+    let opts = CheckOptions::new(app_name, warning, verbose, partial);
     do_exec(config, &opts)?;
     Ok(())
 }
 
 pub struct CheckOptions {
-    pipe: bool,
-    object: bool,
+    app_name: Option<String>,
+    warning: bool,
+    verbose: bool,
+    partial: bool,
 }
 
 impl CheckOptions {
-    pub fn check_pipe(&self) -> bool {
-        self.pipe
-    }
-    pub fn check_object(&self) -> bool {
-        self.object
-    }
-}
-
-impl Default for CheckOptions {
-    fn default() -> Self {
+    pub fn new(app_name: Option<String>, warning: bool, verbose: bool, partial: bool) -> Self {
         CheckOptions {
-            pipe: true,
-            object: true,
+            app_name,
+            warning,
+            verbose,
+            partial,
         }
+    }
+
+    pub fn get_app_name(&self) -> Option<&String> {
+        self.app_name.as_ref()
+    }
+
+    pub fn warning(&self) -> bool {
+        self.warning
+    }
+
+    pub fn verbose(&self) -> bool {
+        self.verbose
+    }
+
+    pub fn partial(&self) -> bool {
+        self.partial
     }
 }

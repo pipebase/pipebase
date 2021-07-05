@@ -10,7 +10,7 @@ use crate::constants::{
     BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH, BOOTSTRAP_PIPE_CONFIG_TYPE,
     BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE, BOOTSTRAP_PIPE_UPSTREAM,
 };
-use crate::utils::{get_meta, get_meta_string_value_by_meta_path};
+use crate::utils::{get_meta, get_meta_string_value_by_meta_path, is_skip_non_exists_pipe};
 
 /// Pipe configuration type name and path
 #[derive(Clone)]
@@ -217,7 +217,12 @@ impl PipeMetas {
                 let upstream_output_type_name = match pipe_output_type_names.get(upstream_pipe_name)
                 {
                     Some(upstream_output_type_name) => upstream_output_type_name,
-                    None => panic!("upstream pipe {} does not exists", upstream_pipe_name),
+                    None => {
+                        if is_skip_non_exists_pipe() {
+                            continue;
+                        }
+                        panic!("upstream pipe {} does not exists", upstream_pipe_name);
+                    }
                 };
                 match upstream_output_type_name {
                     Some(upstream_output_type_name) => pipe_meta

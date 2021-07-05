@@ -192,6 +192,12 @@ impl AppDescriber {
         let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
         describer.describe_pipelines(pid)
     }
+
+    pub fn get_pipelines(&self, pid: &str) -> Vec<Vec<String>> {
+        let pipes = self.get_app().get_pipes();
+        let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
+        describer.get_pipelines(pid)
+    }
 }
 
 const SOURCE_PIPE_LABEL: &str = "source";

@@ -3,7 +3,7 @@ use super::constants::{
     DEFAULT_APP_OBJECT, DEFAULT_CONTEXT_STORE_NAME, PIPEBASE_MAIN,
 };
 use super::context::ContextStore;
-use super::dependency::Dependency;
+use super::dependency::PackageDependency;
 use super::meta::{Meta, MetaValue};
 use super::pipe::Pipe;
 use super::utils::indent_literal;
@@ -14,6 +14,7 @@ use crate::ops::AppValidator;
 use crate::ops::{AppDescriber, AppGenerator};
 use crate::ops::{Describe, Generate, Validate};
 use serde::Deserialize;
+use std::collections::HashSet;
 use std::path::Path;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -21,7 +22,7 @@ pub struct App {
     name: String,
     metas: Option<Vec<Meta>>,
     cstore: Option<ContextStore>,
-    dependencies: Option<Vec<Dependency>>,
+    dependencies: Option<Vec<PackageDependency>>,
     pipes: Vec<Pipe>,
     objects: Option<Vec<Object>>,
 }
@@ -32,7 +33,7 @@ impl Entity for App {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        let dependencies = self.get_dependency();
+        let dependencies = self.get_package_dependency();
         let mut modules: Vec<String> = Vec::new();
         for dependency in dependencies {
             modules.extend(dependency.get_modules().to_owned());
@@ -111,7 +112,7 @@ impl App {
         }
     }
 
-    fn has_dependency(&self, other: &Dependency) -> bool {
+    fn has_dependency(&self, other: &PackageDependency) -> bool {
         let dependencies = self.dependencies.as_ref().unwrap();
         for dependency in dependencies {
             if dependency.eq(other) {
@@ -121,39 +122,39 @@ impl App {
         return false;
     }
 
-    fn add_dependency(&mut self, dependency: Dependency) {
+    fn add_dependency(&mut self, dependency: PackageDependency) {
         let dependencies = self.dependencies.as_mut().unwrap();
         dependencies.push(dependency);
     }
 
-    fn get_dependency(&self) -> &Vec<Dependency> {
+    pub fn get_package_dependency(&self) -> &Vec<PackageDependency> {
         self.dependencies.as_ref().unwrap()
     }
 
-    fn default_dependencies() -> Vec<Dependency> {
+    fn default_dependencies() -> Vec<PackageDependency> {
         vec![
-            Dependency::new(
+            PackageDependency::new(
                 "pipebase".to_owned(),
                 Some("0.1.0".to_owned()),
                 None,
                 None,
                 vec!["pipebase::*".to_owned()],
             ),
-            Dependency::new(
+            PackageDependency::new(
                 "tokio".to_owned(),
                 Some("1.6.1".to_owned()),
                 None,
                 Some(vec!["full".to_owned()]),
                 vec![],
             ),
-            Dependency::new(
+            PackageDependency::new(
                 "log".to_owned(),
                 Some("0.4.14".to_owned()),
                 None,
                 None,
                 vec![],
             ),
-            Dependency::new(
+            PackageDependency::new(
                 "env_logger".to_owned(),
                 Some("0.8.4".to_owned()),
                 None,
@@ -231,7 +232,7 @@ impl App {
     }
 
     pub(crate) fn get_pipes(&self) -> &Vec<Pipe> {
-        &self.pipes.as_ref()
+        &self.pipes
     }
 
     pub(crate) fn get_app_module_name(&self) -> String {
@@ -245,6 +246,18 @@ impl App {
     pub fn generate(&self) -> String {
         let mut app_generator = AppGenerator::new(0);
         self.accept(&mut app_generator);
+        app_generator.generate()
+    }
+
+    // generate pipelines contains pid
+    pub fn generate_pipes(&self, pid: &str) -> String {
+        let mut describer = AppDescriber::new();
+        self.accept(&mut describer);
+        let selected_pipes: HashSet<String> =
+            describer.get_pipelines(pid).into_iter().flatten().collect();
+        let mut app_generator = AppGenerator::new(0);
+        self.accept(&mut app_generator);
+        app_generator.set_pipe_filter(selected_pipes);
         app_generator.generate()
     }
 

@@ -1,38 +1,37 @@
-use super::utils::parse_pipe_manifest;
+use super::do_cargo::*;
+use super::utils::*;
 use crate::commands::check::CheckOptions;
 use crate::print::Printer;
 use crate::Config;
-use pipegen::api::App;
+use std::path::PathBuf;
+use std::process;
 
-fn check_cargo_toml() {}
-
-pub fn do_check(app: &App, printer: &mut Printer, opts: &CheckOptions) -> anyhow::Result<()> {
-    if opts.check_pipe() {
-        printer.status(&"Check", "Pipes")?;
-        match app.validate_pipes() {
-            Ok(_) => (),
-            Err(err) => {
-                printer.error(err.to_string())?;
-                return Err(err.into());
-            }
-        };
+pub fn do_check(
+    path_buf: PathBuf,
+    opts: &CheckOptions,
+    printer: &mut Printer,
+) -> anyhow::Result<()> {
+    let manifest_path = path_buf.as_path();
+    printer.status(&"Check", manifest_path.to_str().unwrap())?;
+    let warning = opts.warning();
+    let verbose = opts.verbose();
+    let partial = opts.partial();
+    if partial {
+        set_pipe_meta_flags("-Pskip");
     }
-    if opts.check_object() {
-        printer.status(&"Check", "Objects")?;
-        match app.validate_objects() {
-            Ok(_) => (),
-            Err(err) => {
-                printer.error(err.to_string())?;
-                return Err(err.into());
-            }
-        };
-    }
+    let status_code = do_cargo_check(manifest_path, warning, verbose, printer)?;
+    match status_code {
+        0 => (),
+        _ => process::exit(status_code),
+    };
     Ok(())
 }
 
 pub fn do_exec(config: &Config, opts: &CheckOptions) -> anyhow::Result<()> {
     let mut printer = Printer::new();
-    let pipe_manifest_path = config.get_pipe_manifest_path();
-    let app = parse_pipe_manifest(pipe_manifest_path.as_path(), &mut printer)?;
-    do_check(&app, &mut printer, opts)
+    do_check(
+        config.get_app_manifest(opts.get_app_name()),
+        opts,
+        &mut printer,
+    )
 }

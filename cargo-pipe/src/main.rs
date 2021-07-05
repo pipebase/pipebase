@@ -21,8 +21,14 @@ fn main() {
 }
 
 fn run() -> CmdResult {
+    let mut args = std::env::args_os().peekable();
+    let mut cmd_and_args = vec![args.next().unwrap()]; // cargo
+    if args.peek().map_or(false, |arg| arg == "pipe") {
+        args.next().unwrap(); // pipe
+    }
+    cmd_and_args.extend(args);
+    // setup args and subcommands (including subcommand args)
     let matches = clap::App::new("cargo-pipe")
-        .arg(clap::Arg::new("pipe").index(1))
         .arg(
             clap::Arg::new("directory")
                 .short('d')
@@ -30,8 +36,9 @@ fn run() -> CmdResult {
                 .about("Absolute path to working directory"),
         )
         .subcommands(commands::cmds())
-        .get_matches();
+        .get_matches_from(cmd_and_args);
 
+    // setup CLI configuration
     let config = match matches.value_of("directory") {
         Some(directory) => Config::new(Some(directory)),
         None => Config::new(None),
@@ -40,10 +47,12 @@ fn run() -> CmdResult {
         Ok(config) => config,
         Err(err) => return Err(err.into()),
     };
+    // find subcommand and args for subcommand
     let (cmd, args) = match matches.subcommand() {
         Some((cmd, args)) => (cmd, args),
         None => return Ok(()),
     };
+    // execute subcommand
     match commands::exec(cmd) {
         Some(f) => f(&config, args)?,
         None => (),
