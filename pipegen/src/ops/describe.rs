@@ -65,6 +65,11 @@ impl PipeGraphDescriber {
         results
     }
 
+    pub(crate) fn describe_pipe(&self, pid: &str) -> Result<String> {
+        let pipe = self.get_pipe_value(pid)?;
+        Ok(format!("{}", pipe))
+    }
+
     fn display_source_pipe_ids(&self) -> EntityIdsDisplay {
         EntityIdsDisplay {
             ids: self.get_source_pipe_ids(),
@@ -151,6 +156,16 @@ impl PipeGraphDescriber {
         }
         components
     }
+
+    fn get_pipe_value(&self, pid: &str) -> Result<Pipe> {
+        if !self.graph.has_pipe(pid) {
+            return Err(api_error(format!("pipe {} not exists", pid)));
+        }
+        match self.graph.get_pipe_value(pid) {
+            Some(pipe) => Ok(pipe.to_owned()),
+            None => Err(api_error(format!("pipe {} not exists", pid))),
+        }
+    }
 }
 
 pub struct ObjectDescriber {
@@ -185,7 +200,7 @@ impl ObjectDescriber {
             Some(object) => object,
             None => return Err(api_error(format!("object {} not exists", oid))),
         };
-        Ok(object.to_literal(0))
+        Ok(format!("{}", object))
     }
 
     fn display_object_ids(&self) -> EntityIdsDisplay {
@@ -254,6 +269,12 @@ impl AppDescriber {
         let pipes = self.get_app().get_pipes();
         let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
         describer.describe()
+    }
+
+    pub fn describe_pipe(&self, pid: &str) -> Result<String> {
+        let pipes = self.get_app().get_pipes();
+        let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
+        describer.describe_pipe(pid)
     }
 
     pub fn describe_pipelines(&self, pid: &str) -> Result<Vec<String>> {

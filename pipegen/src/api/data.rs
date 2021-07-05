@@ -1,8 +1,10 @@
 use std::usize;
 
+use crate::api::meta::metas_to_display;
 use crate::api::utils::indent_literal;
 use crate::api::{Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
+use std::fmt::Display;
 
 use super::meta::{metas_to_literal, Meta};
 
@@ -166,6 +168,19 @@ impl DataField {
             false => "".to_owned(),
         }
     }
+
+    pub fn display(&self) -> (String, String, String) {
+        let name_display = match self.name {
+            Some(ref name) => name.to_owned(),
+            None => String::new(),
+        };
+        let type_display = self.get_data_type_literal(0);
+        let metas_display = match self.metas {
+            Some(ref metas) => metas_to_display(metas),
+            None => String::new(),
+        };
+        (name_display, type_display, metas_display)
+    }
 }
 
 impl Entity for DataField {
@@ -272,3 +287,50 @@ impl Entity for Object {
 }
 
 impl<V: VisitEntity<Object>> EntityAccept<V> for Object {}
+
+impl Display for Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Type: {}", self.ty)?;
+        match self.metas {
+            Some(ref metas) => {
+                writeln!(f, "Type Metas: {}", metas_to_display(metas))?;
+            }
+            None => (),
+        };
+        writeln!(f, "Fields:")?;
+        let mut displays: Vec<(String, String, String)> = Vec::new();
+        displays.push((
+            OBJECY_DISPLAY_HEADER_NAME.to_owned(),
+            OBJECY_DISPLAY_HEADER_TYPE.to_owned(),
+            OBJECY_DISPLAY_HEADER_METAS.to_owned(),
+        ));
+        let mut name_width = OBJECY_DISPLAY_HEADER_NAME.len();
+        let mut ty_width = OBJECY_DISPLAY_HEADER_TYPE.len();
+        let mut metas_width = OBJECY_DISPLAY_HEADER_METAS.len();
+        for field in &self.fields {
+            let (name, ty, metas) = field.display();
+            name_width = name_width.max(name.len());
+            ty_width = ty_width.max(ty.len());
+            metas_width = metas_width.max(metas.len());
+            displays.push((name, ty, metas));
+        }
+        // row of fields
+        for (name, ty, metas) in displays {
+            writeln!(
+                f,
+                "{name:>nw$} {ty:>tw$} {metas:>mw$}",
+                name = name,
+                nw = name_width,
+                ty = ty,
+                tw = ty_width,
+                metas = metas,
+                mw = metas_width
+            )?;
+        }
+        write!(f, "")
+    }
+}
+
+const OBJECY_DISPLAY_HEADER_NAME: &str = "Name";
+const OBJECY_DISPLAY_HEADER_TYPE: &str = "Type";
+const OBJECY_DISPLAY_HEADER_METAS: &str = "Metas";

@@ -10,13 +10,15 @@ pub(crate) fn parse_pipe_manifest(
     printer: &mut Printer,
 ) -> anyhow::Result<App> {
     printer.status(&"Parse", manifest_path.to_str().unwrap())?;
-    match App::parse(manifest_path) {
-        Ok(app) => Ok(app),
+    let app = match App::parse(manifest_path) {
+        Ok(app) => app,
         Err(err) => {
             printer.error(err.to_string())?;
             return Err(err.into());
         }
-    }
+    };
+    printer.status(&"Parse", "succeed")?;
+    Ok(app)
 }
 
 pub(crate) fn set_pipe_meta_flags(v: &str) {

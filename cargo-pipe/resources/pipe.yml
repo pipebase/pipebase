@@ -45,5 +45,5 @@ objects:
         data_ty: String
         metas:
           - project:
-              expr: "b.bar2"
+              expr: "b.bar2.to_owned()"
               alias: "b"
