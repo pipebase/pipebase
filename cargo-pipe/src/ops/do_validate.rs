@@ -5,7 +5,7 @@ use crate::Config;
 use pipegen::api::App;
 
 pub fn do_validate(app: &App, printer: &mut Printer, opts: &ValidateOptions) -> anyhow::Result<()> {
-    if opts.validate_pipe() {
+    if opts.pipe() {
         printer.status(&"Validate", "pipes")?;
         match app.validate_pipes() {
             Ok(_) => (),
@@ -15,7 +15,7 @@ pub fn do_validate(app: &App, printer: &mut Printer, opts: &ValidateOptions) -> 
             }
         };
     }
-    if opts.validate_object() {
+    if opts.object() {
         printer.status(&"Validate", "objects")?;
         match app.validate_objects() {
             Ok(_) => (),

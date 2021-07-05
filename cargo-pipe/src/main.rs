@@ -3,6 +3,8 @@ use errors::CmdResult;
 use std::io::{self, Write};
 use std::process;
 
+use crate::print::Printer;
+
 mod commands;
 mod config;
 mod errors;
@@ -38,24 +40,33 @@ fn run() -> CmdResult {
         .subcommands(commands::cmds())
         .get_matches_from(cmd_and_args);
 
+    let mut printer = Printer::new();
     // setup CLI configuration
-    let config = match matches.value_of("directory") {
-        Some(directory) => Config::new(Some(directory)),
-        None => Config::new(None),
-    };
-    let config = match config {
+    let directory = matches.value_of("directory");
+    let config = match Config::new(directory) {
         Ok(config) => config,
-        Err(err) => return Err(err.into()),
+        Err(err) => {
+            printer.error(format!("new config error: {}", err))?;
+            return Err(err.into());
+        }
     };
     // find subcommand and args for subcommand
     let (cmd, args) = match matches.subcommand() {
         Some((cmd, args)) => (cmd, args),
-        None => return Ok(()),
+        None => {
+            // if no subcomand match, clap should throw exception
+            printer.error("no matched subcommand")?;
+            unreachable!();
+        }
     };
     // execute subcommand
     match commands::exec(cmd) {
         Some(f) => f(&config, args)?,
-        None => (),
+        None => {
+            // subcommand exec method not available yet
+            printer.error(format!("subcommand::exec {} not found", cmd))?;
+            unreachable!()
+        }
     };
     Ok(())
 }

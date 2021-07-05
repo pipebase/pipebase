@@ -23,3 +23,27 @@ pipes:
     config:
       ty: PrinterConfig
     upstreams: [ "timer1", "timer2" ]
+objects:
+  - ty: Bar
+    fields:
+      - name: bar1
+        data_ty: Integer
+      - name: bar2
+        data_ty: String
+  - ty: ProjectedBar
+    metas:
+      - derives: [Clone, Debug, Project]
+      - project: 
+          input: Bar
+    fields:
+      - name: bar1
+        data_ty: Integer
+        metas:
+          - project:
+              from: bar1
+      - name: bar2
+        data_ty: String
+        metas:
+          - project:
+              expr: "b.bar2"
+              alias: "b"
