@@ -250,15 +250,16 @@ impl App {
     }
 
     // generate pipelines contains pid
-    pub fn generate_pipes(&self, pid: &str) -> String {
+    pub fn generate_pipes(&self, pid: &str) -> Result<String> {
         let mut describer = AppDescriber::new();
         self.accept(&mut describer);
-        let selected_pipes: HashSet<String> =
-            describer.get_pipelines(pid).into_iter().flatten().collect();
+        // filter pipes with selected pipelines - partial generation
+        let pipelines = describer.get_pipelines(pid)?;
+        let selected_pipes: HashSet<String> = pipelines.into_iter().flatten().collect();
         let mut app_generator = AppGenerator::new(0);
         self.accept(&mut app_generator);
         app_generator.set_pipe_filter(selected_pipes);
-        app_generator.generate()
+        Ok(app_generator.generate())
     }
 
     pub fn validate_pipes(&self) -> Result<()> {
@@ -285,10 +286,22 @@ impl App {
         describer.describe_pipes()
     }
 
-    pub fn describe_pipelines(&self, pid: &str) -> Vec<String> {
+    pub fn describe_pipelines(&self, pid: &str) -> Result<Vec<String>> {
         let mut describer = AppDescriber::new();
         self.accept(&mut describer);
         describer.describe_pipelines(pid)
+    }
+
+    pub fn describe_objects(&self) -> Vec<String> {
+        let mut describer = AppDescriber::new();
+        self.accept(&mut describer);
+        describer.describe_objects()
+    }
+
+    pub fn describe_object(&self, oid: &str) -> Result<String> {
+        let mut describer = AppDescriber::new();
+        self.accept(&mut describer);
+        describer.describe_object(oid)
     }
 
     pub fn describe(&self) -> Vec<String> {

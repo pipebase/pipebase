@@ -6,14 +6,15 @@ use clap::Arg;
 
 pub fn cmd() -> Cmd {
     Cmd::new("describe")
-        .about("Describe pipes and objects in pipe manifest")
+        .about("Describe pipe manifest")
         .args(vec![
-            Arg::new("pipe")
-                .short('p')
-                .about("Describe pipes in pipe manifest"),
+            Arg::new("all")
+                .short('a')
+                .about("List all pipes and objects in pipe manifest"),
             Arg::new("object")
                 .short('o')
-                .about("Describe objects in pipe manifest"),
+                .about("Describe object in pipe manifest")
+                .takes_value(true),
             Arg::new("line")
                 .short('l')
                 .about("Describe pipelines in pipe manifest given pipe name")
@@ -22,38 +23,41 @@ pub fn cmd() -> Cmd {
 }
 
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
-    let pipe = args.is_present("pipe");
-    let object = args.is_present("object");
+    let all = args.is_present("all");
+    let object_name = match args.value_of("object") {
+        Some(object_name) => Some(object_name.to_owned()),
+        None => None,
+    };
     let pipe_name = match args.value_of("line") {
         Some(pipe_name) => Some(pipe_name.to_owned()),
         None => None,
     };
-    let opts = DescribeOptions::new(pipe, object, pipe_name);
+    let opts = DescribeOptions::new(all, object_name, pipe_name);
     do_exec(config, &opts)?;
     Ok(())
 }
 
 pub struct DescribeOptions {
-    pipe: bool,
-    object: bool,
+    all: bool,
+    object_name: Option<String>,
     pipe_name: Option<String>,
 }
 
 impl DescribeOptions {
-    pub fn new(pipe: bool, object: bool, pipe_name: Option<String>) -> Self {
+    pub fn new(all: bool, object_name: Option<String>, pipe_name: Option<String>) -> Self {
         DescribeOptions {
-            pipe,
-            object,
+            all,
+            object_name,
             pipe_name,
         }
     }
 
-    pub fn pipe(&self) -> bool {
-        self.pipe
+    pub fn all(&self) -> bool {
+        self.all
     }
 
-    pub fn object(&self) -> bool {
-        self.object
+    pub fn object_name(&self) -> Option<&String> {
+        self.object_name.as_ref()
     }
 
     pub fn pipe_name(&self) -> Option<&String> {

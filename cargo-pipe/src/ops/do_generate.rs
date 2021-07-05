@@ -17,7 +17,7 @@ pub fn do_generate(
     let main_path = path_buf.as_path();
     printer.status(&"Generate", main_path.to_str().unwrap())?;
     let contents = match opts.get_pipe_name() {
-        Some(pipe_name) => app.generate_pipes(pipe_name),
+        Some(pipe_name) => app.generate_pipes(pipe_name)?,
         None => app.generate(),
     };
     fs::write(main_path, contents)?;

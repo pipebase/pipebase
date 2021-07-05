@@ -117,6 +117,10 @@ impl Pipe {
         };
         Some(meta)
     }
+
+    pub(crate) fn get_output_data_type(&self) -> Option<&DataField> {
+        self.output.as_ref()
+    }
 }
 
 impl Entity for Pipe {
