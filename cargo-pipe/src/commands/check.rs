@@ -10,10 +10,13 @@ pub fn cmd() -> Cmd {
         .args(vec![
             Arg::new("name")
                 .short('n')
-                .about("app name")
+                .about("Specify app name")
                 .takes_value(true),
-            Arg::new("warning").short('w').about("enable warning"),
-            Arg::new("verbose").short('v').about("enable verbose"),
+            Arg::new("warning").short('w').about("Enable warning"),
+            Arg::new("verbose").short('v').about("Enable verbose"),
+            Arg::new("partial")
+                .short('p')
+                .about("Allow partial pipelines"),
         ])
 }
 
@@ -24,7 +27,8 @@ pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
     };
     let warning = args.is_present("warning");
     let verbose = args.is_present("verbose");
-    let opts = CheckOptions::new(app_name, warning, verbose);
+    let partial = args.is_present("partial");
+    let opts = CheckOptions::new(app_name, warning, verbose, partial);
     do_exec(config, &opts)?;
     Ok(())
 }
@@ -33,14 +37,16 @@ pub struct CheckOptions {
     app_name: Option<String>,
     warning: bool,
     verbose: bool,
+    partial: bool,
 }
 
 impl CheckOptions {
-    pub fn new(app_name: Option<String>, warning: bool, verbose: bool) -> Self {
+    pub fn new(app_name: Option<String>, warning: bool, verbose: bool, partial: bool) -> Self {
         CheckOptions {
             app_name,
             warning,
             verbose,
+            partial,
         }
     }
 
@@ -54,5 +60,9 @@ impl CheckOptions {
 
     pub fn verbose(&self) -> bool {
         self.verbose
+    }
+
+    pub fn partial(&self) -> bool {
+        self.partial
     }
 }

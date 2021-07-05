@@ -47,3 +47,7 @@ pub const AGGREGATE_TOP: &str = "agg.top";
 pub const GROUP: &str = "group";
 
 pub const EQUAL: &str = "equal";
+
+pub const PIPEMETA_FLAGS_ENV: &str = "PIPEMETA_FLAGS";
+pub const PIPEMETA_FLAGS_SEP: &str = " ";
+pub const PIPEMETA_FLAG_SKIP_NON_EXISTS_PIPE: &str = "-Pskip";

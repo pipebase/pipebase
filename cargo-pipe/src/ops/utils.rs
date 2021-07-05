@@ -16,6 +16,10 @@ pub fn parse_pipe_manifest(manifest_path: &Path, printer: &mut Printer) -> anyho
     }
 }
 
+pub fn set_pipe_meta_flags(v: &str) {
+    std::env::set_var("PIPEMETA_FLAGS", v)
+}
+
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PipeTomlProject {
     name: String,

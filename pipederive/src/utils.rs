@@ -1,5 +1,9 @@
+use crate::constants::{
+    PIPEMETA_FLAGS_ENV, PIPEMETA_FLAGS_SEP, PIPEMETA_FLAG_SKIP_NON_EXISTS_PIPE,
+};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
+use std::collections::HashSet;
 use syn::{Attribute, ItemFn, Lit, Meta, MetaList, MetaNameValue, NestedMeta};
 use syn::{Data, Field, Fields, FieldsNamed};
 
@@ -264,4 +268,13 @@ pub fn get_last_stmt_span(function: &ItemFn) -> (Span, Span) {
 
 pub fn get_meta(attribute: &Attribute) -> Meta {
     attribute.parse_meta().unwrap()
+}
+
+pub fn is_skip_non_exists_pipe() -> bool {
+    let flags = match std::env::var(PIPEMETA_FLAGS_ENV) {
+        Ok(flags) => flags,
+        _ => return false,
+    };
+    let flag_set: HashSet<&str> = flags.split(PIPEMETA_FLAGS_SEP).collect();
+    flag_set.contains(PIPEMETA_FLAG_SKIP_NON_EXISTS_PIPE)
 }
