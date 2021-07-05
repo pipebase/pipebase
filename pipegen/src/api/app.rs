@@ -14,6 +14,7 @@ use crate::ops::AppValidator;
 use crate::ops::{AppDescriber, AppGenerator};
 use crate::ops::{Describe, Generate, Validate};
 use serde::Deserialize;
+use std::collections::HashSet;
 use std::path::Path;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -231,7 +232,7 @@ impl App {
     }
 
     pub(crate) fn get_pipes(&self) -> &Vec<Pipe> {
-        &self.pipes.as_ref()
+        &self.pipes
     }
 
     pub(crate) fn get_app_module_name(&self) -> String {
@@ -245,6 +246,18 @@ impl App {
     pub fn generate(&self) -> String {
         let mut app_generator = AppGenerator::new(0);
         self.accept(&mut app_generator);
+        app_generator.generate()
+    }
+
+    // generate pipelines contains pid
+    pub fn generate_pipes(&self, pid: &str) -> String {
+        let mut describer = AppDescriber::new();
+        self.accept(&mut describer);
+        let selected_pipes: HashSet<String> =
+            describer.get_pipelines(pid).into_iter().flatten().collect();
+        let mut app_generator = AppGenerator::new(0);
+        self.accept(&mut app_generator);
+        app_generator.set_pipe_filter(selected_pipes);
         app_generator.generate()
     }
 

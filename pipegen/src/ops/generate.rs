@@ -1,5 +1,5 @@
 use crate::api::{App, Entity, EntityAccept, Object, Pipe, VisitEntity};
-
+use std::collections::HashSet;
 pub trait Generate<T> {
     fn new(indent: usize) -> Self;
     fn generate(&self) -> String;
@@ -68,6 +68,8 @@ impl ObjectGenerator {
 pub struct AppGenerator {
     indent: usize,
     app: Option<App>,
+    pipe_filter: Option<HashSet<String>>,
+    object_filter: Option<HashSet<String>>,
 }
 
 impl VisitEntity<App> for AppGenerator {
@@ -81,6 +83,8 @@ impl Generate<App> for AppGenerator {
         AppGenerator {
             indent: indent,
             app: None,
+            pipe_filter: None,
+            object_filter: None,
         }
     }
 
@@ -101,12 +105,22 @@ impl AppGenerator {
 
     fn generate_entities<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
         entities: &Vec<T>,
+        entity_id_filter: Option<&HashSet<String>>,
         indent: usize,
         join_sep: &str,
     ) -> String {
         let mut lits: Vec<String> = vec![];
         for entity in entities.as_slice() {
-            lits.push(Self::generate_entity(entity, indent));
+            let filter = match entity_id_filter {
+                Some(filter) => filter,
+                None => {
+                    lits.push(Self::generate_entity(entity, indent));
+                    continue;
+                }
+            };
+            if filter.contains(&entity.get_id()) {
+                lits.push(Self::generate_entity(entity, indent));
+            }
         }
         lits.join(join_sep)
     }
@@ -117,14 +131,23 @@ impl AppGenerator {
 
     fn generate_objects(&self, indent: usize) -> String {
         let objects = self.get_app().get_objects();
-        let objects_lit =
-            Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n");
+        let objects_lit = Self::generate_entities::<Object, ObjectGenerator>(
+            objects,
+            self.object_filter.as_ref(),
+            indent,
+            "\n\n",
+        );
         objects_lit
     }
 
     fn generate_pipes(&self, indent: usize) -> String {
         let pipes = self.get_app().get_pipes();
-        let pipes_lit = Self::generate_entities::<Pipe, PipeGenerator>(pipes, indent, "\n");
+        let pipes_lit = Self::generate_entities::<Pipe, PipeGenerator>(
+            pipes,
+            self.pipe_filter.as_ref(),
+            indent,
+            "\n",
+        );
         pipes_lit
     }
 
@@ -145,7 +168,7 @@ impl AppGenerator {
         self.get_app().get_use_modules_literal(indent)
     }
 
-    pub fn generate_all(&self) -> String {
+    fn generate_all(&self) -> String {
         let module_name = self.get_app().get_app_module_name();
         let mut sections: Vec<String> = vec![];
         let indent: usize = self.indent + 1;
@@ -161,6 +184,10 @@ impl AppGenerator {
 
     fn generate_module(module: &str, sections: &Vec<String>) -> String {
         format!("mod {} {{\n{}\n}}", module, sections.join("\n\n"))
+    }
+
+    pub fn set_pipe_filter(&mut self, selected_pipes: HashSet<String>) {
+        self.pipe_filter = Some(selected_pipes);
     }
 }
 
