@@ -40,6 +40,15 @@ impl PipeConfig {
     }
 }
 
+impl Display for PipeConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.path {
+            Some(ref path) => write!(f, "{{ type: {}, path: {} }}", self.ty, path),
+            None => write!(f, "{{ type: {} }}", self.ty),
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Clone)]
 pub struct Pipe {
     name: String,
@@ -159,7 +168,9 @@ impl Entity for Pipe {
 
 impl Display for Pipe {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "name: {}, ty: {}", self.name, self.ty)
+        writeln!(f, "Name:   {}", self.name)?;
+        writeln!(f, "Type:   {}", self.ty)?;
+        writeln!(f, "Config: {}", self.config)
     }
 }
 

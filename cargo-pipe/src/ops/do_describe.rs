@@ -14,16 +14,29 @@ fn do_describe_pipes(app: &App, printer: &mut Printer) -> anyhow::Result<()> {
     Ok(())
 }
 
+fn do_describe_pipe(app: &App, pipe_name: &str, printer: &mut Printer) -> anyhow::Result<()> {
+    printer.status(&"Describe", format!("pipe {}", pipe_name))?;
+    let pipe_display = match app.describe_pipe(pipe_name) {
+        Ok(pipe_display) => pipe_display,
+        Err(err) => {
+            printer.error(format!("describe pipe {} falied: {}", pipe_name, err))?;
+            return Err(err.into());
+        }
+    };
+    printer.result(format!("\n{}", pipe_display))?;
+    Ok(())
+}
+
 fn do_describe_object(app: &App, object_name: &str, printer: &mut Printer) -> anyhow::Result<()> {
     printer.status(&"Describe", format!("object {}", object_name))?;
-    let object_literal = match app.describe_object(object_name) {
-        Ok(object_literal) => object_literal,
+    let object_display = match app.describe_object(object_name) {
+        Ok(object_display) => object_display,
         Err(err) => {
             printer.error(format!("describe object {} falied: {}", object_name, err))?;
             return Err(err.into());
         }
     };
-    printer.result(format!("\n{}\n", object_literal))?;
+    printer.result(format!("\n{}", object_display))?;
     Ok(())
 }
 
@@ -64,13 +77,17 @@ pub fn do_exec(config: &Config, opts: &DescribeOptions) -> anyhow::Result<()> {
         do_describe_pipes(&app, &mut printer)?;
         do_describe_objects(&app, &mut printer)?;
     }
+    match opts.pipe_name() {
+        Some(pipe_name) => do_describe_pipe(&app, pipe_name, &mut printer)?,
+        None => (),
+    };
     // describe particular object
     match opts.object_name() {
         Some(object_name) => do_describe_object(&app, object_name, &mut printer)?,
         None => (),
     };
     // desribe pipelines for particular pipe
-    match opts.pipe_name() {
+    match opts.pipe_name_in_line() {
         Some(pipe_name) => {
             do_describe_pipelines(&app, pipe_name, &mut printer)?;
         }
