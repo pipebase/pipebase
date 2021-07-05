@@ -5,14 +5,16 @@ use crate::ops::do_validate::do_exec;
 use clap::Arg;
 
 pub fn cmd() -> Cmd {
-    Cmd::new("validate").args(vec![
-        Arg::new("pipe")
-            .short('p')
-            .about("validate pipes in manifest"),
-        Arg::new("object")
-            .short('o')
-            .about("validate objects in manifest"),
-    ])
+    Cmd::new("validate")
+        .about("Validate pipes and objects in app manifest")
+        .args(vec![
+            Arg::new("pipe")
+                .short('p')
+                .about("Validate pipes in app manifest"),
+            Arg::new("object")
+                .short('o')
+                .about("Validate objects in app manifest"),
+        ])
 }
 
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {

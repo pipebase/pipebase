@@ -5,14 +5,16 @@ use crate::ops::do_describe::do_exec;
 use clap::Arg;
 
 pub fn cmd() -> Cmd {
-    Cmd::new("describe").args(vec![
-        Arg::new("pipe")
-            .short('p')
-            .about("describe pipes in manifest"),
-        Arg::new("object")
-            .short('o')
-            .about("describe objects in manifest"),
-    ])
+    Cmd::new("describe")
+        .about("Describe pipes and objects in app manifest")
+        .args(vec![
+            Arg::new("pipe")
+                .short('p')
+                .about("Describe pipes in app manifest"),
+            Arg::new("object")
+                .short('o')
+                .about("Describe objects in app manifest"),
+        ])
 }
 
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
