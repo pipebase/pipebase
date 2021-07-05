@@ -7,11 +7,10 @@ use std::path::PathBuf;
 use std::process;
 
 pub fn do_check(
-    mut path_buf: PathBuf,
+    path_buf: PathBuf,
     opts: &CheckOptions,
     printer: &mut Printer,
 ) -> anyhow::Result<()> {
-    path_buf.push(CARGO_MANIFEST_FILE);
     let manifest_path = path_buf.as_path();
     printer.status(&"Check", manifest_path.to_str().unwrap())?;
     let warning = opts.warning();
@@ -31,7 +30,7 @@ pub fn do_check(
 pub fn do_exec(config: &Config, opts: &CheckOptions) -> anyhow::Result<()> {
     let mut printer = Printer::new();
     do_check(
-        config.get_app_directory(opts.get_app_name()),
+        config.get_app_manifest(opts.get_app_name()),
         opts,
         &mut printer,
     )

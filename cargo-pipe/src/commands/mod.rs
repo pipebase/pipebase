@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::errors::CmdResult;
 
+pub(crate) mod build;
 pub(crate) mod check;
 pub(crate) mod describe;
 pub(crate) mod generate;
@@ -18,6 +19,7 @@ pub fn cmds() -> Vec<Cmd> {
         remove::cmd(),
         generate::cmd(),
         check::cmd(),
+        build::cmd(),
     ]
 }
 
@@ -29,6 +31,7 @@ pub fn exec(cmd: &str) -> Option<fn(&Config, &clap::ArgMatches) -> CmdResult> {
         "remove" => remove::exec,
         "generate" => generate::exec,
         "check" => check::exec,
+        "build" => build::exec,
         _ => return None,
     };
     Some(f)

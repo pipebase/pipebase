@@ -1,3 +1,4 @@
+pub(crate) mod do_build;
 pub(crate) mod do_cargo;
 pub(crate) mod do_check;
 pub(crate) mod do_describe;

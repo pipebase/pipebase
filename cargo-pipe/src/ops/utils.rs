@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 
-pub fn parse_pipe_manifest(manifest_path: &Path, printer: &mut Printer) -> anyhow::Result<App> {
+pub(crate) fn parse_pipe_manifest(
+    manifest_path: &Path,
+    printer: &mut Printer,
+) -> anyhow::Result<App> {
     printer.status(&"Parse", manifest_path.to_str().unwrap())?;
     match App::parse(manifest_path) {
         Ok(app) => Ok(app),
@@ -16,7 +19,7 @@ pub fn parse_pipe_manifest(manifest_path: &Path, printer: &mut Printer) -> anyho
     }
 }
 
-pub fn set_pipe_meta_flags(v: &str) {
+pub(crate) fn set_pipe_meta_flags(v: &str) {
     std::env::set_var("PIPEMETA_FLAGS", v)
 }
 

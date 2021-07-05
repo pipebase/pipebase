@@ -4,6 +4,10 @@ use std::path::Path;
 use std::process::Command;
 
 pub(crate) const CARGO_MANIFEST_FILE: &str = "Cargo.toml";
+pub(crate) const CARGO_SRC_DIRECTORY: &'static str = "src";
+pub(crate) const CARGO_TARGET_DIRECTORY: &'static str = "target";
+pub(crate) const CARGO_RELEASE_DIRECTORY: &'static str = "release";
+pub(crate) const CARGO_APP_MAIN: &'static str = "main.rs";
 
 fn run_cmd(mut cmd: Command) -> anyhow::Result<(i32, String)> {
     let output = cmd.output()?;
@@ -31,7 +35,7 @@ fn cargo_binary() -> OsString {
 }
 
 pub fn do_cargo_init(path: &Path, printer: &mut Printer) -> anyhow::Result<i32> {
-    printer.status(&"Cargo", "init")?;
+    printer.status(&"Cargo", "init ...")?;
     let mut cmd = Command::new(cargo_binary());
     cmd.arg("init").arg(path);
     let (err_code, out) = run_cmd(cmd)?;
@@ -60,7 +64,7 @@ pub fn do_cargo_check(
     verbose: bool,
     printer: &mut Printer,
 ) -> anyhow::Result<i32> {
-    printer.status(&"Cargo", "check")?;
+    printer.status(&"Cargo", "check ...")?;
     let mut cmd = Command::new(cargo_binary());
     cmd.arg("check").arg("--manifest-path").arg(manifest_path);
     if verbose {
@@ -69,10 +73,25 @@ pub fn do_cargo_check(
     if !warning {
         std::env::set_var("RUSTFLAGS", "-Awarnings");
     };
-    let (err_code, out) = run_cmd(cmd)?;
-    match err_code {
+    let (status_code, out) = run_cmd(cmd)?;
+    match status_code {
         0 => printer.status(&"Cargo", "check succeed")?,
         _ => printer.error(format!("{}", out))?,
     };
-    Ok(err_code)
+    Ok(status_code)
+}
+
+pub fn do_cargo_build(manifest_path: &Path, printer: &mut Printer) -> anyhow::Result<i32> {
+    printer.status(&"Cargo", "build ...")?;
+    let mut cmd = Command::new(cargo_binary());
+    cmd.arg("build")
+        .arg("--manifest-path")
+        .arg(manifest_path)
+        .arg("--release");
+    let (status_code, out) = run_cmd(cmd)?;
+    match status_code {
+        0 => printer.status(&"Cargo", "build succeed")?,
+        _ => printer.error(format!("{}", out))?,
+    };
+    Ok(status_code)
 }
