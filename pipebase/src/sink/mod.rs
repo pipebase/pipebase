@@ -45,25 +45,22 @@ where
         let rx = rx.as_mut().unwrap();
         log::info!("exporter {} run ...", self.name);
         loop {
-            self.context.inc_total_run();
             self.context.set_state(State::Receive);
             let t = match rx.recv().await {
                 Some(t) => t,
                 None => {
-                    self.context.inc_success_run();
                     break;
                 }
             };
             self.context.set_state(State::Export);
             match exporter.export(&t).await {
-                Ok(_) => {
-                    self.context.inc_success_run();
-                }
+                Ok(_) => (),
                 Err(err) => {
                     error!("exporter error {}", err);
                     break;
                 }
-            }
+            };
+            self.context.inc_total_run();
         }
         log::info!("exporter {} exit ...", self.name);
         self.context.set_state(State::Done);

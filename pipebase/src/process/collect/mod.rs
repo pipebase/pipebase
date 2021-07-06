@@ -90,11 +90,9 @@ where
             log::info!("collector {} run ...", name);
             loop {
                 context.set_state(State::Receive);
-                context.inc_total_run();
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        context.inc_success_run();
                         break;
                     }
                     false => (),
@@ -113,7 +111,7 @@ where
                 }
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
-                context.inc_success_run();
+                context.inc_total_run();
                 if exit_c_clone.load(Ordering::Acquire) {
                     break;
                 }

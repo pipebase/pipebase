@@ -52,7 +52,6 @@ fn code_to_state(state_code: u8) -> State {
 pub struct Context {
     state_code: AtomicU8,
     total_run: AtomicU64,
-    success_run: AtomicU64,
 }
 
 impl Context {
@@ -65,10 +64,6 @@ impl Context {
         self.total_run.load(Ordering::Acquire)
     }
 
-    pub fn get_success_run(&self) -> u64 {
-        self.success_run.load(Ordering::Acquire)
-    }
-
     pub fn set_state(&self, state: State) {
         let code = state as u8;
         self.state_code.store(code, Ordering::Release);
@@ -78,14 +73,9 @@ impl Context {
         self.total_run.fetch_add(1, Ordering::SeqCst)
     }
 
-    pub fn inc_success_run(&self) -> u64 {
-        self.success_run.fetch_add(1, Ordering::SeqCst)
-    }
-
-    pub fn validate(&self, state: State, total_run: u64, success_run: u64) {
+    pub fn validate(&self, state: State, total_run: u64) {
         assert_eq!(state, self.get_state());
         assert_eq!(total_run, self.get_total_run());
-        assert_eq!(success_run, self.get_success_run());
     }
 }
 
@@ -93,16 +83,14 @@ pub struct PipeContext {
     name: String,
     state: State,
     total_run: u64,
-    success_run: u64,
 }
 
 impl PipeContext {
-    pub fn new(name: String, state: State, total_run: u64, success_run: u64) -> Self {
+    pub fn new(name: String, state: State, total_run: u64) -> Self {
         PipeContext {
             name: name,
             state: state,
             total_run: total_run,
-            success_run: success_run,
         }
     }
 }
@@ -111,8 +99,8 @@ impl Display for PipeContext {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(
             f,
-            "{{ name: {}, state: {}, total_run: {}, success_run: {} }}",
-            self.name, self.state, self.total_run, self.success_run
+            "{{ name: {}, state: {}, total_run: {} }}",
+            self.name, self.state, self.total_run
         )
     }
 }
@@ -242,13 +230,7 @@ impl StoreContext<ContextPrinterConfig> for ContextPrinter {
             for (pipe_name, ctx) in &self.contexts {
                 let ref state = ctx.get_state();
                 let total_run = ctx.get_total_run();
-                let success_run = ctx.get_success_run();
-                let display = PipeContext::new(
-                    pipe_name.to_owned(),
-                    state.to_owned(),
-                    total_run,
-                    success_run,
-                );
+                let display = PipeContext::new(pipe_name.to_owned(), state.to_owned(), total_run);
                 print!("{}", display);
                 if state == &State::Done {
                     done += 1;

@@ -63,12 +63,10 @@ where
         let join_event_loop = tokio::spawn(async move {
             log::info!("listener {} run ...", name);
             loop {
-                context.inc_total_run();
                 context.set_state(State::Receive);
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        context.inc_success_run();
                         break;
                     }
                     false => (),
@@ -76,7 +74,6 @@ where
                 let u = match rx0.recv().await {
                     Some(u) => u,
                     None => {
-                        context.inc_success_run();
                         break;
                     }
                 };
@@ -88,7 +85,7 @@ where
                 }
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
-                context.inc_success_run();
+                context.inc_total_run();
             }
             log::info!("listener {} exit ...", name);
             context.set_state(State::Done);

@@ -58,12 +58,10 @@ where
         let rx = rx.as_mut().unwrap();
         log::info!("mapper {} run ...", self.name);
         loop {
-            self.context.inc_total_run();
             self.context.set_state(State::Receive);
             // if all receiver dropped, sender drop as well
             match txs.is_empty() {
                 true => {
-                    self.context.inc_success_run();
                     break;
                 }
                 false => (),
@@ -72,7 +70,6 @@ where
             let t = match t {
                 Some(t) => t,
                 None => {
-                    self.context.inc_success_run();
                     break;
                 }
             };
@@ -92,7 +89,7 @@ where
             }
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
-            self.context.inc_success_run();
+            self.context.inc_total_run();
         }
         log::info!("mapper {} exit ...", self.name);
         self.context.set_state(State::Done);
