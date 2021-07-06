@@ -58,15 +58,20 @@ where
         assert!(!txs.is_empty());
         let collector: Arc<Mutex<V>> = Arc::new(Mutex::new(config.config_into().await.unwrap()));
         let collector_clone = collector.to_owned();
-        let is_end = Arc::new(AtomicBool::new(false));
-        let is_end_clone = is_end.to_owned();
-        let join_event = tokio::spawn(async move {
+        let exit_c = Arc::new(AtomicBool::new(false));
+        let exit_c_clone = exit_c.to_owned();
+        let exit_f = Arc::new(AtomicBool::new(false));
+        let exit_f_clone = exit_f.to_owned();
+        let collect_loop = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
             loop {
+                if exit_f_clone.load(Ordering::Acquire) {
+                    break;
+                }
                 let t = match (*rx).recv().await {
                     Some(t) => t,
                     None => {
-                        is_end_clone.store(true, Ordering::Release);
+                        exit_c.store(true, Ordering::Release);
                         break;
                     }
                 };
@@ -77,7 +82,7 @@ where
         let mut txs = senders_as_map(txs);
         let context = self.get_context();
         let name = self.name.to_owned();
-        let join_flush = tokio::spawn(async move {
+        let flush_loop = tokio::spawn(async move {
             let mut interval = {
                 let c = collector.lock().await;
                 c.get_flush_interval()
@@ -109,14 +114,15 @@ where
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
                 context.inc_success_run();
-                if is_end.load(Ordering::Acquire) {
+                if exit_c_clone.load(Ordering::Acquire) {
                     break;
                 }
             }
             log::info!("collector {} exit ...", name);
+            exit_f.store(true, Ordering::Release);
             context.set_state(State::Done);
         });
-        let join_all = tokio::spawn(async move { tokio::join!(join_event, join_flush) });
+        let join_all = tokio::spawn(async move { tokio::join!(collect_loop, flush_loop) });
         match join_all.await {
             Ok(_) => Ok(()),
             Err(err) => Err(join_error(err)),
