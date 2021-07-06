@@ -28,8 +28,9 @@ pub fn impl_bootstrap(
     let run_pipe_expr_tokens = parse_exprs(&run_pipe_exprs);
     let join_pipes_expr_tokens = parse_exprs(&join_pipes_expr);
     // pipe context
-    let pipe_names = metas.list_pipe_name();
-    let add_pipe_contexts = resolve_pipe_contexts(&pipe_names);
+    // let pipe_names = metas.list_pipe_name();
+    // TODO: ContexStore meta and construct context store
+    // let add_pipe_contexts = resolve_pipe_contexts(&pipe_names);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
         impl #impl_generics Bootstrap for #ident #type_generics #where_clause {
@@ -42,8 +43,6 @@ pub fn impl_bootstrap(
                 #channel_expr_tokens
                 ;
                 #pipe_expr_tokens
-                ;
-                #add_pipe_contexts
                 ;
                 #run_pipe_expr_tokens
                 ;
@@ -97,19 +96,20 @@ fn parse_expr(expr: &str) -> TokenStream {
     expr.parse().unwrap()
 }
 
-fn resolve_pipe_contexts(pipe_names: &Vec<String>) -> TokenStream {
+fn resolve_pipe_contexts(cstore_name: &str, pipe_names: &Vec<String>) -> TokenStream {
     let pipe_context_tokens = pipe_names
         .iter()
-        .map(|pipe_name| resolve_pipe_context(pipe_name));
+        .map(|pipe_name| resolve_pipe_context(cstore_name, pipe_name));
     quote! {
         #(#pipe_context_tokens);*
     }
 }
 
-fn resolve_pipe_context(pipe_name: &str) -> TokenStream {
+fn resolve_pipe_context(cstore_name: &str, pipe_name: &str) -> TokenStream {
     let pipe_ident = Ident::new(pipe_name, Span::call_site());
+    let cstore_ident = Ident::new(cstore_name, Span::call_site());
     quote! {
-        self.add_pipe_context(String::from(#pipe_name), #pipe_ident.get_context())
+        #cstore_ident.add_pipe_context(String::from(#pipe_name), #pipe_ident.get_context())
     }
 }
 

@@ -81,47 +81,7 @@ impl Context {
     }
 }
 
-/*
-#[cfg(test)]
-mod tests {
-    use std::sync::atomic::AtomicU32;
-    use std::sync::atomic::Ordering;
-    use std::sync::Arc;
-
-
-    #[derive(Default)]
-    struct Context {
-        count: AtomicU32
-    }
-
-    impl Context {
-        pub fn get_count(&self) -> u32 {
-            self.count.load(Ordering::Acquire)
-        }
-
-        pub fn inc_count(&self) -> u32 {
-            self.count.fetch_add(1, Ordering::SeqCst)
-        }
-    }
-
-    #[tokio::test]
-    async fn test_count() {
-        let ctx1 = Arc::new(Context::default());
-        let ctx2 = ctx1.to_owned();
-        let ctx3 = ctx1.to_owned();
-        let jh1 = tokio::spawn(async move {
-            for _i in 0..100 {
-                ctx1.inc_count();
-            }
-        });
-        let jh2 = tokio::spawn(async move {
-            for _i in 0..100 {
-                ctx2.inc_count();
-            }
-        });
-        let _ = tokio::join!(jh1, jh2);
-        assert_eq!(200, ctx3.get_count());
-    }
-
+pub trait ContextStore {
+    fn add_pipe_context(&mut self, pipe_name: String, context: std::sync::Arc<Context>);
+    fn get_pipe_context(&self, pipe_name: &str) -> Option<std::sync::Arc<Context>>;
 }
-*/

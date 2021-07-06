@@ -1,7 +1,6 @@
 mod aggregate;
 mod bootstrap;
 mod constants;
-mod context;
 mod equal;
 mod field;
 mod filter;
@@ -65,23 +64,13 @@ pub fn derive_orderby(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStre
     proc_macro::TokenStream::from(expanded)
 }
 
-#[proc_macro_derive(Bootstrap, attributes(pipe))]
+#[proc_macro_derive(Bootstrap, attributes(pipe, cstore))]
 pub fn derive_bootstrap(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ref tokens = parse_macro_input!(_tokens as DeriveInput);
     let ref ident = tokens.ident;
     let ref attributes = tokens.attrs;
     let ref generics = tokens.generics;
     let expanded = bootstrap::impl_bootstrap(ident, attributes, generics);
-    proc_macro::TokenStream::from(expanded)
-}
-
-#[proc_macro_derive(ContextStore, attributes(cstore))]
-pub fn derive_context_store(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ref tokens = parse_macro_input!(_tokens as DeriveInput);
-    let ref ident = tokens.ident;
-    let ref data = tokens.data;
-    let ref generics = tokens.generics;
-    let expanded = context::impl_context_store(ident, data, generics);
     proc_macro::TokenStream::from(expanded)
 }
 

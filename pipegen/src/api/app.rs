@@ -21,8 +21,8 @@ use std::path::Path;
 pub struct App {
     name: String,
     metas: Option<Vec<Meta>>,
-    cstore: Option<ContextStore>,
     dependencies: Option<Vec<PackageDependency>>,
+    cstore: Option<ContextStore>,
     pipes: Vec<Pipe>,
     objects: Option<Vec<Object>>,
 }
@@ -44,10 +44,8 @@ impl Entity for App {
     fn to_literal(&self, indent: usize) -> String {
         // app metas
         let metas = self.get_metas();
-        // app object fields
-        let cstore = self.get_context_store().as_data_field();
         // create app object
-        let app = Object::new(APP_OBJECT_NAME.to_owned(), metas.to_owned(), vec![cstore]);
+        let app = Object::new(APP_OBJECT_NAME.to_owned(), metas.to_owned(), vec![]);
         app.to_literal(indent)
     }
 }
@@ -94,9 +92,6 @@ impl App {
                     metas: vec![
                         Meta::Path {
                             name: "Bootstrap".to_owned(),
-                        },
-                        Meta::Path {
-                            name: "ContextStore".to_owned(),
                         },
                         Meta::Path {
                             name: "Default".to_owned(),
@@ -170,8 +165,9 @@ impl App {
         for module_lit in self.list_dependency() {
             use_module_lits.push(format!("{}use {}", indent_lit, module_lit));
         }
-        use_module_lits.push("".to_owned());
-        use_module_lits.join(";\n")
+        let mut use_module_lits = use_module_lits.join(";\n");
+        use_module_lits.push(';');
+        use_module_lits
     }
 
     pub(crate) fn get_bootstrap_function_literal(&self, indent: usize) -> String {

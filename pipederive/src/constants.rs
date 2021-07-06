@@ -17,12 +17,9 @@ pub const HASH: &str = "hash";
 pub const ORDER: &str = "order";
 
 pub const CONTEXT_STORE: &str = "cstore";
-
-pub const CONTEXT_STORE_METHOD_INSERT: &str = "cstore.method.insert";
-pub const CONTEXT_STORE_METHOD_INSERT_DEFAULT: &str = "insert";
-
-pub const CONTEXT_STORE_METHOD_GET: &str = "cstore.method.get";
-pub const CONTEXT_STORE_METHOD_GET_DEFAULT: &str = "get";
+pub const CONTEXT_STORE_NAME: &str = "cstore.name";
+pub const CONTEXT_STORE_CONFIG_TYPE: &str = "cstore.config.ty";
+pub const CONTEXT_STORE_CONFIG_PATH: &str = "cstore.config.path";
 
 pub const BOOTSTRAP_PIPE: &str = "pipe";
 pub const BOOTSTRAP_PIPE_NAME: &str = "pipe.name";
