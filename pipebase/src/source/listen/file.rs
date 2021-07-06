@@ -1,4 +1,4 @@
-use crate::{period_to_duration, Listen, Period};
+use crate::{Listen, Period};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::fs::{self, DirEntry};
@@ -121,7 +121,7 @@ impl Listen<PathBuf, LocalFilePathVisitorConfig> for LocalFilePathVisitor {
             FilePathVisitMode::Once => return self.run_once().await,
             FilePathVisitMode::Cron(ref period) => period.to_owned(),
         };
-        self.run_cron(period_to_duration(period)).await
+        self.run_cron(period.into()).await
     }
 
     fn set_sender(&mut self, sender: Sender<PathBuf>) {

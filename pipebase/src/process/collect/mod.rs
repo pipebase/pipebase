@@ -56,7 +56,7 @@ where
     ) -> Result<()> {
         assert!(rx.is_some());
         assert!(!txs.is_empty());
-        let collector: Arc<Mutex<V>> = Arc::new(Mutex::new(config.config_into().await.unwrap()));
+        let collector: Arc<Mutex<V>> = Arc::new(Mutex::new(config.config_into().await?));
         let collector_clone = collector.to_owned();
         let exit_c = Arc::new(AtomicBool::new(false));
         let exit_c_clone = exit_c.to_owned();

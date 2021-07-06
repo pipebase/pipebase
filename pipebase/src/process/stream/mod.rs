@@ -44,7 +44,7 @@ where
         assert!(rx.is_some());
         assert!(!txs.is_empty());
         let (tx0, mut rx0) = channel::<U>(1024);
-        let mut streamer = config.config_into().await.unwrap();
+        let mut streamer = config.config_into().await?;
         streamer.set_sender(tx0);
         let name = self.name.to_owned();
         let streamer_loop = tokio::spawn(async move {

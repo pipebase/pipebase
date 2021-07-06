@@ -41,7 +41,7 @@ where
         rx: Option<Receiver<()>>,
     ) -> Result<()> {
         assert!(rx.is_none());
-        let mut poller = config.config_into().await.unwrap();
+        let mut poller = config.config_into().await?;
         let mut txs = senders_as_map(txs);
         info!("source {} run ...", self.name);
         loop {
@@ -50,7 +50,7 @@ where
             // if all receiver dropped, sender drop as well
             match txs.is_empty() {
                 true => {
-                    // Self::inc_success_run(&self.context).await;
+                    self.context.inc_success_run();
                     break;
                 }
                 false => (),

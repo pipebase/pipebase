@@ -1,5 +1,13 @@
+use crate::error::Result;
+use crate::{ConfigInto, FromConfig, FromPath, Period};
+use async_trait::async_trait;
+use serde::Deserialize;
+use std::collections::HashMap;
+use std::fmt::Display;
 use std::sync::atomic::Ordering;
 use std::sync::atomic::{AtomicU64, AtomicU8};
+use std::time::Duration;
+use tokio::time::{sleep, Interval};
 
 use strum::{Display, EnumString};
 
@@ -81,7 +89,176 @@ impl Context {
     }
 }
 
-pub trait ContextStore {
-    fn add_pipe_context(&mut self, pipe_name: String, context: std::sync::Arc<Context>);
-    fn get_pipe_context(&self, pipe_name: &str) -> Option<std::sync::Arc<Context>>;
+pub struct PipeContext {
+    name: String,
+    state: State,
+    total_run: u64,
+    success_run: u64,
+}
+
+impl PipeContext {
+    pub fn new(name: String, state: State, total_run: u64, success_run: u64) -> Self {
+        PipeContext {
+            name: name,
+            state: state,
+            total_run: total_run,
+            success_run: success_run,
+        }
+    }
+}
+
+impl Display for PipeContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{{ name: {}, state: {}, total_run: {}, success_run: {} }}",
+            self.name, self.state, self.total_run, self.success_run
+        )
+    }
+}
+
+#[async_trait]
+pub trait StoreContext<C>: FromConfig<C> {
+    fn store_context(&mut self, pipe_name: String, context: std::sync::Arc<Context>);
+
+    fn load_context(&self, pipe_name: &str) -> Option<&std::sync::Arc<Context>>;
+
+    async fn run(&mut self) -> anyhow::Result<()>;
+}
+
+pub struct ContextStore<'a> {
+    name: &'a str,
+}
+
+impl<'a> ContextStore<'a> {
+    pub async fn run<S, C>(
+        &mut self,
+        config: C,
+        contexts: Vec<(String, std::sync::Arc<Context>)>,
+    ) -> Result<()>
+    where
+        S: StoreContext<C>,
+        C: ConfigInto<S> + Sync,
+    {
+        let mut store = config.config_into().await?;
+        // add context
+        for (name, context) in contexts {
+            store.store_context(name, context);
+        }
+        log::info!("context store {} run ...", self.name);
+        store.run().await?;
+        log::info!("context store {} exit ...", self.name);
+        Ok(())
+    }
+}
+
+impl<'a> ContextStore<'a> {
+    pub fn new(name: &'a str) -> Self {
+        ContextStore { name }
+    }
+}
+
+#[macro_export]
+macro_rules! cstore {
+    (
+        $name:expr
+    ) => {{
+        ContextStore::new($name)
+    }};
+}
+
+#[macro_export]
+macro_rules! run_cstore {
+    (
+        $cstore:ident, $config:ty, $path:expr, [$( ($name:expr, $ctx:expr) ), *]
+    ) => {
+        {
+            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
+            let mut contexts = vec![];
+            $(
+                contexts.push((String::from($name), $ctx));
+            )*
+            tokio::spawn(async move {
+                match $cstore.run(config, contexts).await {
+                    Ok(_) => Ok(()),
+                    Err(err) => {
+                        log::error!("context store exit with error {:#?}", err);
+                        Err(err)
+                    }
+                }
+            })
+        }
+    };
+}
+
+#[derive(Deserialize)]
+pub struct ContextPrinterConfig {
+    pub interval: Period,
+    pub delay: Option<Period>,
+}
+
+impl FromPath for ContextPrinterConfig {}
+
+#[async_trait]
+impl ConfigInto<ContextPrinter> for ContextPrinterConfig {}
+
+pub struct ContextPrinter {
+    interval: Interval,
+    delay: Duration,
+    contexts: HashMap<String, std::sync::Arc<Context>>,
+}
+
+#[async_trait]
+impl FromConfig<ContextPrinterConfig> for ContextPrinter {
+    async fn from_config(config: &ContextPrinterConfig) -> anyhow::Result<Self> {
+        let delay = match config.delay {
+            Some(ref period) => period.to_owned().into(),
+            None => Duration::from_micros(0),
+        };
+        let interval = config.interval.to_owned();
+        Ok(ContextPrinter {
+            interval: tokio::time::interval(interval.into()),
+            delay: delay,
+            contexts: HashMap::new(),
+        })
+    }
+}
+
+#[async_trait]
+impl StoreContext<ContextPrinterConfig> for ContextPrinter {
+    fn store_context(&mut self, pipe_name: String, context: std::sync::Arc<Context>) {
+        self.contexts.insert(pipe_name, context);
+    }
+
+    fn load_context(&self, pipe_name: &str) -> Option<&std::sync::Arc<Context>> {
+        self.contexts.get(pipe_name)
+    }
+
+    async fn run(&mut self) -> anyhow::Result<()> {
+        sleep(self.delay).await;
+        loop {
+            self.interval.tick().await;
+            let mut done: usize = 0;
+            for (pipe_name, ctx) in &self.contexts {
+                let ref state = ctx.get_state();
+                let total_run = ctx.get_total_run();
+                let success_run = ctx.get_success_run();
+                let display = PipeContext::new(
+                    pipe_name.to_owned(),
+                    state.to_owned(),
+                    total_run,
+                    success_run,
+                );
+                print!("{}", display);
+                if state == &State::Done {
+                    done += 1;
+                }
+            }
+            if done == self.contexts.len() {
+                log::info!("all pipe in Done state, exit context printer");
+                break;
+            }
+        }
+        Ok(())
+    }
 }

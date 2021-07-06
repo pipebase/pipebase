@@ -53,7 +53,7 @@ where
     ) -> Result<()> {
         assert!(rx.is_some());
         assert!(!txs.is_empty());
-        let mut mapper = config.config_into().await.unwrap();
+        let mut mapper = config.config_into().await?;
         let mut txs = senders_as_map(txs);
         let rx = rx.as_mut().unwrap();
         log::info!("mapper {} run ...", self.name);

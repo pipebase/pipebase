@@ -41,7 +41,7 @@ where
     ) -> Result<()> {
         assert!(rx.is_some());
         assert!(txs.is_empty());
-        let mut exporter = config.config_into().await.unwrap();
+        let mut exporter = config.config_into().await?;
         let rx = rx.as_mut().unwrap();
         log::info!("exporter {} run ...", self.name);
         loop {

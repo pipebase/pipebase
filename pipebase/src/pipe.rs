@@ -129,7 +129,7 @@ macro_rules! run_pipe {
             )*
             tokio::spawn(async move {
                 match $pipe.run(config, txs, $rx).await {
-                    Ok(context) => Ok(context),
+                    Ok(_) => Ok(()),
                     Err(err) => {
                         log::error!("pipe exit with error {:#?}", err);
                         Err(err)

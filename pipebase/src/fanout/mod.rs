@@ -43,7 +43,7 @@ where
     ) -> Result<()> {
         assert!(rx.is_some());
         assert!(!txs.is_empty());
-        let mut selector = config.config_into().await.unwrap();
+        let mut selector = config.config_into().await?;
         let rx = rx.as_mut().unwrap();
         let mut txs = senders_as_map(txs);
         log::info!("selector {} run ...", self.name);

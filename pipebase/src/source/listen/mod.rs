@@ -47,7 +47,7 @@ where
         assert!(rx.is_none());
         // connect listener
         let (tx0, mut rx0) = channel::<U>(1024);
-        let mut listener = config.config_into().await.unwrap();
+        let mut listener = config.config_into().await?;
         listener.set_sender(tx0);
         // start listener
         let join_listener = tokio::spawn(async move {
