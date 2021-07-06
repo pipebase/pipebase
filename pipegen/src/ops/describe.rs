@@ -11,6 +11,57 @@ pub trait Describe {
     fn describe(&self) -> Vec<String>;
 }
 
+pub struct PipeDescriber {
+    pipes: HashMap<String, Pipe>,
+}
+
+impl VisitEntity<Pipe> for PipeDescriber {
+    fn visit(&mut self, pipe: &Pipe) {
+        self.pipes.insert(pipe.get_id(), pipe.to_owned());
+    }
+}
+
+impl Describe for PipeDescriber {
+    fn new() -> Self {
+        PipeDescriber {
+            pipes: HashMap::new(),
+        }
+    }
+
+    fn describe(&self) -> Vec<String> {
+        self.describe_pipes()
+    }
+}
+
+impl PipeDescriber {
+    pub(crate) fn describe_pipes(&self) -> Vec<String> {
+        let all_pipes = format!("{}", self.display_pipes());
+        vec![all_pipes]
+    }
+
+    pub(crate) fn describe_pipe(&self, pid: &str) -> Result<String> {
+        let pipe = match self.pipes.get(pid) {
+            Some(pipe) => pipe,
+            None => return Err(api_error(format!("pipe {} not exists", pid))),
+        };
+        Ok(format!("{}", pipe))
+    }
+
+    fn display_pipes(&self) -> EntityIdsDisplay {
+        let pids: Vec<String> = self
+            .pipes
+            .keys()
+            .into_iter()
+            .map(|pid| pid.to_owned())
+            .collect();
+        EntityIdsDisplay {
+            ids: pids,
+            sep: ENTITY_ID_LIST_SEP.to_owned(),
+            label: Some(PIPE_LABEL.to_owned()),
+        }
+    }
+}
+
 pub struct PipeGraphDescriber {
     graph: PipeGraph<Pipe>,
     pipe_ids: Vec<String>,
@@ -63,11 +114,6 @@ impl PipeGraphDescriber {
             results.push(format!("{}", component))
         }
         results
-    }
-
-    pub(crate) fn describe_pipe(&self, pid: &str) -> Result<String> {
-        let pipe = self.get_pipe_value(pid)?;
-        Ok(format!("{}", pipe))
     }
 
     fn display_source_pipe_ids(&self) -> EntityIdsDisplay {
@@ -155,16 +201,6 @@ impl PipeGraphDescriber {
             components.push(component.to_owned())
         }
         components
-    }
-
-    fn get_pipe_value(&self, pid: &str) -> Result<Pipe> {
-        if !self.graph.has_pipe(pid) {
-            return Err(api_error(format!("pipe {} not exists", pid)));
-        }
-        match self.graph.get_pipe_value(pid) {
-            Some(pipe) => Ok(pipe.to_owned()),
-            None => Err(api_error(format!("pipe {} not exists", pid))),
-        }
     }
 }
 
@@ -267,14 +303,20 @@ impl AppDescriber {
 
     pub fn describe_pipes(&self) -> Vec<String> {
         let pipes = self.get_app().get_pipes();
-        let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
+        let describer = Self::init_describer::<Pipe, PipeDescriber>(pipes);
         describer.describe()
     }
 
     pub fn describe_pipe(&self, pid: &str) -> Result<String> {
         let pipes = self.get_app().get_pipes();
-        let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
+        let describer = Self::init_describer::<Pipe, PipeDescriber>(pipes);
         describer.describe_pipe(pid)
+    }
+
+    pub fn describe_pipe_graph(&self) -> Vec<String> {
+        let pipes = self.get_app().get_pipes();
+        let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
+        describer.describe()
     }
 
     pub fn describe_pipelines(&self, pid: &str) -> Result<Vec<String>> {
@@ -302,6 +344,7 @@ impl AppDescriber {
     }
 }
 
+const PIPE_LABEL: &str = "pipe";
 const SOURCE_PIPE_LABEL: &str = "source";
 const SINK_PIPE_LABEL: &str = "sink";
 const PIPE_COMPONENT_LABEL: &str = "union";

@@ -14,6 +14,14 @@ fn do_describe_pipes(app: &App, printer: &mut Printer) -> anyhow::Result<()> {
     Ok(())
 }
 
+fn do_describe_pipe_graph(app: &App, printer: &mut Printer) -> anyhow::Result<()> {
+    printer.status(&"Describe", "pipe graph")?;
+    for description in app.describe_pipe_graph() {
+        printer.result(description)?;
+    }
+    Ok(())
+}
+
 fn do_describe_pipe(app: &App, pipe_name: &str, printer: &mut Printer) -> anyhow::Result<()> {
     printer.status(&"Describe", format!("pipe {}", pipe_name))?;
     let pipe_display = match app.describe_pipe(pipe_name) {
@@ -76,6 +84,9 @@ pub fn do_exec(config: &Config, opts: &DescribeOptions) -> anyhow::Result<()> {
     if opts.all() {
         do_describe_pipes(&app, &mut printer)?;
         do_describe_objects(&app, &mut printer)?;
+    }
+    if opts.graph() {
+        do_describe_pipe_graph(&app, &mut printer)?;
     }
     match opts.pipe_name() {
         Some(pipe_name) => do_describe_pipe(&app, pipe_name, &mut printer)?,
