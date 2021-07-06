@@ -131,6 +131,10 @@ where
 }
 
 impl<'a> HasContext for Collector<'a> {
+    fn get_name(&self) -> String {
+        self.name.to_owned()
+    }
+
     fn get_context(&self) -> Arc<Context> {
         self.context.to_owned()
     }

@@ -1,10 +1,13 @@
-use crate::constants::{BOOTSTRAP_FUNCTION, BOOTSTRAP_MODULE, BOOTSTRAP_PIPE};
-use crate::pipemeta::{ChannelExpr, JoinPipesExpr, PipeExpr, PipeMetas, RunPipeExpr};
+use crate::constants::{BOOTSTRAP_FUNCTION, BOOTSTRAP_MODULE, BOOTSTRAP_PIPE, CONTEXT_STORE};
+use crate::pipemeta::{
+    ChannelExpr, ContextStoreExpr, ContextStoreMetas, Expr, JoinExpr, PipeExpr, PipeMetas,
+    RunContextStoreExpr, RunPipeExpr,
+};
 use crate::utils::{
     get_all_attributes_by_meta_prefix, get_last_stmt_span, get_meta_string_value_by_meta_path,
     resolve_ident, resolve_module_path_token,
 };
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{Attribute, Generics, ItemFn, NestedMeta};
 
@@ -13,29 +16,39 @@ pub fn impl_bootstrap(
     attributes: &Vec<Attribute>,
     generics: &Generics,
 ) -> TokenStream {
-    let attributes = get_all_pipe_attributes(attributes);
-    // generate all exprs for print
-    let metas = PipeMetas::parse(&attributes);
-    let all_exprs = resolve_all_exprs(&metas);
-    let joined_exprs = join_all_exprs(&all_exprs, ";\n");
-    // generate exprs and tokens
-    let channel_exprs = resolve_channel_exprs(&metas);
-    let pipe_exprs = resolve_pipe_exprs(&metas);
-    let run_pipe_exprs = resolve_run_pipe_exprs(&metas);
-    let join_pipes_expr = resolve_join_pipes_expr(&metas);
+    let pipe_attributes = get_all_pipe_attributes(attributes);
+    let cstore_attributes = get_all_context_store_attribute(attributes);
+    // parse metas
+    let pipe_metas = PipeMetas::parse(&pipe_attributes);
+    let pipe_names = pipe_metas.list_pipe_name();
+    let mut cstore_metas = ContextStoreMetas::parse(&cstore_attributes);
+    cstore_metas.add_pipes(pipe_names);
+    // generate all exprs to print
+    let all_exprs = resolve_all_exprs(&pipe_metas, &cstore_metas);
+    let all_exprs = merge_all_exprs(&all_exprs, ";\n");
+    // generate pipe exprs
+    let channel_exprs = resolve_channel_exprs(&pipe_metas);
+    let pipe_exprs = resolve_pipe_exprs(&pipe_metas);
+    let run_pipe_exprs = resolve_run_pipe_exprs(&pipe_metas);
+    // generate cstore exprs
+    let cstore_expr = resolve_cstore_exprs(&cstore_metas);
+    let run_cstore_expr = resolve_run_cstore_exprs(&cstore_metas);
+    // generate join all exprs
+    let join_all_expr = resolve_join_all_expr(&pipe_metas, &cstore_metas);
+    // generate tokens for pipe exprs
     let channel_expr_tokens = parse_exprs(&channel_exprs);
     let pipe_expr_tokens = parse_exprs(&pipe_exprs);
     let run_pipe_expr_tokens = parse_exprs(&run_pipe_exprs);
-    let join_pipes_expr_tokens = parse_exprs(&join_pipes_expr);
-    // pipe context
-    // let pipe_names = metas.list_pipe_name();
-    // TODO: ContexStore meta and construct context store
-    // let add_pipe_contexts = resolve_pipe_contexts(&pipe_names);
+    // generate tokens for cstore exprs
+    let cstore_expr_tokens = parse_exprs(&cstore_expr);
+    let run_cstore_expr_tokens = parse_exprs(&run_cstore_expr);
+    // generate token for join all - pipe and context store
+    let join_all_expr_tokens = parse_exprs(&join_all_expr);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
         impl #impl_generics Bootstrap for #ident #type_generics #where_clause {
             fn print() {
-                let exprs = #joined_exprs;
+                let exprs = #all_exprs;
                 println!("{}", exprs)
             }
 
@@ -44,10 +57,14 @@ pub fn impl_bootstrap(
                 ;
                 #pipe_expr_tokens
                 ;
+                #cstore_expr_tokens
+                ;
+                #run_cstore_expr_tokens
+                ;
                 #run_pipe_expr_tokens
                 ;
                 let run = async move {
-                    #join_pipes_expr_tokens
+                    #join_all_expr_tokens
                     ;
                 };
                 Box::pin(run)
@@ -56,16 +73,18 @@ pub fn impl_bootstrap(
     }
 }
 
-fn join_all_exprs(exprs: &Vec<String>, sep: &str) -> String {
+fn merge_all_exprs(exprs: &Vec<String>, sep: &str) -> String {
     exprs.join(sep)
 }
 
-fn resolve_all_exprs(metas: &PipeMetas) -> Vec<String> {
+fn resolve_all_exprs(pipe_metas: &PipeMetas, cstore_metas: &ContextStoreMetas) -> Vec<String> {
     let mut all_exprs: Vec<String> = vec![];
-    all_exprs.extend(resolve_channel_exprs(&metas));
-    all_exprs.extend(resolve_pipe_exprs(&metas));
-    all_exprs.extend(resolve_run_pipe_exprs(&metas));
-    all_exprs.extend(resolve_join_pipes_expr(&metas));
+    all_exprs.extend(resolve_channel_exprs(pipe_metas));
+    all_exprs.extend(resolve_pipe_exprs(pipe_metas));
+    all_exprs.extend(resolve_cstore_exprs(cstore_metas));
+    all_exprs.extend(resolve_run_cstore_exprs(cstore_metas));
+    all_exprs.extend(resolve_run_pipe_exprs(pipe_metas));
+    all_exprs.extend(resolve_join_all_expr(pipe_metas, cstore_metas));
     all_exprs
 }
 
@@ -81,8 +100,22 @@ fn resolve_run_pipe_exprs(metas: &PipeMetas) -> Vec<String> {
     metas.generate_pipe_meta_exprs::<RunPipeExpr>()
 }
 
-fn resolve_join_pipes_expr(metas: &PipeMetas) -> Vec<String> {
-    metas.generate_pipe_metas_expr::<JoinPipesExpr>()
+fn resolve_cstore_exprs(metas: &ContextStoreMetas) -> Vec<String> {
+    metas.generate_cstore_meta_exprs::<ContextStoreExpr>()
+}
+
+fn resolve_run_cstore_exprs(metas: &ContextStoreMetas) -> Vec<String> {
+    metas.generate_cstore_meta_exprs::<RunContextStoreExpr>()
+}
+
+fn resolve_join_all_expr(pipe_metas: &PipeMetas, cstore_metas: &ContextStoreMetas) -> Vec<String> {
+    let mut join_expr = JoinExpr::default();
+    pipe_metas.accept(&mut join_expr);
+    cstore_metas.accept(&mut join_expr);
+    match join_expr.get_expr() {
+        Some(expr) => vec![expr],
+        None => vec![],
+    }
 }
 
 fn parse_exprs(exprs: &Vec<String>) -> TokenStream {
@@ -96,25 +129,12 @@ fn parse_expr(expr: &str) -> TokenStream {
     expr.parse().unwrap()
 }
 
-fn resolve_pipe_contexts(cstore_name: &str, pipe_names: &Vec<String>) -> TokenStream {
-    let pipe_context_tokens = pipe_names
-        .iter()
-        .map(|pipe_name| resolve_pipe_context(cstore_name, pipe_name));
-    quote! {
-        #(#pipe_context_tokens);*
-    }
-}
-
-fn resolve_pipe_context(cstore_name: &str, pipe_name: &str) -> TokenStream {
-    let pipe_ident = Ident::new(pipe_name, Span::call_site());
-    let cstore_ident = Ident::new(cstore_name, Span::call_site());
-    quote! {
-        #cstore_ident.add_pipe_context(String::from(#pipe_name), #pipe_ident.get_context())
-    }
-}
-
 fn get_all_pipe_attributes(attributes: &Vec<Attribute>) -> Vec<Attribute> {
     get_all_attributes_by_meta_prefix(BOOTSTRAP_PIPE, attributes)
+}
+
+fn get_all_context_store_attribute(attributes: &Vec<Attribute>) -> Vec<Attribute> {
+    get_all_attributes_by_meta_prefix(CONTEXT_STORE, attributes)
 }
 
 pub fn impl_bootstrap_macro(_args: Vec<NestedMeta>, mut function: ItemFn) -> TokenStream {

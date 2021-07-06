@@ -122,7 +122,7 @@ pub fn get_any_attribute_by_meta_prefix(
         }
     }
     if is_required {
-        panic!("attribute not found based on prefix")
+        panic!("attribute not found based on prefix {}", prefix)
     }
     return None;
 }

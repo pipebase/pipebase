@@ -1,4 +1,5 @@
 use super::Expr;
+use super::VisitContextStoreMeta;
 use super::VisitPipeMeta;
 
 use std::collections::{HashMap, HashSet};
@@ -9,6 +10,8 @@ use crate::constants::BOOTSTRAP_PIPE_UPSTREAM_NAME_SEP;
 use crate::constants::{
     BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH, BOOTSTRAP_PIPE_CONFIG_TYPE,
     BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE, BOOTSTRAP_PIPE_UPSTREAM,
+    CONTEXT_STORE_CONFIG_EMPTY_PATH, CONTEXT_STORE_CONFIG_PATH, CONTEXT_STORE_CONFIG_TYPE,
+    CONTEXT_STORE_NAME,
 };
 use crate::utils::{get_meta, get_meta_string_value_by_meta_path, is_skip_non_exists_pipe};
 
@@ -267,19 +270,131 @@ impl PipeMetas {
             .collect()
     }
 
-    fn visit_pipe_metas<T: VisitPipeMeta>(&self) -> T {
-        let mut expr = T::default();
+    pub fn accept<T: VisitPipeMeta>(&self, visitor: &mut T) {
         for pipe_meta in self.pipe_metas.values() {
-            pipe_meta.accept(&mut expr)
+            pipe_meta.accept(visitor)
         }
-        expr
+    }
+}
+
+pub struct ContextStoreConfigMeta {
+    ty: String,
+    path: Option<String>,
+}
+
+impl ContextStoreConfigMeta {
+    pub fn get_ty(&self) -> String {
+        self.ty.to_owned()
     }
 
-    // generate expr based on all pipe metas
-    pub fn generate_pipe_metas_expr<T: VisitPipeMeta + Expr>(&self) -> Vec<String> {
-        match self.visit_pipe_metas::<T>().get_expr() {
-            Some(expr) => vec![expr],
-            None => vec![],
+    pub fn get_path(&self) -> String {
+        match self.path.to_owned() {
+            Some(path) => path,
+            None => CONTEXT_STORE_CONFIG_EMPTY_PATH.to_owned(),
+        }
+    }
+}
+
+pub struct ContextStoreMeta {
+    name: String,
+    config_meta: ContextStoreConfigMeta,
+    pipe_names: Vec<String>,
+}
+
+impl ContextStoreMeta {
+    pub fn accept<V: VisitContextStoreMeta>(&self, visitor: &mut V) {
+        visitor.visit(self)
+    }
+
+    pub fn get_name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn add_pipes(&mut self, pipe_names: Vec<String>) {
+        for pipe_name in pipe_names {
+            self.add_pipe(pipe_name)
+        }
+    }
+
+    pub fn add_pipe(&mut self, pipe_name: String) {
+        self.pipe_names.push(pipe_name)
+    }
+
+    pub fn get_pipes(&self) -> Vec<String> {
+        self.pipe_names.to_owned()
+    }
+
+    pub fn get_config_meta(&self) -> &ContextStoreConfigMeta {
+        &self.config_meta
+    }
+
+    pub fn parse(attribute: &Attribute) -> Self {
+        ContextStoreMeta {
+            name: Self::parse_name(attribute),
+            config_meta: Self::parse_config_meta(attribute),
+            pipe_names: Vec::new(),
+        }
+    }
+
+    fn parse_name(attribute: &Attribute) -> String {
+        get_meta_string_value_by_meta_path(CONTEXT_STORE_NAME, &get_meta(attribute), true).unwrap()
+    }
+
+    fn parse_config_meta(attribute: &Attribute) -> ContextStoreConfigMeta {
+        let ty = get_meta_string_value_by_meta_path(
+            CONTEXT_STORE_CONFIG_TYPE,
+            &get_meta(attribute),
+            true,
+        )
+        .unwrap();
+        let path = get_meta_string_value_by_meta_path(
+            CONTEXT_STORE_CONFIG_PATH,
+            &get_meta(attribute),
+            false,
+        );
+        ContextStoreConfigMeta { ty: ty, path: path }
+    }
+
+    pub fn generate_cstore_meta_expr<V: VisitContextStoreMeta + Expr>(&self) -> Option<String> {
+        let mut visitor = V::default();
+        self.accept(&mut visitor);
+        visitor.get_expr()
+    }
+}
+
+pub struct ContextStoreMetas {
+    metas: Vec<ContextStoreMeta>,
+}
+
+impl ContextStoreMetas {
+    pub fn parse(attributes: &Vec<Attribute>) -> Self {
+        let mut metas: Vec<ContextStoreMeta> = Vec::new();
+        for attribute in attributes {
+            metas.push(ContextStoreMeta::parse(attribute));
+        }
+        ContextStoreMetas { metas }
+    }
+
+    pub fn add_pipes(&mut self, pipe_names: Vec<String>) {
+        for meta in &mut self.metas {
+            meta.add_pipes(pipe_names.to_owned())
+        }
+    }
+
+    pub fn generate_cstore_meta_exprs<V: VisitContextStoreMeta + Expr>(&self) -> Vec<String> {
+        let mut exprs: Vec<String> = Vec::new();
+        for meta in &self.metas {
+            match meta.generate_cstore_meta_expr::<V>() {
+                Some(expr) => exprs.push(expr),
+                None => (),
+            };
+        }
+        exprs
+    }
+
+    pub fn accept<V: VisitContextStoreMeta>(&self, visitor: &mut V) {
+        for meta in &self.metas {
+            visitor.visit(meta)
         }
     }
 }

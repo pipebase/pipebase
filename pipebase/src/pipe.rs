@@ -21,6 +21,7 @@ where
 }
 
 pub trait HasContext {
+    fn get_name(&self) -> String;
     fn get_context(&self) -> Arc<Context>;
 }
 

@@ -105,7 +105,7 @@ mod tests {
             ctx_printer,
             ContextPrinterConfig,
             "resources/catalogs/context_printer.yml",
-            [("timer", timer.get_context())]
+            [timer]
         );
         let run_timer = run_pipe!(timer, TimerConfig, "resources/catalogs/timer.yml", [tx]);
         join_pipes!([run_timer, run_ctx_printer]);

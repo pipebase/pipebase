@@ -20,6 +20,9 @@ pub const CONTEXT_STORE: &str = "cstore";
 pub const CONTEXT_STORE_NAME: &str = "cstore.name";
 pub const CONTEXT_STORE_CONFIG_TYPE: &str = "cstore.config.ty";
 pub const CONTEXT_STORE_CONFIG_PATH: &str = "cstore.config.path";
+pub const CONTEXT_STORE_CONFIG_EMPTY_PATH: &str = "";
+pub const CONTEXT_STORE_MACRO: &str = "cstore!";
+pub const RUN_CONTEXT_STORE_MACRO: &str = "run_cstore!";
 
 pub const BOOTSTRAP_PIPE: &str = "pipe";
 pub const BOOTSTRAP_PIPE_NAME: &str = "pipe.name";

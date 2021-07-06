@@ -1,6 +1,7 @@
-use super::meta::PipeMeta;
+use super::meta::{ContextStoreMeta, PipeMeta};
 use crate::constants::{
-    BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, CHANNEL_MACRO, JOIN_PIPES_MACRO, RUN_PIPE_MACRO,
+    BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, CHANNEL_MACRO, CONTEXT_STORE_MACRO, JOIN_PIPES_MACRO,
+    RUN_CONTEXT_STORE_MACRO, RUN_PIPE_MACRO,
 };
 
 pub trait VisitPipeMeta: Default {
@@ -162,20 +163,88 @@ impl RunPipeExpr {
 }
 
 #[derive(Default)]
-pub struct JoinPipesExpr {
+pub struct JoinExpr {
     pipe_names: Vec<String>,
+    cstore_names: Vec<String>,
 }
 
-impl VisitPipeMeta for JoinPipesExpr {
+impl VisitPipeMeta for JoinExpr {
     fn visit(&mut self, meta: &PipeMeta) {
         self.pipe_names.push(meta.get_name().to_owned());
     }
 }
 
-impl Expr for JoinPipesExpr {
+impl VisitContextStoreMeta for JoinExpr {
+    fn visit(&mut self, meta: &ContextStoreMeta) {
+        self.cstore_names.push(meta.get_name().to_owned())
+    }
+}
+
+impl Expr for JoinExpr {
     fn get_expr(&self) -> Option<String> {
-        let all_exprs = self.pipe_names.join(", ");
-        let all_exprs = format!("{}([{}])", JOIN_PIPES_MACRO, all_exprs);
+        let mut all_names = vec![];
+        all_names.extend(self.pipe_names.to_owned());
+        all_names.extend(self.cstore_names.to_owned());
+        let all_exprs = format!("{}([{}])", JOIN_PIPES_MACRO, all_names.join(","));
         Some(all_exprs)
+    }
+}
+
+pub trait VisitContextStoreMeta: Default {
+    fn visit(&mut self, meta: &ContextStoreMeta);
+}
+
+#[derive(Default)]
+pub struct ContextStoreExpr {
+    pub lhs: Option<String>,
+    pub rhs: Option<String>,
+}
+
+impl VisitContextStoreMeta for ContextStoreExpr {
+    fn visit(&mut self, meta: &ContextStoreMeta) {
+        let context_store_name = meta.get_name();
+        let rhs = format!(r#"{}("{}")"#, CONTEXT_STORE_MACRO, context_store_name);
+        self.lhs = Some(Self::as_mut(&context_store_name));
+        self.rhs = Some(rhs);
+    }
+}
+
+impl Expr for ContextStoreExpr {
+    fn get_lhs(&self) -> Option<String> {
+        self.lhs.to_owned()
+    }
+    fn get_rhs(&self) -> Option<String> {
+        self.rhs.to_owned()
+    }
+}
+
+#[derive(Default)]
+pub struct RunContextStoreExpr {
+    pub lhs: Option<String>,
+    pub rhs: Option<String>,
+}
+
+impl VisitContextStoreMeta for RunContextStoreExpr {
+    fn visit(&mut self, meta: &ContextStoreMeta) {
+        let name = meta.get_name();
+        let pipe_exprs = meta.get_pipes().join(",");
+        let config_meta = meta.get_config_meta();
+        let config_ty = config_meta.get_ty();
+        let config_path = config_meta.get_path();
+        let rhs = format!(
+            r#"{}({}, {}, "{}", [{}])"#,
+            RUN_CONTEXT_STORE_MACRO, name, config_ty, config_path, pipe_exprs
+        );
+        self.lhs = Some(name.to_owned());
+        self.rhs = Some(rhs);
+    }
+}
+
+impl Expr for RunContextStoreExpr {
+    fn get_lhs(&self) -> Option<String> {
+        self.lhs.to_owned()
+    }
+    fn get_rhs(&self) -> Option<String> {
+        self.rhs.to_owned()
     }
 }
