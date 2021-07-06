@@ -292,6 +292,12 @@ impl App {
         describer.describe_pipe(pid)
     }
 
+    pub fn describe_pipe_graph(&self) -> Vec<String> {
+        let mut describer = AppDescriber::new();
+        self.accept(&mut describer);
+        describer.describe_pipe_graph()
+    }
+
     pub fn describe_pipelines(&self, pid: &str) -> Result<Vec<String>> {
         let mut describer = AppDescriber::new();
         self.accept(&mut describer);

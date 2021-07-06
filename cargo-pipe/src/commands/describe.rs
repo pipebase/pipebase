@@ -11,6 +11,9 @@ pub fn cmd() -> Cmd {
             Arg::new("all")
                 .short('a')
                 .about("List all pipes and objects in pipe manifest"),
+            Arg::new("graph")
+                .short('g')
+                .about("List basic pipe graph info: source / sink / disjoint components"),
             Arg::new("pipe")
                 .short('p')
                 .about("Describe pipe in pipe manifest")
@@ -28,6 +31,7 @@ pub fn cmd() -> Cmd {
 
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
     let all = args.is_present("all");
+    let graph = args.is_present("graph");
     let pipe_name = match args.value_of("pipe") {
         Some(pipe_name) => Some(pipe_name.to_owned()),
         None => None,
@@ -40,13 +44,14 @@ pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
         Some(pipe_name) => Some(pipe_name.to_owned()),
         None => None,
     };
-    let opts = DescribeOptions::new(all, pipe_name, object_name, pipe_name_in_line);
+    let opts = DescribeOptions::new(all, graph, pipe_name, object_name, pipe_name_in_line);
     do_exec(config, &opts)?;
     Ok(())
 }
 
 pub struct DescribeOptions {
     all: bool,
+    graph: bool,
     pipe_name: Option<String>,
     object_name: Option<String>,
     pipe_name_in_line: Option<String>,
@@ -55,12 +60,14 @@ pub struct DescribeOptions {
 impl DescribeOptions {
     pub fn new(
         all: bool,
+        graph: bool,
         pipe_name: Option<String>,
         object_name: Option<String>,
         pipe_name_in_line: Option<String>,
     ) -> Self {
         DescribeOptions {
             all,
+            graph,
             pipe_name,
             object_name,
             pipe_name_in_line,
@@ -69,6 +76,10 @@ impl DescribeOptions {
 
     pub fn all(&self) -> bool {
         self.all
+    }
+
+    pub fn graph(&self) -> bool {
+        self.graph
     }
 
     pub fn pipe_name(&self) -> Option<&String> {

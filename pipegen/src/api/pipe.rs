@@ -170,7 +170,12 @@ impl Display for Pipe {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Name:   {}", self.name)?;
         writeln!(f, "Type:   {}", self.ty)?;
-        writeln!(f, "Config: {}", self.config)
+        writeln!(f, "Config: {}", self.config)?;
+        let upstream = match self.upstreams {
+            Some(ref upstreams) => upstreams.join(", "),
+            None => "".to_owned(),
+        };
+        writeln!(f, "Upstream: [{}]", upstream)
     }
 }
 
