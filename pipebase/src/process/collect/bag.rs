@@ -158,4 +158,27 @@ mod tests {
         assert_eq!(2, records.get(2).unwrap().val);
         assert_eq!(State::Done, context.get_state());
     }
+
+    #[tokio::test]
+    async fn test_collector_exit() {
+        let (tx0, rx0) = channel!(u128, 1024);
+        let (tx1, rx1) = channel!(Vec<u128>, 1024);
+        let mut timer = poller!("timer");
+        let mut collector = collector!("tick_collector");
+        let run_timer = run_pipe!(timer, TimerConfig, "resources/catalogs/timer.yml", [tx0]);
+        let run_collector = run_pipe!(
+            collector,
+            InMemoryBagCollectorConfig,
+            "resources/catalogs/bag_collector.yml",
+            [tx1],
+            rx0
+        );
+        let start_millis = std::time::SystemTime::now();
+        drop(rx1);
+        join_pipes!([run_timer, run_collector]);
+        let now_millis = std::time::SystemTime::now();
+        // timer and collector should exit asap since downstream rx1 dropped
+        let duration = now_millis.duration_since(start_millis).unwrap();
+        assert!(duration.as_secs() < 3)
+    }
 }
