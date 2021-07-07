@@ -103,13 +103,6 @@ pub fn parse_lit_as_string(lit: &Lit) -> Option<String> {
     return None;
 }
 
-pub fn parse_lit_as_number(lit: &Lit) -> Option<String> {
-    if let Lit::Int(lit) = lit {
-        return Some(lit.base10_digits().to_owned());
-    }
-    return None;
-}
-
 pub fn get_any_attribute_by_meta_prefix(
     prefix: &str,
     attributes: &Vec<Attribute>,
@@ -146,39 +139,23 @@ pub fn get_meta_string_value_by_meta_path(
     meta: &Meta,
     is_required: bool,
 ) -> Option<String> {
-    let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
-    if let Some(ref lit) = find_meta_value_by_meta_path(full_path_vec, meta) {
-        if let Some(value) = parse_lit_as_string(lit) {
-            return Some(value);
-        }
-    }
-    if is_required {
-        panic!(
-            "string value for full path {} not found in attribute",
-            full_path
-        )
-    }
-    None
+    get_meta_value_by_meta_path(full_path, meta, is_required, &parse_lit_as_string)
 }
 
-pub fn get_meta_number_value_by_meta_path(
+pub fn get_meta_value_by_meta_path(
     full_path: &str,
-    attribute: &Attribute,
+    meta: &Meta,
     is_required: bool,
+    parse: &dyn Fn(&Lit) -> Option<String>,
 ) -> Option<String> {
     let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
-    if let Some(ref lit) =
-        find_meta_value_by_meta_path(full_path_vec, &attribute.parse_meta().unwrap())
-    {
-        if let Some(value) = parse_lit_as_number(lit) {
+    if let Some(ref lit) = find_meta_value_by_meta_path(full_path_vec, meta) {
+        if let Some(value) = parse(lit) {
             return Some(value);
         }
     }
     if is_required {
-        panic!(
-            "string value for full path {} not found in attribute",
-            full_path
-        )
+        panic!("value for full path {} not found in attribute", full_path)
     }
     None
 }

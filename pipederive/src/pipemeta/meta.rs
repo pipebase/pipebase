@@ -163,6 +163,12 @@ impl PipeMeta {
             None => None,
         }
     }
+
+    pub fn generate_pipe_meta_expr<T: VisitPipeMeta + Expr>(&self) -> Option<String> {
+        let mut visitor = T::default();
+        self.accept(&mut visitor);
+        visitor.get_expr()
+    }
 }
 
 #[derive(Default)]
@@ -250,24 +256,16 @@ impl PipeMetas {
         pipe_names
     }
 
-    fn visit_pipe_meta<T: VisitPipeMeta>(&self) -> Vec<T> {
-        let mut exprs: Vec<T> = vec![];
-        for pipe_meta in self.pipe_metas.values() {
-            let mut expr = T::default();
-            pipe_meta.accept(&mut expr);
-            exprs.push(expr)
-        }
-        exprs
-    }
-
     // generate expr per pipe meta
     pub fn generate_pipe_meta_exprs<T: VisitPipeMeta + Expr>(&self) -> Vec<String> {
-        self.visit_pipe_meta::<T>()
-            .iter()
-            .map(|e| e.get_expr())
-            .filter(|e| e.is_some())
-            .map(|e| e.unwrap())
-            .collect()
+        let mut exprs: Vec<String> = vec![];
+        for pipe_meta in self.pipe_metas.values() {
+            match pipe_meta.generate_pipe_meta_expr::<T>() {
+                Some(expr) => exprs.push(expr),
+                None => (),
+            };
+        }
+        exprs
     }
 
     pub fn accept<T: VisitPipeMeta>(&self, visitor: &mut T) {
