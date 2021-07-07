@@ -173,17 +173,36 @@ fn expand_aggregate(agg: &AggregateMeta) -> Meta {
     }
 }
 
-fn expand_meta_lit(meta: &Meta, mut indent: usize, compact: bool) -> String {
+fn meta_path_to_lit(name: &str, indent: usize, compact: bool) -> String {
+    let lit = name.to_owned();
     if compact {
-        // if compact no indent
-        indent = 0;
+        return lit;
     }
-    let indent_lit = indent_literal(indent);
+    format!("{}{}", indent_literal(indent), lit)
+}
+
+fn meta_str_value_to_lit(name: &str, value: &str, indent: usize, compact: bool) -> String {
+    let lit = format!(r#"{} = "{}""#, name, value);
+    if compact {
+        return lit;
+    }
+    format!("{}{}", indent_literal(indent), lit)
+}
+
+fn meta_int_value_to_lit(name: &str, value: &i32, indent: usize, compact: bool) -> String {
+    let lit = format!("{} = {}", name, value);
+    if compact {
+        return lit;
+    }
+    format!("{}{}", indent_literal(indent), lit)
+}
+
+fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
     let (name, metas) = match meta {
-        Meta::Path { name } => return format!("{}{}", indent_lit, name),
+        Meta::Path { name } => return meta_path_to_lit(name, indent, compact),
         Meta::Value { name, meta } => match meta {
-            MetaValue::Str(value) => return format!(r#"{}{} = "{}""#, indent_lit, name, value),
-            MetaValue::Int(value) => return format!("{}{} = {}", indent_lit, name, value),
+            MetaValue::Str(value) => return meta_str_value_to_lit(name, value, indent, compact),
+            MetaValue::Int(value) => return meta_int_value_to_lit(name, value, indent, compact),
         },
         Meta::Derive { derives } => {
             let meta = expand_derives(derives);
@@ -207,17 +226,18 @@ fn expand_meta_lit(meta: &Meta, mut indent: usize, compact: bool) -> String {
         }
         Meta::List { name, metas } => (name, metas),
     };
-    let mut nested_metas_lits: Vec<String> = vec![];
-    for nested_meta in metas {
-        nested_metas_lits.push(expand_meta_lit(nested_meta, indent + 1, compact));
-    }
+    let nested_metas_lits: Vec<String> = metas
+        .into_iter()
+        .map(|meta| expand_meta_lit(meta, indent + 1, compact))
+        .collect();
     let nested_metas_lit = join_meta_lits(nested_metas_lits, compact);
     let left = get_left_parenthesis(compact);
     let right = get_right_parenthesis(compact, indent);
-    format!(
-        "{}{}{}{}{}",
-        indent_lit, name, left, nested_metas_lit, right
-    )
+    let lit = format!("{}{}{}{}", name, left, nested_metas_lit, right);
+    match compact {
+        true => lit,
+        false => format!("{}{}", indent_literal(indent), lit),
+    }
 }
 
 pub(crate) fn meta_to_literal(meta: &Meta, indent: usize) -> String {
@@ -227,10 +247,10 @@ pub(crate) fn meta_to_literal(meta: &Meta, indent: usize) -> String {
 }
 
 pub(crate) fn metas_to_literal(metas: &Vec<Meta>, indent: usize) -> String {
-    let mut metas_literal: Vec<String> = vec![];
-    for meta in metas {
-        metas_literal.push(meta_to_literal(meta, indent))
-    }
+    let metas_literal: Vec<String> = metas
+        .into_iter()
+        .map(|meta| meta_to_literal(meta, indent))
+        .collect();
     metas_literal.join("\n")
 }
 
@@ -239,10 +259,10 @@ pub(crate) fn meta_to_display(meta: &Meta) -> String {
 }
 
 pub(crate) fn metas_to_display(metas: &Vec<Meta>) -> String {
-    let mut metas_display: Vec<String> = vec![];
-    for meta in metas {
-        metas_display.push(meta_to_display(meta))
-    }
+    let metas_display: Vec<String> = metas
+        .into_iter()
+        .map(|meta| meta_to_display(meta))
+        .collect();
     metas_display.join(" ")
 }
 

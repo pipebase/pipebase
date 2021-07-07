@@ -69,7 +69,6 @@ pub struct AppGenerator {
     indent: usize,
     app: Option<App>,
     pipe_filter: Option<HashSet<String>>,
-    object_filter: Option<HashSet<String>>,
 }
 
 impl VisitEntity<App> for AppGenerator {
@@ -84,7 +83,6 @@ impl Generate<App> for AppGenerator {
             indent: indent,
             app: None,
             pipe_filter: None,
-            object_filter: None,
         }
     }
 
@@ -105,23 +103,13 @@ impl AppGenerator {
 
     fn generate_entities<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
         entities: &Vec<T>,
-        entity_id_filter: Option<&HashSet<String>>,
         indent: usize,
         join_sep: &str,
     ) -> String {
-        let mut lits: Vec<String> = vec![];
-        for entity in entities.as_slice() {
-            let filter = match entity_id_filter {
-                Some(filter) => filter,
-                None => {
-                    lits.push(Self::generate_entity(entity, indent));
-                    continue;
-                }
-            };
-            if filter.contains(&entity.get_id()) {
-                lits.push(Self::generate_entity(entity, indent));
-            }
-        }
+        let lits: Vec<String> = entities
+            .into_iter()
+            .map(|entity| Self::generate_entity(entity, indent))
+            .collect();
         lits.join(join_sep)
     }
 
@@ -131,23 +119,25 @@ impl AppGenerator {
 
     fn generate_objects(&self, indent: usize) -> String {
         let objects = self.get_app().get_objects();
-        let objects_lit = Self::generate_entities::<Object, ObjectGenerator>(
-            objects,
-            self.object_filter.as_ref(),
-            indent,
-            "\n\n",
-        );
+        let objects_lit =
+            Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n");
         objects_lit
     }
 
     fn generate_pipes(&self, indent: usize) -> String {
-        let pipes = self.get_app().get_pipes();
-        let pipes_lit = Self::generate_entities::<Pipe, PipeGenerator>(
-            pipes,
-            self.pipe_filter.as_ref(),
-            indent,
-            "\n",
-        );
+        let pipes = self.get_app().get_pipes().to_owned();
+        let pipes = match self.pipe_filter {
+            Some(ref filter) => pipes
+                .into_iter()
+                .filter(|pipe| filter.contains(&pipe.get_id()))
+                .map(|mut pipe| {
+                    pipe.filter_upstreams(filter);
+                    pipe
+                })
+                .collect(),
+            None => pipes,
+        };
+        let pipes_lit = Self::generate_entities::<Pipe, PipeGenerator>(&pipes, indent, "\n");
         pipes_lit
     }
 

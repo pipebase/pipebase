@@ -268,22 +268,22 @@ impl<T: Clone> DirectedGraph<T> {
     }
 
     pub fn has_in_vertex(&self, vid: &str) -> bool {
-        assert!(self.has_vertex_id(vid));
+        assert!(self.has_vertex_id(vid), "vertex {} not exists", vid);
         self.vertices.get(vid).unwrap().get_in_vertex_count() > 0
     }
 
     pub fn get_in_vertices(&self, vid: &str) -> &HashSet<String> {
-        assert!(self.has_vertex_id(vid));
+        assert!(self.has_vertex_id(vid), "vertex {} not exists", vid);
         self.vertices.get(vid).unwrap().get_in_vertices()
     }
 
     pub fn has_out_vertex(&self, vid: &str) -> bool {
-        assert!(self.has_vertex_id(vid));
+        assert!(self.has_vertex_id(vid), "vertex {} not exists", vid);
         self.vertices.get(vid).unwrap().get_out_vertex_count() > 0
     }
 
     pub fn get_out_vertices(&self, vid: &str) -> &HashSet<String> {
-        assert!(self.has_vertex_id(vid));
+        assert!(self.has_vertex_id(vid), "vertex {} not exists", vid);
         self.vertices.get(vid).unwrap().get_out_vertices()
     }
 
@@ -394,7 +394,7 @@ impl<T: Clone> PipeGraph<T> {
     }
 
     pub fn get_pipe_value(&self, pid: &str) -> Option<&T> {
-        assert!(self.has_pipe(pid));
+        assert!(self.has_pipe(pid), "pipe {} not exists", pid);
         self.graph.get_vertex_value(pid)
     }
 

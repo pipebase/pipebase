@@ -1,9 +1,5 @@
-use crate::constants::{
-    PIPEMETA_FLAGS_ENV, PIPEMETA_FLAGS_SEP, PIPEMETA_FLAG_SKIP_NON_EXISTS_PIPE,
-};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
-use std::collections::HashSet;
 use syn::{Attribute, ItemFn, Lit, Meta, MetaList, MetaNameValue, NestedMeta};
 use syn::{Data, Field, Fields, FieldsNamed};
 
@@ -125,13 +121,11 @@ pub fn get_all_attributes_by_meta_prefix(
     attributes: &Vec<Attribute>,
 ) -> Vec<Attribute> {
     let prefix_path = prefix.split(".").collect::<Vec<&str>>();
-    let mut hits: Vec<Attribute> = vec![];
-    for attribute in attributes {
-        if is_meta_with_prefix(&prefix_path, &attribute.parse_meta().unwrap()) {
-            hits.push(attribute.clone());
-        }
-    }
-    hits
+    attributes
+        .iter()
+        .filter(|&attribute| is_meta_with_prefix(&prefix_path, &attribute.parse_meta().unwrap()))
+        .map(|attribute| attribute.to_owned())
+        .collect()
 }
 
 pub fn get_meta_string_value_by_meta_path(
@@ -245,13 +239,4 @@ pub fn get_last_stmt_span(function: &ItemFn) -> (Span, Span) {
 
 pub fn get_meta(attribute: &Attribute) -> Meta {
     attribute.parse_meta().unwrap()
-}
-
-pub fn is_skip_non_exists_pipe() -> bool {
-    let flags = match std::env::var(PIPEMETA_FLAGS_ENV) {
-        Ok(flags) => flags,
-        _ => return false,
-    };
-    let flag_set: HashSet<&str> = flags.split(PIPEMETA_FLAGS_SEP).collect();
-    flag_set.contains(PIPEMETA_FLAG_SKIP_NON_EXISTS_PIPE)
 }

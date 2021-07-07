@@ -1,6 +1,6 @@
 use super::constants::{
     APP_OBJECT_NAME, BOOTSTRAP_FUNCTION_META, BOOTSTRAP_FUNCTION_NAME, BOOTSTRAP_MODULE_META_PATH,
-    DEFAULT_APP_OBJECT, DEFAULT_CONTEXT_STORE_NAME, PIPEBASE_MAIN,
+    DEFAULT_APP_OBJECT, PIPEBASE_MAIN,
 };
 use super::context::ContextStore;
 use super::dependency::PackageDependency;
@@ -34,11 +34,11 @@ impl Entity for App {
 
     fn list_dependency(&self) -> Vec<String> {
         let dependencies = self.get_package_dependency();
-        let mut modules: Vec<String> = Vec::new();
-        for dependency in dependencies {
-            modules.extend(dependency.get_modules().to_owned());
-        }
-        modules
+        dependencies
+            .iter()
+            .map(|dep| dep.get_modules().to_owned())
+            .flatten()
+            .collect()
     }
 
     fn to_literal(&self, indent: usize) -> String {
@@ -78,11 +78,6 @@ impl App {
                 self.add_dependency(default_dependency)
             }
         }
-        // init context store
-        match self.cstore {
-            Some(_) => (),
-            None => self.cstore = Some(ContextStore::new(DEFAULT_CONTEXT_STORE_NAME.to_owned())),
-        };
         // init metas
         match self.metas {
             Some(_) => (),
@@ -219,8 +214,8 @@ impl App {
         self.metas.as_ref().unwrap()
     }
 
-    fn get_context_store(&self) -> &ContextStore {
-        self.cstore.as_ref().unwrap()
+    fn get_context_store(&self) -> Option<&ContextStore> {
+        self.cstore.as_ref()
     }
 
     pub(crate) fn get_objects(&self) -> &Vec<Object> {

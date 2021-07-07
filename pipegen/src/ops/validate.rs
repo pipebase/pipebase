@@ -275,7 +275,6 @@ impl Validate<DataField> for DataFieldValidator {
 }
 
 pub struct AppValidator {
-    location: String,
     app: Option<App>,
 }
 
@@ -286,11 +285,8 @@ impl VisitEntity<App> for AppValidator {
 }
 
 impl Validate<App> for AppValidator {
-    fn new(location: &str) -> Self {
-        AppValidator {
-            location: location.to_owned(),
-            app: None,
-        }
+    fn new(_location: &str) -> Self {
+        AppValidator { app: None }
     }
 
     fn validate(&mut self) -> Result<()> {

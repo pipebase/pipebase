@@ -9,5 +9,4 @@ pub(crate) const DEFAULT_APP_OBJECT: &str = "App::default()";
 pub(crate) const BOOTSTRAP_FUNCTION_META: &str = "bootstrap";
 pub(crate) const BOOTSTRAP_FUNCTION_NAME: &str = "bootstrap";
 pub(crate) const BOOTSTRAP_MODULE_META_PATH: &str = "bootstrap";
-pub(crate) const DEFAULT_CONTEXT_STORE_NAME: &str = "pipe_contexts";
 pub(crate) const PIPEBASE_MAIN: &str = "pipebase::main";

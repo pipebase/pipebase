@@ -13,7 +13,7 @@ use crate::constants::{
     CONTEXT_STORE_CONFIG_EMPTY_PATH, CONTEXT_STORE_CONFIG_PATH, CONTEXT_STORE_CONFIG_TYPE,
     CONTEXT_STORE_NAME,
 };
-use crate::utils::{get_meta, get_meta_string_value_by_meta_path, is_skip_non_exists_pipe};
+use crate::utils::{get_meta, get_meta_string_value_by_meta_path};
 
 /// Pipe configuration type name and path
 #[derive(Clone)]
@@ -64,8 +64,8 @@ impl PipeMeta {
         &self.config_meta
     }
 
-    pub fn get_output_type_name(&self) -> &Option<String> {
-        &self.output_type_name
+    pub fn get_output_type_name(&self) -> Option<&String> {
+        self.output_type_name.as_ref()
     }
 
     pub fn get_upstream_output_type_name(&self) -> Option<String> {
@@ -80,19 +80,19 @@ impl PipeMeta {
         // upstream pipes should have identical output meta
         match self.upstream_output_type_name {
             Some(ref local_upstream_output_type_name) => {
-                if !local_upstream_output_type_name.eq(&upstream_output_type_name) {
-                    panic!(
-                        "upstream output conflict, found {} != {}",
-                        local_upstream_output_type_name, upstream_output_type_name
-                    )
-                }
+                assert!(
+                    local_upstream_output_type_name.eq(&upstream_output_type_name),
+                    "upstream output conflict, found {} != {}",
+                    local_upstream_output_type_name,
+                    upstream_output_type_name
+                );
             }
             None => self.upstream_output_type_name = Some(upstream_output_type_name),
         }
     }
 
-    pub fn add_downstream_name(&mut self, downstream_name: String) {
-        self.downstream_names.push(downstream_name)
+    pub fn add_downstream_names(&mut self, downstream_names: Vec<String>) {
+        self.downstream_names.extend(downstream_names)
     }
 
     pub fn get_downstream_names(&self) -> &Vec<String> {
@@ -186,14 +186,16 @@ impl PipeMetas {
         for attribute in attributes {
             let ref pipe_meta = PipeMeta::parse(&attribute);
             let pipe_name = pipe_meta.get_name();
-            if !pipe_names.insert(pipe_name.to_owned()) {
-                panic!("duplicated pipe name {}", pipe_name)
-            }
+            assert!(
+                pipe_names.insert(pipe_name.to_owned()),
+                "duplicated pipe name {}",
+                pipe_name
+            );
             pipe_metas.insert(pipe_name.to_owned(), pipe_meta.to_owned());
             // collect output type per pipe - channel ty
             pipe_output_type_names.insert(
                 pipe_name.to_owned(),
-                pipe_meta.get_output_type_name().to_owned(),
+                pipe_meta.get_output_type_name().cloned(),
             );
             // collect upstream pipe for input lookup - channel rx
             upstream_pipe_names.insert(
@@ -202,45 +204,35 @@ impl PipeMetas {
             );
             // collect downstream pipe - channel tx
             for upstream_pipe_name in pipe_meta.get_upstream_names() {
-                if !downstream_pipe_names.contains_key(upstream_pipe_name) {
-                    downstream_pipe_names
-                        .insert(upstream_pipe_name.to_owned(), vec![pipe_name.to_owned()]);
-                } else {
-                    downstream_pipe_names
-                        .get_mut(upstream_pipe_name)
-                        .unwrap()
-                        .push(pipe_name.to_owned());
-                }
+                let ds = downstream_pipe_names
+                    .entry(upstream_pipe_name.to_owned())
+                    .or_insert(vec![]);
+                ds.push(pipe_name.to_owned());
             }
         }
         for pipe_name in &pipe_names {
-            let pipe_meta = pipe_metas.get_mut(pipe_name).unwrap();
+            let pipe_meta = pipe_metas.get_mut(pipe_name).expect("pipe meta");
             // connect downstream pipe
-            if downstream_pipe_names.contains_key(pipe_name) {
-                for downstream_pipe_name in downstream_pipe_names.get(pipe_name).unwrap() {
-                    pipe_meta.add_downstream_name(downstream_pipe_name.to_owned())
-                }
-            }
+            pipe_meta.add_downstream_names(
+                downstream_pipe_names
+                    .get(pipe_name)
+                    .cloned()
+                    .unwrap_or(vec![]),
+            );
             // setup upstream output as input type for channel
-            for upstream_pipe_name in upstream_pipe_names.get(pipe_name).unwrap() {
-                let upstream_output_type_name = match pipe_output_type_names.get(upstream_pipe_name)
-                {
-                    Some(upstream_output_type_name) => upstream_output_type_name,
-                    None => {
-                        if is_skip_non_exists_pipe() {
-                            continue;
-                        }
-                        panic!("upstream pipe {} does not exists", upstream_pipe_name);
-                    }
-                };
-                match upstream_output_type_name {
-                    Some(upstream_output_type_name) => pipe_meta
-                        .set_upstream_output_type_name(upstream_output_type_name.to_owned()),
-                    None => panic!(
+            for upstream_pipe_name in upstream_pipe_names.get(pipe_name).expect("upstreams") {
+                let upstream_output_type_name = pipe_output_type_names
+                    .get(upstream_pipe_name)
+                    .expect(&format!(
+                        "upstream pipe {} does not exists",
+                        upstream_pipe_name
+                    ))
+                    .to_owned()
+                    .expect(&format!(
                         "output type not found in upstream pipe {}",
                         upstream_pipe_name
-                    ),
-                }
+                    ));
+                pipe_meta.set_upstream_output_type_name(upstream_output_type_name);
             }
         }
         PipeMetas {
@@ -249,23 +241,20 @@ impl PipeMetas {
     }
 
     pub fn list_pipe_name(&self) -> Vec<String> {
-        let mut pipe_names: Vec<String> = vec![];
-        for name in self.pipe_metas.keys() {
-            pipe_names.push(name.to_owned())
-        }
-        pipe_names
+        self.pipe_metas
+            .keys()
+            .into_iter()
+            .map(|k| k.to_owned())
+            .collect()
     }
 
     // generate expr per pipe meta
     pub fn generate_pipe_meta_exprs<T: VisitPipeMeta + Expr>(&self) -> Vec<String> {
-        let mut exprs: Vec<String> = vec![];
-        for pipe_meta in self.pipe_metas.values() {
-            match pipe_meta.generate_pipe_meta_expr::<T>() {
-                Some(expr) => exprs.push(expr),
-                None => (),
-            };
-        }
-        exprs
+        self.pipe_metas
+            .values()
+            .into_iter()
+            .filter_map(|meta| meta.generate_pipe_meta_expr::<T>())
+            .collect()
     }
 
     pub fn accept<T: VisitPipeMeta>(&self, visitor: &mut T) {
@@ -366,10 +355,10 @@ pub struct ContextStoreMetas {
 
 impl ContextStoreMetas {
     pub fn parse(attributes: &Vec<Attribute>) -> Self {
-        let mut metas: Vec<ContextStoreMeta> = Vec::new();
-        for attribute in attributes {
-            metas.push(ContextStoreMeta::parse(attribute));
-        }
+        let metas: Vec<ContextStoreMeta> = attributes
+            .into_iter()
+            .map(|attribute| ContextStoreMeta::parse(attribute))
+            .collect();
         ContextStoreMetas { metas }
     }
 
@@ -380,14 +369,10 @@ impl ContextStoreMetas {
     }
 
     pub fn generate_cstore_meta_exprs<V: VisitContextStoreMeta + Expr>(&self) -> Vec<String> {
-        let mut exprs: Vec<String> = Vec::new();
-        for meta in &self.metas {
-            match meta.generate_cstore_meta_expr::<V>() {
-                Some(expr) => exprs.push(expr),
-                None => (),
-            };
-        }
-        exprs
+        self.metas
+            .iter()
+            .filter_map(|meta| meta.generate_cstore_meta_expr::<V>())
+            .collect()
     }
 
     pub fn accept<V: VisitContextStoreMeta>(&self, visitor: &mut V) {
