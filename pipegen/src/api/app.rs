@@ -270,6 +270,12 @@ impl App {
         validator.validate_objects()
     }
 
+    pub fn validate_cstores(&self) -> Result<()> {
+        let mut validator = AppValidator::new("");
+        self.accept(&mut validator);
+        validator.validate_cstores()
+    }
+
     pub fn validate(&self) -> Result<()> {
         let mut validator = AppValidator::new("");
         self.accept(&mut validator);
