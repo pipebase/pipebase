@@ -163,11 +163,8 @@ impl AppGenerator {
     }
 
     fn generate_context_store(&self, indent: usize) -> String {
-        let cstore = match self.get_app().get_context_store() {
-            Some(cstore) => cstore,
-            None => return String::new(),
-        };
-        Self::generate_entity::<ContextStore, ContextStoreGenerator>(cstore, indent)
+        let cstores = self.get_app().get_context_stores();
+        Self::generate_entities::<ContextStore, ContextStoreGenerator>(cstores, indent, "\n")
     }
 
     fn generate_app_object(&self, indent: usize) -> String {

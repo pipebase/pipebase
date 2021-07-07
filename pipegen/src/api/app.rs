@@ -22,7 +22,7 @@ pub struct App {
     name: String,
     metas: Option<Vec<Meta>>,
     dependencies: Option<Vec<PackageDependency>>,
-    cstore: Option<ContextStore>,
+    cstores: Option<Vec<ContextStore>>,
     pipes: Vec<Pipe>,
     objects: Option<Vec<Object>>,
 }
@@ -99,6 +99,11 @@ impl App {
         match self.objects {
             Some(_) => (),
             None => self.objects = Some(vec![]),
+        }
+        // init context stores
+        match self.cstores {
+            Some(_) => (),
+            None => self.cstores = Some(vec![]),
         }
     }
 
@@ -214,12 +219,12 @@ impl App {
         self.metas.as_ref().unwrap()
     }
 
-    pub fn get_context_store(&self) -> Option<&ContextStore> {
-        self.cstore.as_ref()
+    pub fn get_context_stores(&self) -> &Vec<ContextStore> {
+        self.cstores.as_ref().expect("stores")
     }
 
     pub(crate) fn get_objects(&self) -> &Vec<Object> {
-        self.objects.as_ref().unwrap()
+        self.objects.as_ref().expect("objects")
     }
 
     pub(crate) fn get_pipes(&self) -> &Vec<Pipe> {
