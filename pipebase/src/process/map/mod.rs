@@ -52,8 +52,8 @@ where
         txs: Vec<Sender<U>>,
         mut rx: Option<Receiver<T>>,
     ) -> Result<()> {
-        assert!(rx.is_some());
-        assert!(!txs.is_empty());
+        assert!(rx.is_some(), "mapper {} has no upstreams", self.name);
+        assert!(!txs.is_empty(), "mapper {} has no downstreams", self.name);
         let mut mapper = config.config_into().await?;
         let mut txs = senders_as_map(txs);
         let rx = rx.as_mut().unwrap();

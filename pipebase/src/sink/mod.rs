@@ -39,8 +39,8 @@ where
         txs: Vec<Sender<()>>,
         mut rx: Option<Receiver<T>>,
     ) -> Result<()> {
-        assert!(rx.is_some());
-        assert!(txs.is_empty());
+        assert!(rx.is_some(), "sink {} has no upstreams", self.name);
+        assert!(txs.is_empty(), "sink {} has invalid downstreams", self.name);
         let mut exporter = config.config_into().await?;
         let rx = rx.as_mut().unwrap();
         log::info!("exporter {} run ...", self.name);

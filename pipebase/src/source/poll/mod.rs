@@ -42,7 +42,8 @@ where
         txs: Vec<Sender<U>>,
         rx: Option<Receiver<()>>,
     ) -> Result<()> {
-        assert!(rx.is_none());
+        assert!(rx.is_none(), "poller {} has invalid upstreams", self.name);
+        assert!(!txs.is_empty(), "poller {} has no downstreams", self.name);
         let mut poller = config.config_into().await?;
         let mut txs = senders_as_map(txs);
         info!("source {} run ...", self.name);

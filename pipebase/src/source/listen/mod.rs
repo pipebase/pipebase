@@ -44,7 +44,8 @@ where
         txs: Vec<Sender<U>>,
         rx: Option<Receiver<()>>,
     ) -> Result<()> {
-        assert!(rx.is_none());
+        assert!(rx.is_none(), "listener {} has invalid upstreams", self.name);
+        assert!(!txs.is_empty(), "listener {} has no downstreams", self.name);
         // connect listener
         let (tx0, mut rx0) = channel::<U>(1024);
         let mut listener = config.config_into().await?;

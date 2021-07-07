@@ -55,8 +55,12 @@ where
         txs: Vec<Sender<U>>,
         mut rx: Option<Receiver<T>>,
     ) -> Result<()> {
-        assert!(rx.is_some());
-        assert!(!txs.is_empty());
+        assert!(rx.is_some(), "collector {} has no upstreams", self.name);
+        assert!(
+            !txs.is_empty(),
+            "collector {} has no downstreams",
+            self.name
+        );
         let collector: Arc<Mutex<V>> = Arc::new(Mutex::new(config.config_into().await?));
         let collector_clone = collector.to_owned();
         let exit_c = Arc::new(AtomicBool::new(false));

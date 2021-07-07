@@ -42,8 +42,8 @@ where
         txs: Vec<Sender<U>>,
         mut rx: Option<Receiver<T>>,
     ) -> crate::error::Result<()> {
-        assert!(rx.is_some());
-        assert!(!txs.is_empty());
+        assert!(rx.is_some(), "streamer {} has no upstreams", self.name);
+        assert!(!txs.is_empty(), "streamer {} has no downstreams", self.name);
         let (tx0, mut rx0) = channel::<U>(1024);
         let mut streamer = config.config_into().await?;
         streamer.set_sender(tx0);
