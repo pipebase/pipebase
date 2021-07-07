@@ -214,7 +214,7 @@ impl App {
         self.metas.as_ref().unwrap()
     }
 
-    fn get_context_store(&self) -> Option<&ContextStore> {
+    pub fn get_context_store(&self) -> Option<&ContextStore> {
         self.cstore.as_ref()
     }
 
