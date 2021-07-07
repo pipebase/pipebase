@@ -5,6 +5,8 @@ mod roundrobin;
 pub use hash::*;
 pub use random::*;
 pub use roundrobin::*;
+use tokio::sync::mpsc::error::SendError;
+use tokio::task::JoinHandle;
 
 use crate::{
     filter_senders_by_indices, senders_as_map, spawn_send, wait_join_handles, ConfigInto,
@@ -65,12 +67,16 @@ where
             };
             self.context.set_state(State::Send);
             let candidates = txs.keys().collect::<Vec<&usize>>();
-            let mut jhs = HashMap::new();
-            for i in selector.select(&t, &candidates) {
-                let tx = txs.get(&i).unwrap();
-                let t_clone = t.to_owned();
-                jhs.insert(i, spawn_send(tx.to_owned(), t_clone));
-            }
+            let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<T>>>> = selector
+                .select(&t, &candidates)
+                .into_iter()
+                .map(|i| {
+                    (
+                        i,
+                        spawn_send(txs.get(&i).expect("sender").to_owned(), t.to_owned()),
+                    )
+                })
+                .collect();
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
             self.context.inc_total_run();

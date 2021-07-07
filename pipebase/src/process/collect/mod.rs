@@ -19,9 +19,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::{
     sync::{
-        mpsc::{Receiver, Sender},
+        mpsc::{error::SendError, Receiver, Sender},
         Mutex,
     },
+    task::JoinHandle,
     time::Interval,
 };
 
@@ -98,17 +99,15 @@ where
                     false => (),
                 }
                 interval.tick().await;
-                let data = {
+                let u = {
                     let mut c = collector.lock().await;
                     c.flush().await
                 };
                 context.set_state(State::Send);
-                let mut jhs = HashMap::new();
-                for (idx, tx) in &txs {
-                    let tx_clone = tx.to_owned();
-                    let data_clone = data.to_owned();
-                    jhs.insert(idx.to_owned(), spawn_send(tx_clone, data_clone));
-                }
+                let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
+                    .iter()
+                    .map(|(idx, tx)| (idx.to_owned(), spawn_send(tx.to_owned(), u.to_owned())))
+                    .collect();
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
                 context.inc_total_run();

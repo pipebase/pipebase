@@ -16,7 +16,8 @@ use std::fmt::Debug;
 
 use async_trait::async_trait;
 use log::error;
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
+use tokio::task::JoinHandle;
 
 use crate::context::{Context, State};
 use crate::error::Result;
@@ -82,11 +83,10 @@ where
                 }
             };
             self.context.set_state(State::Send);
-            let mut jhs = HashMap::new();
-            for (idx, tx) in &txs {
-                let u_clone: U = u.to_owned();
-                jhs.insert(idx.to_owned(), spawn_send(tx.to_owned(), u_clone));
-            }
+            let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
+                .iter()
+                .map(|(idx, tx)| (idx.to_owned(), spawn_send(tx.to_owned(), u.to_owned())))
+                .collect();
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
             self.context.inc_total_run();

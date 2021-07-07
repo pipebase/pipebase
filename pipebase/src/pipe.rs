@@ -27,13 +27,7 @@ pub trait HasContext {
 
 // Sender Operations
 pub(crate) fn senders_as_map<U>(txs: Vec<Sender<U>>) -> HashMap<usize, Sender<U>> {
-    let mut i: usize = 0;
-    let mut txs_map: HashMap<usize, Sender<U>> = HashMap::new();
-    for tx in txs {
-        txs_map.insert(i, tx);
-        i += 1;
-    }
-    txs_map
+    txs.into_iter().enumerate().into_iter().collect()
 }
 
 pub(crate) fn spawn_send<U>(

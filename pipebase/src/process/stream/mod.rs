@@ -9,7 +9,8 @@ use crate::{filter_senders_by_indices, senders_as_map, spawn_send, wait_join_han
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::mpsc::{channel, Receiver, Sender};
+use tokio::sync::mpsc::{channel, error::SendError, Receiver, Sender};
+use tokio::task::JoinHandle;
 
 use crate::{ConfigInto, FromConfig, HasContext, Pipe};
 
@@ -84,11 +85,10 @@ where
                     }
                 };
                 context.set_state(State::Send);
-                let mut jhs = HashMap::new();
-                for (idx, tx) in &txs {
-                    let u_clone: U = u.to_owned();
-                    jhs.insert(idx.to_owned(), spawn_send(tx.clone(), u_clone));
-                }
+                let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
+                    .iter()
+                    .map(|(idx, tx)| (idx.to_owned(), spawn_send(tx.to_owned(), u.to_owned())))
+                    .collect();
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
                 context.inc_total_run();

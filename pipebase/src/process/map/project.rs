@@ -187,7 +187,6 @@ where
 mod tests {
 
     use crate::*;
-    use tokio::sync::mpsc::Sender;
 
     #[derive(Debug)]
     struct Record {
