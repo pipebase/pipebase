@@ -112,24 +112,6 @@ pub struct DataField {
 }
 
 impl DataField {
-    pub fn new_named_field(
-        data_ty: DataType,
-        name: String,
-        metas: Vec<Meta>,
-        is_boxed: bool,
-        is_optional: bool,
-        is_public: bool,
-    ) -> Self {
-        DataField {
-            name: Some(name),
-            data_ty: data_ty,
-            metas: Some(metas),
-            is_boxed: Some(is_boxed),
-            is_optional: Some(is_optional),
-            is_public: Some(is_public),
-        }
-    }
-
     pub fn get_data_type_literal(&self, indent: usize) -> String {
         let ty_lit = data_ty_to_literal(&self.data_ty);
         let ty_lit = match self.is_boxed {
@@ -259,18 +241,19 @@ impl Entity for Object {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        let mut dep: Vec<String> = vec![];
-        for field in self.fields.as_slice() {
-            dep.extend(field.list_dependency())
-        }
-        dep
+        self.fields
+            .iter()
+            .map(|field| field.list_dependency())
+            .flatten()
+            .collect()
     }
 
     fn to_literal(&self, indent: usize) -> String {
-        let mut field_lits: Vec<String> = vec![];
-        for field in self.fields.as_slice() {
-            field_lits.push(field.to_literal(indent + 1))
-        }
+        let field_lits: Vec<String> = self
+            .fields
+            .iter()
+            .map(|field| field.to_literal(indent + 1))
+            .collect();
         let field_lits = field_lits.join(",\n");
         let indent_lit = indent_literal(indent);
         let struct_lit = format!(

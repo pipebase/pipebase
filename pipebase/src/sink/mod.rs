@@ -39,31 +39,28 @@ where
         txs: Vec<Sender<()>>,
         mut rx: Option<Receiver<T>>,
     ) -> Result<()> {
-        assert!(rx.is_some());
-        assert!(txs.is_empty());
-        let mut exporter = config.config_into().await.unwrap();
+        assert!(rx.is_some(), "sink {} has no upstreams", self.name);
+        assert!(txs.is_empty(), "sink {} has invalid downstreams", self.name);
+        let mut exporter = config.config_into().await?;
         let rx = rx.as_mut().unwrap();
         log::info!("exporter {} run ...", self.name);
         loop {
-            self.context.inc_total_run();
             self.context.set_state(State::Receive);
             let t = match rx.recv().await {
                 Some(t) => t,
                 None => {
-                    self.context.inc_success_run();
                     break;
                 }
             };
             self.context.set_state(State::Export);
             match exporter.export(&t).await {
-                Ok(_) => {
-                    self.context.inc_success_run();
-                }
+                Ok(_) => (),
                 Err(err) => {
                     error!("exporter error {}", err);
                     break;
                 }
-            }
+            };
+            self.context.inc_total_run();
         }
         log::info!("exporter {} exit ...", self.name);
         self.context.set_state(State::Done);
@@ -72,6 +69,10 @@ where
 }
 
 impl<'a> HasContext for Exporter<'a> {
+    fn get_name(&self) -> String {
+        self.name.to_owned()
+    }
+
     fn get_context(&self) -> Arc<Context> {
         self.context.clone()
     }

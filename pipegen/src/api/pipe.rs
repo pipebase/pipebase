@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fmt::Display;
 
 use crate::api::{Entity, EntityAccept, VisitEntity};
@@ -129,6 +130,20 @@ impl Pipe {
 
     pub(crate) fn get_output_data_type(&self) -> Option<&DataField> {
         self.output.as_ref()
+    }
+
+    pub fn filter_upstreams(&mut self, pipe_id_filter: &HashSet<String>) {
+        let upstreams = match self.upstreams {
+            Some(ref upstreams) => upstreams,
+            None => return,
+        };
+        self.upstreams = Some(
+            upstreams
+                .to_owned()
+                .into_iter()
+                .filter(|id| pipe_id_filter.contains(id))
+                .collect(),
+        )
     }
 }
 

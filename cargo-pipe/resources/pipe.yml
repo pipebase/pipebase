@@ -47,3 +47,8 @@ objects:
           - project:
               expr: "b.bar2.to_owned()"
               alias: "b"
+cstores:
+  - name: "context_printer"
+    config:
+      ty: "ContextPrinterConfig"
+      path: "catalogs/context_printer.yml"

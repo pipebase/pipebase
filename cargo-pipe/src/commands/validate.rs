@@ -14,13 +14,17 @@ pub fn cmd() -> Cmd {
             Arg::new("object")
                 .short('o')
                 .about("Validate objects in pipe manifest"),
+            Arg::new("cstore")
+                .short('c')
+                .about("Validate context stores in pipe manifest"),
         ])
 }
 
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
     let pipe = args.is_present("pipe");
     let object = args.is_present("object");
-    let opts = ValidateOptions::new(pipe, object);
+    let cstore = args.is_present("cstore");
+    let opts = ValidateOptions::new(pipe, object, cstore);
     do_exec(config, &opts)?;
     Ok(())
 }
@@ -28,6 +32,7 @@ pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
 pub struct ValidateOptions {
     pipe: bool,
     object: bool,
+    cstore: bool,
 }
 
 impl ValidateOptions {
@@ -39,8 +44,16 @@ impl ValidateOptions {
         self.object
     }
 
-    pub fn new(pipe: bool, object: bool) -> Self {
-        ValidateOptions { pipe, object }
+    pub fn cstore(&self) -> bool {
+        self.cstore
+    }
+
+    pub fn new(pipe: bool, object: bool, cstore: bool) -> Self {
+        ValidateOptions {
+            pipe,
+            object,
+            cstore,
+        }
     }
 }
 
@@ -49,6 +62,7 @@ impl Default for ValidateOptions {
         ValidateOptions {
             pipe: true,
             object: true,
+            cstore: true,
         }
     }
 }

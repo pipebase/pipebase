@@ -4,8 +4,8 @@ pub use file::*;
 use async_trait::async_trait;
 use log::error;
 use log::info;
-use tokio::sync::mpsc::Receiver;
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
+use tokio::task::JoinHandle;
 
 use crate::context::{Context, State};
 use crate::error::Result;
@@ -44,10 +44,11 @@ where
         txs: Vec<Sender<U>>,
         rx: Option<Receiver<()>>,
     ) -> Result<()> {
-        assert!(rx.is_none());
+        assert!(rx.is_none(), "listener {} has invalid upstreams", self.name);
+        assert!(!txs.is_empty(), "listener {} has no downstreams", self.name);
         // connect listener
         let (tx0, mut rx0) = channel::<U>(1024);
-        let mut listener = config.config_into().await.unwrap();
+        let mut listener = config.config_into().await?;
         listener.set_sender(tx0);
         // start listener
         let join_listener = tokio::spawn(async move {
@@ -63,12 +64,10 @@ where
         let join_event_loop = tokio::spawn(async move {
             log::info!("listener {} run ...", name);
             loop {
-                context.inc_total_run();
                 context.set_state(State::Receive);
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        context.inc_success_run();
                         break;
                     }
                     false => (),
@@ -76,19 +75,17 @@ where
                 let u = match rx0.recv().await {
                     Some(u) => u,
                     None => {
-                        context.inc_success_run();
                         break;
                     }
                 };
                 context.set_state(State::Send);
-                let mut jhs = HashMap::new();
-                for (idx, tx) in &txs {
-                    let u_clone: U = u.to_owned();
-                    jhs.insert(idx.to_owned(), spawn_send(tx.clone(), u_clone));
-                }
+                let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
+                    .iter()
+                    .map(|(idx, tx)| (idx.to_owned(), spawn_send(tx.to_owned(), u.to_owned())))
+                    .collect();
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
-                context.inc_success_run();
+                context.inc_total_run();
             }
             log::info!("listener {} exit ...", name);
             context.set_state(State::Done);
@@ -105,6 +102,10 @@ where
 }
 
 impl<'a> HasContext for Listener<'a> {
+    fn get_name(&self) -> String {
+        self.name.to_owned()
+    }
+
     fn get_context(&self) -> Arc<Context> {
         self.context.clone()
     }

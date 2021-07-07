@@ -17,12 +17,12 @@ pub const HASH: &str = "hash";
 pub const ORDER: &str = "order";
 
 pub const CONTEXT_STORE: &str = "cstore";
-
-pub const CONTEXT_STORE_METHOD_INSERT: &str = "cstore.method.insert";
-pub const CONTEXT_STORE_METHOD_INSERT_DEFAULT: &str = "insert";
-
-pub const CONTEXT_STORE_METHOD_GET: &str = "cstore.method.get";
-pub const CONTEXT_STORE_METHOD_GET_DEFAULT: &str = "get";
+pub const CONTEXT_STORE_NAME: &str = "cstore.name";
+pub const CONTEXT_STORE_CONFIG_TYPE: &str = "cstore.config.ty";
+pub const CONTEXT_STORE_CONFIG_PATH: &str = "cstore.config.path";
+pub const CONTEXT_STORE_CONFIG_EMPTY_PATH: &str = "";
+pub const CONTEXT_STORE_MACRO: &str = "cstore!";
+pub const RUN_CONTEXT_STORE_MACRO: &str = "run_cstore!";
 
 pub const BOOTSTRAP_PIPE: &str = "pipe";
 pub const BOOTSTRAP_PIPE_NAME: &str = "pipe.name";
@@ -47,7 +47,3 @@ pub const AGGREGATE_TOP: &str = "agg.top";
 pub const GROUP: &str = "group";
 
 pub const EQUAL: &str = "equal";
-
-pub const PIPEMETA_FLAGS_ENV: &str = "PIPEMETA_FLAGS";
-pub const PIPEMETA_FLAGS_SEP: &str = " ";
-pub const PIPEMETA_FLAG_SKIP_NON_EXISTS_PIPE: &str = "-Pskip";

@@ -16,7 +16,8 @@ use std::fmt::Debug;
 
 use async_trait::async_trait;
 use log::error;
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
+use tokio::task::JoinHandle;
 
 use crate::context::{Context, State};
 use crate::error::Result;
@@ -51,19 +52,17 @@ where
         txs: Vec<Sender<U>>,
         mut rx: Option<Receiver<T>>,
     ) -> Result<()> {
-        assert!(rx.is_some());
-        assert!(!txs.is_empty());
-        let mut mapper = config.config_into().await.unwrap();
+        assert!(rx.is_some(), "mapper {} has no upstreams", self.name);
+        assert!(!txs.is_empty(), "mapper {} has no downstreams", self.name);
+        let mut mapper = config.config_into().await?;
         let mut txs = senders_as_map(txs);
         let rx = rx.as_mut().unwrap();
         log::info!("mapper {} run ...", self.name);
         loop {
-            self.context.inc_total_run();
             self.context.set_state(State::Receive);
             // if all receiver dropped, sender drop as well
             match txs.is_empty() {
                 true => {
-                    self.context.inc_success_run();
                     break;
                 }
                 false => (),
@@ -72,7 +71,6 @@ where
             let t = match t {
                 Some(t) => t,
                 None => {
-                    self.context.inc_success_run();
                     break;
                 }
             };
@@ -85,14 +83,13 @@ where
                 }
             };
             self.context.set_state(State::Send);
-            let mut jhs = HashMap::new();
-            for (idx, tx) in &txs {
-                let u_clone: U = u.to_owned();
-                jhs.insert(idx.to_owned(), spawn_send(tx.to_owned(), u_clone));
-            }
+            let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
+                .iter()
+                .map(|(idx, tx)| (idx.to_owned(), spawn_send(tx.to_owned(), u.to_owned())))
+                .collect();
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
-            self.context.inc_success_run();
+            self.context.inc_total_run();
         }
         log::info!("mapper {} exit ...", self.name);
         self.context.set_state(State::Done);
@@ -101,6 +98,10 @@ where
 }
 
 impl<'a> HasContext for Mapper<'a> {
+    fn get_name(&self) -> String {
+        self.name.to_owned()
+    }
+
     fn get_context(&self) -> Arc<Context> {
         self.context.clone()
     }

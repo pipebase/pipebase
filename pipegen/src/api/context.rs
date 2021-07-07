@@ -1,69 +1,75 @@
-use super::meta::{Meta, MetaValue};
-use super::{DataField, DataType};
-
+use super::{
+    meta::{meta_to_literal, Meta, MetaValue},
+    Entity, EntityAccept, VisitEntity,
+};
 use serde::Deserialize;
-use std::collections::HashMap;
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct ContextStoreConfig {
+    ty: String,
+    path: Option<String>,
+}
+
+impl ContextStoreConfig {
+    fn get_ty(&self) -> &String {
+        &self.ty
+    }
+    fn get_path(&self) -> Option<&String> {
+        self.path.as_ref()
+    }
+}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ContextStore {
     name: String,
-    methods: HashMap<String, String>,
-    data_ty: DataType,
+    config: ContextStoreConfig,
 }
 
+impl Entity for ContextStore {
+    fn get_id(&self) -> String {
+        self.name.to_owned()
+    }
+
+    fn to_literal(&self, indent: usize) -> String {
+        let ref meta = self.get_meta();
+        meta_to_literal(meta, indent)
+    }
+}
+
+impl<V: VisitEntity<Self>> EntityAccept<V> for ContextStore {}
+
 impl ContextStore {
-    pub(crate) fn new(name: String) -> Self {
-        let mut methods = HashMap::new();
-        methods.insert("get".to_owned(), "get".to_owned());
-        methods.insert("insert".to_owned(), "insert".to_owned());
-        let data_ty = DataType::HashMap {
-            key_data_ty: Box::new(DataType::String),
-            value_data_ty: Box::new(DataType::Object("std::sync::Arc<Context>".to_owned())),
-        };
-        ContextStore {
-            name: name,
-            methods: methods,
-            data_ty: data_ty,
-        }
-    }
-
-    pub(crate) fn get_name(&self) -> &String {
-        &self.name
-    }
-
-    pub(crate) fn get_methods(&self) -> &HashMap<String, String> {
-        &self.methods
-    }
-
-    fn methods_as_meta(&self) -> Meta {
-        let mut method_metas = vec![];
-        for (name, value) in &self.methods {
-            method_metas.push(Meta::Value {
-                name: name.to_owned(),
-                meta: MetaValue::Str(value.to_owned()),
-            });
-        }
-        Meta::List {
-            name: "method".to_owned(),
-            metas: method_metas,
-        }
-    }
-
     fn get_meta(&self) -> Meta {
+        let metas = vec![
+            Meta::Value {
+                name: "name".to_owned(),
+                meta: MetaValue::Str(self.name.to_owned()),
+            },
+            self.get_config_meta(),
+        ];
         Meta::List {
             name: "cstore".to_owned(),
-            metas: vec![self.methods_as_meta()],
+            metas,
         }
     }
 
-    pub(crate) fn as_data_field(&self) -> DataField {
-        DataField::new_named_field(
-            self.data_ty.to_owned(),
-            self.name.to_owned(),
-            vec![self.get_meta()],
-            false,
-            false,
-            true,
-        )
+    fn get_config_meta(&self) -> Meta {
+        let config_ty = self.config.get_ty();
+        let config_path = self.config.get_path();
+        let mut metas = vec![Meta::Value {
+            name: "ty".to_owned(),
+            meta: MetaValue::Str(config_ty.to_owned()),
+        }];
+        match config_path {
+            Some(path) => metas.push(Meta::Value {
+                name: "path".to_owned(),
+                meta: MetaValue::Str(path.to_owned()),
+            }),
+            None => (),
+        };
+        Meta::List {
+            name: "config".to_owned(),
+            metas,
+        }
     }
 }

@@ -1,6 +1,6 @@
-use crate::api::{App, Entity, EntityAccept, Object, Pipe, VisitEntity};
+use crate::api::{App, ContextStore, Entity, EntityAccept, Object, Pipe, VisitEntity};
 use std::collections::HashSet;
-pub trait Generate<T> {
+pub trait Generate {
     fn new(indent: usize) -> Self;
     fn generate(&self) -> String;
 }
@@ -16,7 +16,7 @@ impl VisitEntity<Pipe> for PipeGenerator {
     }
 }
 
-impl Generate<Pipe> for PipeGenerator {
+impl Generate for PipeGenerator {
     fn new(indent: usize) -> Self {
         PipeGenerator {
             indent: indent,
@@ -25,13 +25,10 @@ impl Generate<Pipe> for PipeGenerator {
     }
 
     fn generate(&self) -> String {
-        self.get_pipe().to_literal(self.indent)
-    }
-}
-
-impl PipeGenerator {
-    pub fn get_pipe(&self) -> &Pipe {
-        self.pipe.as_ref().unwrap()
+        self.pipe
+            .as_ref()
+            .expect("pipe inited")
+            .to_literal(self.indent)
     }
 }
 
@@ -46,7 +43,7 @@ impl VisitEntity<Object> for ObjectGenerator {
     }
 }
 
-impl Generate<Object> for ObjectGenerator {
+impl Generate for ObjectGenerator {
     fn new(indent: usize) -> Self {
         ObjectGenerator {
             indent: indent,
@@ -55,13 +52,37 @@ impl Generate<Object> for ObjectGenerator {
     }
 
     fn generate(&self) -> String {
-        self.get_object().to_literal(self.indent)
+        self.object
+            .as_ref()
+            .expect("object inited")
+            .to_literal(self.indent)
     }
 }
 
-impl ObjectGenerator {
-    fn get_object(&self) -> &Object {
-        self.object.as_ref().unwrap()
+pub struct ContextStoreGenerator {
+    indent: usize,
+    cstore: Option<ContextStore>,
+}
+
+impl VisitEntity<ContextStore> for ContextStoreGenerator {
+    fn visit(&mut self, cstore: &ContextStore) {
+        self.cstore = Some(cstore.to_owned())
+    }
+}
+
+impl Generate for ContextStoreGenerator {
+    fn new(indent: usize) -> Self {
+        ContextStoreGenerator {
+            indent: indent,
+            cstore: None,
+        }
+    }
+
+    fn generate(&self) -> String {
+        self.cstore
+            .as_ref()
+            .expect("cstore inited")
+            .to_literal(self.indent)
     }
 }
 
@@ -69,7 +90,6 @@ pub struct AppGenerator {
     indent: usize,
     app: Option<App>,
     pipe_filter: Option<HashSet<String>>,
-    object_filter: Option<HashSet<String>>,
 }
 
 impl VisitEntity<App> for AppGenerator {
@@ -78,13 +98,12 @@ impl VisitEntity<App> for AppGenerator {
     }
 }
 
-impl Generate<App> for AppGenerator {
+impl Generate for AppGenerator {
     fn new(indent: usize) -> Self {
         AppGenerator {
             indent: indent,
             app: None,
             pipe_filter: None,
-            object_filter: None,
         }
     }
 
@@ -94,7 +113,7 @@ impl Generate<App> for AppGenerator {
 }
 
 impl AppGenerator {
-    fn generate_entity<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
+    fn generate_entity<T: EntityAccept<G>, G: Generate + VisitEntity<T>>(
         entity: &T,
         indent: usize,
     ) -> String {
@@ -103,52 +122,49 @@ impl AppGenerator {
         generator.generate()
     }
 
-    fn generate_entities<T: EntityAccept<G>, G: Generate<T> + VisitEntity<T>>(
+    fn generate_entities<T: EntityAccept<G>, G: Generate + VisitEntity<T>>(
         entities: &Vec<T>,
-        entity_id_filter: Option<&HashSet<String>>,
         indent: usize,
         join_sep: &str,
     ) -> String {
-        let mut lits: Vec<String> = vec![];
-        for entity in entities.as_slice() {
-            let filter = match entity_id_filter {
-                Some(filter) => filter,
-                None => {
-                    lits.push(Self::generate_entity(entity, indent));
-                    continue;
-                }
-            };
-            if filter.contains(&entity.get_id()) {
-                lits.push(Self::generate_entity(entity, indent));
-            }
-        }
+        let lits: Vec<String> = entities
+            .into_iter()
+            .map(|entity| Self::generate_entity(entity, indent))
+            .collect();
         lits.join(join_sep)
     }
 
     fn get_app(&self) -> &App {
-        self.app.as_ref().unwrap()
+        self.app.as_ref().expect("app inited")
     }
 
     fn generate_objects(&self, indent: usize) -> String {
         let objects = self.get_app().get_objects();
-        let objects_lit = Self::generate_entities::<Object, ObjectGenerator>(
-            objects,
-            self.object_filter.as_ref(),
-            indent,
-            "\n\n",
-        );
+        let objects_lit =
+            Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n");
         objects_lit
     }
 
     fn generate_pipes(&self, indent: usize) -> String {
-        let pipes = self.get_app().get_pipes();
-        let pipes_lit = Self::generate_entities::<Pipe, PipeGenerator>(
-            pipes,
-            self.pipe_filter.as_ref(),
-            indent,
-            "\n",
-        );
+        let pipes = self.get_app().get_pipes().to_owned();
+        let pipes = match self.pipe_filter {
+            Some(ref filter) => pipes
+                .into_iter()
+                .filter(|pipe| filter.contains(&pipe.get_id()))
+                .map(|mut pipe| {
+                    pipe.filter_upstreams(filter);
+                    pipe
+                })
+                .collect(),
+            None => pipes,
+        };
+        let pipes_lit = Self::generate_entities::<Pipe, PipeGenerator>(&pipes, indent, "\n");
         pipes_lit
+    }
+
+    fn generate_context_store(&self, indent: usize) -> String {
+        let cstores = self.get_app().get_context_stores();
+        Self::generate_entities::<ContextStore, ContextStoreGenerator>(cstores, indent, "\n")
     }
 
     fn generate_app_object(&self, indent: usize) -> String {
@@ -175,6 +191,7 @@ impl AppGenerator {
         sections.push(self.generate_use_modules(indent));
         sections.push(self.generate_objects(indent));
         sections.push(self.generate_pipes(indent));
+        sections.push(self.generate_context_store(indent));
         sections.push(self.generate_app_object(indent));
         sections.push(self.generate_bootstrap_app_function(indent));
         let module_lit = Self::generate_module(&module_name, &sections);
@@ -183,6 +200,11 @@ impl AppGenerator {
     }
 
     fn generate_module(module: &str, sections: &Vec<String>) -> String {
+        let sections: Vec<String> = sections
+            .to_owned()
+            .into_iter()
+            .filter(|s| !s.is_empty())
+            .collect();
         format!("mod {} {{\n{}\n}}", module, sections.join("\n\n"))
     }
 

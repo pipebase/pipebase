@@ -93,10 +93,11 @@ impl Describe for PipeGraphDescriber {
 
 impl PipeGraphDescriber {
     pub(crate) fn describe_pipelines(&self, pid: &str) -> Result<Vec<String>> {
-        let mut results: Vec<String> = Vec::new();
-        for pipeline in &self.display_pipelines(pid)? {
-            results.push(format!("{}", pipeline))
-        }
+        let results: Vec<String> = self
+            .display_pipelines(pid)?
+            .into_iter()
+            .map(|pipeline| format!("{}", pipeline))
+            .collect();
         Ok(results)
     }
 
@@ -109,11 +110,10 @@ impl PipeGraphDescriber {
     }
 
     pub(crate) fn describe_pipe_components(&self) -> Vec<String> {
-        let mut results: Vec<String> = Vec::new();
-        for component in self.display_pipe_components() {
-            results.push(format!("{}", component))
-        }
-        results
+        self.display_pipe_components()
+            .into_iter()
+            .map(|component| format!("{}", component))
+            .collect()
     }
 
     fn display_source_pipe_ids(&self) -> EntityIdsDisplay {
@@ -133,29 +133,26 @@ impl PipeGraphDescriber {
     }
 
     fn display_pipe_components(&self) -> Vec<EntityIdsDisplay> {
-        let mut components_display: Vec<EntityIdsDisplay> = Vec::new();
-        for component in self.get_pipe_components() {
-            let component_display = EntityIdsDisplay {
+        self.get_pipe_components()
+            .into_iter()
+            .map(|component| EntityIdsDisplay {
                 ids: component,
                 sep: ENTITY_ID_LIST_SEP.to_owned(),
                 label: Some(PIPE_COMPONENT_LABEL.to_owned()),
-            };
-            components_display.push(component_display);
-        }
-        components_display
+            })
+            .collect()
     }
 
     fn display_pipelines(&self, pid: &str) -> Result<Vec<EntityIdsDisplay>> {
-        let mut pipelines_display: Vec<EntityIdsDisplay> = Vec::new();
-        for pipeline in self.get_pipelines(pid)? {
-            let pipeline = self.format_pipeline_with_output_type(pipeline);
-            let pipeline_display = EntityIdsDisplay {
-                ids: pipeline,
+        let pipelines_display: Vec<EntityIdsDisplay> = self
+            .get_pipelines(pid)?
+            .into_iter()
+            .map(|pipeline| EntityIdsDisplay {
+                ids: self.format_pipeline_with_output_type(pipeline),
                 sep: PIPE_DIRECT_SEP.to_owned(),
                 label: Some(PIPELINE_LABEL.to_owned()),
-            };
-            pipelines_display.push(pipeline_display);
-        }
+            })
+            .collect();
         Ok(pipelines_display)
     }
 
@@ -196,11 +193,11 @@ impl PipeGraphDescriber {
     }
 
     fn get_pipe_components(&self) -> Vec<Vec<String>> {
-        let mut components: Vec<Vec<String>> = Vec::new();
-        for component in self.graph.find_components().values() {
-            components.push(component.to_owned())
-        }
-        components
+        self.graph
+            .find_components()
+            .values()
+            .map(|component| component.to_owned())
+            .collect()
     }
 }
 

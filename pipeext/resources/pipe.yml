@@ -1,17 +1,24 @@
 name: print_timer_tick
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+  - package: pipeext
+    path: ../../../pipeext
+    modules: ["pipeext::*"]
 pipes:
   - name: timer1
     ty: Poller
     config:
       ty: TimerConfig
-      path: resources/catalogs/timer.yml
+      path: catalogs/poll/timer.yml
     output:
       data_ty: UnsignedLongLong
   - name: timer2
     ty: Poller
     config:
       ty: TimerConfig
-      path: resources/catalogs/timer.yml
+      path: catalogs/poll/timer.yml
     output:
       data_ty: UnsignedLongLong
   - name: printer
@@ -20,7 +27,7 @@ pipes:
       ty: PrinterConfig
     upstreams: [ "timer1", "timer2" ]
 cstores:
-  - name: "context_printer"
+  - name: "context_server"
     config:
-      ty: "ContextPrinterConfig"
-      path: "resources/catalogs/context_printer.yml"
+      ty: "ContextRestServerConfig"
+      path: "catalogs/context/rest_server.yml"

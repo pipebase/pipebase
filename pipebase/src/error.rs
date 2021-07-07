@@ -25,6 +25,7 @@ impl Debug for Error {
 }
 #[derive(Debug)]
 pub enum ErrorImpl {
+    Any(anyhow::Error),
     IO(std::io::Error),
     Join(tokio::task::JoinError),
 }
@@ -32,6 +33,7 @@ pub enum ErrorImpl {
 impl ErrorImpl {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
+            ErrorImpl::Any(err) => err.source(),
             ErrorImpl::IO(err) => Some(err),
             ErrorImpl::Join(err) => Some(err),
         }
@@ -39,6 +41,7 @@ impl ErrorImpl {
 
     fn display(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            ErrorImpl::Any(err) => Display::fmt(err, f),
             ErrorImpl::IO(err) => Display::fmt(err, f),
             ErrorImpl::Join(err) => Display::fmt(err, f),
         }
@@ -46,6 +49,7 @@ impl ErrorImpl {
 
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            ErrorImpl::Any(err) => f.debug_tuple("Anyhow").field(err).finish(),
             ErrorImpl::IO(err) => f.debug_tuple("Io").field(err).finish(),
             ErrorImpl::Join(err) => f.debug_tuple("Join").field(err).finish(),
         }
@@ -58,4 +62,22 @@ pub fn io_error(err: std::io::Error) -> Error {
 
 pub fn join_error(err: tokio::task::JoinError) -> Error {
     Error(Box::new(ErrorImpl::Join(err)))
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error(Box::new(ErrorImpl::IO(err)))
+    }
+}
+
+impl From<tokio::task::JoinError> for Error {
+    fn from(err: tokio::task::JoinError) -> Self {
+        Error(Box::new(ErrorImpl::Join(err)))
+    }
+}
+
+impl From<anyhow::Error> for Error {
+    fn from(err: anyhow::Error) -> Self {
+        Error(Box::new(ErrorImpl::Any(err)))
+    }
 }

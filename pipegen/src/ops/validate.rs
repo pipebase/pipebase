@@ -1,8 +1,7 @@
-use crate::api::DataField;
-use crate::api::Object;
 use crate::api::{
-    App, Entity, EntityAccept, Pipe, VisitEntity, DATA_FIELD_ENTITY_ID_FIELD,
-    OBJECT_ENTITY_ID_FIELD, PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD,
+    App, ContextStore, DataField, Entity, EntityAccept, Object, Pipe, VisitEntity,
+    CONTEXT_STORE_ENTITY_ID_FIELD, DATA_FIELD_ENTITY_ID_FIELD, OBJECT_ENTITY_ID_FIELD,
+    PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD,
 };
 
 use crate::error::{api_error, Result};
@@ -31,7 +30,7 @@ impl Display for ValidationErrorDetailsDisplay {
     }
 }
 
-pub trait Validate<T> {
+pub trait Validate {
     fn new(location: &str) -> Self;
     fn validate(&mut self) -> Result<()>;
     fn check(details: &HashMap<String, String>) -> Result<()> {
@@ -55,7 +54,7 @@ impl VisitEntity<Pipe> for PipeIdValidator {
     }
 }
 
-impl Validate<Pipe> for PipeIdValidator {
+impl Validate for PipeIdValidator {
     fn new(location: &str) -> Self {
         PipeIdValidator {
             location: location.to_owned(),
@@ -96,7 +95,7 @@ impl VisitEntity<Pipe> for PipeGraphValidator {
     }
 }
 
-impl Validate<Pipe> for PipeGraphValidator {
+impl Validate for PipeGraphValidator {
     fn new(location: &str) -> Self {
         PipeGraphValidator {
             location: location.to_owned(),
@@ -155,7 +154,7 @@ impl VisitEntity<Object> for ObjectIdValidator {
     }
 }
 
-impl Validate<Object> for ObjectIdValidator {
+impl Validate for ObjectIdValidator {
     fn new(location: &str) -> Self {
         ObjectIdValidator {
             location: location.to_owned(),
@@ -199,7 +198,7 @@ impl VisitEntity<Object> for ObjectDependencyValidator {
     }
 }
 
-impl Validate<Object> for ObjectDependencyValidator {
+impl Validate for ObjectDependencyValidator {
     fn new(location: &str) -> Self {
         ObjectDependencyValidator {
             location: location.to_owned(),
@@ -239,7 +238,7 @@ impl VisitEntity<DataField> for DataFieldValidator {
     }
 }
 
-impl Validate<DataField> for DataFieldValidator {
+impl Validate for DataFieldValidator {
     fn new(location: &str) -> Self {
         DataFieldValidator {
             location: location.to_owned(),
@@ -274,8 +273,47 @@ impl Validate<DataField> for DataFieldValidator {
     }
 }
 
+#[derive(Default)]
+pub struct ContextStoreIdValidator {
+    pub location: String,
+    pub ids: Vec<String>,
+}
+
+impl VisitEntity<ContextStore> for ContextStoreIdValidator {
+    fn visit(&mut self, cstore: &ContextStore) {
+        self.ids.push(cstore.get_id())
+    }
+}
+
+impl Validate for ContextStoreIdValidator {
+    fn new(location: &str) -> Self {
+        ContextStoreIdValidator {
+            location: location.to_owned(),
+            ..Default::default()
+        }
+    }
+
+    fn validate(&mut self) -> Result<()> {
+        // camel case validation
+        let errors = validate_ids_with_predicate(
+            &self.ids,
+            &self.location,
+            CONTEXT_STORE_ENTITY_ID_FIELD,
+            "use snake_case",
+            &is_snake_lower_case,
+        );
+        Self::check(&errors)?;
+        let errors = validate_ids_uniqueness(
+            &self.ids,
+            &self.location,
+            CONTEXT_STORE_ENTITY_ID_FIELD,
+            "duplicated",
+        );
+        Self::check(&errors)
+    }
+}
+
 pub struct AppValidator {
-    location: String,
     app: Option<App>,
 }
 
@@ -285,17 +323,15 @@ impl VisitEntity<App> for AppValidator {
     }
 }
 
-impl Validate<App> for AppValidator {
-    fn new(location: &str) -> Self {
-        AppValidator {
-            location: location.to_owned(),
-            app: None,
-        }
+impl Validate for AppValidator {
+    fn new(_location: &str) -> Self {
+        AppValidator { app: None }
     }
 
     fn validate(&mut self) -> Result<()> {
         self.validate_pipes()?;
-        self.validate_objects()
+        self.validate_objects()?;
+        self.validate_cstores()
     }
 }
 
@@ -304,7 +340,7 @@ impl AppValidator {
         self.app.as_ref().unwrap()
     }
 
-    fn validate_entities<T: EntityAccept<V>, V: Validate<T> + VisitEntity<T>>(
+    fn validate_entities<T: EntityAccept<V>, V: Validate + VisitEntity<T>>(
         items: &Vec<T>,
         location: &str,
     ) -> Result<()> {
@@ -333,6 +369,12 @@ impl AppValidator {
             )?;
         }
         Self::validate_entities::<Object, ObjectDependencyValidator>(objects, "objects")?;
+        Ok(())
+    }
+
+    pub fn validate_cstores(&self) -> Result<()> {
+        let cstores = self.get_app().get_context_stores();
+        Self::validate_entities::<ContextStore, ContextStoreIdValidator>(cstores, "cstores")?;
         Ok(())
     }
 }

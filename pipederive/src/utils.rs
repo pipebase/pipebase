@@ -1,9 +1,5 @@
-use crate::constants::{
-    PIPEMETA_FLAGS_ENV, PIPEMETA_FLAGS_SEP, PIPEMETA_FLAG_SKIP_NON_EXISTS_PIPE,
-};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
-use std::collections::HashSet;
 use syn::{Attribute, ItemFn, Lit, Meta, MetaList, MetaNameValue, NestedMeta};
 use syn::{Data, Field, Fields, FieldsNamed};
 
@@ -103,13 +99,6 @@ pub fn parse_lit_as_string(lit: &Lit) -> Option<String> {
     return None;
 }
 
-pub fn parse_lit_as_number(lit: &Lit) -> Option<String> {
-    if let Lit::Int(lit) = lit {
-        return Some(lit.base10_digits().to_owned());
-    }
-    return None;
-}
-
 pub fn get_any_attribute_by_meta_prefix(
     prefix: &str,
     attributes: &Vec<Attribute>,
@@ -122,7 +111,7 @@ pub fn get_any_attribute_by_meta_prefix(
         }
     }
     if is_required {
-        panic!("attribute not found based on prefix")
+        panic!("attribute not found based on prefix {}", prefix)
     }
     return None;
 }
@@ -132,13 +121,11 @@ pub fn get_all_attributes_by_meta_prefix(
     attributes: &Vec<Attribute>,
 ) -> Vec<Attribute> {
     let prefix_path = prefix.split(".").collect::<Vec<&str>>();
-    let mut hits: Vec<Attribute> = vec![];
-    for attribute in attributes {
-        if is_meta_with_prefix(&prefix_path, &attribute.parse_meta().unwrap()) {
-            hits.push(attribute.clone());
-        }
-    }
-    hits
+    attributes
+        .iter()
+        .filter(|&attribute| is_meta_with_prefix(&prefix_path, &attribute.parse_meta().unwrap()))
+        .map(|attribute| attribute.to_owned())
+        .collect()
 }
 
 pub fn get_meta_string_value_by_meta_path(
@@ -146,39 +133,23 @@ pub fn get_meta_string_value_by_meta_path(
     meta: &Meta,
     is_required: bool,
 ) -> Option<String> {
-    let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
-    if let Some(ref lit) = find_meta_value_by_meta_path(full_path_vec, meta) {
-        if let Some(value) = parse_lit_as_string(lit) {
-            return Some(value);
-        }
-    }
-    if is_required {
-        panic!(
-            "string value for full path {} not found in attribute",
-            full_path
-        )
-    }
-    None
+    get_meta_value_by_meta_path(full_path, meta, is_required, &parse_lit_as_string)
 }
 
-pub fn get_meta_number_value_by_meta_path(
+pub fn get_meta_value_by_meta_path(
     full_path: &str,
-    attribute: &Attribute,
+    meta: &Meta,
     is_required: bool,
+    parse: &dyn Fn(&Lit) -> Option<String>,
 ) -> Option<String> {
     let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
-    if let Some(ref lit) =
-        find_meta_value_by_meta_path(full_path_vec, &attribute.parse_meta().unwrap())
-    {
-        if let Some(value) = parse_lit_as_number(lit) {
+    if let Some(ref lit) = find_meta_value_by_meta_path(full_path_vec, meta) {
+        if let Some(value) = parse(lit) {
             return Some(value);
         }
     }
     if is_required {
-        panic!(
-            "string value for full path {} not found in attribute",
-            full_path
-        )
+        panic!("value for full path {} not found in attribute", full_path)
     }
     None
 }
@@ -268,13 +239,4 @@ pub fn get_last_stmt_span(function: &ItemFn) -> (Span, Span) {
 
 pub fn get_meta(attribute: &Attribute) -> Meta {
     attribute.parse_meta().unwrap()
-}
-
-pub fn is_skip_non_exists_pipe() -> bool {
-    let flags = match std::env::var(PIPEMETA_FLAGS_ENV) {
-        Ok(flags) => flags,
-        _ => return false,
-    };
-    let flag_set: HashSet<&str> = flags.split(PIPEMETA_FLAGS_SEP).collect();
-    flag_set.contains(PIPEMETA_FLAG_SKIP_NON_EXISTS_PIPE)
 }

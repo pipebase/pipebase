@@ -1,5 +1,13 @@
+use crate::error::Result;
+use crate::{ConfigInto, FromConfig, FromPath, Period};
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt::Display;
 use std::sync::atomic::Ordering;
 use std::sync::atomic::{AtomicU64, AtomicU8};
+use std::time::Duration;
+use tokio::time::{sleep, Interval};
 
 use strum::{Display, EnumString};
 
@@ -44,7 +52,6 @@ fn code_to_state(state_code: u8) -> State {
 pub struct Context {
     state_code: AtomicU8,
     total_run: AtomicU64,
-    success_run: AtomicU64,
 }
 
 impl Context {
@@ -57,10 +64,6 @@ impl Context {
         self.total_run.load(Ordering::Acquire)
     }
 
-    pub fn get_success_run(&self) -> u64 {
-        self.success_run.load(Ordering::Acquire)
-    }
-
     pub fn set_state(&self, state: State) {
         let code = state as u8;
         self.state_code.store(code, Ordering::Release);
@@ -70,58 +73,175 @@ impl Context {
         self.total_run.fetch_add(1, Ordering::SeqCst)
     }
 
-    pub fn inc_success_run(&self) -> u64 {
-        self.success_run.fetch_add(1, Ordering::SeqCst)
-    }
-
-    pub fn validate(&self, state: State, total_run: u64, success_run: u64) {
+    pub fn validate(&self, state: State, total_run: u64) {
         assert_eq!(state, self.get_state());
         assert_eq!(total_run, self.get_total_run());
-        assert_eq!(success_run, self.get_success_run());
     }
 }
 
-/*
-#[cfg(test)]
-mod tests {
-    use std::sync::atomic::AtomicU32;
-    use std::sync::atomic::Ordering;
-    use std::sync::Arc;
-
-
-    #[derive(Default)]
-    struct Context {
-        count: AtomicU32
-    }
-
-    impl Context {
-        pub fn get_count(&self) -> u32 {
-            self.count.load(Ordering::Acquire)
-        }
-
-        pub fn inc_count(&self) -> u32 {
-            self.count.fetch_add(1, Ordering::SeqCst)
-        }
-    }
-
-    #[tokio::test]
-    async fn test_count() {
-        let ctx1 = Arc::new(Context::default());
-        let ctx2 = ctx1.to_owned();
-        let ctx3 = ctx1.to_owned();
-        let jh1 = tokio::spawn(async move {
-            for _i in 0..100 {
-                ctx1.inc_count();
-            }
-        });
-        let jh2 = tokio::spawn(async move {
-            for _i in 0..100 {
-                ctx2.inc_count();
-            }
-        });
-        let _ = tokio::join!(jh1, jh2);
-        assert_eq!(200, ctx3.get_count());
-    }
-
+#[derive(Deserialize, Serialize)]
+pub struct PipeContext {
+    name: String,
+    state: String,
+    total_run: u64,
 }
-*/
+
+impl PipeContext {
+    pub fn new(name: String, state: State, total_run: u64) -> Self {
+        PipeContext {
+            name: name,
+            state: state.to_string(),
+            total_run: total_run,
+        }
+    }
+}
+
+impl Display for PipeContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{{ name: {}, state: {}, total_run: {} }}",
+            self.name, self.state, self.total_run
+        )
+    }
+}
+
+#[async_trait]
+pub trait StoreContext<C>: FromConfig<C> {
+    fn store_context(&mut self, pipe_name: String, context: std::sync::Arc<Context>);
+
+    fn load_context(&self, pipe_name: &str) -> Option<&std::sync::Arc<Context>>;
+
+    async fn run(&mut self) -> anyhow::Result<()>;
+}
+
+pub struct ContextStore<'a> {
+    name: &'a str,
+}
+
+impl<'a> ContextStore<'a> {
+    pub async fn run<S, C>(
+        &mut self,
+        config: C,
+        contexts: Vec<(String, std::sync::Arc<Context>)>,
+    ) -> Result<()>
+    where
+        S: StoreContext<C>,
+        C: ConfigInto<S> + Sync,
+    {
+        let mut store = config.config_into().await?;
+        // add context
+        for (name, context) in contexts {
+            store.store_context(name, context);
+        }
+        log::info!("context store {} run ...", self.name);
+        store.run().await?;
+        log::info!("context store {} exit ...", self.name);
+        Ok(())
+    }
+}
+
+impl<'a> ContextStore<'a> {
+    pub fn new(name: &'a str) -> Self {
+        ContextStore { name }
+    }
+}
+
+#[macro_export]
+macro_rules! cstore {
+    (
+        $name:expr
+    ) => {{
+        ContextStore::new($name)
+    }};
+}
+
+#[macro_export]
+macro_rules! run_cstore {
+    (
+        $cstore:ident, $config:ty, $path:expr, [$( $pipe:expr ), *]
+    ) => {
+        {
+            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
+            let mut contexts = vec![];
+            $(
+                contexts.push(($pipe.get_name(), $pipe.get_context()));
+            )*
+            tokio::spawn(async move {
+                match $cstore.run(config, contexts).await {
+                    Ok(_) => Ok(()),
+                    Err(err) => {
+                        log::error!("context store exit with error {:#?}", err);
+                        Err(err)
+                    }
+                }
+            })
+        }
+    };
+}
+
+#[derive(Deserialize)]
+pub struct ContextPrinterConfig {
+    pub interval: Period,
+    pub delay: Option<Period>,
+}
+
+impl FromPath for ContextPrinterConfig {}
+
+#[async_trait]
+impl ConfigInto<ContextPrinter> for ContextPrinterConfig {}
+
+pub struct ContextPrinter {
+    interval: Interval,
+    delay: Duration,
+    contexts: HashMap<String, std::sync::Arc<Context>>,
+}
+
+#[async_trait]
+impl FromConfig<ContextPrinterConfig> for ContextPrinter {
+    async fn from_config(config: &ContextPrinterConfig) -> anyhow::Result<Self> {
+        let delay = match config.delay {
+            Some(ref period) => period.to_owned().into(),
+            None => Duration::from_micros(0),
+        };
+        let interval = config.interval.to_owned();
+        Ok(ContextPrinter {
+            interval: tokio::time::interval(interval.into()),
+            delay: delay,
+            contexts: HashMap::new(),
+        })
+    }
+}
+
+#[async_trait]
+impl StoreContext<ContextPrinterConfig> for ContextPrinter {
+    fn store_context(&mut self, pipe_name: String, context: std::sync::Arc<Context>) {
+        self.contexts.insert(pipe_name, context);
+    }
+
+    fn load_context(&self, pipe_name: &str) -> Option<&std::sync::Arc<Context>> {
+        self.contexts.get(pipe_name)
+    }
+
+    async fn run(&mut self) -> anyhow::Result<()> {
+        sleep(self.delay).await;
+        loop {
+            self.interval.tick().await;
+            let mut done: usize = 0;
+            for (pipe_name, ctx) in &self.contexts {
+                let ref state = ctx.get_state();
+                let total_run = ctx.get_total_run();
+                let display = PipeContext::new(pipe_name.to_owned(), state.to_owned(), total_run);
+                print!("{}", display);
+                if state == &State::Done {
+                    done += 1;
+                }
+            }
+            if done == self.contexts.len() {
+                log::info!("all pipe in Done state, exit context printer");
+                break;
+            }
+        }
+        Ok(())
+    }
+}

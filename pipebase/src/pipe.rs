@@ -21,18 +21,13 @@ where
 }
 
 pub trait HasContext {
+    fn get_name(&self) -> String;
     fn get_context(&self) -> Arc<Context>;
 }
 
 // Sender Operations
 pub(crate) fn senders_as_map<U>(txs: Vec<Sender<U>>) -> HashMap<usize, Sender<U>> {
-    let mut i: usize = 0;
-    let mut txs_map: HashMap<usize, Sender<U>> = HashMap::new();
-    for tx in txs {
-        txs_map.insert(i, tx);
-        i += 1;
-    }
-    txs_map
+    txs.into_iter().enumerate().into_iter().collect()
 }
 
 pub(crate) fn spawn_send<U>(
@@ -129,7 +124,7 @@ macro_rules! run_pipe {
             )*
             tokio::spawn(async move {
                 match $pipe.run(config, txs, $rx).await {
-                    Ok(context) => Ok(context),
+                    Ok(_) => Ok(()),
                     Err(err) => {
                         log::error!("pipe exit with error {:#?}", err);
                         Err(err)

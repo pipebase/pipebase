@@ -1,5 +1,4 @@
 use super::do_cargo::*;
-use super::utils::*;
 use crate::commands::build::BuildOptions;
 use crate::print::Printer;
 use crate::Config;
@@ -8,15 +7,11 @@ use std::process;
 
 pub fn do_build(
     path_buf: PathBuf,
-    opts: &BuildOptions,
+    _opts: &BuildOptions,
     printer: &mut Printer,
 ) -> anyhow::Result<()> {
     let manifest_path = path_buf.as_path();
     printer.status(&"Build", manifest_path.to_str().unwrap())?;
-    let partial = opts.partial();
-    if partial {
-        set_pipe_meta_flags("-Pskip");
-    }
     let status_code = do_cargo_build(manifest_path, printer)?;
     match status_code {
         0 => (),

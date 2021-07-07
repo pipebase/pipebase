@@ -4,8 +4,10 @@ pub use timer::*;
 
 use async_trait::async_trait;
 use log::{error, info};
+use tokio::sync::mpsc::error::SendError;
 use tokio::sync::mpsc::Receiver;
 use tokio::sync::mpsc::Sender;
+use tokio::task::JoinHandle;
 
 use crate::context::{Context, State};
 use crate::error::Result;
@@ -40,17 +42,16 @@ where
         txs: Vec<Sender<U>>,
         rx: Option<Receiver<()>>,
     ) -> Result<()> {
-        assert!(rx.is_none());
-        let mut poller = config.config_into().await.unwrap();
+        assert!(rx.is_none(), "poller {} has invalid upstreams", self.name);
+        assert!(!txs.is_empty(), "poller {} has no downstreams", self.name);
+        let mut poller = config.config_into().await?;
         let mut txs = senders_as_map(txs);
         info!("source {} run ...", self.name);
         loop {
-            self.context.inc_total_run();
             self.context.set_state(State::Poll);
             // if all receiver dropped, sender drop as well
             match txs.is_empty() {
                 true => {
-                    // Self::inc_success_run(&self.context).await;
                     break;
                 }
                 false => (),
@@ -66,19 +67,17 @@ where
             let u = match u {
                 Some(u) => u,
                 None => {
-                    self.context.inc_success_run();
                     break;
                 }
             };
             self.context.set_state(State::Send);
-            let mut jhs = HashMap::new();
-            for (idx, tx) in &txs {
-                let u_clone = u.to_owned();
-                jhs.insert(idx.to_owned(), spawn_send(tx.to_owned(), u_clone));
-            }
+            let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
+                .iter()
+                .map(|(idx, tx)| (idx.to_owned(), spawn_send(tx.to_owned(), u.to_owned())))
+                .collect();
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
-            self.context.inc_success_run();
+            self.context.inc_total_run();
         }
         info!("source {} exit ...", self.name);
         self.context.set_state(State::Done);
@@ -87,6 +86,10 @@ where
 }
 
 impl<'a> HasContext for Poller<'a> {
+    fn get_name(&self) -> String {
+        self.name.to_owned()
+    }
+
     fn get_context(&self) -> Arc<Context> {
         self.context.clone()
     }

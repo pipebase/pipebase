@@ -25,6 +25,16 @@ pub fn do_validate(app: &App, printer: &mut Printer, opts: &ValidateOptions) -> 
             }
         };
     }
+    if opts.cstore() {
+        printer.status(&"Validate", "cstores")?;
+        match app.validate_cstores() {
+            Ok(_) => (),
+            Err(err) => {
+                printer.error(err.to_string())?;
+                return Err(err.into());
+            }
+        };
+    }
     printer.status(&"Validate", "pass")
 }
 

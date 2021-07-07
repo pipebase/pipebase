@@ -9,7 +9,8 @@ use crate::{filter_senders_by_indices, senders_as_map, spawn_send, wait_join_han
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::mpsc::{channel, Receiver, Sender};
+use tokio::sync::mpsc::{channel, error::SendError, Receiver, Sender};
+use tokio::task::JoinHandle;
 
 use crate::{ConfigInto, FromConfig, HasContext, Pipe};
 
@@ -41,10 +42,10 @@ where
         txs: Vec<Sender<U>>,
         mut rx: Option<Receiver<T>>,
     ) -> crate::error::Result<()> {
-        assert!(rx.is_some());
-        assert!(!txs.is_empty());
+        assert!(rx.is_some(), "streamer {} has no upstreams", self.name);
+        assert!(!txs.is_empty(), "streamer {} has no downstreams", self.name);
         let (tx0, mut rx0) = channel::<U>(1024);
-        let mut streamer = config.config_into().await.unwrap();
+        let mut streamer = config.config_into().await?;
         streamer.set_sender(tx0);
         let name = self.name.to_owned();
         let streamer_loop = tokio::spawn(async move {
@@ -69,12 +70,10 @@ where
         let context = self.context.clone();
         let sender_loop = tokio::spawn(async move {
             loop {
-                context.inc_total_run();
                 context.set_state(State::Receive);
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
-                        context.inc_success_run();
                         break;
                     }
                     false => (),
@@ -82,20 +81,17 @@ where
                 let u = match rx0.recv().await {
                     Some(u) => u,
                     None => {
-                        context.inc_success_run();
-                        // EOF, streamer loop break
                         break;
                     }
                 };
                 context.set_state(State::Send);
-                let mut jhs = HashMap::new();
-                for (idx, tx) in &txs {
-                    let u_clone: U = u.to_owned();
-                    jhs.insert(idx.to_owned(), spawn_send(tx.clone(), u_clone));
-                }
+                let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
+                    .iter()
+                    .map(|(idx, tx)| (idx.to_owned(), spawn_send(tx.to_owned(), u.to_owned())))
+                    .collect();
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
-                context.inc_success_run();
+                context.inc_total_run();
             }
             context.set_state(State::Done);
         });
@@ -111,6 +107,10 @@ where
 }
 
 impl<'a> HasContext for Streamer<'a> {
+    fn get_name(&self) -> String {
+        self.name.to_owned()
+    }
+
     fn get_context(&self) -> Arc<Context> {
         self.context.clone()
     }

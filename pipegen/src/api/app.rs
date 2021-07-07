@@ -1,6 +1,6 @@
 use super::constants::{
     APP_OBJECT_NAME, BOOTSTRAP_FUNCTION_META, BOOTSTRAP_FUNCTION_NAME, BOOTSTRAP_MODULE_META_PATH,
-    DEFAULT_APP_OBJECT, DEFAULT_CONTEXT_STORE_NAME, PIPEBASE_MAIN,
+    DEFAULT_APP_OBJECT, PIPEBASE_MAIN,
 };
 use super::context::ContextStore;
 use super::dependency::PackageDependency;
@@ -21,8 +21,8 @@ use std::path::Path;
 pub struct App {
     name: String,
     metas: Option<Vec<Meta>>,
-    cstore: Option<ContextStore>,
     dependencies: Option<Vec<PackageDependency>>,
+    cstores: Option<Vec<ContextStore>>,
     pipes: Vec<Pipe>,
     objects: Option<Vec<Object>>,
 }
@@ -34,20 +34,18 @@ impl Entity for App {
 
     fn list_dependency(&self) -> Vec<String> {
         let dependencies = self.get_package_dependency();
-        let mut modules: Vec<String> = Vec::new();
-        for dependency in dependencies {
-            modules.extend(dependency.get_modules().to_owned());
-        }
-        modules
+        dependencies
+            .iter()
+            .map(|dep| dep.get_modules().to_owned())
+            .flatten()
+            .collect()
     }
 
     fn to_literal(&self, indent: usize) -> String {
         // app metas
         let metas = self.get_metas();
-        // app object fields
-        let cstore = self.get_context_store().as_data_field();
         // create app object
-        let app = Object::new(APP_OBJECT_NAME.to_owned(), metas.to_owned(), vec![cstore]);
+        let app = Object::new(APP_OBJECT_NAME.to_owned(), metas.to_owned(), vec![]);
         app.to_literal(indent)
     }
 }
@@ -80,11 +78,6 @@ impl App {
                 self.add_dependency(default_dependency)
             }
         }
-        // init context store
-        match self.cstore {
-            Some(_) => (),
-            None => self.cstore = Some(ContextStore::new(DEFAULT_CONTEXT_STORE_NAME.to_owned())),
-        };
         // init metas
         match self.metas {
             Some(_) => (),
@@ -94,9 +87,6 @@ impl App {
                     metas: vec![
                         Meta::Path {
                             name: "Bootstrap".to_owned(),
-                        },
-                        Meta::Path {
-                            name: "ContextStore".to_owned(),
                         },
                         Meta::Path {
                             name: "Default".to_owned(),
@@ -109,6 +99,11 @@ impl App {
         match self.objects {
             Some(_) => (),
             None => self.objects = Some(vec![]),
+        }
+        // init context stores
+        match self.cstores {
+            Some(_) => (),
+            None => self.cstores = Some(vec![]),
         }
     }
 
@@ -170,8 +165,9 @@ impl App {
         for module_lit in self.list_dependency() {
             use_module_lits.push(format!("{}use {}", indent_lit, module_lit));
         }
-        use_module_lits.push("".to_owned());
-        use_module_lits.join(";\n")
+        let mut use_module_lits = use_module_lits.join(";\n");
+        use_module_lits.push(';');
+        use_module_lits
     }
 
     pub(crate) fn get_bootstrap_function_literal(&self, indent: usize) -> String {
@@ -223,12 +219,12 @@ impl App {
         self.metas.as_ref().unwrap()
     }
 
-    fn get_context_store(&self) -> &ContextStore {
-        self.cstore.as_ref().unwrap()
+    pub fn get_context_stores(&self) -> &Vec<ContextStore> {
+        self.cstores.as_ref().expect("stores")
     }
 
     pub(crate) fn get_objects(&self) -> &Vec<Object> {
-        self.objects.as_ref().unwrap()
+        self.objects.as_ref().expect("objects")
     }
 
     pub(crate) fn get_pipes(&self) -> &Vec<Pipe> {
@@ -272,6 +268,12 @@ impl App {
         let mut validator = AppValidator::new("");
         self.accept(&mut validator);
         validator.validate_objects()
+    }
+
+    pub fn validate_cstores(&self) -> Result<()> {
+        let mut validator = AppValidator::new("");
+        self.accept(&mut validator);
+        validator.validate_cstores()
     }
 
     pub fn validate(&self) -> Result<()> {

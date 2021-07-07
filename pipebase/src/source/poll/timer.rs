@@ -14,12 +14,14 @@ pub enum Period {
     Days(u64),
 }
 
-pub fn period_to_duration(period: Period) -> Duration {
-    match period {
-        Period::Millis(m) => Duration::from_millis(m),
-        Period::Secs(s) => Duration::from_secs(s),
-        Period::Hours(h) => Duration::from_secs(h * 3600),
-        Period::Days(d) => Duration::from_secs(d * 3600 * 3600),
+impl From<Period> for Duration {
+    fn from(period: Period) -> Self {
+        match period {
+            Period::Millis(m) => Duration::from_millis(m),
+            Period::Secs(s) => Duration::from_secs(s),
+            Period::Hours(h) => Duration::from_secs(h * 3600),
+            Period::Days(d) => Duration::from_secs(d * 3600 * 3600),
+        }
     }
 }
 
@@ -48,11 +50,12 @@ pub struct Timer {
 impl FromConfig<TimerConfig> for Timer {
     async fn from_config(config: &TimerConfig) -> anyhow::Result<Timer> {
         let delay = match config.delay {
-            Some(ref period) => period_to_duration(period.to_owned()),
+            Some(ref period) => period.to_owned().into(),
             None => Duration::from_micros(0),
         };
+        let interval = config.interval.to_owned();
         Ok(Timer {
-            interval: tokio::time::interval(period_to_duration(config.interval.to_owned())),
+            interval: tokio::time::interval(interval.into()),
             delay: delay,
             ticks: config.ticks,
             tick: 0,
@@ -96,13 +99,16 @@ mod tests {
     #[tokio::test]
     async fn test_timer() {
         let (tx, mut rx) = channel!(u128, 1024);
-        let mut source = Poller::new("timer");
-        join_pipes!([run_pipe!(
-            source,
-            TimerConfig,
-            "resources/catalogs/timer.yml",
-            [tx]
-        )]);
+        let mut timer = Poller::new("timer");
+        let mut ctx_printer = cstore!("ctx_printer");
+        let run_ctx_printer = run_cstore!(
+            ctx_printer,
+            ContextPrinterConfig,
+            "resources/catalogs/context_printer.yml",
+            [timer]
+        );
+        let run_timer = run_pipe!(timer, TimerConfig, "resources/catalogs/timer.yml", [tx]);
+        join_pipes!([run_timer, run_ctx_printer]);
         on_receive(&mut rx, 10).await;
     }
 
