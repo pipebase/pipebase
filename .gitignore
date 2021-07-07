@@ -14,3 +14,4 @@ Cargo.lock
 
 # test generated app
 cargo-pipe/resources/app
+pipeext/resources/app

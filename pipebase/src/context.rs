@@ -1,7 +1,7 @@
 use crate::error::Result;
 use crate::{ConfigInto, FromConfig, FromPath, Period};
 use async_trait::async_trait;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::sync::atomic::Ordering;
@@ -79,9 +79,10 @@ impl Context {
     }
 }
 
+#[derive(Deserialize, Serialize)]
 pub struct PipeContext {
     name: String,
-    state: State,
+    state: String,
     total_run: u64,
 }
 
@@ -89,7 +90,7 @@ impl PipeContext {
     pub fn new(name: String, state: State, total_run: u64) -> Self {
         PipeContext {
             name: name,
-            state: state,
+            state: state.to_string(),
             total_run: total_run,
         }
     }
