@@ -21,10 +21,6 @@ pub(crate) fn parse_pipe_manifest(
     Ok(app)
 }
 
-pub(crate) fn set_pipe_meta_flags(v: &str) {
-    std::env::set_var("PIPEMETA_FLAGS", v)
-}
-
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PipeTomlProject {
     name: String,
