@@ -1,0 +1,45 @@
+name: ingestion
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+  - package: pipeext
+    path: ../../../pipeext
+    modules: ["pipeext::*"]
+pipes:
+  - name: server
+    ty: Listener
+    config:
+      ty: RestServerConfig
+      path: catalogs/rest_server.yml
+    output: 
+      data_ty:
+        Vec: 
+          data_ty: UnsignedByte
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      data_ty: 
+        Object: Record
+    upstreams: [server]
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [json]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize]
+    fields:
+      - name: key
+        data_ty: String
+      - name: value
+        data_ty: UnsignedInteger
+cstores:
+  - name: context_server
+    config:
+      ty: ContextRestServerConfig
+      path: catalogs/context_server.yml

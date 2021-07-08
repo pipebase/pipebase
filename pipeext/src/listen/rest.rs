@@ -49,7 +49,7 @@ impl RestServer {
             .tx
             .to_owned()
             .expect("sender not found for rest server as listener");
-        let api = filters::bytes(tx);
+        let api = filters::ingest(tx);
         let socket = self.socket.to_owned();
         warp::serve(api).run(socket).await
     }
@@ -60,20 +60,20 @@ mod filters {
     use tokio::sync::mpsc::Sender;
     use warp::Filter;
 
-    pub fn bytes(
+    pub fn ingest(
         sender: Sender<Vec<u8>>,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        bytes_post_v1(sender)
+        ingest_v1(sender)
     }
 
-    pub fn bytes_post_v1(
+    pub fn ingest_v1(
         sender: Sender<Vec<u8>>,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::path!("v1" / "bytes")
+        warp::path!("v1" / "ingest")
             .and(warp::post())
             .and(warp::body::bytes())
             .and(with_sender(sender))
-            .and_then(handlers::send_bytes)
+            .and_then(handlers::send_data)
     }
 
     fn with_sender(
@@ -89,7 +89,7 @@ mod handlers {
     use tokio::sync::mpsc::Sender;
     use warp::http::{Response, StatusCode};
 
-    pub async fn send_bytes(
+    pub async fn send_data(
         bytes: bytes::Bytes,
         sender: Sender<Vec<u8>>,
     ) -> Result<impl warp::Reply, Infallible> {

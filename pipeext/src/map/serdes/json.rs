@@ -76,10 +76,8 @@ impl FromConfig<JsonDeserConfig> for JsonDeser {
 
 impl Deser for JsonDeser {
     fn deserialize<T: DeserializeOwned>(bytes: &[u8]) -> anyhow::Result<T> {
-        match serde_json::from_slice::<T>(bytes) {
-            Ok(t) => Ok(t),
-            Err(err) => Err(err.into()),
-        }
+        let t: T = serde_json::from_slice::<T>(bytes)?;
+        Ok(t)
     }
 }
 
