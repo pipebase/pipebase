@@ -8,10 +8,11 @@ use std::path::Path;
 #[derive(Deserialize)]
 pub struct JsonSerConfig {}
 
+#[async_trait]
 impl FromPath for JsonSerConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<Path>,
+        P: AsRef<Path> + Send,
     {
         Ok(JsonSerConfig {})
     }
@@ -51,10 +52,11 @@ where
 #[derive(Deserialize)]
 pub struct JsonDeserConfig {}
 
+#[async_trait]
 impl FromPath for JsonDeserConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<Path>,
+        P: AsRef<Path> + Send,
     {
         Ok(JsonDeserConfig {})
     }

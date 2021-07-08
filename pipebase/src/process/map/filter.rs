@@ -14,10 +14,11 @@ pub trait Filter<Rhs = Self> {
 #[derive(Deserialize)]
 pub struct FilterMapConfig {}
 
+#[async_trait]
 impl FromPath for FilterMapConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<Path>,
+        P: AsRef<Path> + Send,
     {
         Ok(FilterMapConfig {})
     }

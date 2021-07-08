@@ -8,10 +8,11 @@ use tokio::sync::mpsc::Sender;
 #[derive(Deserialize)]
 pub struct IteratorStreamerConfig {}
 
+#[async_trait]
 impl FromPath for IteratorStreamerConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<std::path::Path>,
+        P: AsRef<std::path::Path> + Send,
     {
         Ok(IteratorStreamerConfig {})
     }

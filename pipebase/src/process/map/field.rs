@@ -25,10 +25,11 @@ pub trait FieldAccept<F: Clone> {
 #[derive(Deserialize)]
 pub struct FieldVisitConfig {}
 
+#[async_trait]
 impl FromPath for FieldVisitConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<Path>,
+        P: AsRef<Path> + Send,
     {
         Ok(FieldVisitConfig {})
     }
