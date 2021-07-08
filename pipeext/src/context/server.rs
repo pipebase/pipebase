@@ -130,9 +130,9 @@ mod filters {
     pub fn contexts(
         repository: PipeContextRepository,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        context_list_v1(repository.to_owned())
+        context_query_v1(repository.to_owned())
             .or(context_get_v1(repository.to_owned()))
-            .or(context_query_v1(repository.to_owned()))
+            .or(context_list_v1(repository.to_owned()))
     }
 
     pub fn context_list_v1(
