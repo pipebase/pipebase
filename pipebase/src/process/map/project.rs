@@ -151,10 +151,11 @@ where
 #[derive(Deserialize)]
 pub struct ProjectionConfig {}
 
+#[async_trait]
 impl FromPath for ProjectionConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<Path>,
+        P: AsRef<Path> + Send,
     {
         Ok(ProjectionConfig {})
     }

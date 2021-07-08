@@ -5,10 +5,11 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct RoundRobinConfig {}
 
+#[async_trait]
 impl FromPath for RoundRobinConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<std::path::Path>,
+        P: AsRef<std::path::Path> + Send,
     {
         Ok(RoundRobinConfig {})
     }

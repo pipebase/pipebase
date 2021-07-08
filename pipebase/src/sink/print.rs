@@ -7,10 +7,11 @@ use std::path::Path;
 #[derive(Deserialize)]
 pub struct PrinterConfig {}
 
+#[async_trait]
 impl FromPath for PrinterConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<Path>,
+        P: AsRef<Path> + Send,
     {
         Ok(PrinterConfig {})
     }

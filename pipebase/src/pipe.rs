@@ -117,12 +117,15 @@ macro_rules! run_pipe {
         $pipe:ident, $config:ty, $path:expr, [$( $tx:expr ), *], $rx:expr
     } => {
         {
-            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
             let mut txs = vec![];
             $(
                 txs.push($tx);
             )*
             tokio::spawn(async move {
+                let config = <$config>
+                            ::from_path($path)
+                            .await
+                            .expect(&format!("invalid config file location {}", $path));
                 match $pipe.run(config, txs, $rx).await {
                     Ok(_) => Ok(()),
                     Err(err) => {

@@ -11,10 +11,11 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct SumAggregatorConfig {}
 
+#[async_trait]
 impl FromPath for SumAggregatorConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<std::path::Path>,
+        P: AsRef<std::path::Path> + Send,
     {
         Ok(SumAggregatorConfig {})
     }
@@ -109,10 +110,11 @@ mod sum_aggregator_tests {
 #[derive(Deserialize)]
 pub struct UnorderedGroupSumAggregatorConfig {}
 
+#[async_trait]
 impl FromPath for UnorderedGroupSumAggregatorConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<std::path::Path>,
+        P: AsRef<std::path::Path> + Send,
     {
         Ok(UnorderedGroupSumAggregatorConfig {})
     }
@@ -289,10 +291,11 @@ mod test_group_aggregator {
 #[derive(Deserialize)]
 pub struct OrderedGroupSumAggregatorConfig {}
 
+#[async_trait]
 impl FromPath for OrderedGroupSumAggregatorConfig {
-    fn from_path<P>(_path: P) -> anyhow::Result<Self>
+    async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
-        P: AsRef<std::path::Path>,
+        P: AsRef<std::path::Path> + Send,
     {
         Ok(OrderedGroupSumAggregatorConfig {})
     }

@@ -174,12 +174,12 @@ macro_rules! run_cstore {
         $cstore:ident, $config:ty, $path:expr, [$( $pipe:expr ), *]
     ) => {
         {
-            let config = <$config>::from_path($path).expect(&format!("invalid config file location {}", $path));
             let mut contexts = vec![];
             $(
                 contexts.push(($pipe.get_name(), $pipe.get_context()));
             )*
             tokio::spawn(async move {
+                let config = <$config>::from_path($path).await.expect(&format!("invalid config file location {}", $path));
                 match $cstore.run(config, contexts).await {
                     Ok(_) => Ok(()),
                     Err(err) => {
