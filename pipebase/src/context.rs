@@ -94,6 +94,18 @@ impl PipeContext {
             total_run: total_run,
         }
     }
+
+    pub fn get_name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn get_state(&self) -> &String {
+        &self.state
+    }
+
+    pub fn get_total_run(&self) -> &u64 {
+        &self.total_run
+    }
 }
 
 impl Display for PipeContext {
