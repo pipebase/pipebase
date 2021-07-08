@@ -52,6 +52,7 @@ fn code_to_state(state_code: u8) -> State {
 pub struct Context {
     state_code: AtomicU8,
     total_run: AtomicU64,
+    failure_run: AtomicU64,
 }
 
 impl Context {
@@ -64,6 +65,10 @@ impl Context {
         self.total_run.load(Ordering::Acquire)
     }
 
+    pub fn get_failure_run(&self) -> u64 {
+        self.failure_run.load(Ordering::Acquire)
+    }
+
     pub fn set_state(&self, state: State) {
         let code = state as u8;
         self.state_code.store(code, Ordering::Release);
@@ -71,6 +76,10 @@ impl Context {
 
     pub fn inc_total_run(&self) -> u64 {
         self.total_run.fetch_add(1, Ordering::SeqCst)
+    }
+
+    pub fn inc_failure_run(&self) -> u64 {
+        self.failure_run.fetch_add(1, Ordering::SeqCst)
     }
 
     pub fn validate(&self, state: State, total_run: u64) {
@@ -84,14 +93,16 @@ pub struct PipeContext {
     name: String,
     state: String,
     total_run: u64,
+    failure_run: u64,
 }
 
 impl PipeContext {
-    pub fn new(name: String, state: State, total_run: u64) -> Self {
+    pub fn new(name: String, state: State, total_run: u64, failure_run: u64) -> Self {
         PipeContext {
             name: name,
             state: state.to_string(),
             total_run: total_run,
+            failure_run: failure_run,
         }
     }
 
@@ -243,7 +254,13 @@ impl StoreContext<ContextPrinterConfig> for ContextPrinter {
             for (pipe_name, ctx) in &self.contexts {
                 let ref state = ctx.get_state();
                 let total_run = ctx.get_total_run();
-                let display = PipeContext::new(pipe_name.to_owned(), state.to_owned(), total_run);
+                let failure_run = ctx.get_failure_run();
+                let display = PipeContext::new(
+                    pipe_name.to_owned(),
+                    state.to_owned(),
+                    total_run,
+                    failure_run,
+                );
                 print!("{}", display);
                 if state == &State::Done {
                     done += 1;

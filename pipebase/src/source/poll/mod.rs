@@ -61,7 +61,9 @@ where
                 Ok(u) => u,
                 Err(e) => {
                     error!("{} poll error {:#?}", self.name, e);
-                    break;
+                    self.context.inc_total_run();
+                    self.context.inc_failure_run();
+                    continue;
                 }
             };
             let u = match u {

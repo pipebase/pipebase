@@ -79,7 +79,9 @@ where
                 Ok(u) => u,
                 Err(e) => {
                     error!("process {} error {}", self.name, e);
-                    break;
+                    self.context.inc_total_run();
+                    self.context.inc_failure_run();
+                    continue;
                 }
             };
             self.context.set_state(State::Send);
