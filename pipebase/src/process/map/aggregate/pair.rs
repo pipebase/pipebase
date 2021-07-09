@@ -144,6 +144,30 @@ where
 }
 
 #[cfg(test)]
+mod left_right_tests {
+
+    use crate::*;
+
+    #[derive(LeftRight)]
+    struct Record {
+        #[left]
+        id: String,
+        #[right]
+        val: i32,
+    }
+
+    #[test]
+    fn test_left_right() {
+        let r = Record {
+            id: "foo".to_owned(),
+            val: 1,
+        };
+        assert_eq!("foo", r.left());
+        assert_eq!(&1, r.right());
+    }
+}
+
+#[cfg(test)]
 mod pair_tests {
 
     #[test]

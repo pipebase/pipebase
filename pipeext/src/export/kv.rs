@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use pipebase::{ConfigInto, Export, FromConfig, FromPath, LeftRight, Pair};
+use pipebase::{ConfigInto, Export, FromConfig, FromPath, LeftRight};
 use redis::{Client, Commands, Connection, RedisResult, ToRedisArgs};
 use serde::Deserialize;
 
