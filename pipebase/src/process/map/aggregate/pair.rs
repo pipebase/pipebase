@@ -5,9 +5,11 @@ use std::{
     hash::Hash,
 };
 
-pub trait LeftRight<L, R> {
-    fn left(&self) -> &L;
-    fn right(&self) -> &R;
+pub trait LeftRight {
+    type L;
+    type R;
+    fn left(&self) -> &Self::L;
+    fn right(&self) -> &Self::R;
 }
 
 // General Pair
@@ -20,7 +22,9 @@ impl<L, R> Pair<L, R> {
     }
 }
 
-impl<L, R> LeftRight<L, R> for Pair<L, R> {
+impl<L, R> LeftRight for Pair<L, R> {
+    type L = L;
+    type R = R;
     fn left(&self) -> &L {
         &self.0
     }
@@ -47,7 +51,10 @@ impl<L, R> RhsPair<L, R> {
     }
 }
 
-impl<L, R> LeftRight<L, R> for RhsPair<L, R> {
+impl<L, R> LeftRight for RhsPair<L, R> {
+    type L = L;
+    type R = R;
+
     fn left(&self) -> &L {
         &self.0
     }

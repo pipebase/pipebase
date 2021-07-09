@@ -33,7 +33,7 @@ impl<T> Export<T, PrinterConfig> for Printer
 where
     T: Send + Sync + Debug + 'static,
 {
-    async fn export(&mut self, t: &T) -> anyhow::Result<()> {
+    async fn export(&mut self, t: T) -> anyhow::Result<()> {
         println!("{:?}", t);
         Ok(())
     }
