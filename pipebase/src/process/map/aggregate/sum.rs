@@ -128,9 +128,9 @@ where
     U: FromIterator<Pair<K, V>>,
     G: GroupTable<K, V>,
 {
-    fn new_group_table(&self) -> G;
+    fn group_table(&self) -> G;
     fn group_aggregate(&self, t: T) -> U {
-        let mut group_sum = self.new_group_table();
+        let mut group_sum = self.group_table();
         for ref item in t {
             if !group_sum.contains_group(&item.group()) {
                 group_sum.insert_group(item.group(), V::init());
@@ -163,7 +163,7 @@ where
     K: Hash + Eq + PartialEq,
     V: std::ops::AddAssign<V> + Init + Clone,
 {
-    fn new_group_table(&self) -> HashMap<K, V> {
+    fn group_table(&self) -> HashMap<K, V> {
         HashMap::new()
     }
 }
@@ -322,7 +322,7 @@ where
     K: Ord,
     V: std::ops::AddAssign<V> + Init + Clone,
 {
-    fn new_group_table(&self) -> BTreeMap<K, V> {
+    fn group_table(&self) -> BTreeMap<K, V> {
         BTreeMap::new()
     }
 }
