@@ -48,29 +48,32 @@ where
         let mut streamer = config.config_into().await?;
         streamer.set_sender(tx0);
         let name = self.name.to_owned();
+        let context = self.context.clone();
         let streamer_loop = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
             log::info!("streamer {} run ...", name);
             loop {
+                context.set_state(State::Receive);
                 let t = match (*rx).recv().await {
                     Some(t) => t,
                     None => break,
                 };
+                context.set_state(State::Send);
                 match streamer.stream(t).await {
                     Ok(_) => continue,
                     Err(err) => {
                         log::error!("streamer error {}", err);
-                        break;
+                        context.inc_failure_run();
                     }
                 }
+                context.inc_total_run();
             }
             log::info!("streamer {} exit ...", name);
+            context.set_state(State::Done);
         });
         let mut txs = senders_as_map(txs);
-        let context = self.context.clone();
         let sender_loop = tokio::spawn(async move {
             loop {
-                context.set_state(State::Receive);
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
                     true => {
@@ -84,16 +87,13 @@ where
                         break;
                     }
                 };
-                context.set_state(State::Send);
                 let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
                     .iter()
                     .map(|(idx, tx)| (idx.to_owned(), spawn_send(tx.to_owned(), u.to_owned())))
                     .collect();
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
-                context.inc_total_run();
             }
-            context.set_state(State::Done);
         });
         // join listener and loop
         match tokio::spawn(async move { tokio::join!(streamer_loop, sender_loop) }).await {

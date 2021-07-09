@@ -57,7 +57,7 @@ where
                 Ok(_) => (),
                 Err(err) => {
                     error!("exporter error {}", err);
-                    break;
+                    self.context.inc_failure_run();
                 }
             };
             self.context.inc_total_run();

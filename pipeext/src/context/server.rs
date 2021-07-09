@@ -85,6 +85,7 @@ impl PipeContextRepository {
             name.to_owned(),
             context.get_state(),
             context.get_total_run(),
+            context.get_failure_run(),
         ))
     }
 
@@ -97,6 +98,7 @@ impl PipeContextRepository {
                     name.to_owned(),
                     context.get_state(),
                     context.get_total_run(),
+                    context.get_failure_run(),
                 )
             })
             .filter(|ctx| ctx.get_state() == &query.state)
@@ -113,6 +115,7 @@ impl PipeContextRepository {
                     name.to_owned(),
                     context.get_state(),
                     context.get_total_run(),
+                    context.get_failure_run(),
                 )
             })
             .collect();

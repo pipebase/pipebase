@@ -69,7 +69,7 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::Object(object) => object.to_owned(),
         DataType::Vec { data_ty } => {
             let data_ty_lit = data_ty_to_literal(data_ty);
-            format!("std::collections::Vec<{}>", data_ty_lit)
+            format!("std::vec::Vec<{}>", data_ty_lit)
         }
         DataType::Array { data_ty, size } => {
             let data_ty_lit = data_ty_to_literal(data_ty);
