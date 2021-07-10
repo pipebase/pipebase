@@ -3,16 +3,16 @@ use serde::Deserialize;
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
 pub struct ProjectMeta {
-    pub input: Option<String>,
-    pub from: Option<String>,
-    pub expr: Option<String>,
-    pub alias: Option<String>,
+    input: Option<String>,
+    from: Option<String>,
+    expr: Option<String>,
+    alias: Option<String>,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
 pub struct FilterMeta {
-    pub predicate: String,
-    pub alias: Option<String>,
+    predicate: String,
+    alias: Option<String>,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -32,6 +32,7 @@ pub enum DeriveMeta {
     OrderedBy,
     AggregateAs,
     GroupAs,
+    LeftRight,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -41,6 +42,8 @@ pub enum Tag {
     Order,
     Visit,
     Equal,
+    Left,
+    Right,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -99,6 +102,7 @@ fn expand_derive(derive: &DeriveMeta) -> Meta {
         DeriveMeta::OrderedBy => "OrderedBy",
         DeriveMeta::AggregateAs => "AggregateAs",
         DeriveMeta::GroupAs => "GroupAs",
+        DeriveMeta::LeftRight => "LeftRight",
     };
     new_path(name.to_owned())
 }
@@ -158,6 +162,8 @@ fn expand_tag(tag: &Tag) -> Meta {
         Tag::Order => new_path("order".to_owned()),
         Tag::Visit => new_path("visit".to_owned()),
         Tag::Equal => new_path("equal".to_owned()),
+        Tag::Left => new_path("left".to_owned()),
+        Tag::Right => new_path("right".to_owned()),
     }
 }
 

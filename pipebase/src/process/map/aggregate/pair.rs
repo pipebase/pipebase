@@ -5,9 +5,11 @@ use std::{
     hash::Hash,
 };
 
-pub trait LeftRight<L, R> {
-    fn left(&self) -> &L;
-    fn right(&self) -> &R;
+pub trait LeftRight {
+    type L;
+    type R;
+    fn left(&self) -> &Self::L;
+    fn right(&self) -> &Self::R;
 }
 
 // General Pair
@@ -20,7 +22,9 @@ impl<L, R> Pair<L, R> {
     }
 }
 
-impl<L, R> LeftRight<L, R> for Pair<L, R> {
+impl<L, R> LeftRight for Pair<L, R> {
+    type L = L;
+    type R = R;
     fn left(&self) -> &L {
         &self.0
     }
@@ -39,15 +43,18 @@ impl<L, R> From<(L, R)> for Pair<L, R> {
 // Pair's left as group key
 // Pair's right is a comparable and aggregable value
 #[derive(Debug, Clone, Eq)]
-pub struct RightValuedPair<L, R>(L, R);
+pub struct RhsPair<L, R>(L, R);
 
-impl<L, R> RightValuedPair<L, R> {
+impl<L, R> RhsPair<L, R> {
     pub fn new(k: L, v: R) -> Self {
-        RightValuedPair(k, v)
+        RhsPair(k, v)
     }
 }
 
-impl<L, R> LeftRight<L, R> for RightValuedPair<L, R> {
+impl<L, R> LeftRight for RhsPair<L, R> {
+    type L = L;
+    type R = R;
+
     fn left(&self) -> &L {
         &self.0
     }
@@ -57,7 +64,7 @@ impl<L, R> LeftRight<L, R> for RightValuedPair<L, R> {
     }
 }
 
-impl<L, R> Ord for RightValuedPair<L, R>
+impl<L, R> Ord for RhsPair<L, R>
 where
     L: Eq,
     R: Ord,
@@ -67,7 +74,7 @@ where
     }
 }
 
-impl<L, R> PartialOrd for RightValuedPair<L, R>
+impl<L, R> PartialOrd for RhsPair<L, R>
 where
     L: Eq,
     R: Ord,
@@ -77,7 +84,7 @@ where
     }
 }
 
-impl<L, R> PartialEq for RightValuedPair<L, R>
+impl<L, R> PartialEq for RhsPair<L, R>
 where
     R: Eq,
 {
@@ -86,13 +93,13 @@ where
     }
 }
 
-impl<L, R> From<(L, R)> for RightValuedPair<L, R> {
+impl<L, R> From<(L, R)> for RhsPair<L, R> {
     fn from(t: (L, R)) -> Self {
-        RightValuedPair(t.0, t.1)
+        RhsPair(t.0, t.1)
     }
 }
 
-impl<L, R> GroupAs<L> for RightValuedPair<L, R>
+impl<L, R> GroupAs<L> for RhsPair<L, R>
 where
     L: Clone + Hash + Eq + PartialEq,
 {
@@ -101,7 +108,7 @@ where
     }
 }
 
-impl<L, R> AggregateAs<R> for RightValuedPair<L, R>
+impl<L, R> AggregateAs<R> for RhsPair<L, R>
 where
     R: Clone,
 {
@@ -110,17 +117,17 @@ where
     }
 }
 
-impl<L, R> AggregateAs<Vec<RightValuedPair<L, R>>> for RightValuedPair<L, R>
+impl<L, R> AggregateAs<Vec<RhsPair<L, R>>> for RhsPair<L, R>
 where
     L: Clone,
     R: Clone,
 {
-    fn aggregate_value(&self) -> Vec<RightValuedPair<L, R>> {
+    fn aggregate_value(&self) -> Vec<RhsPair<L, R>> {
         vec![self.to_owned()]
     }
 }
 
-impl<L, R> std::ops::AddAssign<Self> for RightValuedPair<L, R>
+impl<L, R> std::ops::AddAssign<Self> for RhsPair<L, R>
 where
     L: Eq + PartialEq + Debug,
     R: std::ops::AddAssign<R>,
@@ -137,14 +144,38 @@ where
 }
 
 #[cfg(test)]
+mod left_right_tests {
+
+    use crate::*;
+
+    #[derive(LeftRight)]
+    struct Record {
+        #[left]
+        id: String,
+        #[right]
+        val: i32,
+    }
+
+    #[test]
+    fn test_left_right() {
+        let r = Record {
+            id: "foo".to_owned(),
+            val: 1,
+        };
+        assert_eq!("foo", r.left());
+        assert_eq!(&1, r.right());
+    }
+}
+
+#[cfg(test)]
 mod pair_tests {
 
     #[test]
     fn test_right_ordered_pair_cmp() {
-        let p0 = RightValuedPair::new("foo".to_owned(), 1);
-        let p1 = RightValuedPair::new("foo".to_owned(), 2);
+        let p0 = RhsPair::new("foo".to_owned(), 1);
+        let p1 = RhsPair::new("foo".to_owned(), 2);
         assert!(p0 < p1);
-        let p2 = RightValuedPair::new("bar".to_owned(), 2);
+        let p2 = RhsPair::new("bar".to_owned(), 2);
         assert_eq!(p1, p2);
         assert!(p0 < p2);
     }
@@ -153,15 +184,15 @@ mod pair_tests {
 
     #[tokio::test]
     async fn test_right_ordered_pair_group_sum() {
-        let (tx0, rx0) = channel!(Vec<RightValuedPair<String, u32>>, 1024);
+        let (tx0, rx0) = channel!(Vec<RhsPair<String, u32>>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
         let mut pipe = mapper!("pair_group_summation");
         let f0 = populate_records(
             tx0,
             vec![vec![
-                RightValuedPair::new("foo".to_owned(), 1),
-                RightValuedPair::new("foo".to_owned(), 2),
-                RightValuedPair::new("bar".to_owned(), 2),
+                RhsPair::new("foo".to_owned(), 1),
+                RhsPair::new("foo".to_owned(), 2),
+                RhsPair::new("bar".to_owned(), 2),
             ]],
         );
         f0.await;
@@ -183,17 +214,17 @@ mod pair_tests {
 
     #[tokio::test]
     async fn test_top_pair() {
-        let (tx0, rx0) = channel!(Vec<RightValuedPair<String, Count32>>, 1024);
-        let (tx1, mut rx1) = channel!(Vec<RightValuedPair<String, Count32>>, 1024);
+        let (tx0, rx0) = channel!(Vec<RhsPair<String, Count32>>, 1024);
+        let (tx1, mut rx1) = channel!(Vec<RhsPair<String, Count32>>, 1024);
         let mut pipe = Mapper::new("top_word");
         let f0 = populate_records(
             tx0,
             vec![vec![
-                RightValuedPair::new("d".to_owned(), Count32::new(4)),
-                RightValuedPair::new("a".to_owned(), Count32::new(1)),
-                RightValuedPair::new("e".to_owned(), Count32::new(5)),
-                RightValuedPair::new("b".to_owned(), Count32::new(2)),
-                RightValuedPair::new("c".to_owned(), Count32::new(3)),
+                RhsPair::new("d".to_owned(), Count32::new(4)),
+                RhsPair::new("a".to_owned(), Count32::new(1)),
+                RhsPair::new("e".to_owned(), Count32::new(5)),
+                RhsPair::new("b".to_owned(), Count32::new(2)),
+                RhsPair::new("c".to_owned(), Count32::new(3)),
             ]],
         );
         f0.await;

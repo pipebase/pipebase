@@ -14,11 +14,8 @@ use crate::Result;
 use crate::{ConfigInto, Context, FromConfig, HasContext};
 
 #[async_trait]
-pub trait Export<T, C>: Send + Sync + FromConfig<C>
-where
-    T: Send + Sync + 'static,
-{
-    async fn export(&mut self, t: &T) -> anyhow::Result<()>;
+pub trait Export<T, C>: Send + Sync + FromConfig<C> {
+    async fn export(&mut self, t: T) -> anyhow::Result<()>;
 }
 
 pub struct Exporter<'a> {
@@ -29,7 +26,7 @@ pub struct Exporter<'a> {
 #[async_trait]
 impl<'a, T, E, C> Pipe<T, (), E, C> for Exporter<'a>
 where
-    T: Send + Sync + 'static,
+    T: Send + 'static,
     E: Export<T, C> + 'static,
     C: ConfigInto<E> + Send + Sync + 'static,
 {
@@ -53,7 +50,7 @@ where
                 }
             };
             self.context.set_state(State::Export);
-            match exporter.export(&t).await {
+            match exporter.export(t).await {
                 Ok(_) => (),
                 Err(err) => {
                     error!("exporter error {}", err);
