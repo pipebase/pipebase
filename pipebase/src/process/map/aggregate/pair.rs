@@ -1,4 +1,4 @@
-use crate::{AggregateAs, GroupAs};
+use crate::{AggregateAs, GroupAs, Project};
 use std::{
     cmp::{Ord, Ordering, PartialOrd},
     fmt::Debug,
@@ -25,9 +25,8 @@ impl<L, R> LeftRight for (L, R) {
     }
 }
 
-// General Pair
-#[derive(Debug, Clone)]
-pub struct Pair<L, R>(L, R);
+#[derive(Debug, Clone, Eq)]
+pub struct Pair<L, R>(pub L, pub R);
 
 impl<L, R> Pair<L, R> {
     pub fn new(k: L, v: R) -> Self {
@@ -49,35 +48,22 @@ impl<L, R> LeftRight for Pair<L, R> {
 
 impl<L, R> From<(L, R)> for Pair<L, R> {
     fn from(t: (L, R)) -> Self {
-        Pair(t.0, t.1)
+        Pair::new(t.0, t.1)
     }
 }
 
-// Pair's left as group key
-// Pair's right is a comparable and aggregable value
-#[derive(Debug, Clone, Eq)]
-pub struct RhsPair<L, R>(L, R);
-
-impl<L, R> RhsPair<L, R> {
-    pub fn new(k: L, v: R) -> Self {
-        RhsPair(k, v)
+impl<L, R, P> Project<P> for Pair<L, R>
+where
+    P: LeftRight<L = L, R = R>,
+    L: Clone,
+    R: Clone,
+{
+    fn project(rhs: &P) -> Self {
+        Pair::new(rhs.left().to_owned(), rhs.right().to_owned())
     }
 }
 
-impl<L, R> LeftRight for RhsPair<L, R> {
-    type L = L;
-    type R = R;
-
-    fn left(&self) -> &L {
-        &self.0
-    }
-
-    fn right(&self) -> &R {
-        &self.1
-    }
-}
-
-impl<L, R> Ord for RhsPair<L, R>
+impl<L, R> Ord for Pair<L, R>
 where
     L: Eq,
     R: Ord,
@@ -87,7 +73,7 @@ where
     }
 }
 
-impl<L, R> PartialOrd for RhsPair<L, R>
+impl<L, R> PartialOrd for Pair<L, R>
 where
     L: Eq,
     R: Ord,
@@ -97,7 +83,7 @@ where
     }
 }
 
-impl<L, R> PartialEq for RhsPair<L, R>
+impl<L, R> PartialEq for Pair<L, R>
 where
     R: Eq,
 {
@@ -106,13 +92,7 @@ where
     }
 }
 
-impl<L, R> From<(L, R)> for RhsPair<L, R> {
-    fn from(t: (L, R)) -> Self {
-        RhsPair(t.0, t.1)
-    }
-}
-
-impl<L, R> GroupAs<L> for RhsPair<L, R>
+impl<L, R> GroupAs<L> for Pair<L, R>
 where
     L: Clone + Hash + Eq + PartialEq,
 {
@@ -121,7 +101,7 @@ where
     }
 }
 
-impl<L, R> AggregateAs<R> for RhsPair<L, R>
+impl<L, R> AggregateAs<R> for Pair<L, R>
 where
     R: Clone,
 {
@@ -130,17 +110,17 @@ where
     }
 }
 
-impl<L, R> AggregateAs<Vec<RhsPair<L, R>>> for RhsPair<L, R>
+impl<L, R> AggregateAs<Vec<Pair<L, R>>> for Pair<L, R>
 where
     L: Clone,
     R: Clone,
 {
-    fn aggregate_value(&self) -> Vec<RhsPair<L, R>> {
+    fn aggregate_value(&self) -> Vec<Pair<L, R>> {
         vec![self.to_owned()]
     }
 }
 
-impl<L, R> std::ops::AddAssign<Self> for RhsPair<L, R>
+impl<L, R> std::ops::AddAssign<Self> for Pair<L, R>
 where
     L: Eq + PartialEq + Debug,
     R: std::ops::AddAssign<R>,
@@ -185,10 +165,10 @@ mod pair_tests {
 
     #[test]
     fn test_right_ordered_pair_cmp() {
-        let p0 = RhsPair::new("foo".to_owned(), 1);
-        let p1 = RhsPair::new("foo".to_owned(), 2);
+        let p0 = Pair::new("foo".to_owned(), 1);
+        let p1 = Pair::new("foo".to_owned(), 2);
         assert!(p0 < p1);
-        let p2 = RhsPair::new("bar".to_owned(), 2);
+        let p2 = Pair::new("bar".to_owned(), 2);
         assert_eq!(p1, p2);
         assert!(p0 < p2);
     }
@@ -197,15 +177,15 @@ mod pair_tests {
 
     #[tokio::test]
     async fn test_right_ordered_pair_group_sum() {
-        let (tx0, rx0) = channel!(Vec<RhsPair<String, u32>>, 1024);
+        let (tx0, rx0) = channel!(Vec<Pair<String, u32>>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
         let mut pipe = mapper!("pair_group_summation");
         let f0 = populate_records(
             tx0,
             vec![vec![
-                RhsPair::new("foo".to_owned(), 1),
-                RhsPair::new("foo".to_owned(), 2),
-                RhsPair::new("bar".to_owned(), 2),
+                Pair::new("foo".to_owned(), 1),
+                Pair::new("foo".to_owned(), 2),
+                Pair::new("bar".to_owned(), 2),
             ]],
         );
         f0.await;
@@ -227,17 +207,17 @@ mod pair_tests {
 
     #[tokio::test]
     async fn test_top_pair() {
-        let (tx0, rx0) = channel!(Vec<RhsPair<String, Count32>>, 1024);
-        let (tx1, mut rx1) = channel!(Vec<RhsPair<String, Count32>>, 1024);
+        let (tx0, rx0) = channel!(Vec<Pair<String, Count32>>, 1024);
+        let (tx1, mut rx1) = channel!(Vec<Pair<String, Count32>>, 1024);
         let mut pipe = Mapper::new("top_word");
         let f0 = populate_records(
             tx0,
             vec![vec![
-                RhsPair::new("d".to_owned(), Count32::new(4)),
-                RhsPair::new("a".to_owned(), Count32::new(1)),
-                RhsPair::new("e".to_owned(), Count32::new(5)),
-                RhsPair::new("b".to_owned(), Count32::new(2)),
-                RhsPair::new("c".to_owned(), Count32::new(3)),
+                Pair::new("d".to_owned(), Count32::new(4)),
+                Pair::new("a".to_owned(), Count32::new(1)),
+                Pair::new("e".to_owned(), Count32::new(5)),
+                Pair::new("b".to_owned(), Count32::new(2)),
+                Pair::new("c".to_owned(), Count32::new(3)),
             ]],
         );
         f0.await;
