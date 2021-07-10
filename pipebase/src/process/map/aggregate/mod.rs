@@ -34,10 +34,12 @@ pub trait GroupAs<T> {
 }
 
 pub trait GroupTable<K, V>: IntoIterator<Item = (K, V)> {
-    fn contains_group(&self, gid: &K) -> bool;
-    fn insert_group(&mut self, gid: K, v: V) -> Option<V>;
-    fn get_group_mut(&mut self, gid: &K) -> Option<&mut V>;
-    fn get_group(&mut self, gid: &K) -> Option<&V>;
+    fn contains_group(&mut self, gid: &K) -> anyhow::Result<bool>;
+    fn insert_group(&mut self, gid: K, v: V) -> anyhow::Result<Option<V>>;
+    fn get_group(&mut self, gid: &K) -> anyhow::Result<Option<&mut V>>;
+    fn persist_groups(&mut self) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 impl Init for u32 {
@@ -86,20 +88,16 @@ impl<K, V> GroupTable<K, V> for HashMap<K, V>
 where
     K: Eq + Hash,
 {
-    fn contains_group(&self, gid: &K) -> bool {
-        self.contains_key(gid)
+    fn contains_group(&mut self, gid: &K) -> anyhow::Result<bool> {
+        Ok(self.contains_key(gid))
     }
 
-    fn get_group(&mut self, gid: &K) -> Option<&V> {
-        self.get(gid)
+    fn get_group(&mut self, gid: &K) -> anyhow::Result<Option<&mut V>> {
+        Ok(self.get_mut(gid))
     }
 
-    fn get_group_mut(&mut self, gid: &K) -> Option<&mut V> {
-        self.get_mut(gid)
-    }
-
-    fn insert_group(&mut self, gid: K, v: V) -> Option<V> {
-        self.insert(gid, v)
+    fn insert_group(&mut self, gid: K, v: V) -> anyhow::Result<Option<V>> {
+        Ok(self.insert(gid, v))
     }
 }
 
@@ -107,19 +105,15 @@ impl<K, V> GroupTable<K, V> for BTreeMap<K, V>
 where
     K: Ord,
 {
-    fn contains_group(&self, gid: &K) -> bool {
-        self.contains_key(gid)
+    fn contains_group(&mut self, gid: &K) -> anyhow::Result<bool> {
+        Ok(self.contains_key(gid))
     }
 
-    fn get_group(&mut self, gid: &K) -> Option<&V> {
-        self.get(gid)
+    fn get_group(&mut self, gid: &K) -> anyhow::Result<Option<&mut V>> {
+        Ok(self.get_mut(gid))
     }
 
-    fn get_group_mut(&mut self, gid: &K) -> Option<&mut V> {
-        self.get_mut(gid)
-    }
-
-    fn insert_group(&mut self, gid: K, v: V) -> Option<V> {
-        self.insert(gid, v)
+    fn insert_group(&mut self, gid: K, v: V) -> anyhow::Result<Option<V>> {
+        Ok(self.insert(gid, v))
     }
 }

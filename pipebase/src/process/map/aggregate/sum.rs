@@ -107,6 +107,32 @@ mod sum_aggregator_tests {
     }
 }
 
+pub trait GroupSumAggregate<I, T, K, V, U, G>
+where
+    I: GroupAs<K> + AggregateAs<V>,
+    V: std::ops::AddAssign<V> + Init + Clone,
+    T: IntoIterator<Item = I>,
+    U: FromIterator<Pair<K, V>>,
+    G: GroupTable<K, V>,
+{
+    fn group_table(&self) -> anyhow::Result<G>;
+    fn group_aggregate(&self, t: T) -> anyhow::Result<U> {
+        let mut group_table = self.group_table()?;
+        for ref item in t {
+            if !group_table.contains_group(&item.group())? {
+                group_table.insert_group(item.group(), V::init())?;
+            }
+            let sum = group_table
+                .get_group(&item.group())?
+                .expect("group not found");
+            *sum += item.aggregate_value();
+        }
+        // persist aggregated group sums
+        group_table.persist_groups()?;
+        Ok(group_table.into_iter().map(|t| Pair::from(t)).collect())
+    }
+}
+
 #[derive(Deserialize)]
 pub struct UnorderedGroupSumAggregatorConfig {}
 
@@ -117,28 +143,6 @@ impl FromPath for UnorderedGroupSumAggregatorConfig {
         P: AsRef<std::path::Path> + Send,
     {
         Ok(UnorderedGroupSumAggregatorConfig {})
-    }
-}
-
-pub trait GroupSumAggregate<I, T, K, V, U, G>
-where
-    I: GroupAs<K> + AggregateAs<V>,
-    V: std::ops::AddAssign<V> + Init + Clone,
-    T: IntoIterator<Item = I>,
-    U: FromIterator<Pair<K, V>>,
-    G: GroupTable<K, V>,
-{
-    fn group_table(&self) -> G;
-    fn group_aggregate(&self, t: T) -> U {
-        let mut group_sum = self.group_table();
-        for ref item in t {
-            if !group_sum.contains_group(&item.group()) {
-                group_sum.insert_group(item.group(), V::init());
-            }
-            let sum = group_sum.get_group_mut(&item.group()).unwrap();
-            *sum += item.aggregate_value();
-        }
-        group_sum.into_iter().map(|t| Pair::from(t)).collect()
     }
 }
 
@@ -163,8 +167,8 @@ where
     K: Hash + Eq + PartialEq,
     V: std::ops::AddAssign<V> + Init + Clone,
 {
-    fn group_table(&self) -> HashMap<K, V> {
-        HashMap::new()
+    fn group_table(&self) -> anyhow::Result<HashMap<K, V>> {
+        Ok(HashMap::new())
     }
 }
 
@@ -178,7 +182,7 @@ where
     T: IntoIterator<Item = I> + Send + 'static,
 {
     async fn map(&mut self, data: T) -> anyhow::Result<Vec<Pair<K, V>>> {
-        Ok(self.group_aggregate(data))
+        Ok(self.group_aggregate(data)?)
     }
 }
 
@@ -322,8 +326,8 @@ where
     K: Ord,
     V: std::ops::AddAssign<V> + Init + Clone,
 {
-    fn group_table(&self) -> BTreeMap<K, V> {
-        BTreeMap::new()
+    fn group_table(&self) -> anyhow::Result<BTreeMap<K, V>> {
+        Ok(BTreeMap::new())
     }
 }
 
@@ -337,7 +341,7 @@ where
     T: IntoIterator<Item = I> + Send + 'static,
 {
     async fn map(&mut self, data: T) -> anyhow::Result<Vec<Pair<K, V>>> {
-        Ok(self.group_aggregate(data))
+        Ok(self.group_aggregate(data)?)
     }
 }
 

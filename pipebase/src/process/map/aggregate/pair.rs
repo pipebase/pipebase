@@ -12,6 +12,19 @@ pub trait LeftRight {
     fn right(&self) -> &Self::R;
 }
 
+impl<L, R> LeftRight for (L, R) {
+    type L = L;
+    type R = R;
+
+    fn left(&self) -> &Self::L {
+        &self.0
+    }
+
+    fn right(&self) -> &Self::R {
+        &self.1
+    }
+}
+
 // General Pair
 #[derive(Debug, Clone)]
 pub struct Pair<L, R>(L, R);
