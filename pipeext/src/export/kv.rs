@@ -4,15 +4,15 @@ use redis::{Client, Commands, Connection, RedisResult, ToRedisArgs};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct RedisExporterConfig {
+pub struct RedisWriterConfig {
     url: String,
 }
 
-impl FromPath for RedisExporterConfig {}
+impl FromPath for RedisWriterConfig {}
 
-impl ConfigInto<RedisExporter> for RedisExporterConfig {}
+impl ConfigInto<RedisWriter> for RedisWriterConfig {}
 
-pub struct RedisExporter {
+pub struct RedisWriter {
     client: Client,
     connection: Connection,
     // flag indicate whether to reconnect
@@ -20,11 +20,11 @@ pub struct RedisExporter {
 }
 
 #[async_trait]
-impl FromConfig<RedisExporterConfig> for RedisExporter {
-    async fn from_config(config: &RedisExporterConfig) -> anyhow::Result<Self> {
+impl FromConfig<RedisWriterConfig> for RedisWriter {
+    async fn from_config(config: &RedisWriterConfig) -> anyhow::Result<Self> {
         let client = redis::Client::open(config.url.to_owned())?;
         let connection = client.get_connection()?;
-        Ok(RedisExporter {
+        Ok(RedisWriter {
             client,
             connection,
             reconnect: false,
@@ -33,7 +33,7 @@ impl FromConfig<RedisExporterConfig> for RedisExporter {
 }
 
 #[async_trait]
-impl<K, V, P> Export<P, RedisExporterConfig> for RedisExporter
+impl<K, V, P> Export<P, RedisWriterConfig> for RedisWriter
 where
     P: LeftRight<L = K, R = V> + Send + 'static,
     K: ToRedisArgs + Clone + Send + 'static,
@@ -52,7 +52,7 @@ where
     }
 }
 
-impl RedisExporter {
+impl RedisWriter {
     async fn set<K, V, P>(&mut self, p: P) -> RedisResult<()>
     where
         P: LeftRight<L = K, R = V>,

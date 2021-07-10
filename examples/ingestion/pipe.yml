@@ -29,15 +29,25 @@ pipes:
     config:
       ty: PrinterConfig
     upstreams: [json]
+  - name: redis_writer
+    ty: Exporter
+    config:
+      ty: RedisWriterConfig
+      path: catalogs/redis_writer.yml
+    upstreams: [json]
 objects:
   - ty: Record
     metas:
-      - derives: [Clone, Debug, Deserialize]
+      - derives: [Clone, Debug, Deserialize, LeftRight]
     fields:
       - name: key
         data_ty: String
+        metas:
+          - tag: Left
       - name: value
         data_ty: UnsignedInteger
+        metas:
+          - tag: Right
 cstores:
   - name: context_server
     config:

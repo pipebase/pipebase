@@ -45,6 +45,10 @@ pub enum DataType {
     HashSet {
         data_ty: Box<DataType>,
     },
+    Pair {
+        left_data_ty: Box<DataType>,
+        right_data_ty: Box<DataType>,
+    },
 }
 
 pub fn data_ty_to_literal(ty: &DataType) -> String {
@@ -96,6 +100,14 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::HashSet { data_ty } => {
             let data_ty_lit = data_ty_to_literal(data_ty);
             format!("std::collections::HashSet<{}>", data_ty_lit)
+        }
+        DataType::Pair {
+            left_data_ty,
+            right_data_ty,
+        } => {
+            let left_data_ty = data_ty_to_literal(left_data_ty);
+            let right_data_ty = data_ty_to_literal(right_data_ty);
+            format!("pipebase::Pair<{}, {}>", left_data_ty, right_data_ty)
         }
     }
 }
