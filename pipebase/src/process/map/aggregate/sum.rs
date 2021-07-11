@@ -1,9 +1,9 @@
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
-use std::iter::FromIterator;
 
 use crate::{
-    Aggregate, AggregateAs, ConfigInto, FromConfig, FromPath, GroupAs, GroupTable, Init, Map, Pair,
+    Aggregate, AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Map,
+    Pair,
 };
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -39,9 +39,8 @@ where
     U: std::ops::AddAssign<U> + Init,
     T: IntoIterator<Item = I>,
 {
-    fn merge(&self, mut u: U, i: I) -> U {
-        u += i.aggregate_value();
-        u
+    fn merge(&self, u: &mut U, i: &I) {
+        *u += i.aggregate_value();
     }
 }
 
@@ -104,32 +103,6 @@ mod sum_aggregator_tests {
     }
 }
 
-pub trait GroupSumAggregate<I, T, K, V, U, G>
-where
-    I: GroupAs<K> + AggregateAs<V>,
-    V: std::ops::AddAssign<V> + Init + Clone,
-    T: IntoIterator<Item = I>,
-    U: FromIterator<Pair<K, V>>,
-    G: GroupTable<K, V>,
-{
-    fn group_table(&self) -> anyhow::Result<G>;
-    fn group_aggregate(&self, t: T) -> anyhow::Result<U> {
-        let mut group_table = self.group_table()?;
-        for ref item in t {
-            if !group_table.contains_group(&item.group())? {
-                group_table.insert_group(item.group(), V::init())?;
-            }
-            let sum = group_table
-                .get_group(&item.group())?
-                .expect("group not found");
-            *sum += item.aggregate_value();
-        }
-        // persist aggregated group sums
-        group_table.persist_groups()?;
-        Ok(group_table.into_iter().map(|t| Pair::from(t)).collect())
-    }
-}
-
 #[derive(Deserialize)]
 pub struct UnorderedGroupSumAggregatorConfig {}
 
@@ -156,7 +129,7 @@ impl FromConfig<UnorderedGroupSumAggregatorConfig> for UnorderedGroupSumAggregat
 // Group key is hashed but not ordered
 pub struct UnorderedGroupSumAggregator {}
 
-impl<I, T, K, V> GroupSumAggregate<I, T, K, V, Vec<Pair<K, V>>, HashMap<K, V>>
+impl<I, T, K, V> GroupAggregate<I, T, K, V, Vec<Pair<K, V>>, HashMap<K, V>>
     for UnorderedGroupSumAggregator
 where
     I: GroupAs<K> + AggregateAs<V>,
@@ -164,6 +137,10 @@ where
     K: Hash + Eq + PartialEq,
     V: std::ops::AddAssign<V> + Init + Clone,
 {
+    fn merge(&self, v: &mut V, i: &I) {
+        *v += i.aggregate_value();
+    }
+
     fn group_table(&self) -> anyhow::Result<HashMap<K, V>> {
         Ok(HashMap::new())
     }
@@ -315,7 +292,7 @@ impl FromConfig<OrderedGroupSumAggregatorConfig> for OrderedGroupSumAggregator {
 // Group key is ordered
 pub struct OrderedGroupSumAggregator {}
 
-impl<I, T, K, V> GroupSumAggregate<I, T, K, V, Vec<Pair<K, V>>, BTreeMap<K, V>>
+impl<I, T, K, V> GroupAggregate<I, T, K, V, Vec<Pair<K, V>>, BTreeMap<K, V>>
     for OrderedGroupSumAggregator
 where
     I: GroupAs<K> + AggregateAs<V>,
@@ -323,6 +300,10 @@ where
     K: Ord,
     V: std::ops::AddAssign<V> + Init + Clone,
 {
+    fn merge(&self, v: &mut V, i: &I) {
+        *v += i.aggregate_value();
+    }
+
     fn group_table(&self) -> anyhow::Result<BTreeMap<K, V>> {
         Ok(BTreeMap::new())
     }

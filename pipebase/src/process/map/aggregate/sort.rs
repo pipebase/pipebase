@@ -78,9 +78,8 @@ where
     U: Ord + Clone,
     T: IntoIterator<Item = I>,
 {
-    fn merge(&self, mut u: Vec<U>, i: I) -> Vec<U> {
+    fn merge(&self, u: &mut Vec<U>, i: &I) {
         u.extend(i.aggregate_value());
-        u
     }
 
     fn operate(&self, mut u: Vec<U>) -> Vec<U> {
