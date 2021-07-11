@@ -37,8 +37,8 @@ where
     fn merge(&self, u: &mut U, i: &I);
 
     // post merge operation
-    fn operate(&self, u: U) -> U {
-        u
+    fn operate(&self, _u: &mut U) {
+        return;
     }
 
     fn aggregate(&self, t: T) -> U {
@@ -46,7 +46,8 @@ where
         for i in t {
             self.merge(&mut u, &i);
         }
-        self.operate(u)
+        self.operate(&mut u);
+        u
     }
 }
 
@@ -147,6 +148,9 @@ where
     U: FromIterator<Pair<K, V>>,
     G: GroupTable<K, V>,
 {
+    fn operate(&self, v: &mut V) {
+        return;
+    }
     fn merge(&self, v: &mut V, i: &I);
     fn group_table(&self) -> anyhow::Result<G>;
     fn group_aggregate(&self, t: T) -> anyhow::Result<U> {
@@ -162,6 +166,12 @@ where
         }
         // persist aggregated groups
         group_table.persist_groups()?;
-        Ok(group_table.into_iter().map(|t| Pair::from(t)).collect())
+        Ok(group_table
+            .into_iter()
+            .map(|mut t| {
+                self.operate(&mut t.1);
+                Pair::from(t)
+            })
+            .collect())
     }
 }
