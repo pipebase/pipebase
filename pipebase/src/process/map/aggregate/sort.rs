@@ -78,19 +78,19 @@ where
     U: Ord + Clone,
     T: IntoIterator<Item = I>,
 {
-    fn aggregate(&self, t: T) -> Vec<U> {
-        let mut buffer: Vec<U> = Vec::new();
-        for item in t {
-            buffer.extend(item.aggregate_value())
-        }
-        // apply n and desc
-        Self::qsort(&mut buffer, self.n, self.desc);
-        buffer.truncate(self.n.min(buffer.len()));
-        buffer.sort_by(|a, b| match self.desc {
+    fn merge(&self, mut u: Vec<U>, i: I) -> Vec<U> {
+        u.extend(i.aggregate_value());
+        u
+    }
+
+    fn operate(&self, mut u: Vec<U>) -> Vec<U> {
+        Self::qsort(&mut u, self.n, self.desc);
+        u.truncate(self.n);
+        u.sort_by(|a, b| match self.desc {
             true => b.partial_cmp(a).unwrap(),
             false => a.partial_cmp(b).unwrap(),
         });
-        buffer
+        u
     }
 }
 

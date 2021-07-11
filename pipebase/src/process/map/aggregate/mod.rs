@@ -4,7 +4,7 @@ mod sort;
 mod sum;
 
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap},
     hash::Hash,
 };
 
@@ -17,16 +17,45 @@ pub trait Init {
     fn init() -> Self;
 }
 
+impl<T> Init for Vec<T> {
+    fn init() -> Self {
+        Vec::new()
+    }
+}
+
+impl<T> Init for BTreeSet<T>
+where
+    T: Ord,
+{
+    fn init() -> Self {
+        BTreeSet::new()
+    }
+}
+
 pub trait AggregateAs<T> {
     fn aggregate_value(&self) -> T;
 }
 
 pub trait Aggregate<I, T, U>
 where
+    U: Init,
     I: AggregateAs<U>,
     T: IntoIterator<Item = I>,
 {
-    fn aggregate(&self, t: T) -> U;
+    fn merge(&self, u: U, i: I) -> U;
+
+    // post merge operation
+    fn operate(&self, u: U) -> U {
+        u
+    }
+
+    fn aggregate(&self, t: T) -> U {
+        let mut u = U::init();
+        for i in t {
+            u = self.merge(u, i);
+        }
+        self.operate(u)
+    }
 }
 
 pub trait GroupAs<T> {

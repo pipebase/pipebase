@@ -39,12 +39,9 @@ where
     U: std::ops::AddAssign<U> + Init,
     T: IntoIterator<Item = I>,
 {
-    fn aggregate(&self, t: T) -> U {
-        let mut sum: U = U::init();
-        for item in t.into_iter() {
-            sum += item.aggregate_value();
-        }
-        sum
+    fn merge(&self, mut u: U, i: I) -> U {
+        u += i.aggregate_value();
+        u
     }
 }
 
