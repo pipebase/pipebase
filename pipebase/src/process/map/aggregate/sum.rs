@@ -8,6 +8,13 @@ use crate::{
 use async_trait::async_trait;
 use serde::Deserialize;
 
+// u32 as summation result of u32
+impl AggregateAs<u32> for u32 {
+    fn aggregate_value(&self) -> u32 {
+        *self
+    }
+}
+
 #[derive(Deserialize)]
 pub struct SumAggregatorConfig {}
 

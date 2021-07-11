@@ -1,8 +1,8 @@
-use crate::{AggregateAs, Init};
+use crate::AggregateAs;
 use std::{cmp::Ordering, fmt::Debug};
 
 #[derive(Clone, Debug, Eq)]
-pub struct Count32(u32);
+pub struct Count32(pub u32);
 
 impl Count32 {
     pub fn new(c: u32) -> Self {
@@ -38,12 +38,6 @@ impl PartialEq for Count32 {
     }
 }
 
-impl Init for Count32 {
-    fn init() -> Count32 {
-        Count32(0)
-    }
-}
-
 impl AggregateAs<Count32> for Count32 {
     fn aggregate_value(&self) -> Count32 {
         self.to_owned()
@@ -53,5 +47,17 @@ impl AggregateAs<Count32> for Count32 {
 impl AggregateAs<Vec<Count32>> for Count32 {
     fn aggregate_value(&self) -> Vec<Count32> {
         vec![self.to_owned()]
+    }
+}
+
+impl AggregateAs<Count32> for u32 {
+    fn aggregate_value(&self) -> Count32 {
+        Count32::new(1)
+    }
+}
+
+impl AggregateAs<Count32> for String {
+    fn aggregate_value(&self) -> Count32 {
+        Count32::new(1)
     }
 }

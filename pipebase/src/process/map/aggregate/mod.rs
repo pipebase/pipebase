@@ -1,4 +1,6 @@
+mod avg;
 mod count;
+mod init;
 mod pair;
 mod sort;
 mod sum;
@@ -9,20 +11,12 @@ use std::{
     iter::{FromIterator, IntoIterator},
 };
 
+pub use avg::*;
 pub use count::*;
+pub use init::*;
 pub use pair::*;
 pub use sort::*;
 pub use sum::*;
-
-pub trait Init {
-    fn init() -> Self;
-}
-
-impl<T> Init for Vec<T> {
-    fn init() -> Self {
-        Vec::new()
-    }
-}
 
 pub trait AggregateAs<T> {
     fn aggregate_value(&self) -> T;
@@ -30,9 +24,9 @@ pub trait AggregateAs<T> {
 
 pub trait Aggregate<I, T, U>
 where
-    U: Init,
     I: AggregateAs<U>,
     T: IntoIterator<Item = I>,
+    U: Init,
 {
     fn merge(&self, u: &mut U, i: &I);
 
@@ -61,36 +55,6 @@ pub trait GroupTable<K, V>: IntoIterator<Item = (K, V)> {
     fn get_group(&mut self, gid: &K) -> anyhow::Result<Option<&mut V>>;
     fn persist_groups(&mut self) -> anyhow::Result<()> {
         Ok(())
-    }
-}
-
-impl Init for u32 {
-    fn init() -> u32 {
-        0
-    }
-}
-
-impl AggregateAs<u32> for u32 {
-    fn aggregate_value(&self) -> u32 {
-        *self
-    }
-}
-
-impl AggregateAs<Vec<u32>> for u32 {
-    fn aggregate_value(&self) -> Vec<u32> {
-        vec![*self]
-    }
-}
-
-impl AggregateAs<Count32> for u32 {
-    fn aggregate_value(&self) -> Count32 {
-        Count32::new(1)
-    }
-}
-
-impl AggregateAs<Count32> for String {
-    fn aggregate_value(&self) -> Count32 {
-        Count32::new(1)
     }
 }
 
@@ -148,7 +112,7 @@ where
     U: FromIterator<Pair<K, V>>,
     G: GroupTable<K, V>,
 {
-    fn operate(&self, v: &mut V) {
+    fn operate(&self, _v: &mut V) {
         return;
     }
     fn merge(&self, v: &mut V, i: &I);
