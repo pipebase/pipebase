@@ -82,14 +82,13 @@ where
         u.extend(i.aggregate_value());
     }
 
-    fn operate(&self, mut u: Vec<U>) -> Vec<U> {
-        Self::qsort(&mut u, self.n, self.desc);
+    fn operate(&self, u: &mut Vec<U>) {
+        Self::qsort(u, self.n, self.desc);
         u.truncate(self.n);
         u.sort_by(|a, b| match self.desc {
             true => b.partial_cmp(a).unwrap(),
             false => a.partial_cmp(b).unwrap(),
         });
-        u
     }
 }
 
