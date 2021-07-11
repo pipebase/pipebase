@@ -15,4 +15,5 @@ Cargo.lock
 # test generated app
 cargo-pipe/resources/app
 examples/*/app
+pipebase/resources/data
 pipeext/resources/data

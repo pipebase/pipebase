@@ -10,40 +10,32 @@ use serde::Deserialize;
 use tokio::sync::mpsc::Sender;
 
 #[async_trait]
-pub trait FileStreamer {
+pub trait FileStreamReader {
     fn new_reader<P: AsRef<Path>>(path: P) -> anyhow::Result<BufReader<File>> {
         let f = File::open(path)?;
         Ok(BufReader::new(f))
     }
 
     async fn stream_file<P: AsRef<Path> + Send>(&self, path: P) -> anyhow::Result<()>;
-
-    async fn stream_eof(&self) -> anyhow::Result<()>;
 }
 
 #[derive(Deserialize)]
-pub struct FileSplitStreamerConfig {
+pub struct FileSplitReaderConfig {
     pub delimiter: u8,
 }
 
-impl FromPath for FileSplitStreamerConfig {}
+impl FromPath for FileSplitReaderConfig {}
 
 #[async_trait]
-impl ConfigInto<FileSplitStreamer> for FileSplitStreamerConfig {}
+impl ConfigInto<FileSplitReader> for FileSplitReaderConfig {}
 
-pub struct FileSplitStreamer {
+pub struct FileSplitReader {
     delimiter: u8,
     tx: Option<Sender<Vec<u8>>>,
 }
 
 #[async_trait]
-impl FileStreamer for FileSplitStreamer {
-    async fn stream_eof(&self) -> anyhow::Result<()> {
-        let tx = self.tx.as_ref().unwrap();
-        tx.send(vec![]).await?;
-        Ok(())
-    }
-
+impl FileStreamReader for FileSplitReader {
     async fn stream_file<P>(&self, path: P) -> anyhow::Result<()>
     where
         P: AsRef<Path> + Send,
@@ -56,7 +48,6 @@ impl FileStreamer for FileSplitStreamer {
                 Some(result) => result?,
                 None => {
                     // EOF
-                    self.stream_eof().await?;
                     break;
                 }
             };
@@ -67,9 +58,9 @@ impl FileStreamer for FileSplitStreamer {
 }
 
 #[async_trait]
-impl FromConfig<FileSplitStreamerConfig> for FileSplitStreamer {
-    async fn from_config(config: &FileSplitStreamerConfig) -> anyhow::Result<Self> {
-        Ok(FileSplitStreamer {
+impl FromConfig<FileSplitReaderConfig> for FileSplitReader {
+    async fn from_config(config: &FileSplitReaderConfig) -> anyhow::Result<Self> {
+        Ok(FileSplitReader {
             delimiter: config.delimiter.to_owned(),
             tx: None,
         })
@@ -77,7 +68,7 @@ impl FromConfig<FileSplitStreamerConfig> for FileSplitStreamer {
 }
 
 #[async_trait]
-impl<P> Stream<P, Vec<u8>, FileSplitStreamerConfig> for FileSplitStreamer
+impl<P> Stream<P, Vec<u8>, FileSplitReaderConfig> for FileSplitReader
 where
     P: AsRef<Path> + Send + 'static,
 {
@@ -96,13 +87,6 @@ mod file_split_streamer_tests {
     use std::path::PathBuf;
 
     use crate::*;
-    use tokio::sync::mpsc::Sender;
-
-    async fn populate_records(tx: Sender<PathBuf>, paths: Vec<PathBuf>) {
-        for path in paths {
-            let _ = tx.send(path).await.unwrap();
-        }
-    }
 
     #[tokio::test]
     async fn test_file_split_streamer() {
@@ -116,7 +100,7 @@ mod file_split_streamer_tests {
         f0.await;
         join_pipes!([run_pipe!(
             pipe,
-            FileSplitStreamerConfig,
+            FileSplitReaderConfig,
             "resources/catalogs/file_split_streamer.yml",
             [tx1],
             rx0
@@ -125,47 +109,38 @@ mod file_split_streamer_tests {
         assert_eq!("foo", String::from_utf8(word).unwrap());
         let word = rx1.recv().await.unwrap();
         assert_eq!("bar", String::from_utf8(word).unwrap());
-        // eof
-        let line = rx1.recv().await.unwrap();
-        assert!(line.is_empty())
     }
 }
 
 #[derive(Deserialize)]
-pub struct FileLineStreamerConfig {}
+pub struct FileLineReaderConfig {}
 
 #[async_trait]
-impl FromPath for FileLineStreamerConfig {
+impl FromPath for FileLineReaderConfig {
     async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
         P: AsRef<std::path::Path> + Send,
     {
-        Ok(FileLineStreamerConfig {})
+        Ok(FileLineReaderConfig {})
     }
 }
 
 #[async_trait]
-impl ConfigInto<FileLineStreamer> for FileLineStreamerConfig {}
+impl ConfigInto<FileLineReader> for FileLineReaderConfig {}
 
-pub struct FileLineStreamer {
+pub struct FileLineReader {
     tx: Option<Sender<String>>,
 }
 
 #[async_trait]
-impl FromConfig<FileLineStreamerConfig> for FileLineStreamer {
-    async fn from_config(_config: &FileLineStreamerConfig) -> anyhow::Result<Self> {
-        Ok(FileLineStreamer { tx: None })
+impl FromConfig<FileLineReaderConfig> for FileLineReader {
+    async fn from_config(_config: &FileLineReaderConfig) -> anyhow::Result<Self> {
+        Ok(FileLineReader { tx: None })
     }
 }
 
 #[async_trait]
-impl FileStreamer for FileLineStreamer {
-    async fn stream_eof(&self) -> anyhow::Result<()> {
-        let tx = self.tx.as_ref().unwrap();
-        tx.send(String::new()).await?;
-        Ok(())
-    }
-
+impl FileStreamReader for FileLineReader {
     async fn stream_file<P>(&self, path: P) -> anyhow::Result<()>
     where
         P: AsRef<Path> + Send,
@@ -176,7 +151,10 @@ impl FileStreamer for FileLineStreamer {
         loop {
             let line = match lines_iter.next() {
                 Some(line) => line?,
-                None => return self.stream_eof().await,
+                None => {
+                    // EOF
+                    return Ok(());
+                }
             };
             tx.send(line).await?;
         }
@@ -184,7 +162,7 @@ impl FileStreamer for FileLineStreamer {
 }
 
 #[async_trait]
-impl<P> Stream<P, String, FileLineStreamerConfig> for FileLineStreamer
+impl<P> Stream<P, String, FileLineReaderConfig> for FileLineReader
 where
     P: AsRef<Path> + Send + 'static,
 {
@@ -203,13 +181,6 @@ mod file_line_streamer_tests {
     use std::path::PathBuf;
 
     use crate::*;
-    use tokio::sync::mpsc::Sender;
-
-    async fn populate_records(tx: Sender<PathBuf>, paths: Vec<PathBuf>) {
-        for path in paths {
-            let _ = tx.send(path).await.unwrap();
-        }
-    }
 
     #[tokio::test]
     async fn test_file_line_streamer() {
@@ -221,13 +192,10 @@ mod file_line_streamer_tests {
             vec![PathBuf::from("resources/test_file_stream/test_file_1.txt")],
         );
         f0.await;
-        join_pipes!([run_pipe!(pipe, FileLineStreamerConfig, "", [tx1], rx0)]);
+        join_pipes!([run_pipe!(pipe, FileLineReaderConfig, "", [tx1], rx0)]);
         let line = rx1.recv().await.unwrap();
         assert_eq!("foo1 bar1", &line);
         let line = rx1.recv().await.unwrap();
         assert_eq!("foo2 bar2", &line);
-        // eof
-        let line = rx1.recv().await.unwrap();
-        assert!(line.is_empty())
     }
 }
