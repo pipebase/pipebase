@@ -1,7 +1,7 @@
 use crate::{FromBytes, IntoBytes, RocksDBGroupTable};
 use async_trait::async_trait;
 use pipebase::{
-    AggregateAs, ConfigInto, FromConfig, FromPath, GroupAs, GroupSumAggregate, Init, Map, Pair,
+    AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Map, Pair,
 };
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -31,7 +31,7 @@ impl FromConfig<RocksDBUnorderedGroupSumAggregatorConfig> for RocksDBUnorderedGr
     }
 }
 
-impl<I, T, K, V, U> GroupSumAggregate<I, T, K, V, U, RocksDBGroupTable<HashMap<K, V>>>
+impl<I, T, K, V, U> GroupAggregate<I, T, K, V, U, RocksDBGroupTable<HashMap<K, V>>>
     for RocksDBUnorderedGroupSumAggregator
 where
     I: GroupAs<K> + AggregateAs<V>,
@@ -40,6 +40,10 @@ where
     T: IntoIterator<Item = I>,
     U: FromIterator<Pair<K, V>>,
 {
+    fn merge(&self, v: &mut V, i: &I) {
+        *v += i.aggregate_value();
+    }
+
     fn group_table(&self) -> anyhow::Result<RocksDBGroupTable<HashMap<K, V>>> {
         RocksDBGroupTable::new(self.path.to_owned(), HashMap::new())
     }

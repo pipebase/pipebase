@@ -6,6 +6,7 @@ mod sum;
 use std::{
     collections::{BTreeMap, HashMap},
     hash::Hash,
+    iter::{FromIterator, IntoIterator},
 };
 
 pub use count::*;
@@ -17,16 +18,36 @@ pub trait Init {
     fn init() -> Self;
 }
 
+impl<T> Init for Vec<T> {
+    fn init() -> Self {
+        Vec::new()
+    }
+}
+
 pub trait AggregateAs<T> {
     fn aggregate_value(&self) -> T;
 }
 
 pub trait Aggregate<I, T, U>
 where
+    U: Init,
     I: AggregateAs<U>,
     T: IntoIterator<Item = I>,
 {
-    fn aggregate(&self, t: T) -> U;
+    fn merge(&self, u: &mut U, i: &I);
+
+    // post merge operation
+    fn operate(&self, u: U) -> U {
+        u
+    }
+
+    fn aggregate(&self, t: T) -> U {
+        let mut u = U::init();
+        for i in t {
+            self.merge(&mut u, &i);
+        }
+        self.operate(u)
+    }
 }
 
 pub trait GroupAs<T> {
@@ -115,5 +136,32 @@ where
 
     fn insert_group(&mut self, gid: K, v: V) -> anyhow::Result<Option<V>> {
         Ok(self.insert(gid, v))
+    }
+}
+
+pub trait GroupAggregate<I, T, K, V, U, G>
+where
+    I: GroupAs<K> + AggregateAs<V>,
+    V: Init + Clone,
+    T: IntoIterator<Item = I>,
+    U: FromIterator<Pair<K, V>>,
+    G: GroupTable<K, V>,
+{
+    fn merge(&self, v: &mut V, i: &I);
+    fn group_table(&self) -> anyhow::Result<G>;
+    fn group_aggregate(&self, t: T) -> anyhow::Result<U> {
+        let mut group_table = self.group_table()?;
+        for ref item in t {
+            if !group_table.contains_group(&item.group())? {
+                group_table.insert_group(item.group(), V::init())?;
+            }
+            let v = group_table
+                .get_group(&item.group())?
+                .expect("group not found");
+            self.merge(v, item);
+        }
+        // persist aggregated groups
+        group_table.persist_groups()?;
+        Ok(group_table.into_iter().map(|t| Pair::from(t)).collect())
     }
 }
