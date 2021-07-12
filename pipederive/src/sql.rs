@@ -2,14 +2,14 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{spanned::Spanned, Attribute, Data, Field, Generics};
 
-use crate::constants::{PSQL, PSQL_POSITION, PSQL_QUERY};
+use crate::constants::{SQL, SQL_POSITION, SQL_QUERY};
 
 use crate::utils::{
     get_any_attribute_by_meta_prefix, get_meta, get_meta_number_value_by_meta_path,
     get_meta_string_value_by_meta_path, resolve_all_fields,
 };
 
-pub fn impl_psql(
+pub fn impl_sql(
     ident: &Ident,
     attributes: &Vec<Attribute>,
     data: &Data,
@@ -22,8 +22,8 @@ pub fn impl_psql(
     let parameter_tokens = resolve_psql_parameters(&fields);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
-        impl #impl_generics Psql for #ident #type_generics #where_clause {
-            fn psql(&self) -> String {
+        impl #impl_generics Sql for #ident #type_generics #where_clause {
+            fn sql(&self) -> String {
                 // let query = #query;
                 format!(#query, #parameter_tokens)
             }
@@ -32,15 +32,15 @@ pub fn impl_psql(
 }
 
 fn get_any_psql_attribute(attributes: &Vec<Attribute>) -> Attribute {
-    get_any_attribute_by_meta_prefix(PSQL, attributes, true).unwrap()
+    get_any_attribute_by_meta_prefix(SQL, attributes, true).unwrap()
 }
 
 fn get_psql_query(attribute: &Attribute) -> String {
-    get_meta_string_value_by_meta_path(PSQL_QUERY, &get_meta(attribute), true).unwrap()
+    get_meta_string_value_by_meta_path(SQL_QUERY, &get_meta(attribute), true).unwrap()
 }
 
 fn is_psql_field(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(PSQL_POSITION, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(SQL_POSITION, &field.attrs, false).is_some()
 }
 
 fn sort_psql_field(fields: &mut Vec<Field>) {
@@ -50,14 +50,14 @@ fn sort_psql_field(fields: &mut Vec<Field>) {
 fn get_field_pos(field: &Field) -> usize {
     let attribute = get_pos_attribute(&field.attrs);
     let number =
-        get_meta_number_value_by_meta_path(PSQL_POSITION, &get_meta(&attribute), true).unwrap();
+        get_meta_number_value_by_meta_path(SQL_POSITION, &get_meta(&attribute), true).unwrap();
     number
         .parse()
         .expect(&format!("parse number {} failed", number))
 }
 
 fn get_pos_attribute(attributes: &Vec<Attribute>) -> Attribute {
-    get_any_attribute_by_meta_prefix(PSQL_POSITION, attributes, true).unwrap()
+    get_any_attribute_by_meta_prefix(SQL_POSITION, attributes, true).unwrap()
 }
 
 fn resolve_psql_parameters(fields: &Vec<Field>) -> TokenStream {

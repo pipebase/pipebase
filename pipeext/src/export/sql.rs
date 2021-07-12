@@ -1,10 +1,6 @@
 use async_trait::async_trait;
-use pipebase::{ConfigInto, Export, FromConfig, FromPath};
+use pipebase::{ConfigInto, Export, FromConfig, FromPath, Sql};
 use serde::Deserialize;
-
-pub trait Psql {
-    fn psql(&self) -> String;
-}
 
 #[derive(Deserialize)]
 pub struct PsqlWriterConfig {
@@ -39,7 +35,7 @@ impl FromConfig<PsqlWriterConfig> for PsqlWriter {
 #[async_trait]
 impl<T> Export<T, PsqlWriterConfig> for PsqlWriter
 where
-    T: Psql + Send + 'static,
+    T: Sql + Send + 'static,
 {
     async fn export(&mut self, t: T) -> anyhow::Result<()> {
         self.execute(t).await
@@ -49,9 +45,9 @@ where
 impl PsqlWriter {
     async fn execute<R>(&mut self, record: R) -> anyhow::Result<()>
     where
-        R: Psql,
+        R: Sql,
     {
-        let statement = record.psql();
+        let statement = record.sql();
         let rows_updated = self.client.execute(&statement[..], &[]).await?;
         log::info!("{} rows updated", rows_updated);
         Ok(())
@@ -60,17 +56,16 @@ impl PsqlWriter {
 
 #[cfg(test)]
 mod psql_tests {
-    use crate::*;
     use pipebase::*;
 
-    #[derive(Debug, Clone, Psql)]
-    #[psql(
+    #[derive(Debug, Clone, Sql)]
+    #[sql(
         query = r#"INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"#
     )]
     struct Record {
-        #[psql(pos = 2)]
+        #[sql(pos = 2)]
         value: i32,
-        #[psql(pos = 1)]
+        #[sql(pos = 1)]
         key: String,
     }
 
@@ -105,18 +100,18 @@ mod psql_tests {
 
         let record = Record {
             key: "foo".to_owned(),
-            value: 5,
+            value: 1,
         };
-        let statement = record.psql();
+        let statement = record.sql();
         let _ = client
             .execute(&statement[..], &[])
             .await
             .expect("statement failed");
         let record = Record {
             key: "foo".to_owned(),
-            value: 6,
+            value: 2,
         };
-        let statement = record.psql();
+        let statement = record.sql();
         let _ = client
             .execute(&statement[..], &[])
             .await
