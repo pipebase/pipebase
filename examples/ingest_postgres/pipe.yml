@@ -38,19 +38,19 @@ pipes:
 objects:
   - ty: Record
     metas:
-      - derives: [Clone, Debug, Deserialize, Sql]
-      - sql:
-          query: "INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
+      - derives: [Clone, Debug, Deserialize, Render]
+      - render:
+          template: "INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
     fields:
       - name: key
         data_ty: String
         metas:
-          - sql:
+          - render:
               pos: 0
       - name: value
         data_ty: Integer
         metas:
-          - sql:
+          - render:
               pos: 1
 cstores:
   - name: context_server

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use pipebase::{ConfigInto, Export, FromConfig, FromPath, Sql};
+use pipebase::{ConfigInto, Export, FromConfig, FromPath, Render};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -37,7 +37,7 @@ impl FromConfig<PsqlWriterConfig> for PsqlWriter {
 #[async_trait]
 impl<T> Export<T, PsqlWriterConfig> for PsqlWriter
 where
-    T: Sql + Send + 'static,
+    T: Render + Send + 'static,
 {
     async fn export(&mut self, t: T) -> anyhow::Result<()> {
         self.execute(t).await
@@ -47,9 +47,9 @@ where
 impl PsqlWriter {
     async fn execute<R>(&mut self, record: R) -> anyhow::Result<()>
     where
-        R: Sql,
+        R: Render,
     {
-        let statement = record.sql();
+        let statement = record.render();
         let rows_updated = self.client.execute(&statement[..], &[]).await?;
         log::info!("{} rows updated", rows_updated);
         Ok(())
@@ -60,14 +60,14 @@ impl PsqlWriter {
 mod psql_tests {
     use pipebase::*;
 
-    #[derive(Debug, Clone, Sql)]
-    #[sql(
-        query = r#"INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"#
+    #[derive(Debug, Clone, Render)]
+    #[render(
+        template = r#"INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"#
     )]
     struct Record {
-        #[sql(pos = 2)]
+        #[render(pos = 2)]
         value: i32,
-        #[sql(pos = 1)]
+        #[render(pos = 1)]
         key: String,
     }
 
@@ -101,7 +101,7 @@ mod psql_tests {
             key: "foo".to_owned(),
             value: 1,
         };
-        let statement = record.sql();
+        let statement = record.render();
         let _ = client
             .execute(&statement[..], &[])
             .await
@@ -110,7 +110,7 @@ mod psql_tests {
             key: "foo".to_owned(),
             value: 2,
         };
-        let statement = record.sql();
+        let statement = record.render();
         let _ = client
             .execute(&statement[..], &[])
             .await

@@ -11,4 +11,4 @@ cargo install pipe
 ```
 Install [Docker](https://docs.docker.com/engine/install/), you may need docker-compose to setup relevant apps
 ### Run example
-Go to each demo folder for details step
+Go to each demo folder for details

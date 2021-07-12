@@ -33,7 +33,7 @@ pub enum DeriveMeta {
     AggregateAs,
     GroupAs,
     LeftRight,
-    Sql,
+    Render,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -54,8 +54,8 @@ pub enum AggregateMeta {
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
-pub struct SqlMeta {
-    query: Option<String>,
+pub struct RenderMeta {
+    template: Option<String>,
     pos: Option<i32>,
 }
 
@@ -80,7 +80,7 @@ pub enum Meta {
     Filter { filter: FilterMeta },
     Aggregate { agg: AggregateMeta },
     Tag { tag: Tag },
-    Sql { sql: SqlMeta },
+    Render { render: RenderMeta },
 }
 
 fn meta_value_str(name: &str, value: &str, raw: bool) -> Meta {
@@ -119,7 +119,7 @@ fn expand_derive(derive: &DeriveMeta) -> Meta {
         DeriveMeta::AggregateAs => "AggregateAs",
         DeriveMeta::GroupAs => "GroupAs",
         DeriveMeta::LeftRight => "LeftRight",
-        DeriveMeta::Sql => "Sql",
+        DeriveMeta::Render => "Render",
     };
     new_path(name.to_owned())
 }
@@ -196,18 +196,18 @@ fn expand_aggregate(agg: &AggregateMeta) -> Meta {
     }
 }
 
-fn expand_sql(sql: &SqlMeta) -> Meta {
+fn expand_render(render: &RenderMeta) -> Meta {
     let mut metas: Vec<Meta> = Vec::new();
-    match sql.query {
-        Some(ref query) => metas.push(meta_value_str("query", query, true)),
+    match render.template {
+        Some(ref template) => metas.push(meta_value_str("template", template, true)),
         None => (),
     }
-    match sql.pos {
+    match render.pos {
         Some(ref pos) => metas.push(meta_value_int("pos", pos)),
         None => (),
     }
     Meta::List {
-        name: "sql".to_owned(),
+        name: "render".to_owned(),
         metas: metas,
     }
 }
@@ -274,8 +274,8 @@ fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
             let meta = expand_tag(tag);
             return expand_meta_lit(&meta, indent, compact);
         }
-        Meta::Sql { sql } => {
-            let meta = expand_sql(sql);
+        Meta::Render { render } => {
+            let meta = expand_render(render);
             return expand_meta_lit(&meta, indent, compact);
         }
         Meta::List { name, metas } => (name, metas),
