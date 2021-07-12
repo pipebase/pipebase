@@ -14,6 +14,9 @@ pub fn cmd() -> Cmd {
             .short('o')
             .about("Specify output binary path")
             .takes_value(true),
+        Arg::new("release")
+            .short('r')
+            .about("Specify build in release mode with optimizations"),
     ])
 }
 
@@ -26,7 +29,8 @@ pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
         Some(out) => Some(out.to_owned()),
         None => None,
     };
-    let opts = BuildOptions::new(app_name, out);
+    let release = args.is_present("release");
+    let opts = BuildOptions::new(app_name, out, release);
     do_exec(config, &opts)?;
     Ok(())
 }
@@ -34,11 +38,16 @@ pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
 pub struct BuildOptions {
     app_name: Option<String>,
     out: Option<String>,
+    release: bool,
 }
 
 impl BuildOptions {
-    pub fn new(app_name: Option<String>, out: Option<String>) -> Self {
-        BuildOptions { app_name, out }
+    pub fn new(app_name: Option<String>, out: Option<String>, release: bool) -> Self {
+        BuildOptions {
+            app_name,
+            out,
+            release,
+        }
     }
 
     pub fn get_app_name(&self) -> Option<&String> {
@@ -47,5 +56,9 @@ impl BuildOptions {
 
     pub fn out(&self) -> Option<&String> {
         self.out.as_ref()
+    }
+
+    pub fn release(&self) -> bool {
+        self.release
     }
 }

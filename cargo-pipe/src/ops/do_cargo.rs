@@ -7,6 +7,7 @@ pub(crate) const CARGO_MANIFEST_FILE: &str = "Cargo.toml";
 pub(crate) const CARGO_SRC_DIRECTORY: &'static str = "src";
 pub(crate) const CARGO_TARGET_DIRECTORY: &'static str = "target";
 pub(crate) const CARGO_RELEASE_DIRECTORY: &'static str = "release";
+pub(crate) const CARGO_DEBUG_DIRECTORY: &'static str = "debug";
 pub(crate) const CARGO_APP_MAIN: &'static str = "main.rs";
 
 fn run_cmd(mut cmd: Command) -> anyhow::Result<(i32, String)> {
@@ -81,13 +82,17 @@ pub fn do_cargo_check(
     Ok(status_code)
 }
 
-pub fn do_cargo_build(manifest_path: &Path, printer: &mut Printer) -> anyhow::Result<i32> {
+pub fn do_cargo_build(
+    manifest_path: &Path,
+    release: bool,
+    printer: &mut Printer,
+) -> anyhow::Result<i32> {
     printer.status(&"Cargo", "build ...")?;
     let mut cmd = Command::new(cargo_binary());
-    cmd.arg("build")
-        .arg("--manifest-path")
-        .arg(manifest_path)
-        .arg("--release");
+    cmd.arg("build").arg("--manifest-path").arg(manifest_path);
+    if release {
+        cmd.arg("--release");
+    }
     let (status_code, out) = run_cmd(cmd)?;
     match status_code {
         0 => printer.status(&"Cargo", "build succeed")?,
