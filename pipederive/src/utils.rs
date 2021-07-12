@@ -99,6 +99,13 @@ pub fn parse_lit_as_string(lit: &Lit) -> Option<String> {
     return None;
 }
 
+pub fn parse_lit_as_number(lit: &Lit) -> Option<String> {
+    if let Lit::Int(lit) = lit {
+        return Some(lit.base10_digits().to_owned());
+    }
+    return None;
+}
+
 pub fn get_any_attribute_by_meta_prefix(
     prefix: &str,
     attributes: &Vec<Attribute>,
@@ -126,6 +133,14 @@ pub fn get_all_attributes_by_meta_prefix(
         .filter(|&attribute| is_meta_with_prefix(&prefix_path, &attribute.parse_meta().unwrap()))
         .map(|attribute| attribute.to_owned())
         .collect()
+}
+
+pub fn get_meta_number_value_by_meta_path(
+    full_path: &str,
+    meta: &Meta,
+    is_required: bool,
+) -> Option<String> {
+    get_meta_value_by_meta_path(full_path, meta, is_required, &parse_lit_as_number)
 }
 
 pub fn get_meta_string_value_by_meta_path(

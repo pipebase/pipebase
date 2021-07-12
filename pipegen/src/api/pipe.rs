@@ -72,14 +72,14 @@ impl Pipe {
     fn get_name_meta(&self) -> Meta {
         Meta::Value {
             name: "name".to_owned(),
-            meta: MetaValue::Str(self.name.to_owned()),
+            meta: MetaValue::Str(self.name.to_owned(), false),
         }
     }
 
     fn get_type_meta(&self) -> Meta {
         Meta::Value {
             name: "ty".to_owned(),
-            meta: MetaValue::Str(self.ty.to_string()),
+            meta: MetaValue::Str(self.ty.to_string(), false),
         }
     }
 
@@ -87,13 +87,13 @@ impl Pipe {
         let mut config_metas = vec![];
         config_metas.push(Meta::Value {
             name: "ty".to_owned(),
-            meta: MetaValue::Str(self.config.get_config_type().to_owned()),
+            meta: MetaValue::Str(self.config.get_config_type().to_owned(), false),
         });
         match self.config.get_path() {
             Some(path) => {
                 config_metas.push(Meta::Value {
                     name: "path".to_owned(),
-                    meta: MetaValue::Str(path.to_owned()),
+                    meta: MetaValue::Str(path.to_owned(), false),
                 });
             }
             None => (),
@@ -111,7 +111,7 @@ impl Pipe {
         };
         let meta = Meta::Value {
             name: "upstream".to_owned(),
-            meta: MetaValue::Str(upstreams.join(", ")),
+            meta: MetaValue::Str(upstreams.join(", "), false),
         };
         Some(meta)
     }
@@ -123,7 +123,7 @@ impl Pipe {
         };
         let meta = Meta::Value {
             name: "output".to_owned(),
-            meta: MetaValue::Str(output.to_literal(0)),
+            meta: MetaValue::Str(output.to_literal(0), false),
         };
         Some(meta)
     }

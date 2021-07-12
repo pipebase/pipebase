@@ -33,6 +33,7 @@ pub enum DeriveMeta {
     AggregateAs,
     GroupAs,
     LeftRight,
+    Render,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -53,9 +54,16 @@ pub enum AggregateMeta {
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
+pub struct RenderMeta {
+    template: Option<String>,
+    pos: Option<i32>,
+}
+
+#[derive(Clone, PartialEq, Debug, Deserialize)]
 #[serde(untagged)]
 pub enum MetaValue {
-    Str(String),
+    // String Literal, Generate as raw or not
+    Str(String, bool),
     Int(i32),
 }
 
@@ -72,12 +80,20 @@ pub enum Meta {
     Filter { filter: FilterMeta },
     Aggregate { agg: AggregateMeta },
     Tag { tag: Tag },
+    Render { render: RenderMeta },
 }
 
-fn meta_value_str(name: &str, value: &str) -> Meta {
+fn meta_value_str(name: &str, value: &str, raw: bool) -> Meta {
     Meta::Value {
         name: name.to_owned(),
-        meta: MetaValue::Str(value.to_owned()),
+        meta: MetaValue::Str(value.to_owned(), raw),
+    }
+}
+
+fn meta_value_int(name: &str, value: &i32) -> Meta {
+    Meta::Value {
+        name: name.to_owned(),
+        meta: MetaValue::Int(value.to_owned()),
     }
 }
 
@@ -103,6 +119,7 @@ fn expand_derive(derive: &DeriveMeta) -> Meta {
         DeriveMeta::AggregateAs => "AggregateAs",
         DeriveMeta::GroupAs => "GroupAs",
         DeriveMeta::LeftRight => "LeftRight",
+        DeriveMeta::Render => "Render",
     };
     new_path(name.to_owned())
 }
@@ -121,19 +138,19 @@ fn expand_derives(derives: &Vec<DeriveMeta>) -> Meta {
 fn expand_project_meta(meta: &ProjectMeta) -> Meta {
     let mut metas: Vec<Meta> = Vec::new();
     match meta.input {
-        Some(ref input) => metas.push(meta_value_str("input", input)),
+        Some(ref input) => metas.push(meta_value_str("input", input, false)),
         None => (),
     };
     match meta.from {
-        Some(ref from) => metas.push(meta_value_str("from", from)),
+        Some(ref from) => metas.push(meta_value_str("from", from, false)),
         None => (),
     };
     match meta.expr {
-        Some(ref expr) => metas.push(meta_value_str("expr", expr)),
+        Some(ref expr) => metas.push(meta_value_str("expr", expr, false)),
         None => (),
     };
     match meta.alias {
-        Some(ref alias) => metas.push(meta_value_str("alias", alias)),
+        Some(ref alias) => metas.push(meta_value_str("alias", alias, false)),
         None => (),
     };
     Meta::List {
@@ -144,9 +161,9 @@ fn expand_project_meta(meta: &ProjectMeta) -> Meta {
 
 fn expand_filter_meta(meta: &FilterMeta) -> Meta {
     let mut metas: Vec<Meta> = Vec::new();
-    metas.push(meta_value_str("predicate", &meta.predicate));
+    metas.push(meta_value_str("predicate", &meta.predicate, false));
     match meta.alias {
-        Some(ref alias) => metas.push(meta_value_str("alias", alias)),
+        Some(ref alias) => metas.push(meta_value_str("alias", alias, false)),
         None => (),
     };
     Meta::List {
@@ -179,6 +196,22 @@ fn expand_aggregate(agg: &AggregateMeta) -> Meta {
     }
 }
 
+fn expand_render(render: &RenderMeta) -> Meta {
+    let mut metas: Vec<Meta> = Vec::new();
+    match render.template {
+        Some(ref template) => metas.push(meta_value_str("template", template, true)),
+        None => (),
+    }
+    match render.pos {
+        Some(ref pos) => metas.push(meta_value_int("pos", pos)),
+        None => (),
+    }
+    Meta::List {
+        name: "render".to_owned(),
+        metas: metas,
+    }
+}
+
 fn meta_path_to_lit(name: &str, indent: usize, compact: bool) -> String {
     let lit = name.to_owned();
     if compact {
@@ -187,8 +220,17 @@ fn meta_path_to_lit(name: &str, indent: usize, compact: bool) -> String {
     format!("{}{}", indent_literal(indent), lit)
 }
 
-fn meta_str_value_to_lit(name: &str, value: &str, indent: usize, compact: bool) -> String {
-    let lit = format!(r#"{} = "{}""#, name, value);
+fn meta_str_value_to_lit(
+    name: &str,
+    value: &str,
+    raw: &bool,
+    indent: usize,
+    compact: bool,
+) -> String {
+    let lit = match raw {
+        true => format!(r##"{} = r#"{}"#"##, name, value),
+        false => format!(r#"{} = "{}""#, name, value),
+    };
     if compact {
         return lit;
     }
@@ -207,7 +249,9 @@ fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
     let (name, metas) = match meta {
         Meta::Path { name } => return meta_path_to_lit(name, indent, compact),
         Meta::Value { name, meta } => match meta {
-            MetaValue::Str(value) => return meta_str_value_to_lit(name, value, indent, compact),
+            MetaValue::Str(value, raw) => {
+                return meta_str_value_to_lit(name, value, raw, indent, compact)
+            }
             MetaValue::Int(value) => return meta_int_value_to_lit(name, value, indent, compact),
         },
         Meta::Derive { derives } => {
@@ -228,6 +272,10 @@ fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
         }
         Meta::Tag { tag } => {
             let meta = expand_tag(tag);
+            return expand_meta_lit(&meta, indent, compact);
+        }
+        Meta::Render { render } => {
+            let meta = expand_render(render);
             return expand_meta_lit(&meta, indent, compact);
         }
         Meta::List { name, metas } => (name, metas),

@@ -7,11 +7,11 @@ dependencies:
     path: ../../../pipeext
     modules: ["pipeext::*"]
 pipes:
-  - name: server
+  - name: ingestion_server
     ty: Listener
     config:
       ty: RestServerConfig
-      path: catalogs/rest_server.yml
+      path: catalogs/ingestion_server.yml
     output: 
       data_ty:
         Vec: 
@@ -23,31 +23,35 @@ pipes:
     output:
       data_ty: 
         Object: Record
-    upstreams: [server]
+    upstreams: [ingestion_server]
   - name: printer
     ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [json]
-  - name: redis_writer
+  - name: psql_writer
     ty: Exporter
     config:
-      ty: RedisWriterConfig
-      path: catalogs/redis_writer.yml
+      ty: PsqlWriterConfig
+      path: catalogs/psql_writer.yml
     upstreams: [json]
 objects:
   - ty: Record
     metas:
-      - derives: [Clone, Debug, Deserialize, LeftRight]
+      - derives: [Clone, Debug, Deserialize, Render]
+      - render:
+          template: "INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
     fields:
       - name: key
         data_ty: String
         metas:
-          - tag: Left
+          - render:
+              pos: 0
       - name: value
-        data_ty: UnsignedInteger
+        data_ty: Integer
         metas:
-          - tag: Right
+          - render:
+              pos: 1
 cstores:
   - name: context_server
     config:
