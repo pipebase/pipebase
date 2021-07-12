@@ -51,3 +51,6 @@ pub const EQUAL: &str = "equal";
 
 pub const LEFT: &str = "left";
 pub const RIGHT: &str = "right";
+
+pub const PSQL: &str = "psql";
+pub const PSQL_QUERY: &str = "psql.query";
