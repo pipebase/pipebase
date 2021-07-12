@@ -4,6 +4,8 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct PsqlWriterConfig {
+    // params schema: https://github.com/sfackler/rust-postgres/blob/master/postgres/src/config.rs
+    // type supoort: https://docs.rs/postgres/0.19.1/postgres/types/trait.ToSql.html
     params: String,
 }
 
@@ -72,9 +74,6 @@ mod psql_tests {
     #[tokio::test]
     #[ignore = "move to itest"]
     async fn test_psql() {
-        // config https://github.com/sfackler/rust-postgres/blob/master/postgres/src/config.rs
-        // type https://docs.rs/postgres/0.19.1/postgres/types/trait.ToSql.html
-
         let (client, connection) = tokio_postgres::connect(
             "host=localhost port=5432 user=postgres password=postgres dbname=postgres",
             tokio_postgres::NoTls,

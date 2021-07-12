@@ -33,6 +33,7 @@ pub enum DeriveMeta {
     AggregateAs,
     GroupAs,
     LeftRight,
+    Sql,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -50,6 +51,12 @@ pub enum Tag {
 pub enum AggregateMeta {
     Top,
     Sum,
+}
+
+#[derive(Clone, PartialEq, Debug, Deserialize)]
+pub struct SqlMeta {
+    query: Option<String>,
+    pos: Option<i32>,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -72,12 +79,20 @@ pub enum Meta {
     Filter { filter: FilterMeta },
     Aggregate { agg: AggregateMeta },
     Tag { tag: Tag },
+    Sql { sql: SqlMeta },
 }
 
 fn meta_value_str(name: &str, value: &str) -> Meta {
     Meta::Value {
         name: name.to_owned(),
         meta: MetaValue::Str(value.to_owned()),
+    }
+}
+
+fn meta_value_int(name: &str, value: &i32) -> Meta {
+    Meta::Value {
+        name: name.to_owned(),
+        meta: MetaValue::Int(value.to_owned()),
     }
 }
 
@@ -103,6 +118,7 @@ fn expand_derive(derive: &DeriveMeta) -> Meta {
         DeriveMeta::AggregateAs => "AggregateAs",
         DeriveMeta::GroupAs => "GroupAs",
         DeriveMeta::LeftRight => "LeftRight",
+        DeriveMeta::Sql => "Sql",
     };
     new_path(name.to_owned())
 }
@@ -179,6 +195,22 @@ fn expand_aggregate(agg: &AggregateMeta) -> Meta {
     }
 }
 
+fn expand_sql(sql: &SqlMeta) -> Meta {
+    let mut metas: Vec<Meta> = Vec::new();
+    match sql.query {
+        Some(ref query) => metas.push(meta_value_str("query", query)),
+        None => (),
+    }
+    match sql.pos {
+        Some(ref pos) => metas.push(meta_value_int("pos", pos)),
+        None => (),
+    }
+    Meta::List {
+        name: "sql".to_owned(),
+        metas: metas,
+    }
+}
+
 fn meta_path_to_lit(name: &str, indent: usize, compact: bool) -> String {
     let lit = name.to_owned();
     if compact {
@@ -228,6 +260,10 @@ fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
         }
         Meta::Tag { tag } => {
             let meta = expand_tag(tag);
+            return expand_meta_lit(&meta, indent, compact);
+        }
+        Meta::Sql { sql } => {
+            let meta = expand_sql(sql);
             return expand_meta_lit(&meta, indent, compact);
         }
         Meta::List { name, metas } => (name, metas),
