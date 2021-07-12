@@ -1,6 +1,6 @@
 use crate::ops::do_cargo::{
-    CARGO_APP_MAIN, CARGO_MANIFEST_FILE, CARGO_RELEASE_DIRECTORY, CARGO_SRC_DIRECTORY,
-    CARGO_TARGET_DIRECTORY,
+    CARGO_APP_MAIN, CARGO_DEBUG_DIRECTORY, CARGO_MANIFEST_FILE, CARGO_RELEASE_DIRECTORY,
+    CARGO_SRC_DIRECTORY, CARGO_TARGET_DIRECTORY,
 };
 use std::{env::current_dir, path::PathBuf};
 
@@ -60,6 +60,16 @@ impl Config {
         app_binary.push(app_name);
         app_binary.push(CARGO_TARGET_DIRECTORY);
         app_binary.push(CARGO_RELEASE_DIRECTORY);
+        app_binary.push(app_name);
+        app_binary
+    }
+
+    pub fn get_target_debug_app_binary(&self, app_name: Option<&String>) -> PathBuf {
+        let mut app_binary = self.working_drectory.to_owned();
+        let ref app_name = Self::get_app_name_or_default(app_name);
+        app_binary.push(app_name);
+        app_binary.push(CARGO_TARGET_DIRECTORY);
+        app_binary.push(CARGO_DEBUG_DIRECTORY);
         app_binary.push(app_name);
         app_binary
     }
