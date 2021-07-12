@@ -24,21 +24,21 @@ Build
 cargo pipe new && \
 cargo pipe generate && \
 cargo pipe check && \
-cargo pipe build -o psql \
+cargo pipe build -o psql
 ```
 Run app
 ```
 ./psql
 ```
 ### Ingest Data and Monitor
-Ingest sample data
+Open new terinal and ingest sample data
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
 -d @record.json  \
 http://localhost:9000/v1/ingest
 ```
-Query postgres in terminal 1
+Query postgres (terminal 1)
 ```
 SELECT * FROM records
 ```
