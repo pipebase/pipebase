@@ -1,28 +1,14 @@
-### Installation
-Install Rust and Cargo
-```sh
-curl https://sh.rustup.rs -sSf | sh
-```
-Install `cargo-pipe` CLI
-```
-cargo install pipe
-```
 ### Build and Run
-Create new project
+Build
 ```
-cargo pipe new
-```
-Generate app
-```
-cargo pipe generate
-```
-Build app
-```
-cargo pipe build -o ingest
+cargo pipe new && \
+cargo pipe generate && \
+cargo pipe check && \
+cargo pipe build -o ingest_redis
 ```
 Run app
 ```
-./ingest
+./ingest_redis
 ```
 ### Ingest Data and Monitor Pipe
 Setup Redis

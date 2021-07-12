@@ -206,7 +206,7 @@ impl App {
             name: PIPEBASE_MAIN.to_owned(),
             metas: vec![Meta::Value {
                 name: BOOTSTRAP_MODULE_META_PATH.to_owned(),
-                meta: MetaValue::Str(self.get_app_module_name()),
+                meta: MetaValue::Str(self.get_app_module_name(), false),
             }],
         };
         let block = Block::new(vec![Statement::new(
