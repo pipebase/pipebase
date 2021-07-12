@@ -2,11 +2,11 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{spanned::Spanned, Attribute, Data, Field, Generics};
 
-use crate::constants::{PSQL, PSQL_QUERY};
+use crate::constants::{PSQL, PSQL_POSITION, PSQL_QUERY};
 
 use crate::utils::{
-    get_any_attribute_by_meta_prefix, get_meta, get_meta_string_value_by_meta_path,
-    resolve_all_fields,
+    get_any_attribute_by_meta_prefix, get_meta, get_meta_number_value_by_meta_path,
+    get_meta_string_value_by_meta_path, resolve_all_fields,
 };
 
 pub fn impl_psql(
@@ -17,7 +17,8 @@ pub fn impl_psql(
 ) -> TokenStream {
     let attribute = get_any_psql_attribute(attributes);
     let query = get_psql_query(&attribute);
-    let fields = resolve_all_fields(data, &is_psql_field);
+    let mut fields = resolve_all_fields(data, &is_psql_field);
+    sort_psql_field(&mut fields);
     let parameter_tokens = resolve_psql_parameters(&fields);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
@@ -39,7 +40,24 @@ fn get_psql_query(attribute: &Attribute) -> String {
 }
 
 fn is_psql_field(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(PSQL, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(PSQL_POSITION, &field.attrs, false).is_some()
+}
+
+fn sort_psql_field(fields: &mut Vec<Field>) {
+    fields.sort_by(|f0, f1| get_field_pos(f0).partial_cmp(&get_field_pos(f1)).unwrap())
+}
+
+fn get_field_pos(field: &Field) -> usize {
+    let attribute = get_pos_attribute(&field.attrs);
+    let number =
+        get_meta_number_value_by_meta_path(PSQL_POSITION, &get_meta(&attribute), true).unwrap();
+    number
+        .parse()
+        .expect(&format!("parse number {} failed", number))
+}
+
+fn get_pos_attribute(attributes: &Vec<Attribute>) -> Attribute {
+    get_any_attribute_by_meta_prefix(PSQL_POSITION, attributes, true).unwrap()
 }
 
 fn resolve_psql_parameters(fields: &Vec<Field>) -> TokenStream {

@@ -68,10 +68,10 @@ mod psql_tests {
         query = r#"INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"#
     )]
     struct Record {
-        #[psql]
-        key: String,
-        #[psql]
+        #[psql(pos = 2)]
         value: i32,
+        #[psql(pos = 1)]
+        key: String,
     }
 
     #[tokio::test]
@@ -105,7 +105,7 @@ mod psql_tests {
 
         let record = Record {
             key: "foo".to_owned(),
-            value: 3,
+            value: 5,
         };
         let statement = record.psql();
         let _ = client
@@ -114,7 +114,7 @@ mod psql_tests {
             .expect("statement failed");
         let record = Record {
             key: "foo".to_owned(),
-            value: 4,
+            value: 6,
         };
         let statement = record.psql();
         let _ = client

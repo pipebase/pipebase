@@ -54,3 +54,4 @@ pub const RIGHT: &str = "right";
 
 pub const PSQL: &str = "psql";
 pub const PSQL_QUERY: &str = "psql.query";
+pub const PSQL_POSITION: &str = "psql.pos";
