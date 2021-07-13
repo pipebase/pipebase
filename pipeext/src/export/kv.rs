@@ -35,8 +35,6 @@ where
     V: ToRedisArgs + Clone + Send + 'static,
 {
     async fn export(&mut self, p: P) -> anyhow::Result<()> {
-        // reconnect if necessary
-        self.client.reconnect()?;
         self.client.set(p)?;
         Ok(())
     }
