@@ -48,7 +48,7 @@ where
     }
 
     fn group_table(&self) -> anyhow::Result<RocksDBGroupTable<HashMap<K, V>>> {
-        RocksDBGroupTable::new(self.path.to_owned(), HashMap::new())
+        RocksDBGroupTable::new(&self.path, HashMap::new())
     }
 }
 
@@ -124,7 +124,7 @@ mod rockdb_group_sum_tests {
         let pipe_run = run_pipe!(
             pipe,
             RocksDBUnorderedGroupSumAggregatorConfig,
-            "resources/catalogs/rocksdb.yml",
+            "resources/catalogs/rocksdb_sum.yml",
             [tx1],
             rx0
         );
@@ -148,6 +148,6 @@ mod rockdb_group_sum_tests {
                 _ => unreachable!(),
             }
         }
-        std::fs::remove_dir_all("resources/data").unwrap()
+        std::fs::remove_dir_all("resources/data/rocks/sum").unwrap()
     }
 }

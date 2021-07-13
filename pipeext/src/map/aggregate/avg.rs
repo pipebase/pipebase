@@ -49,7 +49,7 @@ where
     }
 
     fn group_table(&self) -> anyhow::Result<RocksDBGroupTable<HashMap<K, Averagef32>>> {
-        RocksDBGroupTable::new(self.path.to_owned(), HashMap::new())
+        RocksDBGroupTable::new(&self.path, HashMap::new())
     }
 }
 
@@ -98,7 +98,7 @@ mod unordered_group_avg_f32_tests {
         let pipe = run_pipe!(
             pipe,
             RocksDBUnorderedGroupAveragef32AggregatorConfig,
-            "resources/catalogs/rocksdb.yml",
+            "resources/catalogs/rocksdb_avg.yml",
             [tx1],
             rx0
         );
@@ -162,6 +162,6 @@ mod unordered_group_avg_f32_tests {
                 _ => unreachable!("unexpected group {}", avg.left()),
             }
         }
-        std::fs::remove_dir_all("resources/data").unwrap()
+        std::fs::remove_dir_all("resources/data/rocks/avg").unwrap()
     }
 }

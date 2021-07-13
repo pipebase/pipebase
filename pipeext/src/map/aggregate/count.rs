@@ -49,7 +49,7 @@ where
     }
 
     fn group_table(&self) -> anyhow::Result<RocksDBGroupTable<HashMap<K, Count32>>> {
-        RocksDBGroupTable::new(self.path.to_owned(), HashMap::new())
+        RocksDBGroupTable::new(&self.path, HashMap::new())
     }
 }
 
@@ -97,7 +97,7 @@ mod group_count32_tests {
         let pipe = run_pipe!(
             pipe,
             RocksDBUnorderedGroupCount32AggregatorConfig,
-            "resources/catalogs/rocksdb.yml",
+            "resources/catalogs/rocksdb_count.yml",
             [tx1],
             rx0
         );
@@ -155,6 +155,6 @@ mod group_count32_tests {
                 _ => unreachable!("unexpected group {}", count.left()),
             }
         }
-        std::fs::remove_dir_all("resources/data").unwrap()
+        std::fs::remove_dir_all("resources/data/rocks/count").unwrap()
     }
 }
