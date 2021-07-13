@@ -1,4 +1,4 @@
-use crate::constants::{AGGREGATE_AVG_F32, AGGREGATE_SUM, AGGREGATE_TOP};
+use crate::constants::{AGGREGATE_AVG_F32, AGGREGATE_COUNT32, AGGREGATE_SUM, AGGREGATE_TOP};
 
 use crate::utils::{get_any_attribute_by_meta_prefix, resolve_first_field};
 use proc_macro2::{Ident, TokenStream};
@@ -19,12 +19,18 @@ pub fn impl_aggregate_as(
         true => aggregate_for_top(ident, generics),
         false => quote! {},
     };
+    let aggregate_for_count32 = match is_count32(attributes) {
+        true => aggregate_for_count32(ident, generics),
+        false => quote! {},
+    };
     quote! {
         #aggregate_for_sum
 
         #aggregate_for_avgf32
 
         #aggregate_for_top
+
+        #aggregate_for_count32
     }
 }
 
@@ -38,6 +44,10 @@ fn is_avgf32_field(field: &Field) -> bool {
 
 fn is_top(attributes: &Vec<Attribute>) -> bool {
     get_any_attribute_by_meta_prefix(AGGREGATE_TOP, attributes, false).is_some()
+}
+
+fn is_count32(attributes: &Vec<Attribute>) -> bool {
+    get_any_attribute_by_meta_prefix(AGGREGATE_COUNT32, attributes, false).is_some()
 }
 
 fn aggregate_for_sum(field: Option<Field>, ident: &Ident, generics: &Generics) -> TokenStream {
@@ -63,6 +73,17 @@ fn aggregate_for_top(ident: &Ident, generics: &Generics) -> TokenStream {
         impl #impl_generics AggregateAs<Vec<Self>> for #ident #type_generics #where_clause {
             fn aggregate_value(&self) -> Vec<Self> {
                 vec![self.to_owned()]
+            }
+        }
+    }
+}
+
+fn aggregate_for_count32(ident: &Ident, generics: &Generics) -> TokenStream {
+    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+    quote! {
+        impl #impl_generics AggregateAs<Count32> for #ident #type_generics #where_clause {
+            fn aggregate_value(&self) -> Count32 {
+                Count32::new(1)
             }
         }
     }
