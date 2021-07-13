@@ -1,0 +1,8 @@
+name: no_upstream_downstream_pipe
+pipes:
+  - name: mapper_a
+    ty: Mapper
+    config:
+      ty: MapperConfig
+    output:
+      data_ty: Integer
