@@ -1,9 +1,9 @@
+mod add;
 mod avg;
 mod count;
 mod init;
 mod pair;
 mod sort;
-mod sum;
 
 use std::{
     collections::{BTreeMap, HashMap},
@@ -11,12 +11,12 @@ use std::{
     iter::{FromIterator, IntoIterator},
 };
 
+pub use add::*;
 pub use avg::*;
 pub use count::*;
 pub use init::*;
 pub use pair::*;
 pub use sort::*;
-pub use sum::*;
 
 pub trait AggregateAs<T> {
     fn aggregate_value(&self) -> T;

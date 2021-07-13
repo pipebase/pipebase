@@ -200,7 +200,7 @@ mod pair_tests {
         f0.await;
         join_pipes!([run_pipe!(
             pipe,
-            UnorderedGroupSumAggregatorConfig,
+            UnorderedGroupAddAggregatorConfig,
             [tx1],
             rx0
         )]);
