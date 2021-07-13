@@ -241,3 +241,7 @@ impl IntoBytes for String {
         Ok(self.as_bytes().to_vec())
     }
 }
+
+pub struct RedisGroupTable<C> {
+    cache: C,
+}
