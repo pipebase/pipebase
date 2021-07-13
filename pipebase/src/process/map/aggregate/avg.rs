@@ -21,6 +21,14 @@ impl Averagef32 {
         assert_ne!(self.1, 0.0, "divide by zero");
         self.0 / self.1
     }
+
+    pub fn sum(&self) -> f32 {
+        self.0
+    }
+
+    pub fn count(&self) -> f32 {
+        self.1
+    }
 }
 
 impl AggregateAs<Averagef32> for u32 {
