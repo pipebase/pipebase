@@ -1,9 +1,5 @@
-mod avg;
-mod count;
-mod sum;
+mod add;
 mod table;
 
-pub use avg::*;
-pub use count::*;
-pub use sum::*;
+pub use add::*;
 pub use table::*;
