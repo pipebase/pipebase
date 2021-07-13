@@ -19,9 +19,12 @@ CREATE TABLE IF NOT EXISTS records (
 );
 ```
 ### Build and Run (terminal 2)
+Init
+```
+cargo pipe new
+```
 Build 
 ```
-cargo pipe new && \
 cargo pipe generate && \
 cargo pipe check && \
 cargo pipe build -o psql

@@ -81,7 +81,7 @@ pub(crate) fn filter_senders_by_indices<U>(
     }
 }
 
-// Test Operations
+#[cfg(test)]
 pub(crate) async fn populate_records<T, U>(tx: Sender<T>, records: U)
 where
     U: IntoIterator<Item = T>,

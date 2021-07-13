@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use pipebase::{GroupTable, LeftRight};
+use pipebase::{Averagef32, Count32, GroupTable, LeftRight};
 use rocksdb::{DBWithThreadMode, SingleThreaded, WriteBatch, DB};
 use std::io::Cursor;
 
@@ -115,6 +115,22 @@ impl IntoBytes for u32 {
     }
 }
 
+impl FromBytes for Count32 {
+    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
+        let mut rdr = Cursor::new(bytes);
+        let value = rdr.read_u32::<BigEndian>()?;
+        Ok(Count32::new(value))
+    }
+}
+
+impl IntoBytes for Count32 {
+    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
+        let mut wtr = vec![];
+        wtr.write_u32::<BigEndian>(self.get())?;
+        Ok(wtr)
+    }
+}
+
 impl FromBytes for i32 {
     fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
         let mut rdr = Cursor::new(bytes);
@@ -175,6 +191,24 @@ impl IntoBytes for f32 {
     fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
         let mut wtr = vec![];
         wtr.write_f32::<BigEndian>(self.to_owned())?;
+        Ok(wtr)
+    }
+}
+
+impl FromBytes for Averagef32 {
+    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
+        let mut rdr = Cursor::new(bytes);
+        let sum = rdr.read_f32::<BigEndian>()?;
+        let count = rdr.read_f32::<BigEndian>()?;
+        Ok(Averagef32::new(sum, count))
+    }
+}
+
+impl IntoBytes for Averagef32 {
+    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
+        let mut wtr = vec![];
+        wtr.write_f32::<BigEndian>(self.sum())?;
+        wtr.write_f32::<BigEndian>(self.count())?;
         Ok(wtr)
     }
 }

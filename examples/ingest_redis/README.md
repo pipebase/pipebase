@@ -8,9 +8,12 @@ Login container
 docker exec -it redis /bin/sh
 ```
 ### Build and Run (terminal 2)
+Init
+```
+cargo pipe new
+```
 Build
 ```
-cargo pipe new && \
 cargo pipe generate && \
 cargo pipe check && \
 cargo pipe build -o ingest_redis
