@@ -88,7 +88,7 @@ mod rockdb_group_sum_tests {
         }
     }
 
-    pub(crate) async fn populate_records<T, U>(tx: Sender<T>, records: U)
+    async fn populate_records<T, U>(tx: Sender<T>, records: U)
     where
         U: IntoIterator<Item = T>,
     {

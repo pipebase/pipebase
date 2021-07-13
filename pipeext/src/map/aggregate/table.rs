@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use pipebase::{GroupTable, LeftRight};
+use pipebase::{Count32, GroupTable, LeftRight};
 use rocksdb::{DBWithThreadMode, SingleThreaded, WriteBatch, DB};
 use std::io::Cursor;
 
@@ -111,6 +111,22 @@ impl IntoBytes for u32 {
     fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
         let mut wtr = vec![];
         wtr.write_u32::<BigEndian>(self.to_owned())?;
+        Ok(wtr)
+    }
+}
+
+impl FromBytes for Count32 {
+    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
+        let mut rdr = Cursor::new(bytes);
+        let value = rdr.read_u32::<BigEndian>()?;
+        Ok(Count32::new(value))
+    }
+}
+
+impl IntoBytes for Count32 {
+    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
+        let mut wtr = vec![];
+        wtr.write_u32::<BigEndian>(self.get())?;
         Ok(wtr)
     }
 }
