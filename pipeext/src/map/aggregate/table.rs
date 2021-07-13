@@ -1,11 +1,9 @@
-use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use pipebase::{Averagef32, Count32, GroupTable, LeftRight};
-use rocksdb::{DBWithThreadMode, SingleThreaded, WriteBatch, DB};
-use std::io::Cursor;
-
+use crate::utils::{FromBytes, IntoBytes, RedisClient, RocksDBClient};
+use pipebase::GroupTable;
+use redis::{FromRedisValue, ToRedisArgs};
 pub struct RocksDBGroupTable<C> {
     cache: C,
-    db: DBWithThreadMode<SingleThreaded>,
+    client: RocksDBClient,
 }
 
 impl<K, V, C> IntoIterator for RocksDBGroupTable<C>
@@ -31,7 +29,7 @@ where
             return Ok(true);
         }
         // load on demand
-        match self.get::<K, V>(gid)? {
+        match self.client.get::<K, V>(gid)? {
             Some(value) => {
                 self.cache.insert_group(gid.to_owned(), value)?;
                 Ok(true)
@@ -52,192 +50,76 @@ where
     }
 
     fn persist_groups(&mut self) -> anyhow::Result<()> {
-        self.put_all(self.cache.to_owned())
+        self.client.put_all(self.cache.to_owned())
     }
 }
 
 impl<C> RocksDBGroupTable<C> {
-    pub fn new(path: String, cache: C) -> anyhow::Result<Self> {
-        let db = DB::open_default(path)?;
-        Ok(RocksDBGroupTable { cache: cache, db })
+    pub fn new(path: &str, cache: C) -> anyhow::Result<Self> {
+        let client = RocksDBClient::new(path)?;
+        Ok(RocksDBGroupTable { cache, client })
     }
+}
 
-    pub fn get<K, V>(&self, key: &K) -> anyhow::Result<Option<V>>
-    where
-        K: IntoBytes,
-        V: FromBytes,
-    {
-        match self.db.get(key.into_bytes()?)? {
-            Some(bytes) => Ok(Some(V::from_bytes(bytes)?)),
-            None => Ok(None),
+pub struct RedisGroupTable<C> {
+    cache: C,
+    client: RedisClient,
+}
+
+impl<K, V, C> IntoIterator for RedisGroupTable<C>
+where
+    C: IntoIterator<Item = (K, V)>,
+{
+    type Item = (K, V);
+    type IntoIter = C::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.cache.into_iter()
+    }
+}
+
+impl<K, V, C> GroupTable<K, V> for RedisGroupTable<C>
+where
+    C: GroupTable<K, V> + Clone,
+    K: ToRedisArgs + Clone,
+    V: ToRedisArgs + FromRedisValue,
+{
+    fn contains_group(&mut self, gid: &K) -> anyhow::Result<bool> {
+        if self.cache.contains_group(gid)? {
+            return Ok(true);
+        }
+        // load on demand
+        match self.client.get::<K, V>(gid.to_owned())? {
+            Some(value) => {
+                self.cache.insert_group(gid.to_owned(), value)?;
+                Ok(true)
+            }
+            None => Ok(false),
         }
     }
 
-    pub fn put_all<K, V, T, U>(&mut self, entries: U) -> anyhow::Result<()>
-    where
-        K: IntoBytes,
-        V: IntoBytes,
-        T: LeftRight<L = K, R = V>,
-        U: IntoIterator<Item = T>,
-    {
-        let mut batch = WriteBatch::default();
-        for entry in entries.into_iter() {
-            let key = entry.left();
-            let value = entry.right();
-            batch.put(key.into_bytes()?, value.into_bytes()?);
+    fn get_group(&mut self, gid: &K) -> anyhow::Result<Option<&mut V>> {
+        if !self.contains_group(gid)? {
+            return Ok(None);
         }
-        self.db.write(batch)?;
+        self.cache.get_group(gid)
+    }
+
+    fn insert_group(&mut self, gid: K, v: V) -> anyhow::Result<Option<V>> {
+        self.cache.insert_group(gid, v)
+    }
+
+    fn persist_groups(&mut self) -> anyhow::Result<()> {
+        self.client.set_all(self.cache.to_owned())?;
         Ok(())
     }
 }
 
-pub trait FromBytes: Sized {
-    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self>;
-}
-
-pub trait IntoBytes {
-    fn into_bytes(&self) -> anyhow::Result<Vec<u8>>;
-}
-
-impl FromBytes for u32 {
-    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
-        let mut rdr = Cursor::new(bytes);
-        let value = rdr.read_u32::<BigEndian>()?;
-        Ok(value)
-    }
-}
-
-impl IntoBytes for u32 {
-    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        let mut wtr = vec![];
-        wtr.write_u32::<BigEndian>(self.to_owned())?;
-        Ok(wtr)
-    }
-}
-
-impl FromBytes for Count32 {
-    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
-        let mut rdr = Cursor::new(bytes);
-        let value = rdr.read_u32::<BigEndian>()?;
-        Ok(Count32::new(value))
-    }
-}
-
-impl IntoBytes for Count32 {
-    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        let mut wtr = vec![];
-        wtr.write_u32::<BigEndian>(self.get())?;
-        Ok(wtr)
-    }
-}
-
-impl FromBytes for i32 {
-    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
-        let mut rdr = Cursor::new(bytes);
-        let value = rdr.read_i32::<BigEndian>()?;
-        Ok(value)
-    }
-}
-
-impl IntoBytes for i32 {
-    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        let mut wtr = vec![];
-        wtr.write_i32::<BigEndian>(self.to_owned())?;
-        Ok(wtr)
-    }
-}
-
-impl FromBytes for u64 {
-    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
-        let mut rdr = Cursor::new(bytes);
-        let value = rdr.read_u64::<BigEndian>()?;
-        Ok(value)
-    }
-}
-
-impl IntoBytes for u64 {
-    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        let mut wtr = vec![];
-        wtr.write_u64::<BigEndian>(self.to_owned())?;
-        Ok(wtr)
-    }
-}
-
-impl FromBytes for i64 {
-    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
-        let mut rdr = Cursor::new(bytes);
-        let value = rdr.read_i64::<BigEndian>()?;
-        Ok(value)
-    }
-}
-
-impl IntoBytes for i64 {
-    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        let mut wtr = vec![];
-        wtr.write_i64::<BigEndian>(self.to_owned())?;
-        Ok(wtr)
-    }
-}
-
-impl FromBytes for f32 {
-    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
-        let mut rdr = Cursor::new(bytes);
-        let value = rdr.read_f32::<BigEndian>()?;
-        Ok(value)
-    }
-}
-
-impl IntoBytes for f32 {
-    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        let mut wtr = vec![];
-        wtr.write_f32::<BigEndian>(self.to_owned())?;
-        Ok(wtr)
-    }
-}
-
-impl FromBytes for Averagef32 {
-    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
-        let mut rdr = Cursor::new(bytes);
-        let sum = rdr.read_f32::<BigEndian>()?;
-        let count = rdr.read_f32::<BigEndian>()?;
-        Ok(Averagef32::new(sum, count))
-    }
-}
-
-impl IntoBytes for Averagef32 {
-    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        let mut wtr = vec![];
-        wtr.write_f32::<BigEndian>(self.sum())?;
-        wtr.write_f32::<BigEndian>(self.count())?;
-        Ok(wtr)
-    }
-}
-
-impl FromBytes for f64 {
-    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
-        let mut rdr = Cursor::new(bytes);
-        let value = rdr.read_f64::<BigEndian>()?;
-        Ok(value)
-    }
-}
-
-impl IntoBytes for f64 {
-    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        let mut wtr = vec![];
-        wtr.write_f64::<BigEndian>(self.to_owned())?;
-        Ok(wtr)
-    }
-}
-
-impl FromBytes for String {
-    fn from_bytes(bytes: Vec<u8>) -> anyhow::Result<Self> {
-        let s = String::from_utf8(bytes)?;
-        Ok(s)
-    }
-}
-
-impl IntoBytes for String {
-    fn into_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        Ok(self.as_bytes().to_vec())
+impl<C> RedisGroupTable<C> {
+    pub fn new(url: &str, cache: C) -> anyhow::Result<Self> {
+        Ok(RedisGroupTable {
+            cache,
+            client: RedisClient::new(url)?,
+        })
     }
 }

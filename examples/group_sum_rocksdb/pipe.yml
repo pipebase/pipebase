@@ -1,0 +1,64 @@
+name: group_sum_redis
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+  - package: pipeext
+    path: ../../../pipeext
+    modules: ["pipeext::*"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: RestServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      data_ty:
+        Vec: 
+          data_ty: UnsignedByte
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      data_ty: 
+        Vec:
+          data_ty:
+            Object: Record
+    upstreams: [ingestion_server]
+  - name: redis_group_sum
+    ty: Mapper
+    config:
+      ty: RocksDBUnorderedGroupAddAggregatorConfig
+      path: catalogs/rocksdb_group_add.yml
+    output:
+      data_ty:
+        Vec:
+          data_ty:
+            Pair:
+              left_data_ty: String
+              right_data_ty: UnsignedInteger
+    upstreams: [json]
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [redis_group_sum]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, GroupAs, AggregateAs]
+    fields:
+      - name: key
+        data_ty: String
+        metas:
+          - tag: Group
+      - name: value
+        data_ty: UnsignedInteger
+        metas:
+          - agg: Sum
+cstores:
+  - name: context_server
+    config:
+      ty: ContextRestServerConfig
+      path: catalogs/context_server.yml

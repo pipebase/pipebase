@@ -16,31 +16,31 @@ impl AggregateAs<u32> for u32 {
 }
 
 #[derive(Deserialize)]
-pub struct SumAggregatorConfig {}
+pub struct AddAggregatorConfig {}
 
 #[async_trait]
-impl FromPath for SumAggregatorConfig {
+impl FromPath for AddAggregatorConfig {
     async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
         P: AsRef<std::path::Path> + Send,
     {
-        Ok(SumAggregatorConfig {})
+        Ok(AddAggregatorConfig {})
     }
 }
 
 #[async_trait]
-impl ConfigInto<SumAggregator> for SumAggregatorConfig {}
+impl ConfigInto<AddAggregator> for AddAggregatorConfig {}
 
-pub struct SumAggregator {}
+pub struct AddAggregator {}
 
 #[async_trait]
-impl FromConfig<SumAggregatorConfig> for SumAggregator {
-    async fn from_config(_config: &SumAggregatorConfig) -> anyhow::Result<Self> {
-        Ok(SumAggregator {})
+impl FromConfig<AddAggregatorConfig> for AddAggregator {
+    async fn from_config(_config: &AddAggregatorConfig) -> anyhow::Result<Self> {
+        Ok(AddAggregator {})
     }
 }
 
-impl<I, T, U> Aggregate<I, T, U> for SumAggregator
+impl<I, T, U> Aggregate<I, T, U> for AddAggregator
 where
     I: AggregateAs<U>,
     U: std::ops::AddAssign<U> + Init,
@@ -52,10 +52,10 @@ where
 }
 
 #[async_trait]
-impl<I, T, U> Map<T, U, SumAggregatorConfig> for SumAggregator
+impl<I, T, U> Map<T, U, AddAggregatorConfig> for AddAggregator
 where
     I: AggregateAs<U>,
-    U: std::ops::AddAssign<U> + Default + Init,
+    U: std::ops::AddAssign<U> + Init,
     T: IntoIterator<Item = I> + Send + 'static,
 {
     async fn map(&mut self, data: T) -> anyhow::Result<U> {
@@ -74,7 +74,7 @@ mod sum_aggregator_tests {
         let mut pipe = mapper!("summation");
         let f0 = populate_records(tx0, vec![vec![1, 3, 5, 7], vec![2, 4, 6, 8]]);
         f0.await;
-        join_pipes!([run_pipe!(pipe, SumAggregatorConfig, [tx1], rx0)]);
+        join_pipes!([run_pipe!(pipe, AddAggregatorConfig, [tx1], rx0)]);
         let odd = rx1.recv().await.unwrap();
         assert_eq!(16, odd);
         let even = rx1.recv().await.unwrap();
@@ -103,7 +103,7 @@ mod sum_aggregator_tests {
             vec![vec![Record::new(1), Record::new(2), Record::new(3)]],
         );
         f0.await;
-        let run_pipe = run_pipe!(pipe, SumAggregatorConfig, [tx1], rx0);
+        let run_pipe = run_pipe!(pipe, AddAggregatorConfig, [tx1], rx0);
         let _ = run_pipe.await;
         let sum = rx1.recv().await.unwrap();
         assert_eq!(6, sum)
@@ -111,33 +111,33 @@ mod sum_aggregator_tests {
 }
 
 #[derive(Deserialize)]
-pub struct UnorderedGroupSumAggregatorConfig {}
+pub struct UnorderedGroupAddAggregatorConfig {}
 
 #[async_trait]
-impl FromPath for UnorderedGroupSumAggregatorConfig {
+impl FromPath for UnorderedGroupAddAggregatorConfig {
     async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
         P: AsRef<std::path::Path> + Send,
     {
-        Ok(UnorderedGroupSumAggregatorConfig {})
+        Ok(UnorderedGroupAddAggregatorConfig {})
     }
 }
 
 #[async_trait]
-impl ConfigInto<UnorderedGroupSumAggregator> for UnorderedGroupSumAggregatorConfig {}
+impl ConfigInto<UnorderedGroupAddAggregator> for UnorderedGroupAddAggregatorConfig {}
 
 #[async_trait]
-impl FromConfig<UnorderedGroupSumAggregatorConfig> for UnorderedGroupSumAggregator {
-    async fn from_config(_config: &UnorderedGroupSumAggregatorConfig) -> anyhow::Result<Self> {
-        Ok(UnorderedGroupSumAggregator {})
+impl FromConfig<UnorderedGroupAddAggregatorConfig> for UnorderedGroupAddAggregator {
+    async fn from_config(_config: &UnorderedGroupAddAggregatorConfig) -> anyhow::Result<Self> {
+        Ok(UnorderedGroupAddAggregator {})
     }
 }
 
 // Group key is hashed but not ordered
-pub struct UnorderedGroupSumAggregator {}
+pub struct UnorderedGroupAddAggregator {}
 
 impl<I, T, K, V> GroupAggregate<I, T, K, V, Vec<Pair<K, V>>, HashMap<K, V>>
-    for UnorderedGroupSumAggregator
+    for UnorderedGroupAddAggregator
 where
     I: GroupAs<K> + AggregateAs<V>,
     T: IntoIterator<Item = I>,
@@ -154,8 +154,8 @@ where
 }
 
 #[async_trait]
-impl<I, T, K, V> Map<T, Vec<Pair<K, V>>, UnorderedGroupSumAggregatorConfig>
-    for UnorderedGroupSumAggregator
+impl<I, T, K, V> Map<T, Vec<Pair<K, V>>, UnorderedGroupAddAggregatorConfig>
+    for UnorderedGroupAddAggregator
 where
     I: GroupAs<K> + AggregateAs<V>,
     K: Hash + Eq + PartialEq,
@@ -168,7 +168,7 @@ where
 }
 
 #[cfg(test)]
-mod test_group_aggregator {
+mod test_group_sum_aggregator {
     use crate::*;
 
     #[tokio::test]
@@ -180,7 +180,7 @@ mod test_group_aggregator {
         f0.await;
         join_pipes!([run_pipe!(
             pipe,
-            UnorderedGroupSumAggregatorConfig,
+            UnorderedGroupAddAggregatorConfig,
             [tx1],
             rx0
         )]);
@@ -189,40 +189,6 @@ mod test_group_aggregator {
             match p.left() {
                 &2 => assert_eq!(&6, p.right()),
                 &3 => assert_eq!(&9, p.right()),
-                _ => unreachable!(),
-            }
-        }
-    }
-
-    #[tokio::test]
-    async fn test_word_group_count_aggregate() {
-        let (tx0, rx0) = channel!(Vec<String>, 1024);
-        let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
-        let mut pipe = mapper!("word_count");
-        let f0 = populate_records(
-            tx0,
-            vec![vec![
-                "foo".to_owned(),
-                "foo".to_owned(),
-                "bar".to_owned(),
-                "buz".to_owned(),
-                "buz".to_owned(),
-                "buz".to_owned(),
-            ]],
-        );
-        f0.await;
-        join_pipes!([run_pipe!(
-            pipe,
-            UnorderedGroupSumAggregatorConfig,
-            [tx1],
-            rx0
-        )]);
-        let wcs = rx2.recv().await.unwrap();
-        for wc in wcs {
-            match wc.left().as_str() {
-                "foo" => assert_eq!(2, wc.right().get()),
-                "bar" => assert_eq!(1, wc.right().get()),
-                "buz" => assert_eq!(3, wc.right().get()),
                 _ => unreachable!(),
             }
         }
@@ -259,7 +225,7 @@ mod test_group_aggregator {
             ]],
         );
         f0.await;
-        let pipe_run = run_pipe!(pipe, UnorderedGroupSumAggregatorConfig, [tx1], rx0);
+        let pipe_run = run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, [tx1], rx0);
         let _ = pipe_run.await;
         let gs = rx1.recv().await.unwrap();
         assert_eq!(2, gs.len());
@@ -274,33 +240,33 @@ mod test_group_aggregator {
 }
 
 #[derive(Deserialize)]
-pub struct OrderedGroupSumAggregatorConfig {}
+pub struct OrderedGroupAddAggregatorConfig {}
 
 #[async_trait]
-impl FromPath for OrderedGroupSumAggregatorConfig {
+impl FromPath for OrderedGroupAddAggregatorConfig {
     async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
         P: AsRef<std::path::Path> + Send,
     {
-        Ok(OrderedGroupSumAggregatorConfig {})
+        Ok(OrderedGroupAddAggregatorConfig {})
     }
 }
 
 #[async_trait]
-impl ConfigInto<OrderedGroupSumAggregator> for OrderedGroupSumAggregatorConfig {}
+impl ConfigInto<OrderedGroupAddAggregator> for OrderedGroupAddAggregatorConfig {}
 
 #[async_trait]
-impl FromConfig<OrderedGroupSumAggregatorConfig> for OrderedGroupSumAggregator {
-    async fn from_config(_config: &OrderedGroupSumAggregatorConfig) -> anyhow::Result<Self> {
-        Ok(OrderedGroupSumAggregator {})
+impl FromConfig<OrderedGroupAddAggregatorConfig> for OrderedGroupAddAggregator {
+    async fn from_config(_config: &OrderedGroupAddAggregatorConfig) -> anyhow::Result<Self> {
+        Ok(OrderedGroupAddAggregator {})
     }
 }
 
 // Group key is ordered
-pub struct OrderedGroupSumAggregator {}
+pub struct OrderedGroupAddAggregator {}
 
 impl<I, T, K, V> GroupAggregate<I, T, K, V, Vec<Pair<K, V>>, BTreeMap<K, V>>
-    for OrderedGroupSumAggregator
+    for OrderedGroupAddAggregator
 where
     I: GroupAs<K> + AggregateAs<V>,
     T: IntoIterator<Item = I>,
@@ -317,8 +283,8 @@ where
 }
 
 #[async_trait]
-impl<I, T, K, V> Map<T, Vec<Pair<K, V>>, OrderedGroupSumAggregatorConfig>
-    for OrderedGroupSumAggregator
+impl<I, T, K, V> Map<T, Vec<Pair<K, V>>, OrderedGroupAddAggregatorConfig>
+    for OrderedGroupAddAggregator
 where
     I: GroupAs<K> + AggregateAs<V>,
     K: Ord,
@@ -351,7 +317,7 @@ mod test_ordered_group_aggregator {
             ]],
         );
         f0.await;
-        join_pipes!([run_pipe!(pipe, OrderedGroupSumAggregatorConfig, [tx1], rx0)]);
+        join_pipes!([run_pipe!(pipe, OrderedGroupAddAggregatorConfig, [tx1], rx0)]);
         let wcs = rx2.recv().await.unwrap();
         let mut wcs_iter = wcs.into_iter();
         let bar = wcs_iter.next().unwrap();

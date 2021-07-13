@@ -51,6 +51,8 @@ pub enum Tag {
 pub enum AggregateMeta {
     Top,
     Sum,
+    Count32,
+    Avgf32,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -188,6 +190,8 @@ fn expand_aggregate(agg: &AggregateMeta) -> Meta {
     let op = match agg {
         AggregateMeta::Sum => "sum",
         AggregateMeta::Top => "top",
+        AggregateMeta::Count32 => "count32",
+        AggregateMeta::Avgf32 => "avgf32",
     };
     let meta = new_path(op.to_owned());
     Meta::List {

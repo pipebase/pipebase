@@ -27,6 +27,8 @@ pub enum DataType {
     UnsignedLongLong,
     Float,
     Double,
+    Count32,
+    Averagef32,
     Object(String),
     Vec {
         data_ty: Box<DataType>,
@@ -70,6 +72,8 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::UnsignedLongLong => "u128".to_owned(),
         DataType::Float => "f32".to_owned(),
         DataType::Double => "f64".to_owned(),
+        DataType::Count32 => "pipebase::Count32".to_owned(),
+        DataType::Averagef32 => "pipebase::Averagef32".to_owned(),
         DataType::Object(object) => object.to_owned(),
         DataType::Vec { data_ty } => {
             let data_ty_lit = data_ty_to_literal(data_ty);

@@ -2,9 +2,9 @@ mod app;
 mod constants;
 mod context;
 mod data;
-mod dependency;
 mod function;
 mod meta;
+mod package;
 mod pipe;
 mod utils;
 
@@ -12,8 +12,8 @@ pub use app::*;
 pub(crate) use constants::*;
 pub(crate) use context::*;
 pub(crate) use data::*;
-pub use dependency::*;
 pub(crate) use function::*;
+pub use package::*;
 pub(crate) use pipe::*;
 
 pub trait Entity {

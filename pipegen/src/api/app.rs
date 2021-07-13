@@ -3,8 +3,8 @@ use super::constants::{
     DEFAULT_APP_OBJECT, PIPEBASE_MAIN,
 };
 use super::context::ContextStore;
-use super::dependency::PackageDependency;
 use super::meta::{Meta, MetaValue};
+use super::package::PackageDependency;
 use super::pipe::Pipe;
 use super::utils::indent_literal;
 use super::{Entity, EntityAccept, Object, VisitEntity};

@@ -1,4 +1,4 @@
-name: pipe_with_cycle
+name: non_exists_upstream_pipe
 pipes:
   - name: a_source
     ty: Poller

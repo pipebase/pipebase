@@ -10,6 +10,7 @@ pub trait LeftRight {
     type R;
     fn left(&self) -> &Self::L;
     fn right(&self) -> &Self::R;
+    fn as_tuple(self) -> (Self::L, Self::R);
 }
 
 impl<L, R> LeftRight for (L, R) {
@@ -22,6 +23,10 @@ impl<L, R> LeftRight for (L, R) {
 
     fn right(&self) -> &Self::R {
         &self.1
+    }
+
+    fn as_tuple(self) -> (L, R) {
+        self
     }
 }
 
@@ -43,6 +48,10 @@ impl<L, R> LeftRight for Pair<L, R> {
 
     fn right(&self) -> &R {
         &self.1
+    }
+
+    fn as_tuple(self) -> (Self::L, Self::R) {
+        (self.0, self.1)
     }
 }
 
@@ -191,7 +200,7 @@ mod pair_tests {
         f0.await;
         join_pipes!([run_pipe!(
             pipe,
-            UnorderedGroupSumAggregatorConfig,
+            UnorderedGroupAddAggregatorConfig,
             [tx1],
             rx0
         )]);

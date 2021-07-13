@@ -519,6 +519,14 @@ mod tests {
     }
 
     #[test]
+    fn test_no_upstream_downstream_pipe() {
+        let manifest_path = Path::new("resources/manifest/no_upstream_downstream_pipe.yml");
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
     fn test_cycle_dependency_pipe() {
         let manifest_path = Path::new("resources/manifest/cycle_dependency_pipe.yml");
         let app = App::parse(manifest_path).unwrap();
