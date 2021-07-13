@@ -1,4 +1,7 @@
-use crate::{FromBytes, IntoBytes, RocksDBGroupTable};
+use crate::{
+    utils::{FromBytes, IntoBytes},
+    RocksDBGroupTable,
+};
 use async_trait::async_trait;
 use pipebase::{
     AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Map, Pair,
