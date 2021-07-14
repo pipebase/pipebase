@@ -1,21 +1,26 @@
-### Prepare Postgres (terminal 1)
-Start postgres
+### Prepare Cassandra (terminal 1)
+Start cassandra
 ```
 docker-compose up -d
 ```
 Login container
 ```
-docker exec -it postgres /bin/sh
+docker exec -it cassandra /bin/sh
 ```
-Psql login
+Cql login
 ```
-psql -h localhost -p 5432 -U postgres -W postgres -d postgres
+cqlsh
+```
+Create keyspace
+```
+CREATE KEYSPACE IF NOT EXISTS test WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};
+USE test;
 ```
 Create table
 ```
 CREATE TABLE IF NOT EXISTS records (
-    key TEXT PRIMARY KEY,
-    value   INTEGER
+    key text PRIMARY KEY,
+    value   int
 );
 ```
 ### Build and Run (terminal 2)
@@ -28,22 +33,25 @@ Build
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe check && \
-cargo pipe build -o psql
+cargo pipe build -o cql -r
 ```
 Run app
 ```
-./psql
+./cql
 ```
-### Ingest Data and Monitor
-Open new terinal and ingest sample data
+### Ingest Data and Monitor (terminal 3)
+Ingest sample data
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
 -d @record.json  \
 http://localhost:9000/v1/ingest
 ```
-Query postgres (terminal 1)
+Query cassandra (terminal 1)
 ```
 SELECT * FROM records;
+ key | value
+-----+-------
+ foo |     1
 ```
 Open [browser](http://localhost:8000/v1/pipe) and list all pipes

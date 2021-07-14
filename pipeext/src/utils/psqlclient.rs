@@ -17,11 +17,11 @@ impl PsqlClient {
         Ok(PsqlClient { client: client })
     }
 
-    pub async fn execute<R>(&mut self, record: R) -> anyhow::Result<()>
+    pub async fn execute<R>(&mut self, r: R) -> anyhow::Result<()>
     where
         R: Render,
     {
-        let statement = record.render();
+        let statement = r.render();
         let rows_updated = self.client.execute(&statement[..], &[]).await?;
         log::info!("{} rows updated", rows_updated);
         Ok(())
