@@ -1,0 +1,4 @@
+---
+url: http://localhost:19000/v1/ingest
+headers:
+  Content-Type: application/json
