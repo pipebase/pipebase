@@ -18,3 +18,4 @@ examples/*/app
 examples/*/data
 pipebase/resources/data
 pipeext/resources/data
+pipeware/*/resources/data
