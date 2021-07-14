@@ -4,6 +4,11 @@ members = [
 	"cargo-pipe",
 	"pipebase",
 	"pipederive",
-	"pipeext",
-	"pipegen"
+	"pipegen",
+	"pipeware/pipecql",
+	"pipeware/pipejson",
+	"pipeware/pipepsql",
+	"pipeware/piperedis",
+	"pipeware/piperocksdb",
+	"pipeware/pipewarp",
 ]
