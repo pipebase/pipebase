@@ -1,11 +1,10 @@
+use crate::utils::PsqlClient;
 use async_trait::async_trait;
 use pipebase::{ConfigInto, Export, FromConfig, FromPath, Render};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct PsqlWriterConfig {
-    // params schema: https://github.com/sfackler/rust-postgres/blob/master/postgres/src/config.rs
-    // type supoort: https://docs.rs/postgres/0.19.1/postgres/types/trait.ToSql.html
     params: String,
 }
 
@@ -14,22 +13,15 @@ impl FromPath for PsqlWriterConfig {}
 impl ConfigInto<PsqlWriter> for PsqlWriterConfig {}
 
 pub struct PsqlWriter {
-    client: tokio_postgres::Client,
+    client: PsqlClient,
 }
 
 #[async_trait]
 impl FromConfig<PsqlWriterConfig> for PsqlWriter {
     async fn from_config(config: &PsqlWriterConfig) -> anyhow::Result<Self> {
-        let (client, connection) =
-            tokio_postgres::connect(&config.params, tokio_postgres::NoTls).await?;
-        tokio::spawn(async move {
-            if let Err(e) = connection.await {
-                eprintln!("connection error: {}", e);
-            }
-        });
         Ok(PsqlWriter {
             // TODO: Support Tls
-            client: client,
+            client: PsqlClient::new(&config.params).await?,
         })
     }
 }
@@ -40,19 +32,7 @@ where
     T: Render + Send + 'static,
 {
     async fn export(&mut self, t: T) -> anyhow::Result<()> {
-        self.execute(t).await
-    }
-}
-
-impl PsqlWriter {
-    async fn execute<R>(&mut self, record: R) -> anyhow::Result<()>
-    where
-        R: Render,
-    {
-        let statement = record.render();
-        let rows_updated = self.client.execute(&statement[..], &[]).await?;
-        log::info!("{} rows updated", rows_updated);
-        Ok(())
+        self.client.execute(t).await
     }
 }
 

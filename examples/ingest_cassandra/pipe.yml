@@ -1,0 +1,59 @@
+name: ingestion
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+  - package: pipeext
+    path: ../../../pipeext
+    modules: ["pipeext::*"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: RestServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      data_ty:
+        Vec: 
+          data_ty: UnsignedByte
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      data_ty: 
+        Object: Record
+    upstreams: [ingestion_server]
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [json]
+  - name: psql_writer
+    ty: Exporter
+    config:
+      ty: CqlWriterConfig
+      path: catalogs/cql_writer.yml
+    upstreams: [json]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, Render]
+      - render:
+          template: "UPDATE test.records SET value = {} where key = '{}'"
+    fields:
+      - name: key
+        data_ty: String
+        metas:
+          - render:
+              pos: 1
+      - name: value
+        data_ty: Integer
+        metas:
+          - render:
+              pos: 0
+cstores:
+  - name: context_server
+    config:
+      ty: ContextRestServerConfig
+      path: catalogs/context_server.yml
