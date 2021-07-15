@@ -1,4 +1,5 @@
 mod bootstrap;
+mod common;
 mod config;
 mod context;
 mod error;
@@ -9,6 +10,7 @@ mod sink;
 mod source;
 
 pub use bootstrap::*;
+pub use common::*;
 pub use config::*;
 pub use context::*;
 pub use fanout::*;

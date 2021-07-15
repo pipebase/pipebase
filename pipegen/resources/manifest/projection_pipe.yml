@@ -22,7 +22,9 @@ objects:
       - name: project
         metas:
           - name: input
-            meta: Record
+            meta: 
+              value: Record
+              raw: false
     fields:
       - name: key
         data_ty: String

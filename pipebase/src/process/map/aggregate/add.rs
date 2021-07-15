@@ -8,13 +8,6 @@ use crate::{
 use async_trait::async_trait;
 use serde::Deserialize;
 
-// u32 as summation result of u32
-impl AggregateAs<u32> for u32 {
-    fn aggregate_value(&self) -> u32 {
-        *self
-    }
-}
-
 #[derive(Deserialize)]
 pub struct AddAggregatorConfig {}
 
@@ -107,6 +100,71 @@ mod sum_aggregator_tests {
         let _ = run_pipe.await;
         let sum = rx1.recv().await.unwrap();
         assert_eq!(6, sum)
+    }
+}
+
+#[cfg(test)]
+mod count32_tests {
+
+    use crate::*;
+
+    #[derive(Debug, Clone, AggregateAs)]
+    #[agg(count32)]
+    struct Record {}
+
+    #[tokio::test]
+    async fn test_count32() {
+        let (tx0, rx0) = channel!(Vec<Record>, 1024);
+        let (tx1, mut rx1) = channel!(Count32, 1024);
+        let mut pipe = mapper!("counter");
+        let pipe = run_pipe!(pipe, AddAggregatorConfig, [tx1], rx0);
+        let f0 = populate_records(tx0, vec![vec![Record {}, Record {}, Record {}, Record {}]]);
+        f0.await;
+        join_pipes!([pipe]);
+        let c = rx1.recv().await.expect("count32 not found");
+        assert_eq!(4, c.get())
+    }
+}
+
+#[cfg(test)]
+mod test_avg {
+
+    use crate::*;
+
+    #[derive(Clone, Debug, AggregateAs)]
+    struct Record {
+        id: String,
+        #[agg(avgf32)]
+        value: i32,
+    }
+
+    #[tokio::test]
+    async fn test_averagef32() {
+        let (tx0, rx0) = channel!(Vec<Record>, 1024);
+        let (tx1, mut rx1) = channel!(Averagef32, 1024);
+        let mut pipe = mapper!("average");
+        let pipe = run_pipe!(pipe, AddAggregatorConfig, [tx1], rx0);
+        let f0 = populate_records(
+            tx0,
+            vec![vec![
+                Record {
+                    id: "a".to_owned(),
+                    value: 1,
+                },
+                Record {
+                    id: "a".to_owned(),
+                    value: 2,
+                },
+                Record {
+                    id: "a".to_owned(),
+                    value: 3,
+                },
+            ]],
+        );
+        f0.await;
+        join_pipes!([pipe]);
+        let avg = rx1.recv().await.expect("not average received");
+        assert_eq!(2.0, avg.average())
     }
 }
 
@@ -234,6 +292,146 @@ mod test_group_sum_aggregator {
                 "foo" => assert_eq!(&3, sum.right()),
                 "bar" => assert_eq!(&3, sum.right()),
                 _ => unreachable!(),
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod unordered_group_avg_f32_tests {
+
+    use crate::*;
+
+    #[derive(Clone, Debug, AggregateAs, GroupAs)]
+    struct Record {
+        #[group]
+        id: String,
+        #[agg(avgf32)]
+        value: i32,
+    }
+
+    #[tokio::test]
+    async fn test_unordered_group_avg_f32() {
+        let (tx0, rx0) = channel!(Vec<Record>, 1024);
+        let (tx1, mut rx1) = channel!(Vec<Pair<String, Averagef32>>, 1024);
+        let mut pipe = mapper!("group_avg_f32");
+        let pipe = run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, [tx1], rx0);
+        let f0 = populate_records(
+            tx0,
+            vec![vec![
+                Record {
+                    id: "foo".to_owned(),
+                    value: 1,
+                },
+                Record {
+                    id: "foo".to_owned(),
+                    value: 2,
+                },
+                Record {
+                    id: "bar".to_owned(),
+                    value: 2,
+                },
+                Record {
+                    id: "bar".to_owned(),
+                    value: 3,
+                },
+            ]],
+        );
+        f0.await;
+        join_pipes!([pipe]);
+        let group_avgs = rx1.recv().await.expect("group average not found");
+        for avg in group_avgs {
+            match &avg.left()[..] {
+                "foo" => {
+                    assert_eq!(1.5, avg.right().average())
+                }
+                "bar" => {
+                    assert_eq!(2.5, avg.right().average())
+                }
+                _ => unreachable!("unexpected group {}", avg.left()),
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod group_count32_tests {
+
+    use crate::*;
+
+    #[derive(Debug, Clone, GroupAs, AggregateAs)]
+    #[agg(count32)]
+    struct Record {
+        #[group]
+        key: String,
+    }
+
+    #[tokio::test]
+    async fn test_word_group_count_aggregate() {
+        let (tx0, rx0) = channel!(Vec<String>, 1024);
+        let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
+        let mut pipe = mapper!("word_count");
+        let f0 = populate_records(
+            tx0,
+            vec![vec![
+                "foo".to_owned(),
+                "foo".to_owned(),
+                "bar".to_owned(),
+                "buz".to_owned(),
+                "buz".to_owned(),
+                "buz".to_owned(),
+            ]],
+        );
+        f0.await;
+        join_pipes!([run_pipe!(
+            pipe,
+            UnorderedGroupAddAggregatorConfig,
+            [tx1],
+            rx0
+        )]);
+        let wcs = rx2.recv().await.unwrap();
+        for wc in wcs {
+            match wc.left().as_str() {
+                "foo" => assert_eq!(2, wc.right().get()),
+                "bar" => assert_eq!(1, wc.right().get()),
+                "buz" => assert_eq!(3, wc.right().get()),
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_record_group_count32() {
+        let (tx0, rx0) = channel!(Vec<Record>, 1024);
+        let (tx1, mut rx1) = channel!(Vec<Pair<String, Count32>>, 1024);
+        let mut pipe = mapper!("group_count32");
+        let pipe = run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, [tx1], rx0);
+        let f0 = populate_records(
+            tx0,
+            vec![vec![
+                Record {
+                    key: "foo".to_owned(),
+                },
+                Record {
+                    key: "foo".to_owned(),
+                },
+                Record {
+                    key: "bar".to_owned(),
+                },
+            ]],
+        );
+        f0.await;
+        join_pipes!([pipe]);
+        let group_counts = rx1.recv().await.expect("group count32 not found");
+        for count in group_counts {
+            match &count.left()[..] {
+                "foo" => {
+                    assert_eq!(2, count.right().get())
+                }
+                "bar" => {
+                    assert_eq!(1, count.right().get())
+                }
+                _ => unreachable!("unexpected group {}", count.left()),
             }
         }
     }

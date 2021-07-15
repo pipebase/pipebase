@@ -72,14 +72,20 @@ impl Pipe {
     fn get_name_meta(&self) -> Meta {
         Meta::Value {
             name: "name".to_owned(),
-            meta: MetaValue::Str(self.name.to_owned(), false),
+            meta: MetaValue::Str {
+                value: self.name.to_owned(),
+                raw: false,
+            },
         }
     }
 
     fn get_type_meta(&self) -> Meta {
         Meta::Value {
             name: "ty".to_owned(),
-            meta: MetaValue::Str(self.ty.to_string(), false),
+            meta: MetaValue::Str {
+                value: self.ty.to_string(),
+                raw: false,
+            },
         }
     }
 
@@ -87,13 +93,19 @@ impl Pipe {
         let mut config_metas = vec![];
         config_metas.push(Meta::Value {
             name: "ty".to_owned(),
-            meta: MetaValue::Str(self.config.get_config_type().to_owned(), false),
+            meta: MetaValue::Str {
+                value: self.config.get_config_type().to_owned(),
+                raw: false,
+            },
         });
         match self.config.get_path() {
             Some(path) => {
                 config_metas.push(Meta::Value {
                     name: "path".to_owned(),
-                    meta: MetaValue::Str(path.to_owned(), false),
+                    meta: MetaValue::Str {
+                        value: path.to_owned(),
+                        raw: false,
+                    },
                 });
             }
             None => (),
@@ -111,7 +123,10 @@ impl Pipe {
         };
         let meta = Meta::Value {
             name: "upstream".to_owned(),
-            meta: MetaValue::Str(upstreams.join(", "), false),
+            meta: MetaValue::Str {
+                value: upstreams.join(", "),
+                raw: false,
+            },
         };
         Some(meta)
     }
@@ -123,7 +138,10 @@ impl Pipe {
         };
         let meta = Meta::Value {
             name: "output".to_owned(),
-            meta: MetaValue::Str(output.to_literal(0), false),
+            meta: MetaValue::Str {
+                value: output.to_literal(0),
+                raw: false,
+            },
         };
         Some(meta)
     }
