@@ -27,7 +27,7 @@ pub enum DeriveMeta {
     PartialEq,
     Project,
     Filter,
-    FieldAccess,
+    FieldAccept,
     HashedBy,
     OrderedBy,
     AggregateAs,
@@ -65,8 +65,8 @@ pub struct RenderMeta {
 #[serde(untagged)]
 pub enum MetaValue {
     // String Literal, Generate as raw or not
-    Str(String, bool),
-    Int(i32),
+    Str { value: String, raw: bool },
+    Int { value: i32 },
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -88,14 +88,19 @@ pub enum Meta {
 fn meta_value_str(name: &str, value: &str, raw: bool) -> Meta {
     Meta::Value {
         name: name.to_owned(),
-        meta: MetaValue::Str(value.to_owned(), raw),
+        meta: MetaValue::Str {
+            value: value.to_owned(),
+            raw,
+        },
     }
 }
 
 fn meta_value_int(name: &str, value: &i32) -> Meta {
     Meta::Value {
         name: name.to_owned(),
-        meta: MetaValue::Int(value.to_owned()),
+        meta: MetaValue::Int {
+            value: value.to_owned(),
+        },
     }
 }
 
@@ -115,7 +120,7 @@ fn expand_derive(derive: &DeriveMeta) -> Meta {
         DeriveMeta::PartialEq => "PartialEq",
         DeriveMeta::Project => "Project",
         DeriveMeta::Filter => "Filter",
-        DeriveMeta::FieldAccess => "FieldAccess",
+        DeriveMeta::FieldAccept => "FieldAccept",
         DeriveMeta::HashedBy => "HashedBy",
         DeriveMeta::OrderedBy => "OrderedBy",
         DeriveMeta::AggregateAs => "AggregateAs",
@@ -148,7 +153,7 @@ fn expand_project_meta(meta: &ProjectMeta) -> Meta {
         None => (),
     };
     match meta.expr {
-        Some(ref expr) => metas.push(meta_value_str("expr", expr, false)),
+        Some(ref expr) => metas.push(meta_value_str("expr", expr, true)),
         None => (),
     };
     match meta.alias {
@@ -163,7 +168,7 @@ fn expand_project_meta(meta: &ProjectMeta) -> Meta {
 
 fn expand_filter_meta(meta: &FilterMeta) -> Meta {
     let mut metas: Vec<Meta> = Vec::new();
-    metas.push(meta_value_str("predicate", &meta.predicate, false));
+    metas.push(meta_value_str("predicate", &meta.predicate, true));
     match meta.alias {
         Some(ref alias) => metas.push(meta_value_str("alias", alias, false)),
         None => (),
@@ -253,10 +258,10 @@ fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
     let (name, metas) = match meta {
         Meta::Path { name } => return meta_path_to_lit(name, indent, compact),
         Meta::Value { name, meta } => match meta {
-            MetaValue::Str(value, raw) => {
+            MetaValue::Str { value, raw } => {
                 return meta_str_value_to_lit(name, value, raw, indent, compact)
             }
-            MetaValue::Int(value) => return meta_int_value_to_lit(name, value, indent, compact),
+            MetaValue::Int { value } => return meta_int_value_to_lit(name, value, indent, compact),
         },
         Meta::Derive { derives } => {
             let meta = expand_derives(derives);

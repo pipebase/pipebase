@@ -43,7 +43,10 @@ impl ContextStore {
         let metas = vec![
             Meta::Value {
                 name: "name".to_owned(),
-                meta: MetaValue::Str(self.name.to_owned(), false),
+                meta: MetaValue::Str {
+                    value: self.name.to_owned(),
+                    raw: false,
+                },
             },
             self.get_config_meta(),
         ];
@@ -58,12 +61,18 @@ impl ContextStore {
         let config_path = self.config.get_path();
         let mut metas = vec![Meta::Value {
             name: "ty".to_owned(),
-            meta: MetaValue::Str(config_ty.to_owned(), false),
+            meta: MetaValue::Str {
+                value: config_ty.to_owned(),
+                raw: false,
+            },
         }];
         match config_path {
             Some(path) => metas.push(Meta::Value {
                 name: "path".to_owned(),
-                meta: MetaValue::Str(path.to_owned(), false),
+                meta: MetaValue::Str {
+                    value: path.to_owned(),
+                    raw: false,
+                },
             }),
             None => (),
         };

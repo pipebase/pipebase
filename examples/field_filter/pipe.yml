@@ -1,0 +1,77 @@
+name: ingestion
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      data_ty:
+        Vec: 
+          data_ty: UnsignedByte
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      data_ty: 
+        Object: Records
+    upstreams: [ingestion_server]
+  - name: field
+    ty: Mapper
+    config:
+      ty: FieldVisitConfig
+    output:
+      data_ty:
+        Vec:
+          data_ty:
+            Object: Record
+    upstreams: [json]
+  - name: filter
+    ty: Mapper
+    config:
+      ty: FilterMapConfig
+    output:
+      data_ty:
+        Vec:
+          data_ty:
+            Object: Record
+    upstreams: [field]
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [filter]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, Filter]
+      - filter:
+          predicate: "r.value > 2"
+          alias: "r"
+    fields:
+      - name: key
+        data_ty: String
+      - name: value
+        data_ty: UnsignedInteger
+  - ty: Records
+    metas:
+      - derives: [Clone, Debug, Deserialize, FieldAccept]
+    fields:
+      - name: records
+        metas:
+          - tag: Visit
+        data_ty:
+          Vec:
+            data_ty:
+              Object: Record
