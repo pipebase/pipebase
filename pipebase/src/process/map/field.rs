@@ -1,26 +1,8 @@
 use super::Map;
-use crate::{ConfigInto, FromConfig, FromPath};
+use crate::{ConfigInto, FieldAccept, FieldVisitor, FromConfig, FromPath};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::path::Path;
-
-pub struct FieldVisitor<F: Clone> {
-    value: Option<F>,
-}
-
-impl<F: Clone> FieldVisitor<F> {
-    pub fn visit(&mut self, value: &F) {
-        self.value = Some(value.to_owned());
-    }
-
-    pub fn get_value(&self) -> Option<&F> {
-        self.value.as_ref()
-    }
-}
-
-pub trait FieldAccept<F: Clone> {
-    fn accept(&self, visitor: &mut FieldVisitor<F>);
-}
 
 #[derive(Deserialize)]
 pub struct FieldVisitConfig {}
@@ -54,7 +36,7 @@ where
     U: Clone,
 {
     async fn map(&mut self, t: T) -> anyhow::Result<U> {
-        let mut visitor = FieldVisitor::<U> { value: None };
+        let mut visitor = FieldVisitor::new();
         t.accept(&mut visitor);
         Ok(visitor.get_value().unwrap().to_owned())
     }
@@ -75,7 +57,7 @@ mod tests {
     fn test_field_visit() {
         let record = [1, 2, 3];
         let records = Records { records: record };
-        let mut visitor = FieldVisitor::<[i32; 3]> { value: None };
+        let mut visitor = FieldVisitor::<[i32; 3]>::new();
         records.accept(&mut visitor);
         let visitor_record = visitor.get_value().unwrap().to_owned();
         assert_eq!(record, visitor_record)

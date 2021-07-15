@@ -1,15 +1,11 @@
 use std::iter::{FromIterator, IntoIterator};
 
-use crate::{ConfigInto, FromConfig, FromPath};
+use crate::{ConfigInto, Filter, FromConfig, FromPath};
 
 use super::Map;
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::path::Path;
-
-pub trait Filter<Rhs = Self> {
-    fn filter(rhs: &Rhs) -> bool;
-}
 
 #[derive(Deserialize)]
 pub struct FilterMapConfig {}
@@ -57,9 +53,6 @@ where
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use pipederive::Filter;
-
-    use super::Filter;
 
     #[derive(Clone, Debug, Filter)]
     #[filter(alias = "r", predicate = "r.r0 + r.r1 < 1")]

@@ -2,13 +2,6 @@ use crate::{Aggregate, AggregateAs, ConfigInto, FromConfig, FromPath, Map};
 use async_trait::async_trait;
 use serde::Deserialize;
 
-// Vec<u32> as sort result for vec of u32
-impl AggregateAs<Vec<u32>> for u32 {
-    fn aggregate_value(&self) -> Vec<u32> {
-        vec![*self]
-    }
-}
-
 #[derive(Deserialize)]
 pub struct TopAggregatorConfig {
     pub n: usize,
