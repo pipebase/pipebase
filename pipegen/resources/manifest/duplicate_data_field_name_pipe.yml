@@ -3,7 +3,7 @@ pipes: []
 objects:
   - ty: Foo
     fields:
-      - data_ty: Integer
+      - ty: Integer
         name: foo
-      - data_ty: String
+      - ty: String
         name: foo

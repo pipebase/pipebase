@@ -3,4 +3,4 @@ pipes: []
 objects:
   - ty: Foo
     fields:
-      - data_ty: Integer
+      - ty: Integer

@@ -17,7 +17,7 @@ config:
   ty: TimerConfig
   path: catalogs/timer.yml
 output:
-  data_ty: UnsignedLongLong
+  ty: UnsignedLongLong
 ```
 Specification
 | Field | Description | Required |
@@ -27,7 +27,7 @@ Specification
 | config.ty | pipe config type | true |
 | config.path | path to pipe config file | false |
 | upstreams | list of upstream pipe names | false if `ty` is `Poller` or `Listener` |
-| output | output data type (unnamed [`data field`]) | false if `ty` is `Exporter` |
+| output | output data type (unnamed [`data field`]) | false if [`pipe type`] is `Exporter` |
 
 Note that:
 * pipes are wired as **directed acyclic graph** using upstremas
@@ -53,9 +53,9 @@ metas:
   - derives: [Clone, Debug, Deserialize]
 fields:
   - name: key
-    data_ty: String
+    ty: String
   - name: value
-    data_ty: UnsignedInteger
+    ty: UnsignedInteger
 ```
 Specification
 | Field | Description | Required |
@@ -71,7 +71,7 @@ Meta defines additional attributes of an object so that it fits trait bounds of 
 | Field | Description | Required |
 | ----- | ----------- | -------- |
 | name | field name | false  |
-| data_ty | [`data type`] | true |
+| ty | [`data type`] | true |
 | metas | list of [`meta`]s per field | false |
 | is_boxed | field is boxed or not | false |
 | is_optional | field is optional or not | false |
@@ -97,14 +97,15 @@ Meta defines additional attributes of an object so that it fits trait bounds of 
 | `UnsignedLongLong` | u128 |
 | `Float` | f32 |
 | `Double` | f64 |
-| `Count32` | Count32(pub u32) |
-| `Averagef32` | Averagef32(pub f32, pub f32) |
+| `PathBuf` | std::path::PathBuf |
+| `Count32` | pipebase::Count32(pub u32) |
+| `Averagef32` | pipebase::Averagef32(pub f32, pub f32) |
 | `Vec` | Vec<T> |
 | `Array` | [T; N] |
 | `Tuple` | (T,) |
 | `HashMap` | HashMap<K, V> |
 | `HashSet` | HashSet<T> |
-| `Pair` | Pair<L, R>(pub L, pub R) |
+| `Pair` | pipebase::Pair<L, R>(pub L, pub R) |
 
 [`data field`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-field
 [`data type`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-type

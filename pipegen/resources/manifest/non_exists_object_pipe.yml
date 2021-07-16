@@ -6,8 +6,8 @@ objects:
   - ty: Bar
     fields: 
       - name: foo
-        data_ty:
+        ty:
           Object: Foo # refer objects[0] 
       - name: buz
-        data_ty:
+        ty:
           Object: Buz # non-exists

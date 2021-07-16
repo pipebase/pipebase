@@ -10,7 +10,7 @@ pipes:
       ty: ProjectionConfig
     upstreams: [ "record_source" ]
     output:
-      data_ty: 
+      ty: 
         Object: Record
 objects:
   - ty: Record
@@ -27,6 +27,6 @@ objects:
               raw: false
     fields:
       - name: key
-        data_ty: String
+        ty: String
       - name: value
-        data_ty: Integer
+        ty: Integer

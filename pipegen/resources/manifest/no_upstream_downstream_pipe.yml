@@ -5,4 +5,4 @@ pipes:
     config:
       ty: MapperConfig
     output:
-      data_ty: Integer
+      ty: Integer

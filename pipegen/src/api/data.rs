@@ -27,29 +27,30 @@ pub enum DataType {
     UnsignedLongLong,
     Float,
     Double,
+    PathBuf,
     Count32,
     Averagef32,
     Object(String),
     Vec {
-        data_ty: Box<DataType>,
+        ty: Box<DataType>,
     },
     Array {
-        data_ty: Box<DataType>,
+        ty: Box<DataType>,
         size: usize,
     },
     Tuple {
-        data_tys: Vec<DataType>,
+        tys: Vec<DataType>,
     },
     HashMap {
-        key_data_ty: Box<DataType>,
-        value_data_ty: Box<DataType>,
+        key_ty: Box<DataType>,
+        value_ty: Box<DataType>,
     },
     HashSet {
-        data_ty: Box<DataType>,
+        ty: Box<DataType>,
     },
     Pair {
-        left_data_ty: Box<DataType>,
-        right_data_ty: Box<DataType>,
+        left_ty: Box<DataType>,
+        right_ty: Box<DataType>,
     },
 }
 
@@ -72,46 +73,35 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::UnsignedLongLong => "u128".to_owned(),
         DataType::Float => "f32".to_owned(),
         DataType::Double => "f64".to_owned(),
+        DataType::PathBuf => "std::path::PathBuf".to_owned(),
         DataType::Count32 => "pipebase::Count32".to_owned(),
         DataType::Averagef32 => "pipebase::Averagef32".to_owned(),
         DataType::Object(object) => object.to_owned(),
-        DataType::Vec { data_ty } => {
-            let data_ty_lit = data_ty_to_literal(data_ty);
-            format!("std::vec::Vec<{}>", data_ty_lit)
+        DataType::Vec { ty } => {
+            let ty_lit = data_ty_to_literal(ty);
+            format!("std::vec::Vec<{}>", ty_lit)
         }
-        DataType::Array { data_ty, size } => {
-            let data_ty_lit = data_ty_to_literal(data_ty);
-            format!("[{}; {}]", data_ty_lit, size)
+        DataType::Array { ty, size } => {
+            let ty_lit = data_ty_to_literal(ty);
+            format!("[{}; {}]", ty_lit, size)
         }
-        DataType::Tuple { data_tys } => {
-            let data_tys: Vec<String> = data_tys
-                .iter()
-                .map(|data_ty| data_ty_to_literal(data_ty))
-                .collect();
-            format!("({})", data_tys.join(", "))
+        DataType::Tuple { tys } => {
+            let tys: Vec<String> = tys.iter().map(|ty| data_ty_to_literal(ty)).collect();
+            format!("({})", tys.join(", "))
         }
-        DataType::HashMap {
-            key_data_ty,
-            value_data_ty,
-        } => {
-            let key_data_ty = data_ty_to_literal(key_data_ty);
-            let value_data_ty = data_ty_to_literal(value_data_ty);
-            format!(
-                "std::collections::HashMap<{}, {}>",
-                key_data_ty, value_data_ty
-            )
+        DataType::HashMap { key_ty, value_ty } => {
+            let key_ty = data_ty_to_literal(key_ty);
+            let value_ty = data_ty_to_literal(value_ty);
+            format!("std::collections::HashMap<{}, {}>", key_ty, value_ty)
         }
-        DataType::HashSet { data_ty } => {
-            let data_ty_lit = data_ty_to_literal(data_ty);
-            format!("std::collections::HashSet<{}>", data_ty_lit)
+        DataType::HashSet { ty } => {
+            let ty_lit = data_ty_to_literal(ty);
+            format!("std::collections::HashSet<{}>", ty_lit)
         }
-        DataType::Pair {
-            left_data_ty,
-            right_data_ty,
-        } => {
-            let left_data_ty = data_ty_to_literal(left_data_ty);
-            let right_data_ty = data_ty_to_literal(right_data_ty);
-            format!("pipebase::Pair<{}, {}>", left_data_ty, right_data_ty)
+        DataType::Pair { left_ty, right_ty } => {
+            let left_ty = data_ty_to_literal(left_ty);
+            let right_ty = data_ty_to_literal(right_ty);
+            format!("pipebase::Pair<{}, {}>", left_ty, right_ty)
         }
     }
 }
@@ -120,7 +110,7 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
 pub struct DataField {
     // either named or unamed data field
     name: Option<String>,
-    data_ty: DataType,
+    ty: DataType,
     metas: Option<Vec<Meta>>,
     is_boxed: Option<bool>,
     is_optional: Option<bool>,
@@ -129,7 +119,7 @@ pub struct DataField {
 
 impl DataField {
     pub fn get_data_type_literal(&self, indent: usize) -> String {
-        let ty_lit = data_ty_to_literal(&self.data_ty);
+        let ty_lit = data_ty_to_literal(&self.ty);
         let ty_lit = match self.is_boxed {
             Some(is_boxed) => match is_boxed {
                 true => format!("Box<{}>", ty_lit),
@@ -190,7 +180,7 @@ impl Entity for DataField {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        match self.data_ty.to_owned() {
+        match self.ty.to_owned() {
             DataType::Object(object) => vec![object],
             _ => vec![],
         }

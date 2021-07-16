@@ -1,0 +1,4 @@
+root: resources
+mode:
+  Cron:
+    Secs: 3

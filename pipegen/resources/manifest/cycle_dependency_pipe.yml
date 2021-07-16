@@ -5,26 +5,26 @@ pipes:
     config:
       ty: PollerConfig
     output:
-      data_ty: Integer
+      ty: Integer
   - name: mapper_a
     ty: Mapper
     upstreams: [ "mapper_c" ]
     config:
       ty: MapperConfig
     output:
-      data_ty: Integer
+      ty: Integer
   - name: mapper_b
     ty: Mapper
     upstreams: [ "mapper_a" ]
     config:
       ty: MapperConfig
     output:
-      data_ty: Integer
+      ty: Integer
   - name: mapper_c
     ty: Mapper
     upstreams: [ "mapper_b" ]
     config:
       ty: MapperConfig
     output:
-      data_ty: Integer
+      ty: Integer
 

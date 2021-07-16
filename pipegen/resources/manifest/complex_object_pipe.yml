@@ -6,34 +6,34 @@ pipes:
       ty: ReceiverConfig
       path: catalogs/receiver.yml
     output: 
-      data_ty:
+      ty:
         Vec:
-          data_ty: 
+          ty: 
             Object: Record
 objects:
   - ty: Record
     fields:
       - name: key
-        data_ty: String
+        ty: String
       - name: optional_value
-        data_ty: Integer
+        ty: Integer
         is_optional: true
       - name: array_int
-        data_ty:
+        ty:
           Array:
-            data_ty: Integer
+            ty: Integer
             size: 3
       - name: tuple_record
-        data_ty:
+        ty:
           Tuple:
-            data_tys: [String, Integer]
+            tys: [String, Integer]
       - name: hashmap_record
-        data_ty:
+        ty:
           HashMap:
-            key_data_ty: String
-            value_data_ty: Integer
+            key_ty: String
+            value_ty: Integer
       - name: hashset_record
-        data_ty:
+        ty:
           HashSet:
-            data_ty: String
+            ty: String
 
