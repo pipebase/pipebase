@@ -24,8 +24,8 @@ use tokio::task::JoinHandle;
 use crate::context::{Context, State};
 use crate::error::Result;
 use crate::{
-    filter_senders_by_indices, senders_as_map, spawn_send, wait_join_handles, ConfigInto,
-    FromConfig, HasContext, Pipe,
+    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
+    ConfigInto, FromConfig, HasContext, Pipe,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -87,10 +87,17 @@ where
                 }
             };
             self.context.set_state(State::Send);
+            let mut u_replicas = replicate(u, txs.len());
             let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
                 .iter()
-                .map(|(idx, tx)| (idx.to_owned(), spawn_send(tx.to_owned(), u.to_owned())))
+                .map(|(idx, tx)| {
+                    (
+                        idx.to_owned(),
+                        spawn_send(tx.to_owned(), u_replicas.pop().expect("no replica left")),
+                    )
+                })
                 .collect();
+            assert!(u_replicas.is_empty(), "replica left over");
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
             self.context.inc_total_run();
