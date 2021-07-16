@@ -6,10 +6,12 @@ Here is a list of basic pipes built in `pipebase`
 | ----------- | --------- | ----- | ------ | ------- |
 | `PrinterConfig` | `Exporter`  | `Debug` | No output | [`printer`] |
 | `TimerConfig` | `Poller` | No input | `u128` | [`timer`] |
+| `LocalFilePathVisitorConfig` | `Listener` | No input | `PathBuf` | [`file_path`] |
 
 [`pipebase`]: https://github.com/pipebase/pipebase/tree/main/pipebase
+[`tokio`]: https://github.com/tokio-rs/tokio
 [`pipes`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipes
 [`pipe type`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipe-type
 [`printer`]: https://github.com/pipebase/pipebase/tree/main/examples/printer
 [`timer`]: https://github.com/pipebase/pipebase/tree/main/examples/timer
-[`tokio`]: https://github.com/tokio-rs/tokio
+[`file_path`]: https://github.com/pipebase/pipebase/tree/main/examples/timer

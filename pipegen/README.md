@@ -97,14 +97,15 @@ Meta defines additional attributes of an object so that it fits trait bounds of 
 | `UnsignedLongLong` | u128 |
 | `Float` | f32 |
 | `Double` | f64 |
-| `Count32` | Count32(pub u32) |
-| `Averagef32` | Averagef32(pub f32, pub f32) |
+| `PathBuf` | std::path::PathBuf |
+| `Count32` | pipebase::Count32(pub u32) |
+| `Averagef32` | pipebase::Averagef32(pub f32, pub f32) |
 | `Vec` | Vec<T> |
 | `Array` | [T; N] |
 | `Tuple` | (T,) |
 | `HashMap` | HashMap<K, V> |
 | `HashSet` | HashSet<T> |
-| `Pair` | Pair<L, R>(pub L, pub R) |
+| `Pair` | pipebase::Pair<L, R>(pub L, pub R) |
 
 [`data field`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-field
 [`data type`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-type

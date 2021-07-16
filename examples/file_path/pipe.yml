@@ -1,0 +1,18 @@
+name: print_timer
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+pipes:
+  - name: file_path_visitor
+    ty: Listener
+    config:
+      ty: LocalFilePathVisitorConfig
+      path: catalogs/local_file_path_visitor.yml
+    output:
+      data_ty: PathBuf
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: ["file_path_visitor"]
