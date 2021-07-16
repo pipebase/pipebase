@@ -30,8 +30,8 @@ objects:
       - name: hashmap_record
         ty:
           HashMap:
-            key_ty: String
-            value_ty: Integer
+            kty: String
+            vty: Integer
       - name: hashset_record
         ty:
           HashSet:

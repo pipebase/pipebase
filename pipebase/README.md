@@ -4,9 +4,11 @@
 Here is a list of basic pipes built in `pipebase`
 | config type | pipe type | input / trait bounds | output | example |
 | ----------- | --------- | ----- | ------ | ------- |
-| `PrinterConfig` | `Exporter`  | `Debug` | No output | [`printer`] |
-| `TimerConfig` | `Poller` | No input | `u128` | [`timer`] |
-| `LocalFilePathVisitorConfig` | `Listener` | No input | `PathBuf` | [`file_path`] |
+| `PrinterConfig` | `Exporter`  | Debug | No output | [`printer`] |
+| `TimerConfig` | `Poller` | No input | u128 | [`timer`] |
+| `LocalFilePathVisitorConfig` | `Listener` | No input | PathBuf | [`file_path`] |
+| `FileLineReaderConfig` | `Streamer` | File Path | String | [`stateless_word_count`] |
+| `IteratorStreamerConfig` | `Streamer` | Interator of Items | Item | [`stateless_word_count`] |
 
 [`pipebase`]: https://github.com/pipebase/pipebase/tree/main/pipebase
 [`tokio`]: https://github.com/tokio-rs/tokio
@@ -15,3 +17,4 @@ Here is a list of basic pipes built in `pipebase`
 [`printer`]: https://github.com/pipebase/pipebase/tree/main/examples/printer
 [`timer`]: https://github.com/pipebase/pipebase/tree/main/examples/timer
 [`file_path`]: https://github.com/pipebase/pipebase/tree/main/examples/file_path
+[`stateless_word_count`]: https://github.com/pipebase/pipebase/tree/main/examples/stateless_word_count

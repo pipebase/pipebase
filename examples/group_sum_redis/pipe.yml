@@ -46,8 +46,8 @@ pipes:
         Vec:
           ty:
             Pair:
-              left_ty: String
-              right_ty: UnsignedInteger
+              lty: String
+              rty: UnsignedInteger
     upstreams: [json]
   - name: printer
     ty: Exporter
