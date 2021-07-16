@@ -55,3 +55,4 @@ pub const RIGHT: &str = "right";
 
 pub const RENDER_TEMPLATE: &str = "render.template";
 pub const RENDER_POSITION: &str = "render.pos";
+pub const RENDER_EXPR: &str = "render.expr";
