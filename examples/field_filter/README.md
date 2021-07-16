@@ -8,7 +8,6 @@ Build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
-cargo pipe check && \
 cargo pipe build -o field_filter -r
 ```
 Run app

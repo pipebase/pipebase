@@ -4,9 +4,9 @@ objects:
   - ty: Bar
     fields:
       - name: bar1
-        data_ty: Integer
+        ty: Integer
       - name: bar2
-        data_ty: String
+        ty: String
   - ty: ProjectedBar
     metas:
       - derives: [Clone, Debug, Project]
@@ -14,12 +14,12 @@ objects:
           input: Bar
     fields:
       - name: bar1
-        data_ty: Integer
+        ty: Integer
         metas:
           - project:
               from: bar1
       - name: bar2
-        data_ty: String
+        ty: String
         metas:
           - project:
               expr: "b.bar2"
@@ -32,19 +32,19 @@ objects:
           alias: b
     fields:
       - name: bar1
-        data_ty: Integer
+        ty: Integer
   - ty: TopBar
     metas:
       - derives: [Clone, Debug, AggregateAs]
       - agg: Top
     fields:
       - name: bar1
-        data_ty: Integer
+        ty: Integer
   - ty: HashedBar
     metas:
       - derives: [Clone, Debug, HashedBy]
     fields:
       - name: bar1
-        data_ty: Integer
+        ty: Integer
         metas:
           - tag: Hash

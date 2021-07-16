@@ -23,15 +23,15 @@ pipes:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: 
-      data_ty:
+      ty:
         Vec: 
-          data_ty: UnsignedByte
+          ty: UnsignedByte
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      data_ty: 
+      ty: 
         Object: Record
     upstreams: [ingestion_server]
   - name: printer
@@ -53,12 +53,12 @@ objects:
           template: "INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
     fields:
       - name: key
-        data_ty: String
+        ty: String
         metas:
           - render:
               pos: 0
       - name: value
-        data_ty: Integer
+        ty: Integer
         metas:
           - render:
               pos: 1

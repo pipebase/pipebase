@@ -10,14 +10,14 @@ pipes:
       ty: TimerConfig
       path: catalogs/timer.yml
     output:
-      data_ty: UnsignedLongLong
+      ty: UnsignedLongLong
   - name: timer2
     ty: Poller
     config:
       ty: TimerConfig
       path: catalogs/timer.yml
     output:
-      data_ty: UnsignedLongLong
+      ty: UnsignedLongLong
   - name: printer
     ty: Exporter
     config:
@@ -27,9 +27,9 @@ objects:
   - ty: Bar
     fields:
       - name: bar1
-        data_ty: Integer
+        ty: Integer
       - name: bar2
-        data_ty: String
+        ty: String
   - ty: ProjectedBar
     metas:
       - derives: [Clone, Debug, Project]
@@ -37,12 +37,12 @@ objects:
           input: Bar
     fields:
       - name: bar1
-        data_ty: Integer
+        ty: Integer
         metas:
           - project:
               from: bar1
       - name: bar2
-        data_ty: String
+        ty: String
         metas:
           - project:
               expr: "b.bar2.to_owned()"

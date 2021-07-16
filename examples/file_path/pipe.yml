@@ -10,7 +10,7 @@ pipes:
       ty: LocalFilePathVisitorConfig
       path: catalogs/local_file_path_visitor.yml
     output:
-      data_ty: PathBuf
+      ty: PathBuf
   - name: printer
     ty: Exporter
     config:

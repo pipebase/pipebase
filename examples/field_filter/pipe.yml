@@ -20,15 +20,15 @@ pipes:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: 
-      data_ty:
+      ty:
         Vec: 
-          data_ty: UnsignedByte
+          ty: UnsignedByte
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      data_ty: 
+      ty: 
         Object: Records
     upstreams: [ingestion_server]
   - name: field
@@ -36,9 +36,9 @@ pipes:
     config:
       ty: FieldVisitConfig
     output:
-      data_ty:
+      ty:
         Vec:
-          data_ty:
+          ty:
             Object: Record
     upstreams: [json]
   - name: filter
@@ -46,9 +46,9 @@ pipes:
     config:
       ty: FilterMapConfig
     output:
-      data_ty:
+      ty:
         Vec:
-          data_ty:
+          ty:
             Object: Record
     upstreams: [field]
   - name: printer
@@ -65,9 +65,9 @@ objects:
           alias: "r"
     fields:
       - name: key
-        data_ty: String
+        ty: String
       - name: value
-        data_ty: UnsignedInteger
+        ty: UnsignedInteger
   - ty: Records
     metas:
       - derives: [Clone, Debug, Deserialize, FieldAccept]
@@ -75,7 +75,7 @@ objects:
       - name: records
         metas:
           - tag: Visit
-        data_ty:
+        ty:
           Vec:
-            data_ty:
+            ty:
               Object: Record

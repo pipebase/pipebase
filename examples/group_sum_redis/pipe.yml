@@ -23,17 +23,17 @@ pipes:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: 
-      data_ty:
+      ty:
         Vec: 
-          data_ty: UnsignedByte
+          ty: UnsignedByte
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      data_ty: 
+      ty: 
         Vec:
-          data_ty:
+          ty:
             Object: Record
     upstreams: [ingestion_server]
   - name: redis_group_sum
@@ -42,12 +42,12 @@ pipes:
       ty: RedisUnorderedGroupAddAggregatorConfig
       path: catalogs/redis_group_add.yml
     output:
-      data_ty:
+      ty:
         Vec:
-          data_ty:
+          ty:
             Pair:
-              left_data_ty: String
-              right_data_ty: UnsignedInteger
+              left_ty: String
+              right_ty: UnsignedInteger
     upstreams: [json]
   - name: printer
     ty: Exporter
@@ -60,11 +60,11 @@ objects:
       - derives: [Clone, Debug, Deserialize, GroupAs, AggregateAs]
     fields:
       - name: key
-        data_ty: String
+        ty: String
         metas:
           - tag: Group
       - name: value
-        data_ty: UnsignedInteger
+        ty: UnsignedInteger
         metas:
           - agg: Sum
 cstores:

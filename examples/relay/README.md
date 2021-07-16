@@ -8,7 +8,6 @@ Build
 ```
 cargo pipe -d send validate -o -p && \
 cargo pipe -d send generate && \
-cargo pipe -d send check && \
 cargo pipe -d send build -o sender -r
 ```
 ### Build Receiver
@@ -20,7 +19,6 @@ Build
 ```
 cargo pipe -d receive validate -o -p && \
 cargo pipe -d receive generate && \
-cargo pipe -d receive check && \
 cargo pipe -d receive build -o receiver -r
 ```
 ### Run sender (terminal 1)

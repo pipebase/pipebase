@@ -23,15 +23,15 @@ pipes:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: 
-      data_ty:
+      ty:
         Vec: 
-          data_ty: UnsignedByte
+          ty: UnsignedByte
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      data_ty: 
+      ty: 
         Object: Record
     upstreams: [ingestion_server]
   - name: printer
@@ -51,11 +51,11 @@ objects:
       - derives: [Clone, Debug, Deserialize, LeftRight]
     fields:
       - name: key
-        data_ty: String
+        ty: String
         metas:
           - tag: Left
       - name: value
-        data_ty: UnsignedInteger
+        ty: UnsignedInteger
         metas:
           - tag: Right
 cstores:

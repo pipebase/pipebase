@@ -17,8 +17,7 @@ Build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
-cargo pipe check && \
-cargo pipe build -o ingest_redis
+cargo pipe build -o ingest_redis -r
 ```
 Run app
 ```

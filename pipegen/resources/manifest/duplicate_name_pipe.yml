@@ -5,14 +5,14 @@ pipes:
     config:
       ty: PollerConfig
     output:
-      data_ty: Integer
+      ty: Integer
   - name: process_a
     ty: Mapper
     upstream: a_source
     config:
       ty: MapperConfig
     output:
-      data_ty: Integer
+      ty: Integer
   - name: process_a
     ty: Collector
     upstream: a_source

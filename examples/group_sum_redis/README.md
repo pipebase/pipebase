@@ -17,7 +17,6 @@ Build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
-cargo pipe check && \
 cargo pipe build -o sum_redis -r
 ```
 Run app
