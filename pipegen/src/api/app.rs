@@ -156,16 +156,6 @@ impl App {
                 None,
                 vec![],
             ),
-            PackageDependency::new(
-                "serde".to_owned(),
-                Some("1.0".to_owned()),
-                None,
-                Some(vec!["derive".to_owned()]),
-                vec![
-                    "serde::Serialize".to_owned(),
-                    "serde::Deserialize".to_owned(),
-                ],
-            ),
         ]
     }
 
