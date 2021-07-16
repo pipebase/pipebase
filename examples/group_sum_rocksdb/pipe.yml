@@ -1,4 +1,4 @@
-name: group_sum_redis
+name: group_sum_rocksdb
 dependencies:
   - package: pipebase
     path: ../../../pipebase

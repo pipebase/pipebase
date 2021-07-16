@@ -1,3 +1,4 @@
+Demo `PsqlWriter` pipe
 ### Prepare Postgres (terminal 1)
 Start postgres
 ```
