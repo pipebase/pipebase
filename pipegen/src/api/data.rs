@@ -42,15 +42,15 @@ pub enum DataType {
         tys: Vec<DataType>,
     },
     HashMap {
-        key_ty: Box<DataType>,
-        value_ty: Box<DataType>,
+        kty: Box<DataType>,
+        vty: Box<DataType>,
     },
     HashSet {
         ty: Box<DataType>,
     },
     Pair {
-        left_ty: Box<DataType>,
-        right_ty: Box<DataType>,
+        lty: Box<DataType>,
+        rty: Box<DataType>,
     },
 }
 
@@ -89,19 +89,19 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
             let tys: Vec<String> = tys.iter().map(|ty| data_ty_to_literal(ty)).collect();
             format!("({})", tys.join(", "))
         }
-        DataType::HashMap { key_ty, value_ty } => {
-            let key_ty = data_ty_to_literal(key_ty);
-            let value_ty = data_ty_to_literal(value_ty);
-            format!("std::collections::HashMap<{}, {}>", key_ty, value_ty)
+        DataType::HashMap { kty, vty } => {
+            let kty = data_ty_to_literal(kty);
+            let vty = data_ty_to_literal(vty);
+            format!("std::collections::HashMap<{}, {}>", kty, vty)
         }
         DataType::HashSet { ty } => {
             let ty_lit = data_ty_to_literal(ty);
             format!("std::collections::HashSet<{}>", ty_lit)
         }
-        DataType::Pair { left_ty, right_ty } => {
-            let left_ty = data_ty_to_literal(left_ty);
-            let right_ty = data_ty_to_literal(right_ty);
-            format!("pipebase::Pair<{}, {}>", left_ty, right_ty)
+        DataType::Pair { lty, rty } => {
+            let lty = data_ty_to_literal(lty);
+            let rty = data_ty_to_literal(rty);
+            format!("pipebase::Pair<{}, {}>", lty, rty)
         }
     }
 }

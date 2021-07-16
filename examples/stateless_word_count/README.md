@@ -1,4 +1,4 @@
-Demo `FileLineReader` `StringSplitter` `UnorderedGroupAddAggregator` pipes
+Demo `FileLineReader` `StringSplitter` `IteratorStreamer` `UnorderedGroupAddAggregator` pipes
 ### Build and Run (terminal 1)
 Init
 ```
