@@ -81,6 +81,18 @@ pub(crate) fn filter_senders_by_indices<U>(
     }
 }
 
+pub(crate) fn replicate<U>(u: U, r: usize) -> Vec<U>
+where
+    U: Clone,
+{
+    let mut replicas: Vec<U> = Vec::new();
+    for _ in 0..r - 1 {
+        replicas.push(u.to_owned());
+    }
+    replicas.push(u);
+    replicas
+}
+
 #[cfg(test)]
 pub(crate) async fn populate_records<T, U>(tx: Sender<T>, records: U)
 where

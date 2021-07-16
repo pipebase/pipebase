@@ -9,8 +9,8 @@ use tokio::sync::mpsc::error::SendError;
 use tokio::task::JoinHandle;
 
 use crate::{
-    filter_senders_by_indices, senders_as_map, spawn_send, wait_join_handles, ConfigInto,
-    FromConfig, HasContext, Pipe,
+    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
+    ConfigInto, FromConfig, HasContext, Pipe,
 };
 use async_trait::async_trait;
 use std::collections::HashMap;
@@ -67,16 +67,21 @@ where
             };
             self.context.set_state(State::Send);
             let candidates = txs.keys().collect::<Vec<&usize>>();
-            let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<T>>>> = selector
-                .select(&t, &candidates)
+            let selected = selector.select(&t, &candidates);
+            let mut t_replicas = replicate(t, selected.len());
+            let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<T>>>> = selected
                 .into_iter()
                 .map(|i| {
                     (
                         i,
-                        spawn_send(txs.get(&i).expect("sender").to_owned(), t.to_owned()),
+                        spawn_send(
+                            txs.get(&i).expect("sender").to_owned(),
+                            t_replicas.pop().expect("no replica left"),
+                        ),
                     )
                 })
                 .collect();
+            assert!(t_replicas.is_empty(), "replica left over");
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
             self.context.inc_total_run();

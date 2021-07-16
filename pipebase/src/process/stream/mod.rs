@@ -5,7 +5,7 @@ pub use file::*;
 pub use iterator::*;
 
 use crate::context::{Context, State};
-use crate::{filter_senders_by_indices, senders_as_map, spawn_send, wait_join_handles};
+use crate::{filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -87,10 +87,17 @@ where
                         break;
                     }
                 };
+                let mut u_replicas = replicate(u, txs.len());
                 let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
                     .iter()
-                    .map(|(idx, tx)| (idx.to_owned(), spawn_send(tx.to_owned(), u.to_owned())))
+                    .map(|(idx, tx)| {
+                        (
+                            idx.to_owned(),
+                            spawn_send(tx.to_owned(), u_replicas.pop().expect("no replica left")),
+                        )
+                    })
                     .collect();
+                assert!(u_replicas.is_empty(), "replica left over");
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
             }
