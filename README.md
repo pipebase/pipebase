@@ -1,7 +1,7 @@
 A data integration framework.
 `pipebase` is a data integration framework, provides:
 * manifest, specification of pipe / custom data object in YAML format
-* cli tool to build data pipeline with manifest
+* cli tool to build data integration app with manifest
 * pipe object plugins using third party SDK
 [Examples]
 

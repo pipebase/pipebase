@@ -1,4 +1,4 @@
-[`pipegen`] parse `manifest`, contains pipe / custom data object specification, and generate code
+[`pipegen`] parse `manifest`, contains pipe / custom data object specification, and generate code for data integration app
 
 ## Manifest Layout
 A `manifest` is composed of following sections:
@@ -29,6 +29,11 @@ Specification
 | upstreams | list of upstream pipe names | false if `ty` is `Poller` or `Listener` |
 | output | output data type (unnamed [`data field`]) | false if `ty` is `Exporter` |
 
+Note that:
+* pipes are wired as **directed acyclic graph** using upstremas
+* upstreams of a pipe should have **same** output type, i.e a pipe's input type is **unique** in runtime
+* pipe with upstreams defines trait bounds for input
+
 ## Pipe Type
 | Type | Description | #upstreams | #downstreams |
 | ---- | ----------- | ---------- | ------------ |
@@ -41,7 +46,7 @@ Specification
 | `Exporter` | export input to remote | 1+ | 0 |
 
 ## Objects
-Cutstom data object transferred in pipelines, example:
+Cutstom data object transferred in pipeline, example:
 ```
 ty: Record
 metas:
@@ -58,6 +63,9 @@ Specification
 | ty | object type in CamelCase | true |
 | metas | list of [`meta`]s per object | false |
 | fields | list of [`data field`]s | true |
+
+## Meta
+Meta defines additional attributes of an object so that it fits trait bounds of a pipe's input 
 
 ## Data Field
 | Field | Description | Required |
@@ -97,9 +105,6 @@ Specification
 | `HashMap` | HashMap<K, V> |
 | `HashSet` | HashSet<T> |
 | `Pair` | Pair<L, R>(pub L, pub R) |
-
-## Meta
-
 
 [`data field`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-field
 [`data type`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-type

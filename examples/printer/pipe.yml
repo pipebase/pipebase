@@ -1,4 +1,4 @@
-name: ingest_postgres
+name: printer
 dependencies:
   - package: pipebase
     path: ../../../pipebase
@@ -6,9 +6,6 @@ dependencies:
   - package: pipejson
     path: ../../../pipeware/pipejson
     modules: ["pipejson::*"]
-  - package: pipepsql
-    path: ../../../pipeware/pipepsql
-    modules: ["pipepsql::*"]
   - package: pipewarp
     path: ../../../pipeware/pipewarp
     modules: ["pipewarp::*"]
@@ -39,31 +36,16 @@ pipes:
     config:
       ty: PrinterConfig
     upstreams: [json]
-  - name: psql_writer
-    ty: Exporter
-    config:
-      ty: PsqlWriterConfig
-      path: catalogs/psql_writer.yml
-    upstreams: [json]
 objects:
   - ty: Record
     metas:
-      - derives: [Clone, Debug, Deserialize, Render]
-      - render:
-          template: "INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
+      - derives: [Clone, Debug, Deserialize]
     fields:
       - name: key
         data_ty: String
-        metas:
-          - render:
-              pos: 0
       - name: value
-        data_ty: Integer
-        metas:
-          - render:
-              pos: 1
-cstores:
-  - name: context_server
-    config:
-      ty: WarpContextServerConfig
-      path: catalogs/context_server.yml
+        data_ty: UnsignedInteger
+
+  
+  
+    

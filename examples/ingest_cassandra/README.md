@@ -1,3 +1,4 @@
+Demo `CqlWriter` pipe
 ### Prepare Cassandra (terminal 1)
 Start cassandra
 ```

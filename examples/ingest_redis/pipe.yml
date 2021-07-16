@@ -1,4 +1,4 @@
-name: ingestion
+name: ingest_redis
 dependencies:
   - package: pipebase
     path: ../../../pipebase

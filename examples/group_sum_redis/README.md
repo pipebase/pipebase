@@ -1,3 +1,4 @@
+Demo `RedisUnorderedGroupAddAggregator` pipe
 ### Setup Redis (terminal 1)
 Launch redis
 ```

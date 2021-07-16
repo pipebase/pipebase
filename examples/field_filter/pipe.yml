@@ -1,4 +1,4 @@
-name: ingestion
+name: field_filter
 dependencies:
   - package: pipebase
     path: ../../../pipebase

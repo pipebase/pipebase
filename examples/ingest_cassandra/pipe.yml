@@ -1,4 +1,4 @@
-name: ingestion
+name: ingest_cassandra
 dependencies:
   - package: pipebase
     path: ../../../pipebase
