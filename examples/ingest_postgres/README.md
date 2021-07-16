@@ -9,7 +9,8 @@ docker exec -it postgres /bin/sh
 ```
 Psql login
 ```
-psql -h localhost -p 5432 -U postgres -W postgres -d postgres
+psql -h localhost -p 5432 -U postgres -d postgres -W
+Password:postgres
 ```
 Create table
 ```
@@ -28,7 +29,7 @@ Build
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe check && \
-cargo pipe build -o psql
+cargo pipe build -o psql -r
 ```
 Run app
 ```

@@ -2,7 +2,7 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{spanned::Spanned, Attribute, Data, Field, Generics};
 
-use crate::constants::{RENDER_POSITION, RENDER_TEMPLATE};
+use crate::constants::{RENDER_EXPR, RENDER_POSITION, RENDER_TEMPLATE};
 
 use crate::utils::{
     get_any_attribute_by_meta_prefix, get_meta, get_meta_number_value_by_meta_path,
@@ -68,8 +68,39 @@ fn resolve_render_params(fields: &Vec<Field>) -> TokenStream {
 
 fn resolve_render_param(field: &Field) -> TokenStream {
     let span = field.span();
-    let ident = &field.ident;
+    let tokens = get_render_param_tokens(field);
     quote_spanned! { span =>
-        self.#ident
+        #tokens
+    }
+}
+
+fn get_render_param_tokens(field: &Field) -> TokenStream {
+    let expr = get_any_render_expr(field);
+    let ident = &field.ident;
+    let ty = &field.ty;
+    match expr {
+        Some(expr) => {
+            let expression: TokenStream = expr.parse().unwrap();
+            let expression_closure = quote! {
+                |#ident: &#ty| { #expression }
+            };
+            quote! {
+                {
+                    let eval = #expression_closure;
+                    eval(&self.#ident)
+                }
+            }
+        }
+        None => quote! { self.#ident },
+    }
+}
+
+fn get_any_render_expr(field: &Field) -> Option<String> {
+    let attribute = get_any_attribute_by_meta_prefix(RENDER_EXPR, &field.attrs, false);
+    match attribute {
+        Some(attribute) => {
+            get_meta_string_value_by_meta_path(RENDER_EXPR, &get_meta(&attribute), true)
+        }
+        None => None,
     }
 }
