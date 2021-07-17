@@ -1,4 +1,4 @@
-use crate::api::{App, ContextStore, Entity, EntityAccept, Object, Pipe, VisitEntity};
+use crate::models::{App, ContextStore, Entity, EntityAccept, Object, Pipe, VisitEntity};
 use std::collections::HashSet;
 pub trait Generate {
     fn new(indent: usize) -> Self;
@@ -215,7 +215,7 @@ impl AppGenerator {
 
 #[cfg(test)]
 mod tests {
-    use crate::api::App;
+    use crate::models::App;
     use std::path::Path;
 
     #[test]

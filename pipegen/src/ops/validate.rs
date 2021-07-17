@@ -1,4 +1,4 @@
-use crate::api::{
+use crate::models::{
     App, ContextStore, DataField, Entity, EntityAccept, Object, Pipe, VisitEntity,
     CONTEXT_STORE_ENTITY_ID_FIELD, DATA_FIELD_ENTITY_ID_FIELD, OBJECT_ENTITY_ID_FIELD,
     PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD, PIPE_OUTPUT_FIELD,
@@ -521,7 +521,7 @@ fn is_camel_case(s: &str) -> bool {
 #[cfg(test)]
 mod tests {
 
-    use crate::api::App;
+    use crate::models::App;
     use std::path::Path;
 
     #[test]

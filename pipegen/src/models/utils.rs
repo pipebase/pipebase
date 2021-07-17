@@ -1,4 +1,4 @@
-use crate::api::constants::INDENT_LITERAL;
+use crate::models::constants::INDENT_LITERAL;
 
 pub fn indent_literal(indent: usize) -> String {
     repeat_string(INDENT_LITERAL, indent)

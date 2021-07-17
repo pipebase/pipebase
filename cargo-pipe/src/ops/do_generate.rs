@@ -3,7 +3,7 @@ use super::utils::*;
 use crate::commands::generate::GenerateOptions;
 use crate::print::Printer;
 use crate::Config;
-use pipegen::api::App;
+use pipegen::models::App;
 use std::fs;
 use std::path::PathBuf;
 use std::process;

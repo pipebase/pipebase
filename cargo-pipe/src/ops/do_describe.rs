@@ -4,7 +4,7 @@ use crate::commands::describe::DescribeOptions;
 use crate::commands::validate::ValidateOptions;
 use crate::config::Config;
 use crate::print::Printer;
-use pipegen::api::App;
+use pipegen::models::App;
 
 fn do_describe_pipes(app: &App, printer: &mut Printer) -> anyhow::Result<()> {
     printer.status(&"Describe", "pipes")?;

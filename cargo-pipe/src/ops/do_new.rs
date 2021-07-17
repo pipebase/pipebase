@@ -4,7 +4,7 @@ use super::utils::*;
 use crate::commands::new::NewOptions;
 use crate::print::Printer;
 use crate::Config;
-use pipegen::api::App;
+use pipegen::models::App;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process;

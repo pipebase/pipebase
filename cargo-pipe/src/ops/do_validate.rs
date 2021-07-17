@@ -2,7 +2,7 @@ use super::utils::read_pipe_manifest;
 use crate::commands::validate::ValidateOptions;
 use crate::print::Printer;
 use crate::Config;
-use pipegen::api::App;
+use pipegen::models::App;
 
 pub fn do_validate(app: &App, printer: &mut Printer, opts: &ValidateOptions) -> anyhow::Result<()> {
     if opts.pipe() {
