@@ -9,12 +9,9 @@ use tokio::sync::mpsc::Receiver;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 
-use crate::context::{Context, State};
-use crate::error::Result;
-use crate::HasContext;
 use crate::{
     filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, FromConfig, Pipe,
+    ConfigInto, Context, FromConfig, HasContext, Pipe, Result, State,
 };
 use std::collections::HashMap;
 use std::sync::Arc;

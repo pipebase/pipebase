@@ -18,8 +18,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::context::{Context, State};
-use crate::error::Result;
+use crate::{Context, Result, State};
 
 pub trait Select<T, C>: Send + Sync + FromConfig<C> {
     fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize>;

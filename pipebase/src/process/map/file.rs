@@ -1,8 +1,7 @@
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 
-use crate::error::Result;
-use crate::{ConfigInto, FromConfig, FromPath, Map};
+use crate::{ConfigInto, FromConfig, FromPath, Map, Result};
 use async_trait::async_trait;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};

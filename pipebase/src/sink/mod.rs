@@ -8,10 +8,9 @@ use log::error;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
 
-use crate::context::State;
 use crate::Pipe;
 use crate::Result;
-use crate::{ConfigInto, Context, FromConfig, HasContext};
+use crate::{ConfigInto, Context, FromConfig, HasContext, State};
 
 #[async_trait]
 pub trait Export<T, C>: Send + Sync + FromConfig<C> {

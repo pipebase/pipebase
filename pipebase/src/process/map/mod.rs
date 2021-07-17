@@ -21,11 +21,9 @@ use log::error;
 use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
 use tokio::task::JoinHandle;
 
-use crate::context::{Context, State};
-use crate::error::Result;
 use crate::{
     filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, FromConfig, HasContext, Pipe,
+    ConfigInto, Context, FromConfig, HasContext, Pipe, Result, State,
 };
 use std::collections::HashMap;
 use std::sync::Arc;

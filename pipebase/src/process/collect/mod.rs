@@ -8,10 +8,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::HasContext;
 use crate::{
-    context::{Context, State},
-    error::join_error,
-    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, FromConfig, Pipe, Result,
+    filter_senders_by_indices, join_error, replicate, senders_as_map, spawn_send,
+    wait_join_handles, ConfigInto, Context, FromConfig, Pipe, Result, State,
 };
 
 use async_trait::async_trait;
