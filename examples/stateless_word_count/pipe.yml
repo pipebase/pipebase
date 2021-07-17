@@ -43,7 +43,7 @@ pipes:
   - name: streamer
     ty: Streamer
     config:
-      ty: IteratorStreamerConfig
+      ty: IteratorReaderConfig
     output:
       ty:
         Pair:

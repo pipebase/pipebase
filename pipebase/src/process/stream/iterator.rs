@@ -6,31 +6,31 @@ use serde::Deserialize;
 use tokio::sync::mpsc::Sender;
 
 #[derive(Deserialize)]
-pub struct IteratorStreamerConfig {}
+pub struct IteratorReaderConfig {}
 
 #[async_trait]
-impl FromPath for IteratorStreamerConfig {
+impl FromPath for IteratorReaderConfig {
     async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
         P: AsRef<std::path::Path> + Send,
     {
-        Ok(IteratorStreamerConfig {})
+        Ok(IteratorReaderConfig {})
     }
 }
 
 #[async_trait]
-impl<U> ConfigInto<IteratorStreamer<U>> for IteratorStreamerConfig {}
+impl<U> ConfigInto<IteratorReader<U>> for IteratorReaderConfig {}
 
 /// Stream iterator
-pub struct IteratorStreamer<U> {
+pub struct IteratorReader<U> {
     /// Sender to notify downstreams
     tx: Option<Sender<U>>,
 }
 
 #[async_trait]
-impl<U> FromConfig<IteratorStreamerConfig> for IteratorStreamer<U> {
-    async fn from_config(_config: &IteratorStreamerConfig) -> anyhow::Result<Self> {
-        Ok(IteratorStreamer { tx: None })
+impl<U> FromConfig<IteratorReaderConfig> for IteratorReader<U> {
+    async fn from_config(_config: &IteratorReaderConfig) -> anyhow::Result<Self> {
+        Ok(IteratorReader { tx: None })
     }
 }
 
@@ -38,7 +38,7 @@ impl<U> FromConfig<IteratorStreamerConfig> for IteratorStreamer<U> {
 /// * T: input
 /// * U: output
 #[async_trait]
-impl<T, U> Stream<T, U, IteratorStreamerConfig> for IteratorStreamer<U>
+impl<T, U> Stream<T, U, IteratorReaderConfig> for IteratorReader<U>
 where
     T: IntoIterator<Item = U> + Send + 'static,
     U: Debug + Send + Sync + 'static,
@@ -66,7 +66,7 @@ mod tests {
     use std::collections::HashMap;
 
     #[tokio::test]
-    async fn test_streamer() {
+    async fn test_iterator_reader() {
         let (tx0, rx0) = channel!(HashMap<String, u32>, 1024);
         let (tx1, mut rx1) = channel!((String, u32), 1024);
         let mut pipe = streamer!("tuple_streamer");
@@ -75,7 +75,7 @@ mod tests {
         record.insert("two".to_owned(), 2);
         let f0 = populate_records(tx0, vec![record]);
         f0.await;
-        join_pipes!([run_pipe!(pipe, IteratorStreamerConfig, [tx1], rx0)]);
+        join_pipes!([run_pipe!(pipe, IteratorReaderConfig, [tx1], rx0)]);
         let mut records: HashMap<String, u32> = HashMap::new();
         let (left, right) = rx1.recv().await.unwrap();
         records.insert(left, right);
