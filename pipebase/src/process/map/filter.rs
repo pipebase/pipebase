@@ -34,8 +34,8 @@ impl FromConfig<FilterMapConfig> for FilterMap {
 }
 
 /// # Parameters
-/// * U: Input
-/// * V: Output
+/// * U: input
+/// * V: output
 #[async_trait]
 impl<T, U, V> Map<U, V, FilterMapConfig> for FilterMap
 where

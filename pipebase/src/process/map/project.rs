@@ -32,8 +32,8 @@ impl FromConfig<ProjectionConfig> for Projection {
 }
 
 /// # Parameters
-/// * T: Input
-/// * U: Output
+/// * T: input
+/// * U: output
 #[async_trait]
 impl<T, U> Map<T, U, ProjectionConfig> for Projection
 where

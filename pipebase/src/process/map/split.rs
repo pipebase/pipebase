@@ -38,8 +38,8 @@ impl Split<String, String, Vec<String>> for StringSplitter {
 }
 
 /// # Parameters
-/// * String: Input
-/// * Vec<String>: Output
+/// * String: input
+/// * Vec<String>: output
 #[async_trait]
 impl Map<String, Vec<String>, StringSplitterConfig> for StringSplitter {
     async fn map(&mut self, data: String) -> anyhow::Result<Vec<String>> {

@@ -31,8 +31,8 @@ impl FromConfig<FieldVisitConfig> for FieldVisit {
 }
 
 /// # Parameters
-/// * T: Input
-/// * U, field of T: Output
+/// * T: input
+/// * U, field of T: output
 #[async_trait]
 impl<T, U> Map<T, U, FieldVisitConfig> for FieldVisit
 where

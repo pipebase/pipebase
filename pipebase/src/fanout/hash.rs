@@ -31,7 +31,7 @@ impl FromConfig<DefaultHashSelectConfig> for DefaultHashSelect {
 }
 
 /// # Parameters
-/// * Input: T
+/// * T: input
 impl<T: Hash> Select<T, DefaultHashSelectConfig> for DefaultHashSelect {
     /// `candidates`: index of downstreams
     /// `t`: input data reference

@@ -35,8 +35,8 @@ impl<U> FromConfig<IteratorStreamerConfig> for IteratorStreamer<U> {
 }
 
 /// # Parameters
-/// * T: Input
-/// * U: Output
+/// * T: input
+/// * U: output
 #[async_trait]
 impl<T, U> Stream<T, U, IteratorStreamerConfig> for IteratorStreamer<U>
 where

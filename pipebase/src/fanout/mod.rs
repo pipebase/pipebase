@@ -34,9 +34,8 @@ pub struct Selector<'a> {
 /// * Select downstreams
 /// * Send data to selected downstreams
 /// # Parameters
-/// * Input: T
-/// * Output: T
-/// * Selector: S
+/// * T: input/output
+/// * S: selector
 #[async_trait]
 impl<'a, T, S, C> Pipe<T, T, S, C> for Selector<'a>
 where

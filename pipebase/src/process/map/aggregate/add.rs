@@ -489,10 +489,10 @@ where
 }
 
 /// # Parameters
-/// * T: Input
-/// * Vec<Pair<K, V>>: Output
-/// * K: Group Value
-/// * V: Aggregate Value
+/// * T: input
+/// * Vec<Pair<K, V>>: output
+/// * K: group value
+/// * V: aggregate value
 #[async_trait]
 impl<I, T, K, V> Map<T, Vec<Pair<K, V>>, OrderedGroupAddAggregatorConfig>
     for OrderedGroupAddAggregator
