@@ -8,7 +8,7 @@ Here is a list of basic pipes built in `pipebase`
 | `TimerConfig` | `Poller` | doc | [`timer`] |
 | `LocalFilePathVisitorConfig` | `Listener` | doc | [`file_path`] |
 | `FileLineReaderConfig` | `Streamer` | doc | [`stateless_word_count`] |
-| `IteratorStreamerConfig` | `Streamer` | doc | [`stateless_word_count`] |
+| `IteratorReaderConfig` | `Streamer` | doc | [`stateless_word_count`] |
 | `FieldVisitConfig` | `Mapper` | doc | [`field_filter`] |
 | `FilterMapConfig` | `Mapper` | doc | [`field_filter`] |
 | `StringSplitterConfig` | `Mapper` | doc | [`stateless_word_count`] |

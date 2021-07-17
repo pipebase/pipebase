@@ -96,8 +96,8 @@ where
 }
 
 /// # Parameters
-/// * T: Input
-/// * Vec<U>: Output
+/// * T: input
+/// * Vec<U>: output
 #[async_trait]
 impl<I, T, U> Map<T, Vec<U>, TopAggregatorConfig> for TopAggregator
 where

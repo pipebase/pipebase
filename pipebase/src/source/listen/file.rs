@@ -118,7 +118,7 @@ impl LocalFilePathVisitor {
 }
 
 /// # Parameters
-/// * Output: PathBuf
+/// * PathBuf: output
 #[async_trait]
 impl Listen<PathBuf, LocalFilePathVisitorConfig> for LocalFilePathVisitor {
     async fn run(&mut self) -> anyhow::Result<()> {

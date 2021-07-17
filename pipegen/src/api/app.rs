@@ -53,7 +53,7 @@ impl Entity for App {
 impl<V> EntityAccept<V> for App where V: VisitEntity<Self> {}
 
 impl App {
-    pub fn parse(api_manifest_path: &Path) -> Result<App> {
+    pub fn read(api_manifest_path: &Path) -> Result<App> {
         let file = match std::fs::File::open(api_manifest_path) {
             Ok(file) => file,
             Err(err) => return Err(io_error(err)),

@@ -67,7 +67,7 @@ impl FromConfig<TimerConfig> for Timer {
 }
 
 /// # Parameters
-/// * u128: Output
+/// * u128: output
 #[async_trait]
 impl Poll<u128, TimerConfig> for Timer {
     async fn poll(&mut self) -> anyhow::Result<Option<u128>> {

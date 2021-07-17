@@ -30,7 +30,7 @@ impl FromConfig<PrinterConfig> for Printer {
 }
 
 /// # Parameters
-/// * T: Input
+/// * T: input
 #[async_trait]
 impl<T> Export<T, PrinterConfig> for Printer
 where

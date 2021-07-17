@@ -35,8 +35,8 @@ pub struct Listener<'a> {
 /// * Run listener
 /// * Receive data from listener and send downstreams
 /// # Parameters
-/// * U: Output
-/// * L: Listener
+/// * U: output
+/// * L: listener
 #[async_trait]
 impl<'a, U, L, C> Pipe<(), U, L, C> for Listener<'a>
 where

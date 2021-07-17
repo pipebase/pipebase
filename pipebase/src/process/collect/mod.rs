@@ -45,9 +45,9 @@ pub struct Collector<'a> {
 /// * Run collector and collect items in buffer
 /// * Flush collector in period and send data to downstreams
 /// # Parameters
-/// * T: Input
-/// * U: Output
-/// * V: Collector
+/// * T: input
+/// * U: output
+/// * V: collector
 #[async_trait]
 impl<'a, T, U, V, C> Pipe<T, U, V, C> for Collector<'a>
 where

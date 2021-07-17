@@ -35,8 +35,8 @@ impl FromConfig<EchoConfig> for Echo {
 }
 
 /// # Parameters
-/// * T: Input
-/// * T: Output
+/// * T: input
+/// * T: output
 #[async_trait]
 impl<T> Map<T, T, EchoConfig> for Echo
 where

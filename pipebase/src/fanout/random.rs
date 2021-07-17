@@ -30,7 +30,7 @@ impl FromConfig<RandomConfig> for Random {
 }
 
 /// # Parameters
-/// * Input: T
+/// * T: input
 impl<T> Select<T, RandomConfig> for Random {
     /// `candidates`: index of downstreams
     fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {

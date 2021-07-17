@@ -59,7 +59,7 @@ pub fn do_new(app: &App, printer: &mut Printer, mut path_buf: PathBuf) -> anyhow
 pub fn do_exec(config: &Config, opts: &NewOptions) -> anyhow::Result<()> {
     let mut printer = Printer::new();
     let pipe_manifest_path = config.get_pipe_manifest_path();
-    let app = parse_pipe_manifest(pipe_manifest_path.as_path(), &mut printer)?;
+    let app = read_pipe_manifest(pipe_manifest_path.as_path(), &mut printer)?;
     do_new(
         &app,
         &mut printer,

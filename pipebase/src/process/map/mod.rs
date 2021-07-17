@@ -44,9 +44,9 @@ pub struct Mapper<'a> {
 /// * Receive and map data
 /// * Send mapper's output to downstrem
 /// # Parameters
-/// * T: Input
-/// * U: Output
-/// * M: Mapper
+/// * T: input
+/// * U: output
+/// * M: mapper
 #[async_trait]
 impl<'a, T, U, M, C> Pipe<T, U, M, C> for Mapper<'a>
 where

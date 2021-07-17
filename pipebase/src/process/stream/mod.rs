@@ -32,9 +32,9 @@ pub struct Streamer<'a> {
 /// * Run streamer
 /// * Receive data from streamer and send downstreams
 /// # Parameters
-/// * T: Input
-/// * U: Output
-/// * S: Streamer
+/// * T: input
+/// * U: output
+/// * S: streamer
 #[async_trait]
 impl<'a, T, U, S, C> Pipe<T, U, S, C> for Streamer<'a>
 where

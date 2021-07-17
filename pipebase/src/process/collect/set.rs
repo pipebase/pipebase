@@ -92,8 +92,8 @@ where
 }
 
 /// # Parameters
-/// * T: Input
-/// * Vec<T>: Output
+/// * T: input
+/// * Vec<T>: output
 #[async_trait]
 impl<T> Collect<T, Vec<T>, InMemorySetCollectorConfig> for InMemorySetCollector<T>
 where

@@ -27,8 +27,8 @@ pub struct Exporter<'a> {
 /// * Receive data from upstream
 /// * Export to external
 /// # Parameters
-/// * T: Input
-/// * E: Exporter
+/// * T: input
+/// * E: exporter
 #[async_trait]
 impl<'a, T, E, C> Pipe<T, (), E, C> for Exporter<'a>
 where

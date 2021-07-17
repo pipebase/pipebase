@@ -31,7 +31,7 @@ impl FromConfig<RoundRobinConfig> for RoundRobin {
 }
 
 /// # Parameters
-/// * Input: T
+/// * T: input
 impl<T> Select<T, RoundRobinConfig> for RoundRobin {
     /// `candidates`: index of downstreams
     fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {

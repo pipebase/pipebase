@@ -71,8 +71,8 @@ impl FromConfig<FileSplitReaderConfig> for FileSplitReader {
 }
 
 /// # Parameters
-/// * P, file path: Input
-/// * Vec<u8>, bytes: Output
+/// * P, file path: input
+/// * Vec<u8>, bytes: output
 #[async_trait]
 impl<P> Stream<P, Vec<u8>, FileSplitReaderConfig> for FileSplitReader
 where

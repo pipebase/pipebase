@@ -90,8 +90,8 @@ impl FromConfig<FileReaderConfig> for FileReader {
 }
 
 /// # Parameters
-/// * P, file path: Input
-/// * Vec<u8>, bytes: Output
+/// * P, file path: input
+/// * Vec<u8>, bytes: output
 #[async_trait]
 impl<P> Map<P, Vec<u8>, FileReaderConfig> for FileReader
 where
