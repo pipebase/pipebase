@@ -19,6 +19,7 @@ impl FromPath for RandomConfig {
 #[async_trait]
 impl ConfigInto<Random> for RandomConfig {}
 
+/// Select candidates with random number
 pub struct Random {}
 
 #[async_trait]
@@ -28,7 +29,10 @@ impl FromConfig<RandomConfig> for Random {
     }
 }
 
+/// # Parameters
+/// * Input: T
 impl<T> Select<T, RandomConfig> for Random {
+    /// `candidates`: index of downstreams
     fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
         let mut rng = rand::thread_rng();
         let i = rng.gen_range(0..candidates.len());

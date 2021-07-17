@@ -39,10 +39,11 @@ impl FromPath for TimerConfig {}
 #[async_trait]
 impl ConfigInto<Timer> for TimerConfig {}
 
+/// Use tokio::time::Interval and emit tick in period
 pub struct Timer {
-    // interval between ticks
+    /// Interval between ticks
     pub interval: Interval,
-    // initial delay
+    /// Initial delay
     pub delay: Duration,
     pub ticks: u128,
     pub tick: u128,
@@ -65,6 +66,8 @@ impl FromConfig<TimerConfig> for Timer {
     }
 }
 
+/// # Parameters
+/// * u128: Output
 #[async_trait]
 impl Poll<u128, TimerConfig> for Timer {
     async fn poll(&mut self) -> anyhow::Result<Option<u128>> {

@@ -30,6 +30,13 @@ pub struct Selector<'a> {
     context: Arc<Context>,
 }
 
+/// Start loop
+/// * Select downstreams
+/// * Send data to selected downstreams
+/// # Parameters
+/// * Input: T
+/// * Output: T
+/// * Selector: S
 #[async_trait]
 impl<'a, T, S, C> Pipe<T, T, S, C> for Selector<'a>
 where

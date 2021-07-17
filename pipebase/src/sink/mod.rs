@@ -23,6 +23,12 @@ pub struct Exporter<'a> {
     context: Arc<Context>,
 }
 
+/// Start loop
+/// * Receive data from upstream
+/// * Export to external
+/// # Parameters
+/// * T: Input
+/// * E: Exporter
 #[async_trait]
 impl<'a, T, E, C> Pipe<T, (), E, C> for Exporter<'a>
 where

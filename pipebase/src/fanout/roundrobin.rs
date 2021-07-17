@@ -18,6 +18,7 @@ impl FromPath for RoundRobinConfig {
 #[async_trait]
 impl ConfigInto<RoundRobin> for RoundRobinConfig {}
 
+/// Select candidates use round robin
 pub struct RoundRobin {
     pub i: usize,
 }
@@ -29,7 +30,10 @@ impl FromConfig<RoundRobinConfig> for RoundRobin {
     }
 }
 
+/// # Parameters
+/// * Input: T
 impl<T> Select<T, RoundRobinConfig> for RoundRobin {
+    /// `candidates`: index of downstreams
     fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
         let i = self.i % candidates.len();
         let selected = vec![candidates[i].clone()];

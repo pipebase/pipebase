@@ -21,9 +21,10 @@ impl FromPath for FileWriterConfig {}
 
 impl ConfigInto<FileWriter> for FileWriterConfig {}
 
-// write bytes to files under directory
+/// Create and Write files under directory
 pub struct FileWriter {
     directory: PathBuf,
+    /// Random file name length
     filename_length: usize,
 }
 
@@ -39,6 +40,8 @@ impl FromConfig<FileWriterConfig> for FileWriter {
 
 #[async_trait]
 impl Map<Vec<u8>, PathBuf, FileWriterConfig> for FileWriter {
+    /// Input: Vec<u8>, bytes
+    /// Output: PathBuf, file path
     async fn map(&mut self, data: Vec<u8>) -> anyhow::Result<PathBuf> {
         let path = self.write_all(data)?;
         Ok(path)
@@ -76,6 +79,7 @@ impl FromPath for FileReaderConfig {
 
 impl ConfigInto<FileReader> for FileReaderConfig {}
 
+/// Read file
 pub struct FileReader {}
 
 #[async_trait]
@@ -85,6 +89,9 @@ impl FromConfig<FileReaderConfig> for FileReader {
     }
 }
 
+/// # Parameters
+/// * P, file path: Input
+/// * Vec<u8>, bytes: Output
 #[async_trait]
 impl<P> Map<P, Vec<u8>, FileReaderConfig> for FileReader
 where

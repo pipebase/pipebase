@@ -4,6 +4,7 @@ use std::hash::Hash;
 use std::iter::{FromIterator, IntoIterator};
 
 pub trait GroupAs<T> {
+    /// Get value to group by
     fn group(&self) -> T;
 }
 
@@ -19,6 +20,7 @@ impl GroupAs<String> for String {
     }
 }
 
+/// Store value per group
 pub trait GroupTable<K, V>: IntoIterator<Item = (K, V)> {
     fn contains_group(&mut self, gid: &K) -> anyhow::Result<bool>;
     fn insert_group(&mut self, gid: K, v: V) -> anyhow::Result<Option<V>>;
@@ -62,6 +64,7 @@ where
     }
 }
 
+/// Aggregate items per group
 pub trait GroupAggregate<I, T, K, V, U, G>
 where
     I: GroupAs<K> + AggregateAs<V>,
@@ -70,11 +73,16 @@ where
     U: FromIterator<Pair<K, V>>,
     G: GroupTable<K, V>,
 {
+    /// Post merge operation
     fn operate(&self, _v: &mut V) {
         return;
     }
+    /// Merge item into aggregated value per group
     fn merge(&self, v: &mut V, i: &I);
     fn group_table(&self) -> anyhow::Result<G>;
+    /// Group aggregate items
+    /// * Merge items per group
+    /// * Post merge operate aggregated value per group
     fn group_aggregate(&self, t: T) -> anyhow::Result<U> {
         let mut group_table = self.group_table()?;
         for ref item in t {

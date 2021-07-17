@@ -1,4 +1,4 @@
-// render template with object field as parameter
+// Render object as String
 pub trait Render {
     fn render(&self) -> String;
 }
@@ -12,7 +12,7 @@ impl Render for String {
 #[cfg(test)]
 mod tests {
 
-    pub use crate::*;
+    use crate::*;
 
     #[derive(Render)]
     #[render(template = "key = {}, value plus one = {}")]

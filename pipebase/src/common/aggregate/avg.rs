@@ -2,7 +2,7 @@ use std::ops::AddAssign;
 
 use crate::AggregateAs;
 
-// average is (sum, count) pair
+// Average is (sum, count) pair
 #[derive(Clone, Debug)]
 pub struct Averagef32(pub f32, pub f32);
 

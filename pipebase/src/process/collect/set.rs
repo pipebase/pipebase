@@ -32,6 +32,7 @@ where
     }
 }
 
+/// Collect unique item
 #[async_trait]
 pub trait SetCollect<T, S>
 where
@@ -40,11 +41,13 @@ where
 {
     fn get_set(&mut self) -> &mut S;
 
+    /// Collect item
     async fn set_collect(&mut self, t: T) {
         let set = self.get_set();
         set.collect(t).await;
     }
 
+    /// Flush set and return items
     async fn flush_set(&mut self) -> Vec<T> {
         let set = self.get_set();
         set.flush().await
@@ -61,7 +64,9 @@ impl FromPath for InMemorySetCollectorConfig {}
 #[async_trait]
 impl<T> ConfigInto<InMemorySetCollector<T>> for InMemorySetCollectorConfig {}
 
+/// In memory cache unique items
 pub struct InMemorySetCollector<T> {
+    /// Caller should flush cache every flush_period millis
     pub flush_period_in_millis: u64,
     pub buffer: HashSet<T>,
 }
@@ -86,6 +91,9 @@ where
     }
 }
 
+/// # Parameters
+/// * T: Input
+/// * Vec<T>: Output
 #[async_trait]
 impl<T> Collect<T, Vec<T>, InMemorySetCollectorConfig> for InMemorySetCollector<T>
 where
@@ -99,6 +107,7 @@ where
         self.flush_set().await
     }
 
+    /// Call by collector pipe to flush set in period
     fn get_flush_interval(&self) -> Interval {
         tokio::time::interval(Duration::from_millis(self.flush_period_in_millis))
     }

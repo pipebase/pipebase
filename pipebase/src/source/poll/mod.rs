@@ -29,6 +29,12 @@ pub struct Poller<'a> {
     context: Arc<Context>,
 }
 
+/// Start loop
+/// * Poll data from external
+/// * Send data to downstreams
+/// # Parameters
+/// * U: Output
+/// * P: Poller
 #[async_trait]
 impl<'a, U, P, C> Pipe<(), U, P, C> for Poller<'a>
 where

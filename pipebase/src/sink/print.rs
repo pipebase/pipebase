@@ -19,6 +19,7 @@ impl FromPath for PrinterConfig {
 
 impl ConfigInto<Printer> for PrinterConfig {}
 
+/// Stdout data
 pub struct Printer {}
 
 #[async_trait]
@@ -28,6 +29,8 @@ impl FromConfig<PrinterConfig> for Printer {
     }
 }
 
+/// # Parameters
+/// * T: Input
 #[async_trait]
 impl<T> Export<T, PrinterConfig> for Printer
 where
