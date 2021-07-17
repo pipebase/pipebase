@@ -1,5 +1,4 @@
-use crate::error::Result;
-use crate::{ConfigInto, FromConfig, FromPath, Period};
+use crate::{ConfigInto, FromConfig, FromPath, Period, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

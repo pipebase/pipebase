@@ -1,30 +1,16 @@
-mod file;
-pub use file::*;
-
 use async_trait::async_trait;
 use log::error;
 use log::info;
 use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
 use tokio::task::JoinHandle;
 
-use crate::context::{Context, State};
-use crate::error::Result;
 use crate::{
     filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, FromConfig, HasContext, Pipe,
+    ConfigInto, Context, HasContext, Listen, Pipe, Result, State,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc::channel;
-
-#[async_trait]
-pub trait Listen<T, C>: Send + Sync + FromConfig<C>
-where
-    T: Send + 'static,
-{
-    async fn run(&mut self) -> anyhow::Result<()>;
-    fn set_sender(&mut self, sender: Sender<T>);
-}
 
 pub struct Listener<'a> {
     name: &'a str,

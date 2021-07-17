@@ -1,17 +1,10 @@
-mod bag;
-mod set;
-pub use bag::*;
-pub use set::*;
-
 use std::iter::FromIterator;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::HasContext;
 use crate::{
-    context::{Context, State},
-    error::join_error,
-    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, FromConfig, Pipe, Result,
+    filter_senders_by_indices, join_error, replicate, senders_as_map, spawn_send,
+    wait_join_handles, Collect, ConfigInto, Context, Pipe, Result, State,
 };
 
 use async_trait::async_trait;
@@ -23,18 +16,7 @@ use tokio::{
         Mutex,
     },
     task::JoinHandle,
-    time::Interval,
 };
-
-#[async_trait]
-pub trait Collect<T, U, C>: Send + FromConfig<C>
-where
-    U: FromIterator<T> + Clone,
-{
-    async fn collect(&mut self, t: T);
-    async fn flush(&mut self) -> U;
-    fn get_flush_interval(&self) -> Interval;
-}
 
 pub struct Collector<'a> {
     name: &'a str,

@@ -1,6 +1,3 @@
-mod print;
-
-pub use print::*;
 use tokio::sync::mpsc::Sender;
 
 use async_trait::async_trait;
@@ -8,15 +5,9 @@ use log::error;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
 
-use crate::context::State;
 use crate::Pipe;
 use crate::Result;
-use crate::{ConfigInto, Context, FromConfig, HasContext};
-
-#[async_trait]
-pub trait Export<T, C>: Send + Sync + FromConfig<C> {
-    async fn export(&mut self, t: T) -> anyhow::Result<()>;
-}
+use crate::{ConfigInto, Context, Export, HasContext, State};
 
 pub struct Exporter<'a> {
     name: &'a str,

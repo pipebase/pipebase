@@ -1,27 +1,14 @@
-mod file;
-mod iterator;
-
-pub use file::*;
-pub use iterator::*;
-
-use crate::context::{Context, State};
-use crate::{filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles};
+use crate::{
+    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles, Context,
+    Result, State,
+};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc::{channel, error::SendError, Receiver, Sender};
 use tokio::task::JoinHandle;
 
-use crate::{ConfigInto, FromConfig, HasContext, Pipe};
-
-#[async_trait]
-pub trait Stream<T, U, C>: Send + Sync + FromConfig<C>
-where
-    U: Send + 'static,
-{
-    async fn stream(&mut self, t: T) -> anyhow::Result<()>;
-    fn set_sender(&mut self, sender: Sender<U>);
-}
+use crate::{ConfigInto, HasContext, Pipe, Stream};
 
 pub struct Streamer<'a> {
     name: &'a str,
@@ -48,7 +35,7 @@ where
         config: C,
         txs: Vec<Sender<U>>,
         mut rx: Option<Receiver<T>>,
-    ) -> crate::error::Result<()> {
+    ) -> Result<()> {
         assert!(rx.is_some(), "streamer {} has no upstreams", self.name);
         assert!(!txs.is_empty(), "streamer {} has no downstreams", self.name);
         let (tx0, mut rx0) = channel::<U>(1024);

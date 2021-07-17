@@ -1,29 +1,15 @@
-mod hash;
-mod random;
-mod roundrobin;
-
-pub use hash::*;
-pub use random::*;
-pub use roundrobin::*;
 use tokio::sync::mpsc::error::SendError;
 use tokio::task::JoinHandle;
 
 use crate::{
     filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, FromConfig, HasContext, Pipe,
+    ConfigInto, Context, HasContext, Pipe, Result, Select, State,
 };
 use async_trait::async_trait;
 use std::collections::HashMap;
 
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
-
-use crate::context::{Context, State};
-use crate::error::Result;
-
-pub trait Select<T, C>: Send + Sync + FromConfig<C> {
-    fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize>;
-}
 
 pub struct Selector<'a> {
     name: &'a str,

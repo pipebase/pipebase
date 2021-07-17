@@ -1,60 +1,51 @@
-mod timer;
-
-pub use timer::*;
+use std::fmt::Debug;
 
 use async_trait::async_trait;
-use log::{error, info};
-use tokio::sync::mpsc::error::SendError;
-use tokio::sync::mpsc::Receiver;
-use tokio::sync::mpsc::Sender;
+use log::error;
+use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
 use tokio::task::JoinHandle;
 
-use crate::context::{Context, State};
-use crate::error::Result;
-use crate::HasContext;
 use crate::{
     filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, FromConfig, Pipe,
+    ConfigInto, Context, HasContext, Map, Pipe, Result, State,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
 
-#[async_trait]
-pub trait Poll<T, C>: Send + Sync + FromConfig<C> {
-    async fn poll(&mut self) -> anyhow::Result<Option<T>>;
-}
-
-pub struct Poller<'a> {
+pub struct Mapper<'a> {
     name: &'a str,
     context: Arc<Context>,
 }
 
 /// Start loop
-/// * Poll data from external
-/// * Send data to downstreams
+/// * Receive and map data
+/// * Send mapper's output to downstrem
 /// # Parameters
+/// * T: input
 /// * U: output
-/// * P: poller
+/// * M: mapper
 #[async_trait]
-impl<'a, U, P, C> Pipe<(), U, P, C> for Poller<'a>
+impl<'a, T, U, M, C> Pipe<T, U, M, C> for Mapper<'a>
 where
-    U: Clone + Send + 'static,
-    P: Poll<U, C>,
-    C: ConfigInto<P> + Send + Sync + 'static,
+    T: Send + Sync + 'static,
+    U: Clone + Debug + Send + 'static,
+    M: Map<T, U, C>,
+    C: ConfigInto<M> + Send + Sync + 'static,
 {
     async fn run(
         &mut self,
         config: C,
         txs: Vec<Sender<U>>,
-        rx: Option<Receiver<()>>,
+        mut rx: Option<Receiver<T>>,
     ) -> Result<()> {
-        assert!(rx.is_none(), "poller {} has invalid upstreams", self.name);
-        assert!(!txs.is_empty(), "poller {} has no downstreams", self.name);
-        let mut poller = config.config_into().await?;
+        assert!(rx.is_some(), "mapper {} has no upstreams", self.name);
+        assert!(!txs.is_empty(), "mapper {} has no downstreams", self.name);
+        let mut mapper = config.config_into().await?;
         let mut txs = senders_as_map(txs);
-        info!("source {} run ...", self.name);
+        let rx = rx.as_mut().unwrap();
+        log::info!("mapper {} run ...", self.name);
         loop {
-            self.context.set_state(State::Poll);
+            self.context.set_state(State::Receive);
             // if all receiver dropped, sender drop as well
             match txs.is_empty() {
                 true => {
@@ -62,20 +53,21 @@ where
                 }
                 false => (),
             }
-            let u = poller.poll().await;
-            let u = match u {
+            let t = rx.recv().await;
+            let t = match t {
+                Some(t) => t,
+                None => {
+                    break;
+                }
+            };
+            self.context.set_state(State::Process);
+            let u = match mapper.map(t).await {
                 Ok(u) => u,
                 Err(e) => {
-                    error!("{} poll error {:#?}", self.name, e);
+                    error!("process {} error {}", self.name, e);
                     self.context.inc_total_run();
                     self.context.inc_failure_run();
                     continue;
-                }
-            };
-            let u = match u {
-                Some(u) => u,
-                None => {
-                    break;
                 }
             };
             self.context.set_state(State::Send);
@@ -94,13 +86,13 @@ where
             filter_senders_by_indices(&mut txs, drop_sender_indices);
             self.context.inc_total_run();
         }
-        info!("source {} exit ...", self.name);
+        log::info!("mapper {} exit ...", self.name);
         self.context.set_state(State::Done);
         Ok(())
     }
 }
 
-impl<'a> HasContext for Poller<'a> {
+impl<'a> HasContext for Mapper<'a> {
     fn get_name(&self) -> String {
         self.name.to_owned()
     }
@@ -110,9 +102,9 @@ impl<'a> HasContext for Poller<'a> {
     }
 }
 
-impl<'a> Poller<'a> {
+impl<'a> Mapper<'a> {
     pub fn new(name: &'a str) -> Self {
-        Poller {
+        Mapper {
             name: name,
             context: Default::default(),
         }
@@ -120,10 +112,10 @@ impl<'a> Poller<'a> {
 }
 
 #[macro_export]
-macro_rules! poller {
+macro_rules! mapper {
     (
         $name:expr
     ) => {{
-        Poller::new($name)
+        Mapper::new($name)
     }};
 }
