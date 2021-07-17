@@ -20,6 +20,7 @@ impl FromPath for DefaultHashSelectConfig {
 #[async_trait]
 impl ConfigInto<DefaultHashSelect> for DefaultHashSelectConfig {}
 
+/// Select candidate by it's hash value
 pub struct DefaultHashSelect {}
 
 #[async_trait]
@@ -29,7 +30,11 @@ impl FromConfig<DefaultHashSelectConfig> for DefaultHashSelect {
     }
 }
 
+/// # Parameters
+/// * Input: T
 impl<T: Hash> Select<T, DefaultHashSelectConfig> for DefaultHashSelect {
+    /// `candidates`: index of downstreams
+    /// `t`: input data reference
     fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize> {
         let mut hasher = DefaultHasher::new();
         t.hash(&mut hasher);

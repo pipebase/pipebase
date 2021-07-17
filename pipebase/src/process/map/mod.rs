@@ -40,6 +40,13 @@ pub struct Mapper<'a> {
     context: Arc<Context>,
 }
 
+/// Start loop
+/// * Receive and map data
+/// * Send mapper's output to downstrem
+/// # Parameters
+/// * T: Input
+/// * U: Output
+/// * M: Mapper
 #[async_trait]
 impl<'a, T, U, M, C> Pipe<T, U, M, C> for Mapper<'a>
 where

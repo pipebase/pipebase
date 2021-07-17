@@ -21,11 +21,13 @@ impl FromConfig<StringSplitterConfig> for StringSplitter {
     }
 }
 
+/// Split string with pattern
 pub struct StringSplitter {
     pub pattern: String,
 }
 
 impl Split<String, String, Vec<String>> for StringSplitter {
+    /// Split string as a vector of strings
     fn split(s: String, pattern: &str) -> Vec<String> {
         let mut splits: Vec<String> = Vec::new();
         for item in s.split(pattern) {
@@ -35,6 +37,9 @@ impl Split<String, String, Vec<String>> for StringSplitter {
     }
 }
 
+/// # Parameters
+/// * String: Input
+/// * Vec<String>: Output
 #[async_trait]
 impl Map<String, Vec<String>, StringSplitterConfig> for StringSplitter {
     async fn map(&mut self, data: String) -> anyhow::Result<Vec<String>> {

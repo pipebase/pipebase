@@ -31,6 +31,12 @@ pub struct Listener<'a> {
     context: Arc<Context>,
 }
 
+/// Spawn two tasks
+/// * Run listener
+/// * Receive data from listener and send downstreams
+/// # Parameters
+/// * U: Output
+/// * L: Listener
 #[async_trait]
 impl<'a, U, L, C> Pipe<(), U, L, C> for Listener<'a>
 where
@@ -61,7 +67,7 @@ where
         let mut txs = senders_as_map(txs);
         let context = self.context.clone();
         let name = self.name.to_owned();
-        let join_event_loop = tokio::spawn(async move {
+        let join_send_loop = tokio::spawn(async move {
             log::info!("listener {} run ...", name);
             loop {
                 context.set_state(State::Receive);
@@ -98,7 +104,7 @@ where
             context.set_state(State::Done);
         });
         // join listener and loop
-        match tokio::spawn(async move { tokio::join!(join_listener, join_event_loop) }).await {
+        match tokio::spawn(async move { tokio::join!(join_listener, join_send_loop) }).await {
             Ok(_) => (),
             Err(err) => {
                 error!("listener join error {:#?}", err)

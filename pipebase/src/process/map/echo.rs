@@ -24,6 +24,7 @@ impl FromPath for EchoConfig {
 #[async_trait]
 impl ConfigInto<Echo> for EchoConfig {}
 
+/// Log and return input
 pub struct Echo {}
 
 #[async_trait]
@@ -33,6 +34,9 @@ impl FromConfig<EchoConfig> for Echo {
     }
 }
 
+/// # Parameters
+/// * T: Input
+/// * T: Output
 #[async_trait]
 impl<T> Map<T, T, EchoConfig> for Echo
 where

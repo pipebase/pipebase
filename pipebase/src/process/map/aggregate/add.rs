@@ -24,6 +24,7 @@ impl FromPath for AddAggregatorConfig {
 #[async_trait]
 impl ConfigInto<AddAggregator> for AddAggregatorConfig {}
 
+/// Aggregate items with `+=`
 pub struct AddAggregator {}
 
 #[async_trait]
@@ -39,6 +40,7 @@ where
     U: std::ops::AddAssign<U> + Init,
     T: IntoIterator<Item = I>,
 {
+    /// Merge items of I as U using `+=`
     fn merge(&self, u: &mut U, i: &I) {
         *u += i.aggregate_value();
     }
@@ -51,6 +53,8 @@ where
     U: std::ops::AddAssign<U> + Init,
     T: IntoIterator<Item = I> + Send + 'static,
 {
+    /// Input: T
+    /// Output: U
     async fn map(&mut self, data: T) -> anyhow::Result<U> {
         Ok(self.aggregate(data))
     }
@@ -191,7 +195,7 @@ impl FromConfig<UnorderedGroupAddAggregatorConfig> for UnorderedGroupAddAggregat
     }
 }
 
-// Group key is hashed but not ordered
+/// Group added result by key
 pub struct UnorderedGroupAddAggregator {}
 
 impl<I, T, K, V> GroupAggregate<I, T, K, V, Vec<Pair<K, V>>, HashMap<K, V>>
@@ -202,6 +206,7 @@ where
     K: Hash + Eq + PartialEq,
     V: std::ops::AddAssign<V> + Init + Clone,
 {
+    /// Merge items per group using `+=`
     fn merge(&self, v: &mut V, i: &I) {
         *v += i.aggregate_value();
     }
@@ -220,6 +225,8 @@ where
     V: std::ops::AddAssign<V> + Init + Clone,
     T: IntoIterator<Item = I> + Send + 'static,
 {
+    /// Input: T
+    /// Output: Vec<Pair<K, V>>
     async fn map(&mut self, data: T) -> anyhow::Result<Vec<Pair<K, V>>> {
         Ok(self.group_aggregate(data)?)
     }
@@ -460,7 +467,7 @@ impl FromConfig<OrderedGroupAddAggregatorConfig> for OrderedGroupAddAggregator {
     }
 }
 
-// Group key is ordered
+/// Group added result by ordered key
 pub struct OrderedGroupAddAggregator {}
 
 impl<I, T, K, V> GroupAggregate<I, T, K, V, Vec<Pair<K, V>>, BTreeMap<K, V>>
@@ -471,6 +478,7 @@ where
     K: Ord,
     V: std::ops::AddAssign<V> + Init + Clone,
 {
+    /// Merge items per group using `+=`
     fn merge(&self, v: &mut V, i: &I) {
         *v += i.aggregate_value();
     }
@@ -480,6 +488,11 @@ where
     }
 }
 
+/// # Parameters
+/// * T: Input
+/// * Vec<Pair<K, V>>: Output
+/// * K: Group Value
+/// * V: Aggregate Value
 #[async_trait]
 impl<I, T, K, V> Map<T, Vec<Pair<K, V>>, OrderedGroupAddAggregatorConfig>
     for OrderedGroupAddAggregator

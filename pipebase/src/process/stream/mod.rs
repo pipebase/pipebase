@@ -28,6 +28,13 @@ pub struct Streamer<'a> {
     context: Arc<Context>,
 }
 
+/// Spawn two tasks
+/// * Run streamer
+/// * Receive data from streamer and send downstreams
+/// # Parameters
+/// * T: Input
+/// * U: Output
+/// * S: Streamer
 #[async_trait]
 impl<'a, T, U, S, C> Pipe<T, U, S, C> for Streamer<'a>
 where

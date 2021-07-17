@@ -13,6 +13,7 @@ impl FromPath for TopAggregatorConfig {}
 #[async_trait]
 impl ConfigInto<TopAggregator> for TopAggregatorConfig {}
 
+/// Find topN
 pub struct TopAggregator {
     n: usize,
     desc: bool,
@@ -78,10 +79,12 @@ where
     U: Ord + Clone,
     T: IntoIterator<Item = I>,
 {
+    /// Merge comparable items into vectors
     fn merge(&self, u: &mut Vec<U>, i: &I) {
         u.extend(i.aggregate_value());
     }
 
+    /// Sort merged items
     fn operate(&self, u: &mut Vec<U>) {
         Self::qsort(u, self.n, self.desc);
         u.truncate(self.n);
@@ -92,6 +95,9 @@ where
     }
 }
 
+/// # Parameters
+/// * T: Input
+/// * Vec<U>: Output
 #[async_trait]
 impl<I, T, U> Map<T, Vec<U>, TopAggregatorConfig> for TopAggregator
 where

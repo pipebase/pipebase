@@ -21,7 +21,9 @@ impl FromPath for IteratorStreamerConfig {
 #[async_trait]
 impl<U> ConfigInto<IteratorStreamer<U>> for IteratorStreamerConfig {}
 
+/// Stream iterator
 pub struct IteratorStreamer<U> {
+    /// Sender to notify downstreams
     tx: Option<Sender<U>>,
 }
 
@@ -32,6 +34,9 @@ impl<U> FromConfig<IteratorStreamerConfig> for IteratorStreamer<U> {
     }
 }
 
+/// # Parameters
+/// * T: Input
+/// * U: Output
 #[async_trait]
 impl<T, U> Stream<T, U, IteratorStreamerConfig> for IteratorStreamer<U>
 where

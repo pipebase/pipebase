@@ -1,3 +1,4 @@
+/// Project input to Self
 pub trait Project<Rhs = Self> {
     fn project(rhs: &Rhs) -> Self;
 }
@@ -138,5 +139,48 @@ where
             to.push(U::project(item))
         }
         to
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use crate::*;
+
+    #[derive(Debug)]
+    struct Record {
+        pub r0: i32,
+        pub r1: i32,
+    }
+
+    #[derive(Clone, Debug, Project)]
+    #[project(input = "self::Record")]
+    struct SwappedRecord {
+        #[project(from = "r1")]
+        pub r0: i32,
+        #[project(from = "r0")]
+        pub r1: i32,
+    }
+
+    #[test]
+    fn test_reverse() {
+        let origin = Record { r0: 0, r1: 1 };
+        let swapped: SwappedRecord = Project::project(&origin);
+        assert_eq!(1, swapped.r0);
+        assert_eq!(0, swapped.r1);
+    }
+
+    #[derive(Debug, Project)]
+    #[project(input = "Record")]
+    struct RecordSumPlusOne {
+        #[project(alias = "r", expr = "let mut s = r.r0 + r.r1; s + 1")]
+        pub s: i32,
+    }
+
+    #[test]
+    fn test_sum_plus_one() {
+        let origin = Record { r0: 1, r1: 1 };
+        let sum = RecordSumPlusOne::project(&origin);
+        assert_eq!(3, sum.s);
     }
 }

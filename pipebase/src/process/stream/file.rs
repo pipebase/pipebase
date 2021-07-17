@@ -29,8 +29,11 @@ impl FromPath for FileSplitReaderConfig {}
 #[async_trait]
 impl ConfigInto<FileSplitReader> for FileSplitReaderConfig {}
 
+/// Stream file splits
 pub struct FileSplitReader {
+    /// Delimite to split file
     delimiter: u8,
+    /// Sender to notify downstreams
     tx: Option<Sender<Vec<u8>>>,
 }
 
@@ -67,6 +70,9 @@ impl FromConfig<FileSplitReaderConfig> for FileSplitReader {
     }
 }
 
+/// # Parameters
+/// * P, file path: Input
+/// * Vec<u8>, bytes: Output
 #[async_trait]
 impl<P> Stream<P, Vec<u8>, FileSplitReaderConfig> for FileSplitReader
 where
@@ -128,7 +134,9 @@ impl FromPath for FileLineReaderConfig {
 #[async_trait]
 impl ConfigInto<FileLineReader> for FileLineReaderConfig {}
 
+/// Stream file lines
 pub struct FileLineReader {
+    /// Sender to notify downstreams
     tx: Option<Sender<String>>,
 }
 
@@ -166,6 +174,8 @@ impl<P> Stream<P, String, FileLineReaderConfig> for FileLineReader
 where
     P: AsRef<Path> + Send + 'static,
 {
+    /// Input: P, file path
+    /// Output: String, file line
     async fn stream(&mut self, path: P) -> anyhow::Result<()> {
         self.stream_file(path).await
     }

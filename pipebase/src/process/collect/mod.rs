@@ -41,6 +41,13 @@ pub struct Collector<'a> {
     context: Arc<Context>,
 }
 
+/// Spawn two tasks
+/// * Run collector and collect items in buffer
+/// * Flush collector in period and send data to downstreams
+/// # Parameters
+/// * T: Input
+/// * U: Output
+/// * V: Collector
 #[async_trait]
 impl<'a, T, U, V, C> Pipe<T, U, V, C> for Collector<'a>
 where

@@ -3,32 +3,36 @@ mod count;
 mod group;
 mod init;
 mod pair;
-mod table;
 
 pub use avg::*;
 pub use count::*;
 pub use group::*;
 pub use init::*;
 pub use pair::*;
-pub use table::*;
 
 pub trait AggregateAs<T> {
+    /// Get value to aggregate
     fn aggregate_value(&self) -> T;
 }
 
+/// Aggregate items
 pub trait Aggregate<I, T, U>
 where
     I: AggregateAs<U>,
     T: IntoIterator<Item = I>,
     U: Init,
 {
+    /// Merge items
     fn merge(&self, u: &mut U, i: &I);
 
-    // post merge operation
+    /// Post merge operation
     fn operate(&self, _u: &mut U) {
         return;
     }
 
+    /// Aggregate items
+    /// * Merge
+    /// * Post merge operation
     fn aggregate(&self, t: T) -> U {
         let mut u = U::init();
         for i in t {
@@ -39,14 +43,14 @@ where
     }
 }
 
-// u32 as summation result of u32
+// u32 aggregate value for summation
 impl AggregateAs<u32> for u32 {
     fn aggregate_value(&self) -> u32 {
         *self
     }
 }
 
-// Vec<u32> as sort result for vec of u32
+// u32 aggregate value for sorting
 impl AggregateAs<Vec<u32>> for u32 {
     fn aggregate_value(&self) -> Vec<u32> {
         vec![*self]

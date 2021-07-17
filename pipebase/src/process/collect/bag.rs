@@ -27,6 +27,7 @@ where
     }
 }
 
+/// Collect items
 #[async_trait]
 pub trait BagCollect<T, B>
 where
@@ -35,11 +36,13 @@ where
 {
     fn get_bag(&mut self) -> &mut B;
 
+    /// Collect item
     async fn bag_collect(&mut self, t: T) {
         let b = self.get_bag();
         b.collect(t).await;
     }
 
+    /// Flush bag and return items
     async fn flush_bag(&mut self) -> Vec<T> {
         let b = self.get_bag();
         b.flush().await
@@ -56,7 +59,9 @@ impl FromPath for InMemoryBagCollectorConfig {}
 #[async_trait]
 impl<T> ConfigInto<InMemoryBagCollector<T>> for InMemoryBagCollectorConfig {}
 
+/// In memory cache items
 pub struct InMemoryBagCollector<T> {
+    /// Caller should flush cache every flush_period millis
     pub flush_period_in_millis: u64,
     pub buffer: Vec<T>,
 }
@@ -81,6 +86,9 @@ where
     }
 }
 
+/// # Parameters
+/// * T: Input
+/// * Vec<T>: Output
 #[async_trait]
 impl<T> Collect<T, Vec<T>, InMemoryBagCollectorConfig> for InMemoryBagCollector<T>
 where
@@ -94,6 +102,7 @@ where
         self.flush_bag().await
     }
 
+    /// Call by collector pipe to flush bag in period
     fn get_flush_interval(&self) -> Interval {
         tokio::time::interval(Duration::from_millis(self.flush_period_in_millis))
     }

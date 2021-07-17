@@ -12,7 +12,7 @@ use crate::{ConfigInto, FromConfig, FromPath};
 
 #[async_trait]
 pub trait ListFile {
-    // list file in directory
+    /// list file in directory
     async fn list(&self) -> io::Result<Vec<PathBuf>>;
     async fn filter(&self, _entry: &DirEntry) -> bool {
         true
@@ -27,7 +27,6 @@ pub enum FilePathVisitMode {
 
 #[derive(Clone, Deserialize)]
 pub struct LocalFilePathVisitorConfig {
-    // root directory path
     pub root: String,
     pub mode: Option<FilePathVisitMode>,
 }
@@ -37,10 +36,13 @@ impl FromPath for LocalFilePathVisitorConfig {}
 #[async_trait]
 impl ConfigInto<LocalFilePathVisitor> for LocalFilePathVisitorConfig {}
 
+/// Visit file under directory and send file path
 pub struct LocalFilePathVisitor {
-    // root directory path
+    /// Root directory path
     root: PathBuf,
+    /// Either Once ot Cron
     mode: FilePathVisitMode,
+    /// Sender to notify downstreams
     tx: Option<Sender<PathBuf>>,
 }
 
@@ -67,6 +69,7 @@ impl FromConfig<LocalFilePathVisitorConfig> for LocalFilePathVisitor {
 
 #[async_trait]
 impl ListFile for LocalFilePathVisitor {
+    /// Recursive list file under directory
     async fn list(&self) -> io::Result<Vec<PathBuf>> {
         let dir = match self.root.is_dir() {
             true => self.root.to_owned(),
@@ -114,6 +117,8 @@ impl LocalFilePathVisitor {
     }
 }
 
+/// # Parameters
+/// * Output: PathBuf
 #[async_trait]
 impl Listen<PathBuf, LocalFilePathVisitorConfig> for LocalFilePathVisitor {
     async fn run(&mut self) -> anyhow::Result<()> {
