@@ -4,6 +4,9 @@ pipes:
     ty: Listener
     config:
       ty: ServerConfig
+    output:
+      ty:
+        Object: Record
   - name: project_record
     ty: Mapper
     config:

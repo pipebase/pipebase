@@ -1,0 +1,82 @@
+name: project_file
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: file_path_visitor
+    ty: Listener
+    config:
+      ty: LocalFilePathVisitorConfig
+      path: catalogs/local_file_path_visitor.yml
+    output:
+      ty: PathBuf
+  - name: file_reader
+    ty: Mapper
+    config:
+      ty: FileReaderConfig
+    output:
+      ty: 
+        Vec:
+          ty: UnsignedByte
+    upstreams: [file_path_visitor]
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty:
+        Vec:
+          ty: 
+            Object: Transaction
+    upstreams: [file_reader]
+  - name: project
+    ty: Mapper
+    config:
+      ty: ProjectionConfig
+    output:
+      ty:
+        Vec:
+          ty: 
+            Object: Record
+    upstreams: [json]
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [project]
+objects:
+  - ty: Transaction
+    metas:
+      - derives: [Clone, Debug, Deserialize]
+    fields:
+      - name: id
+        ty: String
+      - name: price
+        ty: Float
+      - name: amount
+        ty: UnsignedSize
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Project]
+      - project:
+          input: Transaction
+    fields:
+      - name: key
+        ty: String
+        metas:
+          - project:
+              from: id
+      - name: value
+        ty: Float
+        metas:
+          - project:
+              expr: t.price * t.amount as f32
+              alias: t

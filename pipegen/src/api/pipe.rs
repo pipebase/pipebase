@@ -62,9 +62,25 @@ pub struct Pipe {
 }
 
 impl Pipe {
+    pub fn init(&mut self) {
+        if self.output.is_some() {
+            self.output.as_mut().unwrap().init();
+        }
+        if self.upstreams.is_none() {
+            self.upstreams = Some(Vec::new())
+        }
+    }
+
     pub fn is_source(&self) -> bool {
         match &self.ty {
             PipeType::Listener | PipeType::Poller => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_sink(&self) -> bool {
+        match &self.ty {
+            PipeType::Exporter => true,
             _ => false,
         }
     }
@@ -117,10 +133,10 @@ impl Pipe {
     }
 
     fn get_upstream_meta(&self) -> Option<Meta> {
-        let upstreams = match self.upstreams {
-            Some(ref upstreams) => upstreams,
-            None => return None,
-        };
+        let upstreams = self.upstreams.as_ref().expect("upstreams not inited");
+        if upstreams.is_empty() {
+            return None;
+        }
         let meta = Meta::Value {
             name: "upstream".to_owned(),
             meta: MetaValue::Str {
@@ -148,6 +164,10 @@ impl Pipe {
 
     pub(crate) fn get_output_data_type(&self) -> Option<&DataField> {
         self.output.as_ref()
+    }
+
+    pub(crate) fn has_output(&self) -> bool {
+        self.output.is_some()
     }
 
     pub fn filter_upstreams(&mut self, pipe_id_filter: &HashSet<String>) {

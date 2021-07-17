@@ -1,0 +1,20 @@
+name: invalid_exporter_output
+pipes:
+  - name: record_source
+    ty: Listener
+    config:
+      ty: ServerConfig
+    output:
+      ty:
+        Object: Record
+  - name: print_record
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [ "record_source" ]
+    output:
+      ty: 
+        Object: Record
+objects:
+  - ty: Record
+    fields: []
