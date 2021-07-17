@@ -62,6 +62,15 @@ pub struct Pipe {
 }
 
 impl Pipe {
+    pub fn init(&mut self) {
+        if self.output.is_some() {
+            self.output.as_mut().unwrap().init();
+        }
+        if self.upstreams.is_none() {
+            self.upstreams = Some(Vec::new())
+        }
+    }
+
     pub fn is_source(&self) -> bool {
         match &self.ty {
             PipeType::Listener | PipeType::Poller => true,
@@ -117,10 +126,7 @@ impl Pipe {
     }
 
     fn get_upstream_meta(&self) -> Option<Meta> {
-        let upstreams = match self.upstreams {
-            Some(ref upstreams) => upstreams,
-            None => return None,
-        };
+        let upstreams = self.upstreams.as_ref().expect("upstreams not inited");
         let meta = Meta::Value {
             name: "upstream".to_owned(),
             meta: MetaValue::Str {

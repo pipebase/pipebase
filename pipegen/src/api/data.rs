@@ -118,32 +118,38 @@ pub struct DataField {
 }
 
 impl DataField {
+    pub fn init(&mut self) {
+        if self.is_boxed.is_none() {
+            self.is_boxed = Some(false);
+        }
+        if self.is_optional.is_none() {
+            self.is_optional = Some(false);
+        }
+        if self.is_public.is_none() {
+            self.is_public = Some(true);
+        }
+        if self.metas.is_none() {
+            self.metas = Some(Vec::new())
+        }
+    }
+
     pub fn get_data_type_literal(&self, indent: usize) -> String {
         let ty_lit = data_ty_to_literal(&self.ty);
-        let ty_lit = match self.is_boxed {
-            Some(is_boxed) => match is_boxed {
-                true => format!("Box<{}>", ty_lit),
-                false => ty_lit,
-            },
-            None => ty_lit,
+        let ty_lit = match self.is_boxed.expect("is_boxed not inited") {
+            true => format!("Box<{}>", ty_lit),
+            false => ty_lit,
         };
-        let ty_lit = match self.is_optional {
-            Some(is_optional) => match is_optional {
-                true => format!("Option<{}>", ty_lit),
-                false => ty_lit,
-            },
-            None => ty_lit,
+        let ty_lit = match self.is_optional.expect("is_optional not inited") {
+            true => format!("Option<{}>", ty_lit),
+            false => ty_lit,
         };
         let indent_lit = indent_literal(indent);
         format!("{}{}", indent_lit, ty_lit)
     }
 
     pub fn get_metas_literal(&self, indent: usize) -> Option<String> {
-        let metas = match self.metas.to_owned() {
-            Some(metas) => metas,
-            None => return None,
-        };
-        Some(metas_to_literal(&metas, indent))
+        let metas = self.metas.as_ref().expect("field metas not inited");
+        Some(metas_to_literal(metas, indent))
     }
 
     pub fn get_pub_literal(&self) -> String {
@@ -224,15 +230,27 @@ impl Object {
         Object {
             ty: ty,
             metas: Some(metas),
-            fields: fields,
+            fields: fields
+                .into_iter()
+                .map(|mut f| {
+                    f.init();
+                    f
+                })
+                .collect(),
+        }
+    }
+
+    pub fn init(&mut self) {
+        if self.metas.is_none() {
+            self.metas = Some(Vec::new())
+        }
+        for field in self.fields.as_mut_slice() {
+            field.init();
         }
     }
 
     pub fn get_metas_literal(&self, indent: usize) -> Option<String> {
-        let metas = match self.metas.to_owned() {
-            Some(metas) => metas,
-            None => return None,
-        };
+        let metas = self.metas.as_ref().expect("object metas not inited");
         Some(metas_to_literal(&metas, indent))
     }
 

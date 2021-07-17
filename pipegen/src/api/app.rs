@@ -95,10 +95,17 @@ impl App {
                 }])
             }
         };
+        // init pipes
+        for pipe in self.pipes.as_mut_slice() {
+            pipe.init();
+        }
         // init objects
         match self.objects {
             Some(_) => (),
             None => self.objects = Some(vec![]),
+        }
+        for object in self.objects.as_mut().unwrap() {
+            object.init();
         }
         // init context stores
         match self.cstores {
