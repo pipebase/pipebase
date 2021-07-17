@@ -1,4 +1,4 @@
-use super::utils::parse_pipe_manifest;
+use super::utils::read_pipe_manifest;
 use crate::commands::validate::ValidateOptions;
 use crate::print::Printer;
 use crate::Config;
@@ -41,6 +41,6 @@ pub fn do_validate(app: &App, printer: &mut Printer, opts: &ValidateOptions) -> 
 pub fn do_exec(config: &Config, opts: &ValidateOptions) -> anyhow::Result<()> {
     let mut printer = Printer::new();
     let pipe_manifest_path = config.get_pipe_manifest_path();
-    let app = parse_pipe_manifest(pipe_manifest_path.as_path(), &mut printer)?;
+    let app = read_pipe_manifest(pipe_manifest_path.as_path(), &mut printer)?;
     do_validate(&app, &mut printer, opts)
 }

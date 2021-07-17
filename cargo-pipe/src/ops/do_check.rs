@@ -10,7 +10,7 @@ use std::process;
 pub fn do_check(config: &Config, opts: &CheckOptions, printer: &mut Printer) -> anyhow::Result<()> {
     // validate pipe manifest as prerequiste
     let pipe_manifest_path = config.get_pipe_manifest_path();
-    let app = parse_pipe_manifest(pipe_manifest_path.as_path(), printer)?;
+    let app = read_pipe_manifest(pipe_manifest_path.as_path(), printer)?;
     do_validate(&app, printer, &ValidateOptions::default())?;
     // cargo check
     let manifest_path_buf = config.get_app_manifest(opts.get_app_name());

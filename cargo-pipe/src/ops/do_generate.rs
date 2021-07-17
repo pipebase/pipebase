@@ -39,7 +39,7 @@ pub fn do_generate(
 pub fn do_exec(config: &Config, opts: &GenerateOptions) -> anyhow::Result<()> {
     let mut printer = Printer::new();
     let pipe_manifest_path = config.get_pipe_manifest_path();
-    let app = parse_pipe_manifest(pipe_manifest_path.as_path(), &mut printer)?;
+    let app = read_pipe_manifest(pipe_manifest_path.as_path(), &mut printer)?;
     let path_buf = config.get_app_main_path(opts.get_app_name());
     do_generate(&app, path_buf, opts, &mut printer)?;
     Ok(())

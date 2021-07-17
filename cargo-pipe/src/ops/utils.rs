@@ -5,12 +5,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 
-pub(crate) fn parse_pipe_manifest(
+pub(crate) fn read_pipe_manifest(
     manifest_path: &Path,
     printer: &mut Printer,
 ) -> anyhow::Result<App> {
     printer.status(&"Parse", manifest_path.to_str().unwrap())?;
-    let app = match App::parse(manifest_path) {
+    let app = match App::read(manifest_path) {
         Ok(app) => app,
         Err(err) => {
             printer.error(err.to_string())?;

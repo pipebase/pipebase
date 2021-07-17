@@ -359,7 +359,7 @@ mod tests {
     #[test]
     fn test_describe_timer_tick_pipe() {
         let manifest_path: &Path = Path::new("resources/manifest/print_timer_tick_pipe.yml");
-        let app = App::parse(manifest_path).unwrap();
+        let app = App::read(manifest_path).unwrap();
         app.validate().expect("expect valid");
         for result in app.describe() {
             println!("{}", result)
@@ -369,7 +369,7 @@ mod tests {
     #[test]
     fn test_describe_timer_tick_pipeline() {
         let manifest_path: &Path = Path::new("resources/manifest/print_timer_tick_pipe.yml");
-        let app = App::parse(manifest_path).unwrap();
+        let app = App::read(manifest_path).unwrap();
         app.validate().expect("expect valid");
         let pipelines = app.describe_pipelines("printer").expect("pipelines");
         assert_eq!(2, pipelines.len());
