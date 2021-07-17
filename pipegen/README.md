@@ -30,9 +30,9 @@ Specification
 | output | output data type (unnamed [`data field`]) | false if [`pipe type`] is `Exporter` |
 
 Note that:
-* pipes are wired as **directed acyclic graph** using upstremas
-* upstreams of a pipe should have **same** output type, i.e a pipe's input type is **unique** in runtime
-* pipe with upstreams defines trait bounds for input
+* pipes are wired as **directed acyclic graph** using upstreams
+* upstreams of a pipe should have **same** output type, i.e a pipe's input type is **determined** in runtime
+* pipe defines trait bounds for input, and upstreams' output should satisfy the constrait
 
 ## Pipe Type
 | Type | Description | #upstreams | #downstreams |
