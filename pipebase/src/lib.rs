@@ -1,12 +1,18 @@
+mod collect;
 mod common;
-mod fanout;
-mod process;
-mod sink;
-mod source;
+mod export;
+mod listen;
+mod map;
+mod poll;
+mod select;
+mod stream;
 
+pub use collect::*;
 pub use common::*;
-pub use fanout::*;
+pub use export::*;
+pub use listen::*;
+pub use map::*;
 pub use pipederive::*;
-pub use process::*;
-pub use sink::*;
-pub use source::*;
+pub use poll::*;
+pub use select::*;
+pub use stream::*;
