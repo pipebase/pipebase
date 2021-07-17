@@ -1,15 +1,16 @@
 `pipebase` is a data integration framework, provides:
-* manifest, specification of pipe / custom data object in YAML format
-* cli tool to build data integration app with manifest
-* pipe plugins using third party SDK
+
+* *manifest*, specification of pipe / custom data object in YAML format
+* *cli tool*, build data integration app with manifest
+* *plugins*, customized pipes using third party SDK
 
 [Examples]
 
 ## Overview
 `pipebase` is composed of three main components
-* build: [`pipegen`], [`cargo-pipe`]
-* runtime: [`pipebase`]
-* plugins: [`pipeware`]
+* **build**: [`pipegen`], [`cargo-pipe`]
+* **runtime**: [`pipebase`]
+* **plugins**: [`pipeware`]
 
 [`cargo-pipe`]: https://github.com/pipebase/pipebase/tree/main/cargo-pipe
 [`pipebase`]: https://github.com/pipebase/pipebase/tree/main/pipebase
