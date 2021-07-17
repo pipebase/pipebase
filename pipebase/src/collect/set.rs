@@ -4,33 +4,8 @@ use std::hash::Hash;
 use std::time::Duration;
 use tokio::time::Interval;
 
-use crate::{Collect, ConfigInto, FromConfig, FromPath};
+use crate::{Collect, ConfigInto, FromConfig, FromPath, Set};
 use async_trait::async_trait;
-
-#[async_trait]
-pub trait Set<T> {
-    async fn collect(&mut self, t: T);
-    async fn flush(&mut self) -> Vec<T>;
-}
-
-#[async_trait]
-impl<T> Set<T> for HashSet<T>
-where
-    T: Hash + Eq + Clone + Send,
-{
-    async fn collect(&mut self, t: T) {
-        self.insert(t);
-    }
-
-    async fn flush(&mut self) -> Vec<T> {
-        let mut buffer: Vec<T> = Vec::new();
-        for item in self.iter() {
-            buffer.push(item.to_owned())
-        }
-        self.clear();
-        buffer
-    }
-}
 
 /// Collect unique item
 #[async_trait]
