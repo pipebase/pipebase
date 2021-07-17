@@ -78,6 +78,13 @@ impl Pipe {
         }
     }
 
+    pub fn is_sink(&self) -> bool {
+        match &self.ty {
+            PipeType::Exporter => true,
+            _ => false,
+        }
+    }
+
     fn get_name_meta(&self) -> Meta {
         Meta::Value {
             name: "name".to_owned(),
@@ -154,6 +161,10 @@ impl Pipe {
 
     pub(crate) fn get_output_data_type(&self) -> Option<&DataField> {
         self.output.as_ref()
+    }
+
+    pub(crate) fn has_output(&self) -> bool {
+        self.output.is_some()
     }
 
     pub fn filter_upstreams(&mut self, pipe_id_filter: &HashSet<String>) {

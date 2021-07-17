@@ -5,6 +5,8 @@ pub(crate) const OBJECT_ENTITY_ID_FIELD: &str = "ty";
 pub(crate) const DATA_FIELD_ENTITY_ID_FIELD: &str = "name";
 pub(crate) const CONTEXT_STORE_ENTITY_ID_FIELD: &str = "name";
 
+pub(crate) const PIPE_OUTPUT_FIELD: &str = "output";
+
 pub(crate) const APP_OBJECT_NAME: &str = "App";
 pub(crate) const DEFAULT_APP_OBJECT: &str = "App::default()";
 pub(crate) const BOOTSTRAP_FUNCTION_META: &str = "bootstrap";

@@ -1,0 +1,6 @@
+name: pipe_output_not_found
+pipes:
+  - name: record_source
+    ty: Listener
+    config:
+      ty: ServerConfig

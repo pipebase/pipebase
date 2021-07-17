@@ -1,7 +1,7 @@
 use crate::api::{
     App, ContextStore, DataField, Entity, EntityAccept, Object, Pipe, VisitEntity,
     CONTEXT_STORE_ENTITY_ID_FIELD, DATA_FIELD_ENTITY_ID_FIELD, OBJECT_ENTITY_ID_FIELD,
-    PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD,
+    PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD, PIPE_OUTPUT_FIELD,
 };
 
 use crate::error::{api_error, Result};
@@ -33,6 +33,7 @@ impl Display for ValidationErrorDetailsDisplay {
 pub trait Validate {
     fn new(location: &str) -> Self;
     fn validate(&mut self) -> Result<()>;
+    /// check any error details collected
     fn check(details: &HashMap<String, String>) -> Result<()> {
         match details.is_empty() {
             true => Ok(()),
@@ -82,6 +83,42 @@ impl Validate for PipeIdValidator {
     }
 }
 
+pub struct PipeOutputValidator {
+    location: String,
+    pipes: Vec<Pipe>,
+}
+
+impl VisitEntity<Pipe> for PipeOutputValidator {
+    fn visit(&mut self, pipe: &Pipe) {
+        self.pipes.push(pipe.to_owned())
+    }
+}
+
+impl Validate for PipeOutputValidator {
+    fn new(location: &str) -> Self {
+        PipeOutputValidator {
+            location: location.to_owned(),
+            pipes: Vec::new(),
+        }
+    }
+
+    fn validate(&mut self) -> Result<()> {
+        let mut errors: HashMap<String, String> = HashMap::new();
+        for (i, pipe) in self.pipes.iter().enumerate() {
+            let location = format!("{}[{}].{}", self.location, i, PIPE_OUTPUT_FIELD);
+            if pipe.is_sink() && pipe.has_output() {
+                errors.insert(location, String::from("found invalid output for sink pipe"));
+                continue;
+            }
+            if !pipe.is_sink() && !pipe.has_output() {
+                errors.insert(location, String::from("pipe output not found"));
+            }
+        }
+        Self::check(&errors)?;
+        Ok(())
+    }
+}
+
 pub struct PipeGraphValidator {
     pub location: String,
     pub graph: PipeGraph<Pipe>,
@@ -113,7 +150,7 @@ impl Validate for PipeGraphValidator {
                 if self.graph.has_upstream_pipe(pid) {
                     errors.insert(
                         location.to_owned(),
-                        format!("found invalid upstream for source pipe"),
+                        String::from("found invalid upstream for source pipe"),
                     );
                 }
                 continue;
@@ -354,6 +391,7 @@ impl AppValidator {
     pub fn validate_pipes(&self) -> Result<()> {
         let pipes = self.get_app().get_pipes();
         Self::validate_entities::<Pipe, PipeIdValidator>(pipes, "pipes")?;
+        Self::validate_entities::<Pipe, PipeOutputValidator>(pipes, "pipes")?;
         Self::validate_entities::<Pipe, PipeGraphValidator>(pipes, "pipes")
     }
 
@@ -569,6 +607,22 @@ mod tests {
     #[test]
     fn test_non_exists_object_pipe() {
         let manifest_path = Path::new("resources/manifest/non_exists_object_pipe.yml");
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_invalid_exporter_output() {
+        let manifest_path = Path::new("resources/manifest/invalid_exporter_output.yml");
+        let app = App::parse(manifest_path).unwrap();
+        let e = app.validate().expect_err("expect invalid");
+        println!("{}", e)
+    }
+
+    #[test]
+    fn test_pipe_output_not_found() {
+        let manifest_path = Path::new("resources/manifest/pipe_output_not_found.yml");
         let app = App::parse(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
