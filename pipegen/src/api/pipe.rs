@@ -134,6 +134,9 @@ impl Pipe {
 
     fn get_upstream_meta(&self) -> Option<Meta> {
         let upstreams = self.upstreams.as_ref().expect("upstreams not inited");
+        if upstreams.is_empty() {
+            return None;
+        }
         let meta = Meta::Value {
             name: "upstream".to_owned(),
             meta: MetaValue::Str {

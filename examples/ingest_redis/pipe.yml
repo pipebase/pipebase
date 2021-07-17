@@ -3,15 +3,15 @@ dependencies:
   - package: pipebase
     path: ../../../pipebase
     modules: ["pipebase::*"]
-  - package: pipejson
-    path: ../../../pipeware/pipejson
-    modules: ["pipejson::*"]
   - package: piperedis
     path: ../../../pipeware/piperedis
     modules: ["piperedis::*"]
   - package: pipewarp
     path: ../../../pipeware/pipewarp
     modules: ["pipewarp::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
   - package: serde
     version: "1.0"
     features: ["derive"]
