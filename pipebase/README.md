@@ -2,18 +2,18 @@
 
 ## Basic Pipes
 Here is a list of basic pipes built in `pipebase`
-| config type | pipe type | input / output | example |
-| ----------- | --------- | -------------- | ------- |
-| `PrinterConfig` | `Exporter` | doc | [`printer`] |
-| `TimerConfig` | `Poller` | doc | [`timer`] |
-| `LocalFilePathVisitorConfig` | `Listener` | doc | [`file_path`] |
-| `FileLineReaderConfig` | `Streamer` | doc | [`stateless_word_count`] |
-| `IteratorReaderConfig` | `Streamer` | doc | [`stateless_word_count`] |
-| `FieldVisitConfig` | `Mapper` | doc | [`field_filter`] |
-| `FilterMapConfig` | `Mapper` | doc | [`field_filter`] |
-| `StringSplitterConfig` | `Mapper` | doc | [`stateless_word_count`] |
-| `ProjectionConfig` | `Mapper` | doc | [`project_file`] |
-| `FileReaderConfig` | `Mapper` | doc | [`project_file`] |
+| pipe type | implementation | input / output | example |
+| --------- | -------------- | -------------- | ------- |
+| `Exporter` | `Printer` | doc | [`printer`] |
+| `Poller` | `Timer` | doc | [`timer`] |
+| `Listener` | `LocalFilePathVisitor` | doc | [`file_path`] |
+| `Streamer` | `FileLineReader` | doc | [`stateless_word_count`] |
+| `Streamer` | `IteratorReader` | doc | [`stateless_word_count`] |
+| `Mapper` | `FieldVisit` | doc | [`field_filter`] |
+| `Mapper` | `FilterMap` | doc | [`field_filter`] |
+| `Mapper` | `StringSplitter` | doc | [`stateless_word_count`] |
+| `Mapper` | `Projection` | doc | [`project_file`] |
+| `Mapper` | `FileReader` | doc | [`project_file`] |
 
 [`pipebase`]: https://github.com/pipebase/pipebase/tree/main/pipebase
 [`tokio`]: https://github.com/tokio-rs/tokio
