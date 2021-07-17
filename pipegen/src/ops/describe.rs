@@ -1,6 +1,6 @@
 use crate::{
-    api::{App, Entity, EntityAccept, Object, Pipe, VisitEntity},
     error::{api_error, Result},
+    models::{App, Entity, EntityAccept, Object, Pipe, VisitEntity},
     ops::utils::PipeGraph,
 };
 
@@ -353,7 +353,7 @@ const OBJECTS_LABLE: &str = "objects";
 #[cfg(test)]
 mod tests {
 
-    use crate::api::App;
+    use crate::models::App;
     use std::path::Path;
 
     #[test]

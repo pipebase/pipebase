@@ -1,8 +1,8 @@
 use std::usize;
 
-use crate::api::meta::metas_to_display;
-use crate::api::utils::indent_literal;
-use crate::api::{Entity, EntityAccept, VisitEntity};
+use crate::models::meta::metas_to_display;
+use crate::models::utils::indent_literal;
+use crate::models::{Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
 use std::fmt::Display;
 

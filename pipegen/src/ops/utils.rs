@@ -317,7 +317,7 @@ impl<T: Clone> DirectedGraph<T> {
     }
 }
 
-use crate::api::{Entity, Pipe};
+use crate::models::{Entity, Pipe};
 pub struct PipeGraph<T: Clone> {
     graph: DirectedGraph<T>,
 }

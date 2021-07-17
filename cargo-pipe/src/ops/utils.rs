@@ -1,6 +1,6 @@
 use crate::print::Printer;
-use pipegen::api::App;
-use pipegen::api::PackageDependency;
+use pipegen::models::App;
+use pipegen::models::PackageDependency;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
