@@ -28,7 +28,7 @@ pub struct FilterMap {}
 
 #[async_trait]
 impl FromConfig<FilterMapConfig> for FilterMap {
-    async fn from_config(_config: &FilterMapConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: FilterMapConfig) -> anyhow::Result<Self> {
         Ok(FilterMap {})
     }
 }

@@ -18,9 +18,9 @@ pub struct CqlWriter {
 
 #[async_trait]
 impl FromConfig<CqlWriterConfig> for CqlWriter {
-    async fn from_config(config: &CqlWriterConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: CqlWriterConfig) -> anyhow::Result<Self> {
         Ok(CqlWriter {
-            client: CqlClient::new(&config.hostname).await?,
+            client: CqlClient::new(config.hostname).await?,
         })
     }
 }

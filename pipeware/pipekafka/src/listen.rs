@@ -37,7 +37,7 @@ pub struct KafkaConsumer {
 
 #[async_trait]
 impl FromConfig<KafkaConsumerConfig> for KafkaConsumer {
-    async fn from_config(config: &KafkaConsumerConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: KafkaConsumerConfig) -> anyhow::Result<Self> {
         let params: HashMap<&str, String> = config.to_owned().into();
         let topics = config.consumer.get_topics();
         let consumer = create_kafka_client::<DefaultConsumerContext, DefaultStreamConsumer>(

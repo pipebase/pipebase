@@ -48,7 +48,7 @@ pub struct InMemorySetCollector<T> {
 
 #[async_trait]
 impl<T> FromConfig<InMemorySetCollectorConfig> for InMemorySetCollector<T> {
-    async fn from_config(config: &InMemorySetCollectorConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: InMemorySetCollectorConfig) -> anyhow::Result<Self> {
         Ok(InMemorySetCollector {
             flush_period_in_millis: config.flush_period_in_millis,
             buffer: HashSet::new(),

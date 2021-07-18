@@ -9,7 +9,7 @@ pub struct RedisClient {
 }
 
 impl RedisClient {
-    pub fn new(url: &str) -> anyhow::Result<Self> {
+    pub fn new(url: String) -> anyhow::Result<Self> {
         let client = redis::Client::open(url)?;
         let connection = client.get_connection()?;
         Ok(RedisClient {

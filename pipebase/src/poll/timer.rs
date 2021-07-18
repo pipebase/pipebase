@@ -30,14 +30,13 @@ pub struct Timer {
 
 #[async_trait]
 impl FromConfig<TimerConfig> for Timer {
-    async fn from_config(config: &TimerConfig) -> anyhow::Result<Timer> {
+    async fn from_config(config: TimerConfig) -> anyhow::Result<Timer> {
         let delay = match config.delay {
-            Some(ref period) => period.to_owned().into(),
+            Some(period) => period.into(),
             None => Duration::from_micros(0),
         };
-        let interval = config.interval.to_owned();
         Ok(Timer {
-            interval: tokio::time::interval(interval.into()),
+            interval: tokio::time::interval(config.interval.into()),
             delay: delay,
             ticks: config.ticks,
             tick: 0,

@@ -57,7 +57,7 @@ where
 }
 
 impl<C> RedisGroupTable<C> {
-    pub fn new(url: &str, cache: C) -> anyhow::Result<Self> {
+    pub fn new(url: String, cache: C) -> anyhow::Result<Self> {
         Ok(RedisGroupTable {
             cache,
             client: RedisClient::new(url)?,

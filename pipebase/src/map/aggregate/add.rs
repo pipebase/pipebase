@@ -29,7 +29,7 @@ pub struct AddAggregator {}
 
 #[async_trait]
 impl FromConfig<AddAggregatorConfig> for AddAggregator {
-    async fn from_config(_config: &AddAggregatorConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: AddAggregatorConfig) -> anyhow::Result<Self> {
         Ok(AddAggregator {})
     }
 }
@@ -190,7 +190,7 @@ impl ConfigInto<UnorderedGroupAddAggregator> for UnorderedGroupAddAggregatorConf
 
 #[async_trait]
 impl FromConfig<UnorderedGroupAddAggregatorConfig> for UnorderedGroupAddAggregator {
-    async fn from_config(_config: &UnorderedGroupAddAggregatorConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: UnorderedGroupAddAggregatorConfig) -> anyhow::Result<Self> {
         Ok(UnorderedGroupAddAggregator {})
     }
 }
@@ -462,7 +462,7 @@ impl ConfigInto<OrderedGroupAddAggregator> for OrderedGroupAddAggregatorConfig {
 
 #[async_trait]
 impl FromConfig<OrderedGroupAddAggregatorConfig> for OrderedGroupAddAggregator {
-    async fn from_config(_config: &OrderedGroupAddAggregatorConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: OrderedGroupAddAggregatorConfig) -> anyhow::Result<Self> {
         Ok(OrderedGroupAddAggregator {})
     }
 }

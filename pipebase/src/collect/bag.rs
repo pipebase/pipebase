@@ -46,7 +46,7 @@ pub struct InMemoryBagCollector<T> {
 
 #[async_trait]
 impl<T> FromConfig<InMemoryBagCollectorConfig> for InMemoryBagCollector<T> {
-    async fn from_config(config: &InMemoryBagCollectorConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: InMemoryBagCollectorConfig) -> anyhow::Result<Self> {
         Ok(InMemoryBagCollector {
             flush_period_in_millis: config.flush_period_in_millis,
             buffer: vec![],

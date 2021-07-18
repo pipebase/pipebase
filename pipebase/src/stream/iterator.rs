@@ -29,7 +29,7 @@ pub struct IteratorReader<U> {
 
 #[async_trait]
 impl<U> FromConfig<IteratorReaderConfig> for IteratorReader<U> {
-    async fn from_config(_config: &IteratorReaderConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: IteratorReaderConfig) -> anyhow::Result<Self> {
         Ok(IteratorReader { tx: None })
     }
 }

@@ -26,7 +26,7 @@ pub struct Projection {}
 
 #[async_trait]
 impl FromConfig<ProjectionConfig> for Projection {
-    async fn from_config(_config: &ProjectionConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: ProjectionConfig) -> anyhow::Result<Self> {
         Ok(Projection {})
     }
 }

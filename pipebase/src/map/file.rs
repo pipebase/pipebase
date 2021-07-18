@@ -29,9 +29,9 @@ pub struct FileWriter {
 
 #[async_trait]
 impl FromConfig<FileWriterConfig> for FileWriter {
-    async fn from_config(config: &FileWriterConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: FileWriterConfig) -> anyhow::Result<Self> {
         Ok(FileWriter {
-            directory: PathBuf::from(&config.directory),
+            directory: PathBuf::from(config.directory),
             filename_length: config.filename_length.unwrap_or(DEFAULT_FILENAME_LENGTH),
         })
     }
@@ -83,7 +83,7 @@ pub struct FileReader {}
 
 #[async_trait]
 impl FromConfig<FileReaderConfig> for FileReader {
-    async fn from_config(_config: &FileReaderConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: FileReaderConfig) -> anyhow::Result<Self> {
         Ok(FileReader {})
     }
 }

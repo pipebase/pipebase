@@ -47,13 +47,13 @@ pub struct LocalFilePathVisitor {
 }
 
 impl LocalFilePathVisitor {
-    pub fn new(config: &LocalFilePathVisitorConfig) -> Self {
+    pub fn new(config: LocalFilePathVisitorConfig) -> Self {
         let mode = match config.mode {
-            Some(ref mode) => mode.to_owned(),
+            Some(mode) => mode,
             None => FilePathVisitMode::Once,
         };
         LocalFilePathVisitor {
-            root: PathBuf::from(&config.root),
+            root: PathBuf::from(config.root),
             mode: mode,
             tx: None,
         }
@@ -62,7 +62,7 @@ impl LocalFilePathVisitor {
 
 #[async_trait]
 impl FromConfig<LocalFilePathVisitorConfig> for LocalFilePathVisitor {
-    async fn from_config(config: &LocalFilePathVisitorConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: LocalFilePathVisitorConfig) -> anyhow::Result<Self> {
         Ok(LocalFilePathVisitor::new(config))
     }
 }

@@ -27,7 +27,7 @@ pub struct WarpContextServer {
 
 #[async_trait]
 impl FromConfig<WarpContextServerConfig> for WarpContextServer {
-    async fn from_config(config: &WarpContextServerConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: WarpContextServerConfig) -> anyhow::Result<Self> {
         let ip_port = format!("{}:{}", config.ip, config.port);
         let socket: SocketAddr = ip_port.parse()?;
         Ok(WarpContextServer {
