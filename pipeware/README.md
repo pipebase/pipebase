@@ -5,6 +5,7 @@ Pipes
 | pipe type | implementation | input / output | example |
 | --------- | -------------- | -------------- | ------- |
 | `Listener`  | WarpIngestionServer | doc | `ingest_*` |
+| `Listener` | KafkaConsumer | doc | [`consume_kafka`] |
 | `Mapper` | JsonSer | doc |  |
 | `Mapper` | JsonDeser | doc | `ingest_*` |
 | `Mapper` | RedisUnorderedGroupAddAggregator | doc | [`group_sum_redis`] |
@@ -21,3 +22,4 @@ Pipes
 [`ingest_postgres`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_postgres
 [`ingest_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_redis
 [`relay`]: https://github.com/pipebase/pipebase/tree/main/examples/relay
+[`consume_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_kafka

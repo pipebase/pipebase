@@ -46,7 +46,7 @@ where
         let join_listener = tokio::spawn(async move {
             match listener.run().await {
                 Ok(_) => info!("listener exit ..."),
-                Err(e) => error!("listenr exit with error {}", e),
+                Err(e) => error!("listener exit with error {}", e),
             };
         });
         // start event loop
