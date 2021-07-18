@@ -3,8 +3,10 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
-use std::sync::atomic::Ordering;
-use std::sync::atomic::{AtomicU64, AtomicU8};
+use std::sync::{
+    atomic::{AtomicU64, AtomicU8, Ordering},
+    Arc,
+};
 use std::time::Duration;
 use tokio::time::{sleep, Interval};
 
@@ -271,4 +273,8 @@ impl StoreContext<ContextPrinterConfig> for ContextPrinter {
         }
         Ok(())
     }
+}
+pub trait HasContext {
+    fn get_name(&self) -> String;
+    fn get_context(&self) -> Arc<Context>;
 }
