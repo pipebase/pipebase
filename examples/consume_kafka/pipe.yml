@@ -1,0 +1,47 @@
+name: consume_kafka
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+  - package: pipekafka
+    path: ../../../pipeware/pipekafka
+    modules: ["pipekafka::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: kafka_consumer
+    ty: Listener
+    config:
+      ty: KafkaConsumerConfig
+      path: catalogs/kafka_consumer.yml
+    output: 
+      ty:
+        Vec: 
+          ty: UnsignedByte
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty: 
+        Object: Record
+    upstreams: [kafka_consumer]
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [json]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize]
+    fields:
+      - name: key
+        ty: String
+      - name: value
+        ty: UnsignedInteger

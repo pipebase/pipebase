@@ -7,6 +7,7 @@ members = [
 	"pipegen",
 	"pipeware/pipecql",
 	"pipeware/pipejson",
+	"pipeware/pipekafka",
 	"pipeware/pipepsql",
 	"pipeware/piperedis",
 	"pipeware/pipereqwest",
