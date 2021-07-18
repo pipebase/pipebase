@@ -18,10 +18,10 @@ pub struct PsqlWriter {
 
 #[async_trait]
 impl FromConfig<PsqlWriterConfig> for PsqlWriter {
-    async fn from_config(config: &PsqlWriterConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: PsqlWriterConfig) -> anyhow::Result<Self> {
         Ok(PsqlWriter {
             // TODO: Support Tls
-            client: PsqlClient::new(&config.params).await?,
+            client: PsqlClient::new(config.params).await?,
         })
     }
 }

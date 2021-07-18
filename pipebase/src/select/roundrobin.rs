@@ -25,7 +25,7 @@ pub struct RoundRobin {
 
 #[async_trait]
 impl FromConfig<RoundRobinConfig> for RoundRobin {
-    async fn from_config(_config: &RoundRobinConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: RoundRobinConfig) -> anyhow::Result<Self> {
         Ok(RoundRobin { i: 0 })
     }
 }

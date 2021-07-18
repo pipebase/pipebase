@@ -23,13 +23,13 @@ pub struct ReqwestPoster {
 
 #[async_trait]
 impl FromConfig<ReqwestPosterConfig> for ReqwestPoster {
-    async fn from_config(config: &ReqwestPosterConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: ReqwestPosterConfig) -> anyhow::Result<Self> {
         Ok(ReqwestPoster {
             client: ReqwestPostClient::new(
-                config.url.to_owned(),
-                config.basic_auth.to_owned(),
-                config.bear_auth_token.to_owned(),
-                config.headers.to_owned().unwrap_or_default(),
+                config.url,
+                config.basic_auth,
+                config.bear_auth_token,
+                config.headers.unwrap_or_default(),
             )?,
         })
     }

@@ -14,9 +14,9 @@ impl ConfigInto<StringSplitter> for StringSplitterConfig {}
 
 #[async_trait]
 impl FromConfig<StringSplitterConfig> for StringSplitter {
-    async fn from_config(config: &StringSplitterConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: StringSplitterConfig) -> anyhow::Result<Self> {
         Ok(StringSplitter {
-            pattern: config.pattern.to_owned(),
+            pattern: config.pattern,
         })
     }
 }

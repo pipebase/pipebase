@@ -37,7 +37,7 @@ pub struct KafkaProducer {
 
 #[async_trait]
 impl FromConfig<KafkaProducerConfig> for KafkaProducer {
-    async fn from_config(config: &KafkaProducerConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: KafkaProducerConfig) -> anyhow::Result<Self> {
         let params: HashMap<&str, String> = config.to_owned().into();
         let producer: DefaultAsyncProducer = create_kafka_client::<
             DefaultProducerContext,

@@ -24,7 +24,7 @@ pub struct Random {}
 
 #[async_trait]
 impl FromConfig<RandomConfig> for Random {
-    async fn from_config(_config: &RandomConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: RandomConfig) -> anyhow::Result<Self> {
         Ok(Random {})
     }
 }

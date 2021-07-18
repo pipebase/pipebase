@@ -3,8 +3,10 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
-use std::sync::atomic::Ordering;
-use std::sync::atomic::{AtomicU64, AtomicU8};
+use std::sync::{
+    atomic::{AtomicU64, AtomicU8, Ordering},
+    Arc,
+};
 use std::time::Duration;
 use tokio::time::{sleep, Interval};
 
@@ -149,7 +151,7 @@ impl<'a> ContextStore<'a> {
     ) -> Result<()>
     where
         S: StoreContext<C>,
-        C: ConfigInto<S> + Sync,
+        C: ConfigInto<S> + Send,
     {
         let mut store = config.config_into().await?;
         // add context
@@ -221,14 +223,13 @@ pub struct ContextPrinter {
 
 #[async_trait]
 impl FromConfig<ContextPrinterConfig> for ContextPrinter {
-    async fn from_config(config: &ContextPrinterConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: ContextPrinterConfig) -> anyhow::Result<Self> {
         let delay = match config.delay {
-            Some(ref period) => period.to_owned().into(),
+            Some(period) => period.into(),
             None => Duration::from_micros(0),
         };
-        let interval = config.interval.to_owned();
         Ok(ContextPrinter {
-            interval: tokio::time::interval(interval.into()),
+            interval: tokio::time::interval(config.interval.into()),
             delay: delay,
             contexts: HashMap::new(),
         })
@@ -272,4 +273,8 @@ impl StoreContext<ContextPrinterConfig> for ContextPrinter {
         }
         Ok(())
     }
+}
+pub trait HasContext {
+    fn get_name(&self) -> String;
+    fn get_context(&self) -> Arc<Context>;
 }

@@ -1,7 +1,6 @@
-use crate::{ConfigInto, Context, FromConfig, Result};
+use crate::{ConfigInto, FromConfig, HasContext, Result};
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::mpsc::error::SendError;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::task::JoinHandle;
@@ -18,11 +17,6 @@ where
         txs: Vec<Sender<U>>,
         mut rx: Option<Receiver<T>>,
     ) -> Result<()>;
-}
-
-pub trait HasContext {
-    fn get_name(&self) -> String;
-    fn get_context(&self) -> Arc<Context>;
 }
 
 // Sender Operations

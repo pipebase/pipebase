@@ -23,10 +23,8 @@ pub struct RedisUnorderedGroupAddAggregator {
 
 #[async_trait]
 impl FromConfig<RedisUnorderedGroupAddAggregatorConfig> for RedisUnorderedGroupAddAggregator {
-    async fn from_config(config: &RedisUnorderedGroupAddAggregatorConfig) -> anyhow::Result<Self> {
-        Ok(RedisUnorderedGroupAddAggregator {
-            url: config.url.to_owned(),
-        })
+    async fn from_config(config: RedisUnorderedGroupAddAggregatorConfig) -> anyhow::Result<Self> {
+        Ok(RedisUnorderedGroupAddAggregator { url: config.url })
     }
 }
 
@@ -44,7 +42,7 @@ where
     }
 
     fn group_table(&self) -> anyhow::Result<RedisGroupTable<HashMap<K, V>>> {
-        RedisGroupTable::new(&self.url, HashMap::new())
+        RedisGroupTable::new(self.url.to_owned(), HashMap::new())
     }
 }
 

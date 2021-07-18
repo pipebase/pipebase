@@ -25,7 +25,7 @@ pub struct DefaultHashSelect {}
 
 #[async_trait]
 impl FromConfig<DefaultHashSelectConfig> for DefaultHashSelect {
-    async fn from_config(_config: &DefaultHashSelectConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: DefaultHashSelectConfig) -> anyhow::Result<Self> {
         Ok(DefaultHashSelect {})
     }
 }

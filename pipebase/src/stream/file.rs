@@ -62,9 +62,9 @@ impl FileStreamReader for FileSplitReader {
 
 #[async_trait]
 impl FromConfig<FileSplitReaderConfig> for FileSplitReader {
-    async fn from_config(config: &FileSplitReaderConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: FileSplitReaderConfig) -> anyhow::Result<Self> {
         Ok(FileSplitReader {
-            delimiter: config.delimiter.to_owned(),
+            delimiter: config.delimiter,
             tx: None,
         })
     }
@@ -142,7 +142,7 @@ pub struct FileLineReader {
 
 #[async_trait]
 impl FromConfig<FileLineReaderConfig> for FileLineReader {
-    async fn from_config(_config: &FileLineReaderConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: FileLineReaderConfig) -> anyhow::Result<Self> {
         Ok(FileLineReader { tx: None })
     }
 }

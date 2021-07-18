@@ -65,7 +65,7 @@ impl TopAggregator {
 
 #[async_trait]
 impl FromConfig<TopAggregatorConfig> for TopAggregator {
-    async fn from_config(config: &TopAggregatorConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: TopAggregatorConfig) -> anyhow::Result<Self> {
         Ok(TopAggregator {
             n: config.n,
             desc: config.desc,

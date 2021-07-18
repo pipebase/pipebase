@@ -24,7 +24,7 @@ pub struct Printer {}
 
 #[async_trait]
 impl FromConfig<PrinterConfig> for Printer {
-    async fn from_config(_config: &PrinterConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: PrinterConfig) -> anyhow::Result<Self> {
         Ok(Printer {})
     }
 }

@@ -4,28 +4,7 @@ use std::time::Duration;
 use std::u128;
 use tokio::time::{sleep, Interval};
 
-use crate::{ConfigInto, FromConfig, FromPath, Poll};
-
-#[derive(Clone, Deserialize)]
-pub enum Period {
-    Millis(u64),
-    Secs(u64),
-    Minutes(u64),
-    Hours(u64),
-    Days(u64),
-}
-
-impl From<Period> for Duration {
-    fn from(period: Period) -> Self {
-        match period {
-            Period::Millis(m) => Duration::from_millis(m),
-            Period::Secs(s) => Duration::from_secs(s),
-            Period::Minutes(m) => Duration::from_secs(m * 60),
-            Period::Hours(h) => Duration::from_secs(h * 3600),
-            Period::Days(d) => Duration::from_secs(d * 3600 * 3600),
-        }
-    }
-}
+use crate::{ConfigInto, FromConfig, FromPath, Period, Poll};
 
 #[derive(Deserialize)]
 pub struct TimerConfig {
@@ -51,14 +30,13 @@ pub struct Timer {
 
 #[async_trait]
 impl FromConfig<TimerConfig> for Timer {
-    async fn from_config(config: &TimerConfig) -> anyhow::Result<Timer> {
+    async fn from_config(config: TimerConfig) -> anyhow::Result<Timer> {
         let delay = match config.delay {
-            Some(ref period) => period.to_owned().into(),
+            Some(period) => period.into(),
             None => Duration::from_micros(0),
         };
-        let interval = config.interval.to_owned();
         Ok(Timer {
-            interval: tokio::time::interval(interval.into()),
+            interval: tokio::time::interval(config.interval.into()),
             delay: delay,
             ticks: config.ticks,
             tick: 0,

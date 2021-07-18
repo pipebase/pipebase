@@ -24,7 +24,7 @@ pub struct JsonSer {}
 
 #[async_trait]
 impl FromConfig<JsonSerConfig> for JsonSer {
-    async fn from_config(_config: &JsonSerConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: JsonSerConfig) -> anyhow::Result<Self> {
         Ok(JsonSer {})
     }
 }
@@ -68,7 +68,7 @@ pub struct JsonDeser {}
 
 #[async_trait]
 impl FromConfig<JsonDeserConfig> for JsonDeser {
-    async fn from_config(_config: &JsonDeserConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: JsonDeserConfig) -> anyhow::Result<Self> {
         Ok(JsonDeser {})
     }
 }

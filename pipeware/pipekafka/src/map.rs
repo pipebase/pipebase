@@ -22,7 +22,7 @@ impl ConfigInto<KafkaJsonRecordConverter> for KafkaJsonRecordConverterConfig {}
 
 #[async_trait]
 impl FromConfig<KafkaJsonRecordConverterConfig> for KafkaJsonRecordConverter {
-    async fn from_config(_config: &KafkaJsonRecordConverterConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: KafkaJsonRecordConverterConfig) -> anyhow::Result<Self> {
         Ok(KafkaJsonRecordConverter {})
     }
 }

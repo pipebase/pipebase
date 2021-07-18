@@ -20,9 +20,9 @@ pub struct RedisWriter {
 
 #[async_trait]
 impl FromConfig<RedisWriterConfig> for RedisWriter {
-    async fn from_config(config: &RedisWriterConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: RedisWriterConfig) -> anyhow::Result<Self> {
         Ok(RedisWriter {
-            client: RedisClient::new(&config.url)?,
+            client: RedisClient::new(config.url)?,
         })
     }
 }

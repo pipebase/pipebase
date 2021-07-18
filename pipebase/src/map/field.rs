@@ -25,7 +25,7 @@ pub struct FieldVisit {}
 
 #[async_trait]
 impl FromConfig<FieldVisitConfig> for FieldVisit {
-    async fn from_config(_config: &FieldVisitConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: FieldVisitConfig) -> anyhow::Result<Self> {
         Ok(FieldVisit {})
     }
 }

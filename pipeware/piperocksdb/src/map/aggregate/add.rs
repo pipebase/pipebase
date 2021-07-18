@@ -23,12 +23,8 @@ pub struct RocksDBUnorderedGroupAddAggregator {
 
 #[async_trait]
 impl FromConfig<RocksDBUnorderedGroupAddAggregatorConfig> for RocksDBUnorderedGroupAddAggregator {
-    async fn from_config(
-        config: &RocksDBUnorderedGroupAddAggregatorConfig,
-    ) -> anyhow::Result<Self> {
-        Ok(RocksDBUnorderedGroupAddAggregator {
-            path: config.path.to_owned(),
-        })
+    async fn from_config(config: RocksDBUnorderedGroupAddAggregatorConfig) -> anyhow::Result<Self> {
+        Ok(RocksDBUnorderedGroupAddAggregator { path: config.path })
     }
 }
 

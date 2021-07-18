@@ -29,7 +29,7 @@ pub struct Echo {}
 
 #[async_trait]
 impl FromConfig<EchoConfig> for Echo {
-    async fn from_config(_config: &EchoConfig) -> anyhow::Result<Self> {
+    async fn from_config(_config: EchoConfig) -> anyhow::Result<Self> {
         Ok(Echo {})
     }
 }

@@ -21,7 +21,7 @@ pub struct WarpIngestionServer {
 
 #[async_trait]
 impl FromConfig<WarpIngestionServerConfig> for WarpIngestionServer {
-    async fn from_config(config: &WarpIngestionServerConfig) -> anyhow::Result<Self> {
+    async fn from_config(config: WarpIngestionServerConfig) -> anyhow::Result<Self> {
         let ip_port = format!("{}:{}", config.ip, config.port);
         let socket: SocketAddr = ip_port.parse()?;
         Ok(WarpIngestionServer {
