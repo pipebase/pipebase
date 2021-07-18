@@ -23,8 +23,7 @@ Run app
 ```
 ./ingest_redis
 ```
-### Ingest Data and Monitor Pipe 
-Open new terinal and ingest sample data
+### Ingest Data (terminal 3)
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \

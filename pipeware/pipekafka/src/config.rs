@@ -1,4 +1,5 @@
 use crate::constants::*;
+use pipebase::Period;
 use rdkafka::{
     client::ClientContext,
     config::{ClientConfig, FromClientConfigAndContext, RDKafkaLogLevel},
@@ -61,6 +62,37 @@ impl From<KafkaConsumerClientConfig> for HashMap<&str, String> {
         match config.enable_auto_commit {
             Some(ref enable_auto_commit) => {
                 params.insert(ENABLE_AUTO_COMMIT, format!("{}", enable_auto_commit))
+            }
+            None => None,
+        };
+        params
+    }
+}
+
+/// Kafka client config for producer
+#[derive(Clone, Deserialize)]
+pub struct KafkaProducerClientConfig {
+    topic: String,
+    queue_timeout: Period,
+    message_timeout_ms: Option<u32>,
+}
+
+impl KafkaProducerClientConfig {
+    pub fn get_topic(&self) -> &str {
+        self.topic.as_str()
+    }
+
+    pub fn get_queue_timeout(&self) -> Period {
+        self.queue_timeout.to_owned()
+    }
+}
+
+impl From<KafkaProducerClientConfig> for HashMap<&str, String> {
+    fn from(config: KafkaProducerClientConfig) -> Self {
+        let mut params: HashMap<&str, String> = HashMap::new();
+        match config.message_timeout_ms {
+            Some(ref message_timeout_ms) => {
+                params.insert(MESSAGE_TIMEOUT_MS, format!("{}", message_timeout_ms))
             }
             None => None,
         };

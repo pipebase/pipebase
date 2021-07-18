@@ -1,0 +1,66 @@
+name: ingest_kafka
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+  - package: pipekafka
+    path: ../../../pipeware/pipekafka
+    modules: ["pipekafka::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize", "serde::Serialize"]
+  - package: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      ty:
+        Vec: 
+          ty: UnsignedByte
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty: 
+        Object: Record
+    upstreams: [ingestion_server]
+  - name: record_converter
+    ty: Mapper
+    config:
+      ty: KafkaJsonRecordConverterConfig
+    upstreams: [json]
+    output:
+      ty:
+        Pair:
+          lty: String
+          rty: 
+            Vec:
+              ty:
+                UnsignedByte
+  - name: kafka_producer
+    ty: Exporter
+    config:
+      ty: KafkaProducerConfig
+      path: catalogs/kafka_producer.yml
+    upstreams: [record_converter]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, Serialize, GroupAs]
+    fields:
+      - name: key
+        ty: String
+        metas:
+          - tag: Group
+      - name: value
+        ty: UnsignedInteger

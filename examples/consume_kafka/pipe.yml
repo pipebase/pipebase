@@ -1,4 +1,4 @@
-name: ingest_redis
+name: consume_kafka
 dependencies:
   - package: pipebase
     path: ../../../pipebase
