@@ -1,0 +1,28 @@
+name: log_kube
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+  - package: pipekafka
+    path: ../../../pipeware/pipekafka
+    modules: ["pipekafka::*"]
+  - package: pipekube
+    path: ../../../pipeware/pipekube
+    modules: ["pipekube::*"]
+pipes:
+  - name: kube_logger
+    ty: Listener
+    config:
+      ty: KubeLogReaderConfig
+      path: catalogs/kube_log_reader.yml
+    output: 
+      ty:
+        Pair:
+          lty: String
+          rty: String
+  - name: kafka_producer
+    ty: Exporter
+    config:
+      ty: KafkaProducerConfig
+      path: catalogs/kafka_producer.yml
+    upstreams: [kube_logger]

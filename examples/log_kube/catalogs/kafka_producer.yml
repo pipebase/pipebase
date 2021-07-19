@@ -1,0 +1,7 @@
+base:
+  bootstrap_servers: localhost:9092
+producer:
+  topic: kube
+  queue_timeout:
+    Secs: 0
+  message_timeout_ms: 5000
