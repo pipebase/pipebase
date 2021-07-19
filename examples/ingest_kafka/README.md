@@ -26,7 +26,7 @@ cargo pipe build -o ingest_kafka -r
 ```
 Run app
 ```
-./producer_kafka
+./ingest_kafka
 ```
 ### Ingest data (terminal 3)
 ```

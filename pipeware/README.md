@@ -6,6 +6,7 @@ Pipes
 | --------- | -------------- | -------------- | ------- |
 | `Listener`  | WarpIngestionServer | doc | `ingest_*` |
 | `Listener` | KafkaConsumer | doc | [`consume_kafka`] |
+| `Listener` | KubeLogReader | doc | [`log_kube`] |
 | `Mapper` | JsonSer | doc |  |
 | `Mapper` | JsonDeser | doc | `ingest_*` |
 | `Mapper` | RedisUnorderedGroupAddAggregator | doc | [`group_sum_redis`] |
@@ -26,3 +27,4 @@ Pipes
 [`relay`]: https://github.com/pipebase/pipebase/tree/main/examples/relay
 [`consume_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_kafka
 [`ingest_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_kafka
+[`log_kube`]: https://github.com/pipebase/pipebase/tree/main/examples/log_kube
