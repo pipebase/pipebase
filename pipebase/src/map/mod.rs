@@ -1,4 +1,5 @@
 mod aggregate;
+mod conversion;
 mod echo;
 mod field;
 mod file;
@@ -8,6 +9,7 @@ mod runtime;
 mod split;
 
 pub use aggregate::*;
+pub use conversion::*;
 pub use echo::*;
 pub use field::*;
 pub use file::*;
