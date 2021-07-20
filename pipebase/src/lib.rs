@@ -7,3 +7,5 @@ pub mod poll;
 pub mod prelude;
 pub mod select;
 pub mod stream;
+
+pub use pipederive::main;

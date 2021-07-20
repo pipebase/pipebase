@@ -2,7 +2,7 @@ name: consume_kafka
 dependencies:
   - package: pipebase
     path: ../../../pipebase
-    modules: ["pipebase::*"]
+    modules: ["pipebase::prelude::*"]
   - package: pipekafka
     path: ../../../pipeware/pipekafka
     modules: ["pipekafka::*"]

@@ -2,7 +2,7 @@ name: sender
 dependencies:
   - package: pipebase
     path: ../../../../pipebase
-    modules: ["pipebase::*"]
+    modules: ["pipebase::prelude::*"]
   - package: pipereqwest
     path: ../../../../pipeware/pipereqwest
     modules: ["pipereqwest::*"]

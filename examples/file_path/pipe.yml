@@ -2,7 +2,7 @@ name: print_timer
 dependencies:
   - package: pipebase
     path: ../../../pipebase
-    modules: ["pipebase::*"]
+    modules: ["pipebase::prelude::*"]
 pipes:
   - name: file_path_visitor
     ty: Listener

@@ -2,7 +2,7 @@ name: ingest_redis
 dependencies:
   - package: pipebase
     path: ../../../pipebase
-    modules: ["pipebase::*"]
+    modules: ["pipebase::prelude::*"]
   - package: piperedis
     path: ../../../pipeware/piperedis
     modules: ["piperedis::*"]
