@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 use pipebase::{ConfigInto, FromConfig, FromPath, Map};
-use serde::Deserialize;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::path::Path;
 
 #[derive(Deserialize)]
