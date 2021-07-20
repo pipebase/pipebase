@@ -255,3 +255,28 @@ pub fn get_last_stmt_span(function: &ItemFn) -> (Span, Span) {
 pub fn get_meta(attribute: &Attribute) -> Meta {
     attribute.parse_meta().unwrap()
 }
+
+pub fn resolve_data(
+    data: &Data,
+    input_type_token: &TokenStream,
+    resolve: &dyn Fn(&Field, &TokenStream) -> TokenStream,
+) -> TokenStream {
+    match *data {
+        Data::Struct(ref data) => match data.fields {
+            Fields::Named(ref fields) => resolve_fields_named(fields, input_type_token, resolve),
+            Fields::Unnamed(_) | Fields::Unit => unimplemented!(),
+        },
+        Data::Enum(_) | Data::Union(_) => unimplemented!(),
+    }
+}
+
+fn resolve_fields_named(
+    fields: &FieldsNamed,
+    input_type_token: &TokenStream,
+    resolve: &dyn Fn(&Field, &TokenStream) -> TokenStream,
+) -> TokenStream {
+    let resolved_fields = fields.named.iter().map(|f| resolve(f, input_type_token));
+    quote! {
+        #(#resolved_fields),*
+    }
+}

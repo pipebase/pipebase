@@ -134,10 +134,7 @@ where
     U: Project<T>,
 {
     fn project(from: &Vec<T>) -> Vec<U> {
-        let mut to: Vec<U> = vec![];
-        for item in from {
-            to.push(U::project(item))
-        }
+        let to: Vec<U> = from.into_iter().map(|item| U::project(item)).collect();
         to
     }
 }
@@ -153,7 +150,7 @@ mod tests {
         pub r1: i32,
     }
 
-    #[derive(Clone, Debug, Project)]
+    #[derive(Debug, Project)]
     #[project(input = "self::Record")]
     struct SwappedRecord {
         #[project(from = "r1")]
@@ -163,7 +160,7 @@ mod tests {
     }
 
     #[test]
-    fn test_reverse() {
+    fn test_swap() {
         let origin = Record { r0: 0, r1: 1 };
         let swapped: SwappedRecord = Project::project(&origin);
         assert_eq!(1, swapped.r0);
