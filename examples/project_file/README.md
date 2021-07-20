@@ -8,10 +8,10 @@ Build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
-cargo pipe build -o project -r
+cargo pipe build -o project_file -r
 ```
 Run app
 ```
-./project
+./project_file
 [Record { key: "foo", value: 3.0 }, Record { key: "bar", value: 3.0 }]
 ```

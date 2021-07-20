@@ -131,17 +131,17 @@ fn handle_project_expr(
 ) -> TokenStream {
     let input_alias_ident = Ident::new(input_alias, Span::call_site());
     let expression: TokenStream = expr.parse().unwrap();
-    let input_type_ident = match is_move {
-        true => input_type_ident.to_owned(),
-        false => quote! { &#input_type_ident },
-    };
     let expression_closure = quote! {
-        |#input_alias_ident: #input_type_ident| -> #field_type { #expression }
+        |#input_alias_ident: &#input_type_ident| -> #field_type { #expression }
+    };
+    let from_token: TokenStream = match is_move {
+        true => "&from".parse().expect("parse token '&from' failure"),
+        false => "from".parse().expect("parse token 'from' failure"),
     };
     quote_spanned! {field_span =>
         #field_ident: {
             let eval = #expression_closure;
-            eval(from)
+            eval(#from_token)
         }
     }
 }

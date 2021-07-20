@@ -382,7 +382,7 @@ mod move_project_tests {
     struct SwappedKeyValueRecord {
         #[project(from = "value")]
         key: i32,
-        #[project(from = "key")]
+        #[project(alias = "o", expr = "o.key.clone()")]
         value: String,
     }
 
