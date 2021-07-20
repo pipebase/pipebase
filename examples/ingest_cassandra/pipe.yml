@@ -2,7 +2,7 @@ name: ingest_cassandra
 dependencies:
   - package: pipebase
     path: ../../../pipebase
-    modules: ["pipebase::*"]
+    modules: ["pipebase::prelude::*"]
   - package: pipejson
     path: ../../../pipeware/pipejson
     modules: ["pipejson::*"]

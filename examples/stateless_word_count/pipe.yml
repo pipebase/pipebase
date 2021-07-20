@@ -2,7 +2,7 @@ name: stateless_word_count
 dependencies:
   - package: pipebase
     path: ../../../pipebase
-    modules: ["pipebase::*"]
+    modules: ["pipebase::prelude::*"]
 pipes:
   - name: file_path_visitor
     ty: Listener

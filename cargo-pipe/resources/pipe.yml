@@ -2,7 +2,7 @@ name: print_timer_tick
 dependencies:
   - package: pipebase
     path: ../../../pipebase
-    modules: ["pipebase::prelude*"]
+    modules: ["pipebase::prelude::*"]
 pipes:
   - name: timer1
     ty: Poller
