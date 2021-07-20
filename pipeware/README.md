@@ -9,6 +9,8 @@ Pipes
 | `Listener` | KubeLogReader | doc | [`log_kube`] |
 | `Mapper` | JsonSer | doc |  |
 | `Mapper` | JsonDeser | doc | `ingest_*` |
+| `Mapper` | CsvSer | doc | [`convert_csv`] |
+| `Mapper` | CsvDeser | doc |  |
 | `Mapper` | RedisUnorderedGroupAddAggregator | doc | [`group_sum_redis`] |
 | `Mapper` | RocksDBUnorderedGroupAddAggregator | doc | [`group_sum_rocksdb`] |
 | `Mapper` | KafkaJsonRecordConverter | doc | [`ingest_kafka`] |
@@ -28,3 +30,4 @@ Pipes
 [`consume_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_kafka
 [`ingest_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_kafka
 [`log_kube`]: https://github.com/pipebase/pipebase/tree/main/examples/log_kube
+[`convert_csv`]: https://github.com/pipebase/pipebase/tree/main/examples/convert_csv
