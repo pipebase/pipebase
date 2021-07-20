@@ -7,7 +7,7 @@ pub use set::*;
 
 use std::iter::FromIterator;
 
-use crate::FromConfig;
+use crate::common::FromConfig;
 
 use async_trait::async_trait;
 use tokio::time::Interval;

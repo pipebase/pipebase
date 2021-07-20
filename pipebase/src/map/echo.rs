@@ -1,8 +1,7 @@
 use std::fmt::Debug;
 
-use crate::{ConfigInto, FromConfig, FromPath};
-
 use super::Map;
+use crate::common::{ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 use log::info;
 use serde::Deserialize;
@@ -50,7 +49,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::prelude::*;
     use tokio::sync::mpsc::Sender;
 
     #[derive(Clone, Debug)]

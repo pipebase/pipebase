@@ -5,7 +5,10 @@ use kube::{
     api::{Api, LogParams},
     Client,
 };
-use pipebase::{ConfigInto, FromConfig, FromPath, Listen, Pair};
+use pipebase::{
+    common::{ConfigInto, FromConfig, FromPath, Pair},
+    listen::Listen,
+};
 use serde::Deserialize;
 use tokio::sync::mpsc::Sender;
 

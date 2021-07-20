@@ -1,6 +1,9 @@
 use crate::client::RedisClient;
 use async_trait::async_trait;
-use pipebase::{ConfigInto, Export, FromConfig, FromPath, LeftRight};
+use pipebase::{
+    common::{ConfigInto, FromConfig, FromPath, LeftRight},
+    export::Export,
+};
 use redis::ToRedisArgs;
 use serde::Deserialize;
 

@@ -1,14 +1,14 @@
-use crate::{
-    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles, Context,
-    Result, State,
-};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc::{channel, error::SendError, Receiver, Sender};
 use tokio::task::JoinHandle;
 
-use crate::{ConfigInto, HasContext, Pipe, Stream};
+use super::Stream;
+use crate::common::{
+    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
+    ConfigInto, Context, HasContext, Pipe, Result, State,
+};
 
 pub struct Streamer<'a> {
     name: &'a str,

@@ -140,7 +140,7 @@ impl App {
                 Some("0.1.0".to_owned()),
                 None,
                 None,
-                vec!["pipebase::*".to_owned()],
+                vec!["pipebase::prelude::*".to_owned()],
             ),
             PackageDependency::new(
                 "tokio".to_owned(),

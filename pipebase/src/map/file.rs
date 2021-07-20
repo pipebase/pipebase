@@ -1,7 +1,8 @@
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 
-use crate::{ConfigInto, FromConfig, FromPath, Map, Result};
+use super::Map;
+use crate::common::{ConfigInto, FromConfig, FromPath, Result};
 use async_trait::async_trait;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
@@ -120,7 +121,7 @@ mod file_rw_tests {
     use std::fs;
     use std::path::PathBuf;
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[tokio::test]
     async fn test_file_rw() {

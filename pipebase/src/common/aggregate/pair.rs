@@ -1,4 +1,5 @@
-use crate::{AggregateAs, GroupAs, Project};
+use super::{AggregateAs, GroupAs};
+use crate::common::Project;
 use std::{
     cmp::{Ord, Ordering, PartialOrd},
     fmt::Debug,
@@ -148,7 +149,7 @@ where
 #[cfg(test)]
 mod left_right_tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(LeftRight)]
     struct Record {
@@ -171,6 +172,8 @@ mod left_right_tests {
 
 #[cfg(test)]
 mod pair_tests {
+
+    use crate::prelude::*;
 
     #[test]
     fn test_right_ordered_pair_cmp() {

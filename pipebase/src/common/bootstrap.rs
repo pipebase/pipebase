@@ -7,7 +7,7 @@ pub trait Bootstrap {
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(Bootstrap)]
     #[pipe(

@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use std::{collections::HashMap, net::SocketAddr};
 
-use pipebase::{ConfigInto, FromConfig, FromPath, PipeContext, StoreContext};
+use pipebase::common::{ConfigInto, Context, FromConfig, FromPath, PipeContext, StoreContext};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -22,7 +22,7 @@ impl ConfigInto<WarpContextServer> for WarpContextServerConfig {}
 
 pub struct WarpContextServer {
     socket: SocketAddr,
-    contexts: HashMap<String, std::sync::Arc<pipebase::Context>>,
+    contexts: HashMap<String, std::sync::Arc<Context>>,
 }
 
 #[async_trait]
@@ -39,11 +39,11 @@ impl FromConfig<WarpContextServerConfig> for WarpContextServer {
 
 #[async_trait]
 impl StoreContext<WarpContextServerConfig> for WarpContextServer {
-    fn store_context(&mut self, pipe_name: String, context: std::sync::Arc<pipebase::Context>) {
+    fn store_context(&mut self, pipe_name: String, context: std::sync::Arc<Context>) {
         self.contexts.insert(pipe_name, context);
     }
 
-    fn load_context(&self, pipe_name: &str) -> Option<&std::sync::Arc<pipebase::Context>> {
+    fn load_context(&self, pipe_name: &str) -> Option<&std::sync::Arc<Context>> {
         self.contexts.get(pipe_name)
     }
 
@@ -68,11 +68,11 @@ impl WarpContextServer {
 
 #[derive(Clone)]
 pub struct PipeContextRepository {
-    contexts: HashMap<String, std::sync::Arc<pipebase::Context>>,
+    contexts: HashMap<String, std::sync::Arc<Context>>,
 }
 
 impl PipeContextRepository {
-    fn new(contexts: HashMap<String, std::sync::Arc<pipebase::Context>>) -> Self {
+    fn new(contexts: HashMap<String, std::sync::Arc<Context>>) -> Self {
         PipeContextRepository { contexts }
     }
 

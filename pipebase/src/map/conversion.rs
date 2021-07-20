@@ -1,4 +1,4 @@
-use crate::{ConfigInto, Convert, FromConfig, FromPath};
+use crate::common::{ConfigInto, Convert, FromConfig, FromPath};
 
 use super::Map;
 use async_trait::async_trait;

@@ -1,9 +1,9 @@
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 
-use crate::{
-    Aggregate, AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Map,
-    Pair,
+use super::Map;
+use crate::common::{
+    Aggregate, AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Pair,
 };
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -62,7 +62,7 @@ where
 
 #[cfg(test)]
 mod sum_aggregator_tests {
-    use crate::*;
+    use crate::prelude::*;
 
     #[tokio::test]
     async fn test_sum_aggregator() {
@@ -110,7 +110,7 @@ mod sum_aggregator_tests {
 #[cfg(test)]
 mod count32_tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(Debug, Clone, AggregateAs)]
     #[agg(count32)]
@@ -133,7 +133,7 @@ mod count32_tests {
 #[cfg(test)]
 mod test_avg {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(Clone, Debug, AggregateAs)]
     struct Record {
@@ -234,7 +234,7 @@ where
 
 #[cfg(test)]
 mod test_group_sum_aggregator {
-    use crate::*;
+    use crate::prelude::*;
 
     #[tokio::test]
     async fn test_u32_group_sum_aggregator() {
@@ -307,7 +307,7 @@ mod test_group_sum_aggregator {
 #[cfg(test)]
 mod unordered_group_avg_f32_tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(Clone, Debug, AggregateAs, GroupAs)]
     struct Record {
@@ -364,7 +364,7 @@ mod unordered_group_avg_f32_tests {
 #[cfg(test)]
 mod group_count32_tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(Debug, Clone, GroupAs, AggregateAs)]
     #[agg(count32)]
@@ -509,7 +509,7 @@ where
 
 #[cfg(test)]
 mod test_ordered_group_aggregator {
-    use crate::*;
+    use crate::prelude::*;
 
     #[tokio::test]
     async fn test_word_group_count_aggregate() {

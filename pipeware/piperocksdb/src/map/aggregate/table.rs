@@ -1,6 +1,6 @@
 use crate::byteops::{FromBytes, IntoBytes};
 use crate::client::RocksDBClient;
-use pipebase::GroupTable;
+use pipebase::common::GroupTable;
 pub struct RocksDBGroupTable<C> {
     cache: C,
     client: RocksDBClient,

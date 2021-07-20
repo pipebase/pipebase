@@ -6,7 +6,7 @@ pub use timer::*;
 
 use async_trait::async_trait;
 
-use crate::FromConfig;
+use crate::common::FromConfig;
 
 #[async_trait]
 pub trait Poll<T, C>: Send + Sync + FromConfig<C> {

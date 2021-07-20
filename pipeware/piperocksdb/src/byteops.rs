@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use pipebase::{Averagef32, Count32};
+use pipebase::common::{Averagef32, Count32};
 use std::io::Cursor;
 
 pub trait FromBytes: Sized {

@@ -24,7 +24,7 @@ pub trait FieldAccept<F: Clone> {
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(FieldAccept)]
     struct Records {

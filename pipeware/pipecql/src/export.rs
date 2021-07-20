@@ -1,6 +1,9 @@
 use crate::client::CqlClient;
 use async_trait::async_trait;
-use pipebase::{ConfigInto, Export, FromConfig, FromPath, Render};
+use pipebase::{
+    common::{ConfigInto, FromConfig, FromPath, Render},
+    export::Export,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize)]

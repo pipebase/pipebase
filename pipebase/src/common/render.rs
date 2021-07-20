@@ -12,7 +12,7 @@ impl Render for String {
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(Render)]
     #[render(template = "key = {}, value plus one = {}")]

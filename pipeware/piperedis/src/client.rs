@@ -1,4 +1,4 @@
-use pipebase::LeftRight;
+use pipebase::common::LeftRight;
 use redis::{Client, Commands, Connection, FromRedisValue, RedisResult, ToRedisArgs};
 
 pub struct RedisClient {

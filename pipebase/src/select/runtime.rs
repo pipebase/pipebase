@@ -1,9 +1,10 @@
 use tokio::sync::mpsc::error::SendError;
 use tokio::task::JoinHandle;
 
-use crate::{
+use super::Select;
+use crate::common::{
     filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, Context, HasContext, Pipe, Result, Select, State,
+    ConfigInto, Context, HasContext, Pipe, Result, State,
 };
 use async_trait::async_trait;
 use std::collections::HashMap;

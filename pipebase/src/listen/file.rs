@@ -1,4 +1,3 @@
-use crate::{Listen, Period};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::fs::{self, DirEntry};
@@ -8,7 +7,8 @@ use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::time::sleep;
 
-use crate::{ConfigInto, FromConfig, FromPath};
+use super::Listen;
+use crate::common::{ConfigInto, FromConfig, FromPath, Period};
 
 #[async_trait]
 pub trait ListFile {
@@ -136,7 +136,7 @@ impl Listen<PathBuf, LocalFilePathVisitorConfig> for LocalFilePathVisitor {
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::prelude::*;
     use std::collections::HashSet;
     use std::path::PathBuf;
 

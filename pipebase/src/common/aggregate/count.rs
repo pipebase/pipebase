@@ -1,4 +1,4 @@
-use crate::AggregateAs;
+use super::AggregateAs;
 use std::{cmp::Ordering, fmt::Debug};
 
 #[derive(Clone, Debug, Eq)]

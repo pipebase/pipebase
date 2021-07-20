@@ -1,4 +1,5 @@
-use crate::{ConfigInto, FromConfig, FromPath, Map, Split};
+use super::Map;
+use crate::common::{ConfigInto, FromConfig, FromPath, Split};
 use async_trait::async_trait;
 use serde::Deserialize;
 
@@ -50,7 +51,7 @@ impl Map<String, Vec<String>, StringSplitterConfig> for StringSplitter {
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::prelude::*;
     use tokio::sync::mpsc::Sender;
 
     async fn populate_records(tx: Sender<String>, records: Vec<String>) {

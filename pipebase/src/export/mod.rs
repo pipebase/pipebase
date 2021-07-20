@@ -6,7 +6,7 @@ pub use runtime::*;
 
 use async_trait::async_trait;
 
-use crate::FromConfig;
+use crate::common::FromConfig;
 
 #[async_trait]
 pub trait Export<T, C>: Send + Sync + FromConfig<C> {

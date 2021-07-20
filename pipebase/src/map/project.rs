@@ -1,6 +1,5 @@
-use crate::{ConfigInto, FromConfig, FromPath, Project};
-
 use super::Map;
+use crate::common::{ConfigInto, FromConfig, FromPath, Project};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::path::Path;
@@ -48,7 +47,7 @@ where
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(Debug)]
     struct Record {

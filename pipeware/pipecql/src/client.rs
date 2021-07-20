@@ -1,4 +1,4 @@
-use pipebase::Render;
+use pipebase::common::Render;
 use scylla::transport::session::Session;
 use scylla::SessionBuilder;
 

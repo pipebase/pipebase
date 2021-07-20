@@ -1,4 +1,5 @@
-use crate::{ConfigInto, FromConfig, FromPath, Select};
+use super::Select;
+use crate::common::{ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::collections::hash_map::DefaultHasher;
@@ -47,7 +48,7 @@ impl<T: Hash> Select<T, DefaultHashSelectConfig> for DefaultHashSelect {
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::prelude::*;
     use tokio::sync::mpsc::{Receiver, Sender};
 
     #[derive(Clone, Debug, HashedBy)]
