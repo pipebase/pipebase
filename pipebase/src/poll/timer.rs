@@ -4,7 +4,8 @@ use std::time::Duration;
 use std::u128;
 use tokio::time::{sleep, Interval};
 
-use crate::{ConfigInto, FromConfig, FromPath, Period, Poll};
+use super::Poll;
+use crate::common::{ConfigInto, FromConfig, FromPath, Period};
 
 #[derive(Deserialize)]
 pub struct TimerConfig {
@@ -67,7 +68,7 @@ impl Poll<u128, TimerConfig> for Timer {
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::prelude::*;
     use tokio::sync::mpsc::Receiver;
 
     async fn on_receive(rx: &mut Receiver<u128>, ticks: u128) {

@@ -1,7 +1,9 @@
 use crate::record::{IntoKafkaRecord, KafkaJsonRecordConverter};
 use async_trait::async_trait;
-use pipebase::{ConfigInto, FromConfig, FromPath, Map};
-use pipebase::{GroupAs, Pair};
+use pipebase::{
+    common::{ConfigInto, FromConfig, FromPath, GroupAs, Pair},
+    map::Map,
+};
 use rdkafka::message::ToBytes;
 use serde::{Deserialize, Serialize};
 

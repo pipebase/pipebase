@@ -4,7 +4,8 @@ use std::{
     path::Path,
 };
 
-use crate::{ConfigInto, FromConfig, FromPath, Stream};
+use super::Stream;
+use crate::common::{ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 use serde::Deserialize;
 use tokio::sync::mpsc::Sender;
@@ -92,13 +93,13 @@ mod file_split_streamer_tests {
 
     use std::path::PathBuf;
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[tokio::test]
     async fn test_file_split_streamer() {
         let (tx0, rx0) = channel!(PathBuf, 1024);
         let (tx1, mut rx1) = channel!(Vec<u8>, 1024);
-        let mut pipe = Streamer::new("file_space_split_streamer");
+        let mut pipe = streamer!("file_space_split_streamer");
         let f0 = populate_records(
             tx0,
             vec![PathBuf::from("resources/test_file_stream/test_file_0.txt")],
@@ -190,7 +191,7 @@ mod file_line_streamer_tests {
 
     use std::path::PathBuf;
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[tokio::test]
     async fn test_file_line_streamer() {

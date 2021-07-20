@@ -1,6 +1,7 @@
 use std::{fmt::Debug, iter::FromIterator};
 
-use crate::{ConfigInto, FromConfig, FromPath, Stream};
+use super::Stream;
+use crate::common::{ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 use serde::Deserialize;
 use tokio::sync::mpsc::Sender;
@@ -61,7 +62,7 @@ where
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     use std::collections::HashMap;
 

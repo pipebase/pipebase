@@ -1,6 +1,9 @@
 use crate::config::{create_kafka_client, KafkaClientConfig, KafkaProducerClientConfig};
 use async_trait::async_trait;
-use pipebase::{ConfigInto, Export, FromConfig, FromPath, LeftRight};
+use pipebase::{
+    common::{ConfigInto, FromConfig, FromPath, LeftRight},
+    export::Export,
+};
 use rdkafka::{
     message::ToBytes,
     producer::{DefaultProducerContext, FutureProducer, FutureRecord},

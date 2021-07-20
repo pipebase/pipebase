@@ -1,4 +1,5 @@
-use crate::{Aggregate, AggregateAs, ConfigInto, FromConfig, FromPath, Map};
+use super::Map;
+use crate::common::{Aggregate, AggregateAs, ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 use serde::Deserialize;
 
@@ -113,7 +114,7 @@ where
 #[cfg(test)]
 mod top_aggregator_tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[tokio::test]
     async fn test_top_aggregator() {

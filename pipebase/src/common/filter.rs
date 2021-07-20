@@ -6,7 +6,7 @@ pub trait Filter<Rhs = Self> {
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(Clone, Debug, Filter)]
     #[filter(alias = "r", predicate = "r.r0 + r.r1 < 1")]

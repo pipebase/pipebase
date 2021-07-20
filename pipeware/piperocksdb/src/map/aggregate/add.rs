@@ -2,7 +2,8 @@ use super::table::RocksDBGroupTable;
 use crate::byteops::{FromBytes, IntoBytes};
 use async_trait::async_trait;
 use pipebase::{
-    AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Map, Pair,
+    common::{AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Pair},
+    map::Map,
 };
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -65,7 +66,7 @@ where
 mod rockdb_group_sum_tests {
 
     use crate::*;
-    use pipebase::*;
+    use pipebase::prelude::*;
     use tokio::sync::mpsc::Sender;
 
     #[derive(AggregateAs, GroupAs)]
@@ -150,7 +151,7 @@ mod rockdb_group_sum_tests {
 mod unordered_group_avg_f32_tests {
 
     use crate::*;
-    use pipebase::*;
+    use pipebase::prelude::*;
     use tokio::sync::mpsc::Sender;
 
     #[derive(Clone, Debug, AggregateAs, GroupAs)]
@@ -250,7 +251,7 @@ mod unordered_group_avg_f32_tests {
 mod group_count32_tests {
 
     use crate::*;
-    use pipebase::*;
+    use pipebase::prelude::*;
     use tokio::sync::mpsc::Sender;
 
     #[derive(Debug, Clone, GroupAs, AggregateAs)]

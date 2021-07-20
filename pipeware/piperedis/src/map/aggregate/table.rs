@@ -1,5 +1,5 @@
 use crate::client::RedisClient;
-use pipebase::GroupTable;
+use pipebase::common::GroupTable;
 use redis::{FromRedisValue, ToRedisArgs};
 
 pub struct RedisGroupTable<C> {

@@ -8,7 +8,7 @@ pub use random::*;
 pub use roundrobin::*;
 pub use runtime::*;
 
-use crate::FromConfig;
+use crate::common::FromConfig;
 
 pub trait Select<T, C>: Send + Sync + FromConfig<C> {
     fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize>;

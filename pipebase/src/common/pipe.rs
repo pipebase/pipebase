@@ -1,4 +1,4 @@
-use crate::{ConfigInto, FromConfig, HasContext, Result};
+use super::{ConfigInto, FromConfig, HasContext, Result};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use tokio::sync::mpsc::error::SendError;

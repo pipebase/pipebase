@@ -1,5 +1,5 @@
 use crate::constants::*;
-use pipebase::Period;
+use pipebase::common::Period;
 use rdkafka::{
     client::ClientContext,
     config::{ClientConfig, FromClientConfigAndContext, RDKafkaLogLevel},

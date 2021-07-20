@@ -1,5 +1,5 @@
 use crate::byteops::{FromBytes, IntoBytes};
-use pipebase::LeftRight;
+use pipebase::common::LeftRight;
 use rocksdb::{DBWithThreadMode, SingleThreaded, WriteBatch, DB};
 
 pub struct RocksDBClient {

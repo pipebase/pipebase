@@ -2,7 +2,8 @@ use serde::Deserialize;
 use std::time::Duration;
 use tokio::time::Interval;
 
-use crate::{Bag, Collect, ConfigInto, FromConfig, FromPath};
+use super::Collect;
+use crate::common::{Bag, ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 
 /// Collect items
@@ -88,7 +89,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::prelude::*;
     use tokio::sync::mpsc::Receiver;
 
     #[derive(Clone, Debug)]

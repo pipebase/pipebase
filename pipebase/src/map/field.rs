@@ -1,5 +1,5 @@
 use super::Map;
-use crate::{ConfigInto, FieldAccept, FieldVisitor, FromConfig, FromPath};
+use crate::common::{ConfigInto, FieldAccept, FieldVisitor, FromConfig, FromPath};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::path::Path;
@@ -49,7 +49,7 @@ where
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(FieldAccept)]
     struct Records {

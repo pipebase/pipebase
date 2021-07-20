@@ -1,5 +1,8 @@
 use async_trait::async_trait;
-use pipebase::{ConfigInto, FromConfig, FromPath, Listen};
+use pipebase::{
+    common::{ConfigInto, FromConfig, FromPath},
+    listen::Listen,
+};
 use serde::Deserialize;
 use std::net::SocketAddr;
 use tokio::sync::mpsc::Sender;

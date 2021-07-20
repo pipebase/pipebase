@@ -1,4 +1,5 @@
-use crate::{ConfigInto, Export, FromConfig, FromPath};
+use super::Export;
+use crate::common::{ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::fmt::Debug;
@@ -45,7 +46,7 @@ where
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[tokio::test]
     async fn test_printer() {

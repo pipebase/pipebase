@@ -1,4 +1,5 @@
-use crate::{ConfigInto, FromConfig, FromPath, Select};
+use super::Select;
+use crate::common::{ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
 use rand::Rng;
 use serde::Deserialize;
@@ -42,7 +43,7 @@ impl<T> Select<T, RandomConfig> for Random {
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::prelude::*;
     use tokio::sync::mpsc::Receiver;
 
     async fn count_tick(rx: &mut Receiver<u128>, id: usize) -> usize {

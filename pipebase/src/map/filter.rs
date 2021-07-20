@@ -1,6 +1,6 @@
 use std::iter::{FromIterator, IntoIterator};
 
-use crate::{ConfigInto, Filter, FromConfig, FromPath};
+use crate::common::{ConfigInto, Filter, FromConfig, FromPath};
 
 use super::Map;
 use async_trait::async_trait;
@@ -57,7 +57,7 @@ where
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(Clone, Debug, Filter)]
     #[filter(alias = "r", predicate = "r.r0 + r.r1 < 1")]

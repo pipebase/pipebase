@@ -1,6 +1,9 @@
 use crate::client::{BasicAuth, ReqwestPostClient};
 use async_trait::async_trait;
-use pipebase::{ConfigInto, Export, FromConfig, FromPath};
+use pipebase::{
+    common::{ConfigInto, FromConfig, FromPath},
+    export::Export,
+};
 use reqwest::{Body, Response};
 use serde::Deserialize;
 use std::collections::HashMap;

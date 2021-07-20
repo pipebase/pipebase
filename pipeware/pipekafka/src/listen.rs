@@ -1,6 +1,9 @@
 use crate::config::{create_kafka_client, KafkaClientConfig, KafkaConsumerClientConfig};
 use async_trait::async_trait;
-use pipebase::{ConfigInto, FromConfig, FromPath, Listen};
+use pipebase::{
+    common::{ConfigInto, FromConfig, FromPath},
+    listen::Listen,
+};
 use rdkafka::{
     consumer::{CommitMode, Consumer, DefaultConsumerContext, StreamConsumer},
     Message,

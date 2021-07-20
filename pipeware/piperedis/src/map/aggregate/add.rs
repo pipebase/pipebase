@@ -1,7 +1,8 @@
 use super::table::RedisGroupTable;
 use async_trait::async_trait;
 use pipebase::{
-    AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Map, Pair,
+    common::{AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Pair},
+    map::Map,
 };
 use redis::{FromRedisValue, ToRedisArgs};
 use serde::Deserialize;

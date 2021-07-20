@@ -1,4 +1,4 @@
-use crate::{Averagef32, Count32};
+use super::{Averagef32, Count32};
 
 pub trait Init {
     fn init() -> Self;

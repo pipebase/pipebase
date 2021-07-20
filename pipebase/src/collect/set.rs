@@ -4,7 +4,8 @@ use std::hash::Hash;
 use std::time::Duration;
 use tokio::time::Interval;
 
-use crate::{Collect, ConfigInto, FromConfig, FromPath, Set};
+use super::Collect;
+use crate::common::{ConfigInto, FromConfig, FromPath, Set};
 use async_trait::async_trait;
 
 /// Collect unique item
@@ -90,7 +91,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::prelude::*;
 
     #[derive(Clone, Debug, Eq, HashedBy, Equal)]
     struct Record {

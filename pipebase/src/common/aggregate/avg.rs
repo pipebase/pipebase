@@ -1,6 +1,6 @@
 use std::ops::AddAssign;
 
-use crate::AggregateAs;
+use super::AggregateAs;
 
 // Average is (sum, count) pair
 #[derive(Clone, Debug)]

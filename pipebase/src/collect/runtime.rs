@@ -1,10 +1,10 @@
 use std::iter::FromIterator;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::HasContext;
-use crate::{
+use super::Collect;
+use crate::common::{
     filter_senders_by_indices, join_error, replicate, senders_as_map, spawn_send,
-    wait_join_handles, Collect, ConfigInto, Context, Pipe, Result, State,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, Result, State,
 };
 
 use async_trait::async_trait;

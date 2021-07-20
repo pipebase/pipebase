@@ -1,4 +1,4 @@
-use pipebase::Render;
+use pipebase::common::Render;
 use tokio_postgres::{Client, NoTls};
 pub struct PsqlClient {
     client: Client,

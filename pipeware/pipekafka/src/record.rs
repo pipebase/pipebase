@@ -1,4 +1,4 @@
-use pipebase::{GroupAs, Pair};
+use pipebase::common::{GroupAs, Pair};
 use rdkafka::message::ToBytes;
 use serde::Serialize;
 pub trait IntoKafkaRecord<K, T>
