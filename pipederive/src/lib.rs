@@ -1,6 +1,7 @@
 mod aggregate;
 mod bootstrap;
 mod constants;
+mod convert;
 mod equal;
 mod field;
 mod filter;
@@ -147,5 +148,16 @@ pub fn derive_render(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStrea
     let ref data = tokens.data;
     let ref generics = tokens.generics;
     let expanded = render::impl_render(ident, attributes, data, generics);
+    proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(Convert, attributes(convert))]
+pub fn derive_convert(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ref tokens = parse_macro_input!(_tokens as DeriveInput);
+    let ref ident = tokens.ident;
+    let ref attributes = tokens.attrs;
+    let ref data = tokens.data;
+    let ref generics = tokens.generics;
+    let expanded = convert::impl_convert(ident, attributes, data, generics);
     proc_macro::TokenStream::from(expanded)
 }

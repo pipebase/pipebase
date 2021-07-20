@@ -10,6 +10,12 @@ pub struct ProjectMeta {
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
+pub struct ConvertMeta {
+    input: Option<String>,
+    from: Option<String>,
+}
+
+#[derive(Clone, PartialEq, Debug, Deserialize)]
 pub struct FilterMeta {
     predicate: String,
     alias: Option<String>,
@@ -18,6 +24,7 @@ pub struct FilterMeta {
 #[derive(Clone, PartialEq, Debug, Deserialize)]
 pub enum DeriveMeta {
     Clone,
+    Convert,
     Debug,
     Display,
     Serialize,
@@ -83,6 +90,7 @@ pub enum Meta {
     Aggregate { agg: AggregateMeta },
     Tag { tag: Tag },
     Render { render: RenderMeta },
+    Convert { convert: ConvertMeta },
 }
 
 fn meta_value_str(name: &str, value: &str, raw: bool) -> Meta {
@@ -110,6 +118,7 @@ fn new_path(name: String) -> Meta {
 
 fn expand_derive(derive: &DeriveMeta) -> Meta {
     let name = match derive {
+        DeriveMeta::Convert => "Convert",
         DeriveMeta::Clone => "Clone",
         DeriveMeta::Debug => "Debug",
         DeriveMeta::Display => "Display",
@@ -162,6 +171,22 @@ fn expand_project_meta(meta: &ProjectMeta) -> Meta {
     };
     Meta::List {
         name: "project".to_owned(),
+        metas: metas,
+    }
+}
+
+fn expand_convert_meta(meta: &ConvertMeta) -> Meta {
+    let mut metas: Vec<Meta> = Vec::new();
+    match meta.input {
+        Some(ref input) => metas.push(meta_value_str("input", input, false)),
+        None => (),
+    };
+    match meta.from {
+        Some(ref from) => metas.push(meta_value_str("from", from, false)),
+        None => (),
+    };
+    Meta::List {
+        name: "convert".to_owned(),
         metas: metas,
     }
 }
@@ -285,6 +310,10 @@ fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
         }
         Meta::Render { render } => {
             let meta = expand_render(render);
+            return expand_meta_lit(&meta, indent, compact);
+        }
+        Meta::Convert { convert } => {
+            let meta = expand_convert_meta(convert);
             return expand_meta_lit(&meta, indent, compact);
         }
         Meta::List { name, metas } => (name, metas),

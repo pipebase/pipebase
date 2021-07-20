@@ -1,13 +1,13 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, quote_spanned};
-use syn::{spanned::Spanned, Attribute, Data, Field, Fields, FieldsNamed, Generics, Type};
+use syn::{spanned::Spanned, Attribute, Data, Field, Generics, Type};
 
 use crate::constants::{
     PROJECT, PROJECT_ALIAS, PROJECT_ALIAS_DEFAULT, PROJECT_EXPR, PROJECT_FROM, PROJECT_INPUT,
 };
 use crate::utils::{
     get_any_attribute_by_meta_prefix, get_meta, get_meta_string_value_by_meta_path,
-    get_type_name_token, resolve_field_path_token,
+    get_type_name_token, resolve_data, resolve_field_path_token,
 };
 
 pub fn impl_project(
@@ -20,7 +20,7 @@ pub fn impl_project(
     let input_type_token =
         get_type_name_token(&project_attribute.parse_meta().unwrap(), PROJECT_INPUT);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
-    let resolved_data = resolve_data(data, &input_type_token);
+    let resolved_data = resolve_data(data, &input_type_token, &resolve_field_named);
     let expanded = quote! {
       // Project trait
       impl #impl_generics Project<#input_type_token> for #ident #type_generics #where_clause {
@@ -32,26 +32,6 @@ pub fn impl_project(
     expanded
 }
 
-fn resolve_data(data: &Data, input_type_token: &TokenStream) -> TokenStream {
-    match *data {
-        Data::Struct(ref data) => match data.fields {
-            Fields::Named(ref fields) => resolve_fields_named(fields, input_type_token),
-            Fields::Unnamed(_) | Fields::Unit => unimplemented!(),
-        },
-        Data::Enum(_) | Data::Union(_) => unimplemented!(),
-    }
-}
-
-fn resolve_fields_named(fields: &FieldsNamed, input_type_token: &TokenStream) -> TokenStream {
-    let resolved_fields = fields
-        .named
-        .iter()
-        .map(|f| resolve_field_named(f, input_type_token));
-    quote! {
-        #(#resolved_fields),*
-    }
-}
-
 fn resolve_field_named(field: &Field, input_type_ident: &TokenStream) -> TokenStream {
     let ref attributes = field.attrs;
     let ref field_ident = field.ident;
@@ -59,21 +39,25 @@ fn resolve_field_named(field: &Field, input_type_ident: &TokenStream) -> TokenSt
     let ref project_attribute = get_any_project_attribute(attributes);
     let project_from = get_project_from(project_attribute);
     let project_expr = get_project_expr(project_attribute);
-    match (project_from, project_expr) {
-        (Some(project_from), _) => handle_project_from(field.span(), field_ident, &project_from),
-        (None, Some(project_expr)) => {
+    match project_from {
+        Some(project_from) => return handle_project_from(field.span(), field_ident, &project_from),
+        None => (),
+    };
+    match project_expr {
+        Some(project_expr) => {
             let project_alias = get_project_alias(project_attribute);
-            handle_project_expr(
+            return handle_project_expr(
                 field.span(),
                 field_ident,
                 field_type,
                 &project_expr,
                 input_type_ident,
                 &project_alias,
-            )
+            );
         }
-        (None, None) => panic!("field require one of attributes transform(project, expr)"),
-    }
+        None => (),
+    };
+    panic!("field require one of attributes project(from, expr)")
 }
 
 fn handle_project_from(
