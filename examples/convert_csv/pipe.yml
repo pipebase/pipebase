@@ -1,0 +1,102 @@
+name: convert_csv
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: pipecsv
+    path: ../../../pipeware/pipecsv
+    modules: ["pipecsv::*"]
+  - package: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize", "serde::Serialize"]
+pipes:
+  - name: file_path_visitor
+    ty: Listener
+    config:
+      ty: LocalFilePathVisitorConfig
+      path: catalogs/local_file_path_visitor.yml
+    output:
+      ty: PathBuf
+  - name: file_reader
+    ty: Mapper
+    config:
+      ty: FileReaderConfig
+    output:
+      ty: 
+        Vec:
+          ty: UnsignedByte
+    upstreams: [file_path_visitor]
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty:
+        Vec:
+          ty: 
+            Object: Transaction
+    upstreams: [file_reader]
+  - name: conversion
+    ty: Mapper
+    config: 
+      ty: ConversionConfig
+    output:
+      ty:
+        Vec:
+          ty: 
+            Object: Record
+    upstreams: [json]
+  - name: csv
+    ty: Mapper
+    config: 
+      ty: CsvSerConfig
+    output:
+      ty: 
+        Vec:
+          ty: UnsignedByte
+    upstreams: [conversion]
+  - name: file_writer
+    ty: Mapper
+    config:
+      ty: FileWriterConfig
+      path: catalogs/file_writer.yml
+    output:
+      ty: PathBuf
+    upstreams: [csv]
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [file_writer]
+objects:
+  - ty: Transaction
+    metas:
+      - derives: [Clone, Debug, Deserialize]
+    fields:
+      - name: id
+        ty: String
+      - name: charge
+        ty: Float
+      - name: description
+        ty: String
+        is_optional: true
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Convert, Serialize]
+      - convert:
+          input: Transaction
+    fields:
+      - name: key
+        ty: String
+        metas:
+          - convert:
+              from: id
+      - name: value
+        ty: Float
+        metas:
+          - convert:
+              from: charge
