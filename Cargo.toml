@@ -14,5 +14,6 @@ members = [
 	"pipeware/piperedis",
 	"pipeware/pipereqwest",
 	"pipeware/piperocksdb",
+	"pipeware/pipes3",
 	"pipeware/pipewarp",
 ]
