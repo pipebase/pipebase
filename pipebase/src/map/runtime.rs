@@ -65,7 +65,7 @@ where
             let u = match mapper.map(t).await {
                 Ok(u) => u,
                 Err(e) => {
-                    error!("process {} error {}", self.name, e);
+                    error!("mapper {} error '{}'", self.name, e);
                     self.context.inc_total_run();
                     self.context.inc_failure_run();
                     continue;

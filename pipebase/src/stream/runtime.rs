@@ -56,7 +56,7 @@ where
                 match streamer.stream(t).await {
                     Ok(_) => continue,
                     Err(err) => {
-                        log::error!("streamer error {}", err);
+                        log::error!("streamer {} error '{}'", name, err);
                         context.inc_failure_run();
                     }
                 }
