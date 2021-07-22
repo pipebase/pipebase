@@ -49,7 +49,7 @@ where
             match exporter.export(t).await {
                 Ok(_) => (),
                 Err(err) => {
-                    error!("exporter error {}", err);
+                    error!("exporter {} error '{}'", self.name, err);
                     self.context.inc_failure_run();
                 }
             };

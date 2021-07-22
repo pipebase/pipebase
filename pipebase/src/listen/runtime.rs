@@ -43,11 +43,12 @@ where
         let (tx0, mut rx0) = channel::<U>(1024);
         let mut listener = config.config_into().await?;
         listener.set_sender(tx0);
+        let name = self.name.to_owned();
         // start listener
         let join_listener = tokio::spawn(async move {
             match listener.run().await {
                 Ok(_) => info!("listener exit ..."),
-                Err(e) => error!("listener exit with error {}", e),
+                Err(e) => error!("listener {} exit with error '{}'", name, e),
             };
         });
         // start event loop

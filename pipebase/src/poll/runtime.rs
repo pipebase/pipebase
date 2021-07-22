@@ -55,7 +55,7 @@ where
             let u = match u {
                 Ok(u) => u,
                 Err(e) => {
-                    error!("{} poll error {:#?}", self.name, e);
+                    error!("poller {} error '{}'", self.name, e);
                     self.context.inc_total_run();
                     self.context.inc_failure_run();
                     continue;
