@@ -7,7 +7,7 @@ curl https://sh.rustup.rs -sSf | sh
 ```
 Install `cargo-pipe` CLI
 ```
-cargo install pipe
+cargo install cargo-pipe
 ```
 Install [Docker](https://docs.docker.com/engine/install/), you may need docker-compose to setup relevant apps
 ## Run example
