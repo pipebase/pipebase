@@ -99,8 +99,8 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::Float => "f32".to_owned(),
         DataType::Double => "f64".to_owned(),
         DataType::PathBuf => "std::path::PathBuf".to_owned(),
-        DataType::Count32 => "pipebase::Count32".to_owned(),
-        DataType::Averagef32 => "pipebase::Averagef32".to_owned(),
+        DataType::Count32 => "Count32".to_owned(),
+        DataType::Averagef32 => "Averagef32".to_owned(),
         DataType::Object(object) => object.to_owned(),
         DataType::Booleans => {
             let ty_lit = data_ty_to_literal(&DataType::Boolean);
@@ -210,7 +210,7 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::Pair { lty, rty } => {
             let lty = data_ty_to_literal(lty);
             let rty = data_ty_to_literal(rty);
-            format!("pipebase::Pair<{}, {}>", lty, rty)
+            format!("Pair<{}, {}>", lty, rty)
         }
         DataType::Pairs { lty, rty } => {
             let ty_lit = data_ty_to_literal(&DataType::Pair {

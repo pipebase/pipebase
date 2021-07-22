@@ -20,9 +20,7 @@ pipes:
       ty: KafkaConsumerConfig
       path: catalogs/kafka_consumer.yml
     output: 
-      ty:
-        Vec: 
-          ty: UnsignedByte
+      ty: UnsignedBytes
   - name: json
     ty: Mapper
     config:

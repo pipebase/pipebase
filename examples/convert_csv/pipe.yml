@@ -26,9 +26,7 @@ pipes:
     config:
       ty: FileReaderConfig
     output:
-      ty: 
-        Vec:
-          ty: UnsignedByte
+      ty: UnsignedBytes
     upstreams: [file_path_visitor]
   - name: json
     ty: Mapper
@@ -36,28 +34,22 @@ pipes:
       ty: JsonDeserConfig
     output:
       ty:
-        Vec:
-          ty: 
-            Object: Transaction
+        Objects: Transaction
     upstreams: [file_reader]
   - name: conversion
     ty: Mapper
     config: 
       ty: ConversionConfig
     output:
-      ty:
-        Vec:
-          ty: 
-            Object: Record
+      ty: 
+        Objects: Record
     upstreams: [json]
   - name: csv
     ty: Mapper
     config: 
       ty: CsvSerConfig
     output:
-      ty: 
-        Vec:
-          ty: UnsignedByte
+      ty: UnsignedBytes 
     upstreams: [conversion]
   - name: file_writer
     ty: Mapper

@@ -23,9 +23,7 @@ pipes:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: 
-      ty:
-        Vec: 
-          ty: UnsignedByte
+      ty: UnsignedBytes
   - name: json
     ty: Mapper
     config:
@@ -43,10 +41,7 @@ pipes:
       ty:
         Pair:
           lty: String
-          rty: 
-            Vec:
-              ty:
-                UnsignedByte
+          rty: UnsignedBytes
   - name: kafka_producer
     ty: Exporter
     config:

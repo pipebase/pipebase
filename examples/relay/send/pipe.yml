@@ -16,9 +16,7 @@ pipes:
       ty: WarpIngestionServerConfig
       path: catalogs/relay_server.yml
     output: 
-      ty:
-        Vec: 
-          ty: UnsignedByte
+      ty: UnsignedBytes
   - name: poster
     ty: Exporter
     config:
