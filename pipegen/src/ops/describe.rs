@@ -171,6 +171,13 @@ impl PipeGraphDescriber {
         }
     }
 
+    pub(crate) fn get_pipe_component(&self, pid: &str) -> Result<Vec<String>> {
+        match self.graph.has_pipe(pid) {
+            true => Ok(self.graph.find_component(pid)),
+            false => Err(api_error(format!("pipe {} not exists", pid))),
+        }
+    }
+
     fn get_pipe_output_type(&self, pid: &str) -> Option<String> {
         let pipe = self.graph.get_pipe_value(pid).unwrap();
         match pipe.get_output_data_type() {
@@ -322,10 +329,10 @@ impl AppDescriber {
         describer.describe_pipelines(pid)
     }
 
-    pub fn get_pipelines(&self, pid: &str) -> Result<Vec<Vec<String>>> {
+    pub fn get_pipe_component(&self, pid: &str) -> Result<Vec<String>> {
         let pipes = self.get_app().get_pipes();
         let describer = Self::init_describer::<Pipe, PipeGraphDescriber>(pipes);
-        describer.get_pipelines(pid)
+        describer.get_pipe_component(pid)
     }
 
     pub fn describe_objects(&self) -> Vec<String> {

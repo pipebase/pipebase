@@ -259,9 +259,9 @@ impl App {
     pub fn generate_pipes(&self, pid: &str) -> Result<String> {
         let mut describer = AppDescriber::new();
         self.accept(&mut describer);
-        // filter pipes with selected pipelines - partial generation
-        let pipelines = describer.get_pipelines(pid)?;
-        let selected_pipes: HashSet<String> = pipelines.into_iter().flatten().collect();
+        // filter pipes with selected component - partial generation
+        let component = describer.get_pipe_component(pid)?;
+        let selected_pipes: HashSet<String> = component.into_iter().collect();
         let mut app_generator = AppGenerator::new(0);
         self.accept(&mut app_generator);
         app_generator.set_pipe_filter(selected_pipes);
