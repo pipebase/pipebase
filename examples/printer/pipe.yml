@@ -20,9 +20,7 @@ pipes:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: 
-      ty:
-        Vec: 
-          ty: UnsignedByte
+      ty: UnsignedBytes
   - name: json
     ty: Mapper
     config:

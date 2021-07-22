@@ -5,6 +5,9 @@ pub struct PackageDependency {
     package: String,
     version: Option<String>,
     path: Option<String>,
+    git: Option<String>,
+    branch: Option<String>,
+    tag: Option<String>,
     features: Option<Vec<String>>,
     // module path used in app
     modules: Vec<String>,
@@ -23,6 +26,9 @@ impl PackageDependency {
         package: String,
         version: Option<String>,
         path: Option<String>,
+        git: Option<String>,
+        branch: Option<String>,
+        tag: Option<String>,
         features: Option<Vec<String>>,
         modules: Vec<String>,
     ) -> Self {
@@ -30,6 +36,9 @@ impl PackageDependency {
             package,
             version,
             path,
+            git,
+            branch,
+            tag,
             features,
             modules,
         }
@@ -45,6 +54,18 @@ impl PackageDependency {
 
     pub fn get_path(&self) -> Option<String> {
         self.path.to_owned()
+    }
+
+    pub fn get_git(&self) -> Option<String> {
+        self.git.to_owned()
+    }
+
+    pub fn get_branch(&self) -> Option<String> {
+        self.branch.to_owned()
+    }
+
+    pub fn get_tag(&self) -> Option<String> {
+        self.tag.to_owned()
     }
 
     pub fn get_features(&self) -> Option<Vec<String>> {

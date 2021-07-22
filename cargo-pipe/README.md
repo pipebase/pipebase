@@ -7,7 +7,7 @@ curl https://sh.rustup.rs -sSf | sh
 ```
 Install `cargo-pipe` CLI
 ```
-cargo install pipe
+cargo install cargo-pipe
 ```
 
 ## Usage

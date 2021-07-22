@@ -23,18 +23,14 @@ pipes:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: 
-      ty:
-        Vec: 
-          ty: UnsignedByte
+      ty: UnsignedBytes
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       ty: 
-        Vec:
-          ty:
-            Object: Record
+        Objects: Record
     upstreams: [ingestion_server]
   - name: redis_group_sum
     ty: Mapper
@@ -43,11 +39,9 @@ pipes:
       path: catalogs/redis_group_add.yml
     output:
       ty:
-        Vec:
-          ty:
-            Pair:
-              lty: String
-              rty: UnsignedInteger
+        Pairs:
+          lty: String
+          rty: UnsignedInteger
     upstreams: [json]
   - name: printer
     ty: Exporter

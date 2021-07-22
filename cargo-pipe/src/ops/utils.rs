@@ -34,6 +34,9 @@ pub struct PipeTomlProject {
 pub struct PipeTomlDependency {
     version: Option<String>,
     path: Option<String>,
+    git: Option<String>,
+    branch: Option<String>,
+    tag: Option<String>,
     features: Option<Vec<String>>,
 }
 
@@ -42,6 +45,9 @@ impl From<PackageDependency> for PipeTomlDependency {
         PipeTomlDependency {
             version: pd.get_version(),
             path: pd.get_path(),
+            git: pd.get_git(),
+            branch: pd.get_branch(),
+            tag: pd.get_tag(),
             features: pd.get_features(),
         }
     }

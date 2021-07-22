@@ -20,9 +20,7 @@ pipes:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: 
-      ty:
-        Vec: 
-          ty: UnsignedByte
+      ty: UnsignedBytes
   - name: json
     ty: Mapper
     config:
@@ -37,9 +35,7 @@ pipes:
       ty: FieldVisitConfig
     output:
       ty:
-        Vec:
-          ty:
-            Object: Record
+        Objects: Record
     upstreams: [json]
   - name: filter
     ty: Mapper
@@ -47,9 +43,7 @@ pipes:
       ty: FilterMapConfig
     output:
       ty:
-        Vec:
-          ty:
-            Object: Record
+        Objects: Record
     upstreams: [field]
   - name: printer
     ty: Exporter

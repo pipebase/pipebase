@@ -31,6 +31,27 @@ pub enum DataType {
     Count32,
     Averagef32,
     Object(String),
+    Booleans,
+    Characters,
+    Strings,
+    Bytes,
+    UnsignedBytes,
+    Shorts,
+    UnsignedShorts,
+    Integers,
+    UnsignedIntegers,
+    Sizes,
+    UnsignedSizes,
+    Longs,
+    UnsignedLongs,
+    LongLongs,
+    UnsignedLongLongs,
+    Floats,
+    Doubles,
+    PathBufs,
+    Count32s,
+    Averagef32s,
+    Objects(String),
     Vec {
         ty: Box<DataType>,
     },
@@ -49,6 +70,10 @@ pub enum DataType {
         ty: Box<DataType>,
     },
     Pair {
+        lty: Box<DataType>,
+        rty: Box<DataType>,
+    },
+    Pairs {
         lty: Box<DataType>,
         rty: Box<DataType>,
     },
@@ -74,9 +99,93 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::Float => "f32".to_owned(),
         DataType::Double => "f64".to_owned(),
         DataType::PathBuf => "std::path::PathBuf".to_owned(),
-        DataType::Count32 => "pipebase::Count32".to_owned(),
-        DataType::Averagef32 => "pipebase::Averagef32".to_owned(),
+        DataType::Count32 => "Count32".to_owned(),
+        DataType::Averagef32 => "Averagef32".to_owned(),
         DataType::Object(object) => object.to_owned(),
+        DataType::Booleans => {
+            let ty_lit = data_ty_to_literal(&DataType::Boolean);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Characters => {
+            let ty_lit = data_ty_to_literal(&DataType::Character);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Strings => {
+            let ty_lit = data_ty_to_literal(&DataType::String);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Bytes => {
+            let ty_lit = data_ty_to_literal(&DataType::Byte);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::UnsignedBytes => {
+            let ty_lit = data_ty_to_literal(&DataType::UnsignedByte);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Shorts => {
+            let ty_lit = data_ty_to_literal(&DataType::Short);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::UnsignedShorts => {
+            let ty_lit = data_ty_to_literal(&DataType::UnsignedShort);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Integers => {
+            let ty_lit = data_ty_to_literal(&DataType::Integer);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::UnsignedIntegers => {
+            let ty_lit = data_ty_to_literal(&DataType::UnsignedInteger);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Sizes => {
+            let ty_lit = data_ty_to_literal(&DataType::Size);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::UnsignedSizes => {
+            let ty_lit = data_ty_to_literal(&DataType::UnsignedSize);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Longs => {
+            let ty_lit = data_ty_to_literal(&DataType::Long);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::UnsignedLongs => {
+            let ty_lit = data_ty_to_literal(&DataType::UnsignedLong);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::LongLongs => {
+            let ty_lit = data_ty_to_literal(&DataType::LongLong);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::UnsignedLongLongs => {
+            let ty_lit = data_ty_to_literal(&DataType::UnsignedLongLong);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Floats => {
+            let ty_lit = data_ty_to_literal(&DataType::Float);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Doubles => {
+            let ty_lit = data_ty_to_literal(&DataType::Double);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::PathBufs => {
+            let ty_lit = data_ty_to_literal(&DataType::PathBuf);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Count32s => {
+            let ty_lit = data_ty_to_literal(&DataType::Count32);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Averagef32s => {
+            let ty_lit = data_ty_to_literal(&DataType::Averagef32);
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::Objects(object) => {
+            let ty_lit = data_ty_to_literal(&DataType::Object(object.to_owned()));
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
         DataType::Vec { ty } => {
             let ty_lit = data_ty_to_literal(ty);
             format!("std::vec::Vec<{}>", ty_lit)
@@ -101,7 +210,14 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::Pair { lty, rty } => {
             let lty = data_ty_to_literal(lty);
             let rty = data_ty_to_literal(rty);
-            format!("pipebase::Pair<{}, {}>", lty, rty)
+            format!("Pair<{}, {}>", lty, rty)
+        }
+        DataType::Pairs { lty, rty } => {
+            let ty_lit = data_ty_to_literal(&DataType::Pair {
+                lty: lty.to_owned(),
+                rty: rty.to_owned(),
+            });
+            format!("std::vec::Vec<{}>", ty_lit)
         }
     }
 }
