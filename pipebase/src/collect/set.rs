@@ -1,11 +1,10 @@
 use serde::Deserialize;
 use std::collections::HashSet;
 use std::hash::Hash;
-use std::time::Duration;
 use tokio::time::Interval;
 
 use super::Collect;
-use crate::common::{ConfigInto, FromConfig, FromPath, Set};
+use crate::common::{ConfigInto, FromConfig, FromPath, Period, Set};
 use async_trait::async_trait;
 
 /// Collect unique item
@@ -18,21 +17,22 @@ where
     fn get_set(&mut self) -> &mut S;
 
     /// Collect item
-    async fn set_collect(&mut self, t: T) {
+    async fn set_collect(&mut self, t: T) -> anyhow::Result<()> {
         let set = self.get_set();
-        set.collect(t).await;
+        set.collect(t).await
     }
 
     /// Flush set and return items
-    async fn flush_set(&mut self) -> Vec<T> {
+    async fn flush_set(&mut self) -> anyhow::Result<Vec<T>> {
         let set = self.get_set();
-        set.flush().await
+        let set = set.flush().await?;
+        Ok(set)
     }
 }
 
 #[derive(Deserialize)]
 pub struct InMemorySetCollectorConfig {
-    pub flush_period_in_millis: u64,
+    pub flush_period: Period,
 }
 
 impl FromPath for InMemorySetCollectorConfig {}
@@ -42,8 +42,8 @@ impl<T> ConfigInto<InMemorySetCollector<T>> for InMemorySetCollectorConfig {}
 
 /// In memory cache unique items
 pub struct InMemorySetCollector<T> {
-    /// Caller should flush cache every flush_period millis
-    pub flush_period_in_millis: u64,
+    /// Caller should flush cache every flush_period
+    pub flush_period: Period,
     pub buffer: HashSet<T>,
 }
 
@@ -51,7 +51,7 @@ pub struct InMemorySetCollector<T> {
 impl<T> FromConfig<InMemorySetCollectorConfig> for InMemorySetCollector<T> {
     async fn from_config(config: InMemorySetCollectorConfig) -> anyhow::Result<Self> {
         Ok(InMemorySetCollector {
-            flush_period_in_millis: config.flush_period_in_millis,
+            flush_period: config.flush_period,
             buffer: HashSet::new(),
         })
     }
@@ -75,17 +75,22 @@ impl<T> Collect<T, Vec<T>, InMemorySetCollectorConfig> for InMemorySetCollector<
 where
     T: Clone + Send + Hash + Eq + 'static,
 {
-    async fn collect(&mut self, t: T) {
-        self.set_collect(t).await;
+    async fn collect(&mut self, t: T) -> anyhow::Result<()> {
+        self.set_collect(t).await
     }
 
-    async fn flush(&mut self) -> Vec<T> {
-        self.flush_set().await
+    async fn flush(&mut self) -> anyhow::Result<Option<Vec<T>>> {
+        let set = self.flush_set().await?;
+        if set.is_empty() {
+            return Ok(None);
+        }
+        return Ok(Some(set));
     }
 
     /// Call by collector pipe to flush set in period
     fn get_flush_interval(&self) -> Interval {
-        tokio::time::interval(Duration::from_millis(self.flush_period_in_millis))
+        let flush_period = self.flush_period.clone();
+        tokio::time::interval(flush_period.into())
     }
 }
 
