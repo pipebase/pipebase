@@ -9,7 +9,10 @@ use super::pipe::Pipe;
 use super::utils::indent_literal;
 use super::{Entity, EntityAccept, Object, VisitEntity};
 use crate::error::*;
-use crate::models::{Block, DataType, Function, Rhs, Statement};
+use crate::models::{
+    default_env_log_package, default_log_package, default_pipebase_package, default_tokio_package,
+    Block, DataType, Function, Rhs, Statement,
+};
 use crate::ops::AppValidator;
 use crate::ops::{AppDescriber, AppGenerator};
 use crate::ops::{Describe, Generate, Validate};
@@ -135,46 +138,10 @@ impl App {
 
     fn default_dependencies() -> Vec<PackageDependency> {
         vec![
-            PackageDependency::new(
-                "pipebase".to_owned(),
-                Some("0.1.0".to_owned()),
-                None,
-                None,
-                None,
-                None,
-                None,
-                vec!["pipebase::prelude::*".to_owned()],
-            ),
-            PackageDependency::new(
-                "tokio".to_owned(),
-                Some("1.6.1".to_owned()),
-                None,
-                None,
-                None,
-                None,
-                Some(vec!["full".to_owned()]),
-                vec![],
-            ),
-            PackageDependency::new(
-                "log".to_owned(),
-                Some("0.4.14".to_owned()),
-                None,
-                None,
-                None,
-                None,
-                None,
-                vec![],
-            ),
-            PackageDependency::new(
-                "env_logger".to_owned(),
-                Some("0.8.4".to_owned()),
-                None,
-                None,
-                None,
-                None,
-                None,
-                vec![],
-            ),
+            default_pipebase_package(),
+            default_tokio_package(),
+            default_log_package(),
+            default_env_log_package(),
         ]
     }
 

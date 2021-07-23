@@ -6,34 +6,34 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
 #[derive(Deserialize)]
-pub struct DefaultHashSelectConfig {}
+pub struct DefaultHashSelectorConfig {}
 
 #[async_trait]
-impl FromPath for DefaultHashSelectConfig {
+impl FromPath for DefaultHashSelectorConfig {
     async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
         P: AsRef<std::path::Path> + Send,
     {
-        Ok(DefaultHashSelectConfig {})
+        Ok(DefaultHashSelectorConfig {})
     }
 }
 
 #[async_trait]
-impl ConfigInto<DefaultHashSelect> for DefaultHashSelectConfig {}
+impl ConfigInto<DefaultHashSelector> for DefaultHashSelectorConfig {}
 
 /// Select candidate by it's hash value
-pub struct DefaultHashSelect {}
+pub struct DefaultHashSelector {}
 
 #[async_trait]
-impl FromConfig<DefaultHashSelectConfig> for DefaultHashSelect {
-    async fn from_config(_config: DefaultHashSelectConfig) -> anyhow::Result<Self> {
-        Ok(DefaultHashSelect {})
+impl FromConfig<DefaultHashSelectorConfig> for DefaultHashSelector {
+    async fn from_config(_config: DefaultHashSelectorConfig) -> anyhow::Result<Self> {
+        Ok(DefaultHashSelector {})
     }
 }
 
 /// # Parameters
 /// * T: input
-impl<T: Hash> Select<T, DefaultHashSelectConfig> for DefaultHashSelect {
+impl<T: Hash> Select<T, DefaultHashSelectorConfig> for DefaultHashSelector {
     /// `candidates`: index of downstreams
     /// `t`: input data reference
     fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize> {
@@ -107,7 +107,7 @@ mod tests {
         let f2 = receive_records(rx2, 2);
         let mut pipe = selector!("hash_select");
         f0.await;
-        join_pipes!([run_pipe!(pipe, DefaultHashSelectConfig, [tx1, tx2], rx0)]);
+        join_pipes!([run_pipe!(pipe, DefaultHashSelectorConfig, [tx1, tx2], rx0)]);
         let c1 = f1.await;
         let c2 = f2.await;
         assert_eq!(4, c1 + c2)

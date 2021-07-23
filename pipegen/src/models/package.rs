@@ -76,3 +76,55 @@ impl PackageDependency {
         &self.modules
     }
 }
+
+pub(crate) fn default_tokio_package() -> PackageDependency {
+    PackageDependency::new(
+        "tokio".to_owned(),
+        Some("1.6.1".to_owned()),
+        None,
+        None,
+        None,
+        None,
+        Some(vec!["full".to_owned()]),
+        vec![],
+    )
+}
+
+pub(crate) fn default_pipebase_package() -> PackageDependency {
+    PackageDependency::new(
+        "pipebase".to_owned(),
+        Some("0.1.0".to_owned()),
+        None,
+        None,
+        None,
+        None,
+        None,
+        vec!["pipebase::prelude::*".to_owned()],
+    )
+}
+
+pub(crate) fn default_log_package() -> PackageDependency {
+    PackageDependency::new(
+        "log".to_owned(),
+        Some("0.4.14".to_owned()),
+        None,
+        None,
+        None,
+        None,
+        None,
+        vec![],
+    )
+}
+
+pub(crate) fn default_env_log_package() -> PackageDependency {
+    PackageDependency::new(
+        "env_logger".to_owned(),
+        Some("0.8.4".to_owned()),
+        None,
+        None,
+        None,
+        None,
+        None,
+        vec![],
+    )
+}

@@ -5,34 +5,34 @@ use rand::Rng;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct RandomConfig {}
+pub struct RandomSelectorConfig {}
 
 #[async_trait]
-impl FromPath for RandomConfig {
+impl FromPath for RandomSelectorConfig {
     async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
         P: AsRef<std::path::Path> + Send,
     {
-        Ok(RandomConfig {})
+        Ok(RandomSelectorConfig {})
     }
 }
 
 #[async_trait]
-impl ConfigInto<Random> for RandomConfig {}
+impl ConfigInto<RandomSelector> for RandomSelectorConfig {}
 
 /// Select candidates with random number
-pub struct Random {}
+pub struct RandomSelector {}
 
 #[async_trait]
-impl FromConfig<RandomConfig> for Random {
-    async fn from_config(_config: RandomConfig) -> anyhow::Result<Self> {
-        Ok(Random {})
+impl FromConfig<RandomSelectorConfig> for RandomSelector {
+    async fn from_config(_config: RandomSelectorConfig) -> anyhow::Result<Self> {
+        Ok(RandomSelector {})
     }
 }
 
 /// # Parameters
 /// * T: input
-impl<T> Select<T, RandomConfig> for Random {
+impl<T> Select<T, RandomSelectorConfig> for RandomSelector {
     /// `candidates`: index of downstreams
     fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
         let mut rng = rand::thread_rng();
@@ -68,7 +68,7 @@ mod tests {
         let mut selector = selector!("random_select");
         join_pipes!([
             run_pipe!(source, TimerConfig, "resources/catalogs/timer.yml", [tx0]),
-            run_pipe!(selector, RandomConfig, [tx1, tx2], rx0)
+            run_pipe!(selector, RandomSelectorConfig, [tx1, tx2], rx0)
         ]);
         let c1 = count_tick(&mut rx1, 0).await;
         let c2 = count_tick(&mut rx2, 1).await;
