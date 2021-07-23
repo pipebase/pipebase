@@ -1,0 +1,62 @@
+name: ingest_postgres
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: pipemysql
+    path: ../../../pipeware/pipemysql
+    modules: ["pipemysql::*"]
+  - package: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - package: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      ty: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty: 
+        Object: Record
+    upstreams: [ingestion_server]
+  - name: mysql_writer
+    ty: Exporter
+    config:
+      ty: MySQLWriterConfig
+      path: catalogs/mysql_writer.yml
+    upstreams: [json]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, Render]
+      - render:
+          template: "INSERT INTO records (`key`, `value`) VALUES ('{}', {}) AS new ON DUPLICATE KEY UPDATE `value` = new.`value`"
+    fields:
+      - name: key
+        ty: String
+        metas:
+          - render:
+              pos: 0
+      - name: value
+        ty: Integer
+        metas:
+          - render:
+              pos: 1
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml
