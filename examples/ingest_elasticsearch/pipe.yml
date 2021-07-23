@@ -1,0 +1,65 @@
+name: ingest_elasticsearch
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      ty: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty: 
+        Object: Record
+    upstreams: [ingestion_server]
+  - name: text_collector
+    ty: Collector
+    config:
+      ty: TextCollectorConfig
+    output:
+      ty: String
+      path: text_collector.yml
+    upstreams: [file_path_visitor]
+  - name: string_encoder
+    ty: Mapper
+    config:
+      ty: StringUTF8Encoder
+    upstreams: [file_line_reader]
+    output:
+      ty: UnsignedBytes
+  - name: reqwest_poster
+    ty: Exporter
+    config:
+      ty: ReqwestPoster
+      path: reqwest_poster.yml
+    upstreams: [string_encoder]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, Render]
+      - render:
+          template: "{{\"index\": {{\"_index\": \"records\", \"_type\": \"_doc\", \"_id\": "{}"}}}}\n
+                     {{\"key\": \"{}\", \"value\": {}}}"
+    fields:
+      - name: id
+        ty: Integer
+        metas:
+          - render:
+              pos: 0
+      - name: key
+        ty: String
+        metas:
+          - render:
+              pos: 1
+      - name: value
+        ty: Integer
+        metas:
+          - render:
+              pos: 2

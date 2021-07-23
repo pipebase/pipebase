@@ -1,0 +1,3 @@
+flush_period:
+  Period:
+    Secs: 5
