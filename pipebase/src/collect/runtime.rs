@@ -55,6 +55,7 @@ where
         let exit_c_clone = exit_c.to_owned();
         let exit_f = Arc::new(AtomicBool::new(false));
         let exit_f_clone = exit_f.to_owned();
+        let name = self.name.to_owned();
         let collect_loop = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
             loop {
@@ -69,7 +70,10 @@ where
                     }
                 };
                 let mut c = collector_clone.lock().await;
-                (*c).collect(t).await;
+                match (*c).collect(t).await {
+                    Ok(()) => continue,
+                    Err(err) => log::error!("collector {} collect error '{}'", name, err),
+                }
             }
         });
         let mut txs = senders_as_map(txs);
@@ -93,7 +97,17 @@ where
                 interval.tick().await;
                 let u = {
                     let mut c = collector.lock().await;
-                    c.flush().await
+                    let u = match c.flush().await {
+                        Ok(u) => u,
+                        Err(err) => {
+                            log::error!("collector {} flush error '{}'", name, err);
+                            continue;
+                        }
+                    };
+                    match u {
+                        Some(u) => u,
+                        None => continue,
+                    }
                 };
                 context.set_state(State::Send);
                 let mut u_replicas = replicate(u, txs.len());

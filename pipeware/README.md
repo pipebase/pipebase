@@ -17,7 +17,7 @@ Pipes
 | `Exporter` | CqlWriter | doc | [`ingest_cassandra`] |
 | `Exporter` | PsqlWriter | doc | [`ingest_postgres`] |
 | `Exporter` | RedisWriter | doc | [`ingest_redis`] |
-| `Exporter` | ReqwestPoster | doc | [`relay`] |
+| `Exporter` | ReqwestPoster | doc | [`relay`], [`ingest_elasticsearch`] |
 | `Exporter` | KafkaProducer | doc | [`ingest_kafka`] |
 | `Exporter` | S3Writer | doc | [`upload_s3`] |
 | `Exporter` | MySQLWriter | doc | [`ingest_mysql`] |
@@ -35,3 +35,4 @@ Pipes
 [`convert_csv`]: https://github.com/pipebase/pipebase/tree/main/examples/convert_csv
 [`upload_s3`]: https://github.com/pipebase/pipebase/tree/main/examples/upload_s3
 [`ingest_mysql`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_mysql
+[`ingest_elasticsearch`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_elasticsearch

@@ -51,9 +51,9 @@ objects:
     metas:
       - derives: [Clone, Debug, Deserialize, Render]
       - render:
-          template: >
-             {{"index": {{"_index": "records", "_type": "_doc", "_id": "{}"}}}}
-             {{"key": "{}", "value": {}}}
+          template: |-
+            {{"index": {{"_index": "records", "_type": "_doc", "_id": "{}"}}}}
+            {{"key": "{}", "value": {}}}
     fields:
       - name: id
         ty: Integer
@@ -70,3 +70,8 @@ objects:
         metas:
           - render:
               pos: 2
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml

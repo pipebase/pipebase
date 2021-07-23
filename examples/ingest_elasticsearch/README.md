@@ -1,12 +1,12 @@
-Demo `InMemoryBagCollector` `ReqwestPoster` pipe
-### Setup Elasticsearch and Kibana (terminal 1)
-Launch elasticsearch and kibana
+Demo `TextCollector` `ReqwestPoster` pipe
+### Setup Elasticsearch (terminal 1)
+Launch elasticsearch
 ```
 docker-compose up -d
 ```
 Create index
 ```
-curl -XPUT localhost:9200/records
+curl -X PUT localhost:9200/records
 ```
 ### Build and Run (terminal 2)
 Init
@@ -23,14 +23,31 @@ Run app
 ```
 ./ingest_es
 ```
-### Ingest Data
+### Ingest Data (terminal 3)
 Open new terinal and ingest sample data
 ```
-curl -i -X POST \
--H "Content-Type: application/json" \
--d @resources/record_0.json  \
--d @resources/record_1.json  \
--d @resources/record_2.json  \
--d @resources/record_3.json  \
-http://localhost:9000/v1/ingest
+for (( i=0; i < 10; i++ )) 
+do
+    curl -i -X POST \
+    -H "Content-Type: application/json" \
+    -d @resources/record_${i}.json \
+    http://localhost:9000/v1/ingest
+done
+```
+### Query Elasticsearch (terminal 1)
+```
+curl http://localhost:9200/records/_search?q=key:* | jq -r .hits.hits[]._source
+{
+  "key": "zero",
+  "value": 0
+}
+{
+  "key": "one",
+  "value": 1
+}
+{
+  "key": "two",
+  "value": 2
+}
+...
 ```

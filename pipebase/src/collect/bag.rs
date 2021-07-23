@@ -15,15 +15,16 @@ where
     fn get_bag(&mut self) -> &mut B;
 
     /// Collect item
-    async fn bag_collect(&mut self, t: T) {
+    async fn bag_collect(&mut self, t: T) -> anyhow::Result<()> {
         let b = self.get_bag();
-        b.collect(t).await;
+        b.collect(t).await
     }
 
     /// Flush bag and return items
-    async fn flush_bag(&mut self) -> Vec<T> {
-        let b = self.get_bag();
-        b.flush().await
+    async fn flush_bag(&mut self) -> anyhow::Result<Vec<T>> {
+        let bag = self.get_bag();
+        let bag = bag.flush().await?;
+        Ok(bag)
     }
 }
 
@@ -72,12 +73,16 @@ impl<T> Collect<T, Vec<T>, InMemoryBagCollectorConfig> for InMemoryBagCollector<
 where
     T: Clone + Send + 'static,
 {
-    async fn collect(&mut self, t: T) {
+    async fn collect(&mut self, t: T) -> anyhow::Result<()> {
         self.bag_collect(t).await
     }
 
-    async fn flush(&mut self) -> Vec<T> {
-        self.flush_bag().await
+    async fn flush(&mut self) -> anyhow::Result<Option<Vec<T>>> {
+        let bag = self.flush_bag().await?;
+        if bag.is_empty() {
+            return Ok(None);
+        }
+        return Ok(Some(bag));
     }
 
     /// Call by collector pipe to flush bag in period
@@ -167,6 +172,6 @@ mod tests {
         let now_millis = std::time::SystemTime::now();
         // timer and collector should exit asap since downstream rx1 dropped
         let duration = now_millis.duration_since(start_millis).unwrap();
-        assert!(duration.as_secs() < 3)
+        assert!(duration.as_secs() < 10)
     }
 }

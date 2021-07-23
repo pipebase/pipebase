@@ -14,7 +14,7 @@ use tokio::time::Interval;
 
 #[async_trait]
 pub trait Collect<T, U, C>: Send + FromConfig<C> {
-    async fn collect(&mut self, t: T);
-    async fn flush(&mut self) -> U;
+    async fn collect(&mut self, t: T) -> anyhow::Result<()>;
+    async fn flush(&mut self) -> anyhow::Result<Option<U>>;
     fn get_flush_interval(&self) -> Interval;
 }

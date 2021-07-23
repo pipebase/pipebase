@@ -17,15 +17,16 @@ where
     fn get_set(&mut self) -> &mut S;
 
     /// Collect item
-    async fn set_collect(&mut self, t: T) {
+    async fn set_collect(&mut self, t: T) -> anyhow::Result<()> {
         let set = self.get_set();
-        set.collect(t).await;
+        set.collect(t).await
     }
 
     /// Flush set and return items
-    async fn flush_set(&mut self) -> Vec<T> {
+    async fn flush_set(&mut self) -> anyhow::Result<Vec<T>> {
         let set = self.get_set();
-        set.flush().await
+        let set = set.flush().await?;
+        Ok(set)
     }
 }
 
@@ -74,12 +75,16 @@ impl<T> Collect<T, Vec<T>, InMemorySetCollectorConfig> for InMemorySetCollector<
 where
     T: Clone + Send + Hash + Eq + 'static,
 {
-    async fn collect(&mut self, t: T) {
-        self.set_collect(t).await;
+    async fn collect(&mut self, t: T) -> anyhow::Result<()> {
+        self.set_collect(t).await
     }
 
-    async fn flush(&mut self) -> Vec<T> {
-        self.flush_set().await
+    async fn flush(&mut self) -> anyhow::Result<Option<Vec<T>>> {
+        let set = self.flush_set().await?;
+        if set.is_empty() {
+            return Ok(None);
+        }
+        return Ok(Some(set));
     }
 
     /// Call by collector pipe to flush set in period
