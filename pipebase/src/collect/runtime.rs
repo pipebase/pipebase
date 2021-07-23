@@ -1,4 +1,3 @@
-use std::iter::FromIterator;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use super::Collect;
@@ -34,7 +33,7 @@ pub struct Collector<'a> {
 impl<'a, T, U, V, C> Pipe<T, U, V, C> for Collector<'a>
 where
     T: Clone + Send + Sync + 'static,
-    U: FromIterator<T> + Clone + Send + 'static,
+    U: Clone + Send + 'static,
     V: Collect<T, U, C> + 'static,
     C: ConfigInto<V> + Send + Sync + 'static,
 {

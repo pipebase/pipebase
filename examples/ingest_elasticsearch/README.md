@@ -28,7 +28,9 @@ Open new terinal and ingest sample data
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
--d @record0.json  \
--d @record1.json  \
+-d @resources/record_0.json  \
+-d @resources/record_1.json  \
+-d @resources/record_2.json  \
+-d @resources/record_3.json  \
 http://localhost:9000/v1/ingest
 ```

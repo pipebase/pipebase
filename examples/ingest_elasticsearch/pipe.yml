@@ -3,6 +3,19 @@ dependencies:
   - package: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - package: pipereqwest
+    path: ../../../pipeware/pipereqwest
+    modules: ["pipereqwest::*"]
+  - package: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
 pipes:
   - name: ingestion_server
     ty: Listener
@@ -23,23 +36,24 @@ pipes:
     ty: Collector
     config:
       ty: TextCollectorConfig
+      path: catalogs/text_collector.yml
     output:
       ty: String
-      path: text_collector.yml
-    upstreams: [file_path_visitor]
+    upstreams: [json]
   - name: reqwest_poster
     ty: Exporter
     config:
-      ty: ReqwestPoster
-      path: reqwest_poster.yml
-    upstreams: [string_encoder]
+      ty: ReqwestPosterConfig
+      path: catalogs/reqwest_poster.yml
+    upstreams: [text_collector]
 objects:
   - ty: Record
     metas:
       - derives: [Clone, Debug, Deserialize, Render]
       - render:
-          template: "{{\"index\": {{\"_index\": \"records\", \"_type\": \"_doc\", \"_id\": "{}"}}}}\n
-                     {{\"key\": \"{}\", \"value\": {}}}"
+          template: >
+             {{"index": {{"_index": "records", "_type": "_doc", "_id": "{}"}}}}
+             {{"key": "{}", "value": {}}}
     fields:
       - name: id
         ty: Integer

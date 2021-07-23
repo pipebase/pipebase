@@ -37,13 +37,13 @@ impl FromConfig<TextCollectorConfig> for TextCollector {
 #[async_trait]
 impl<T> Collect<T, String, TextCollectorConfig> for TextCollector 
 where
-    T: Render
+    T: Render + Send + 'static
 {
     async fn collect(&mut self, t: T) {
         if !self.buffer.is_empty() {
-            self.buffer.push_str(self.separator)
+            self.buffer.push_str(&self.separator)
         }
-        self.buffer.push_str(t.render())
+        self.buffer.push_str(&t.render())
     }
 
     async fn flush(&mut self) -> String {
