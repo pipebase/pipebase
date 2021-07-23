@@ -1,0 +1,80 @@
+name: ingest_redis_parallel
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - package: piperedis
+    path: ../../../pipeware/piperedis
+    modules: ["piperedis::*"]
+  - package: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      ty: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty: 
+        Objects: Record
+    upstreams: [ingestion_server]
+  - name: iterator_reader
+    ty: Streamer
+    config:
+      ty: IteratorReaderConfig
+    upstreams: [json]
+    output:
+      ty:
+        Object: Record
+  - name: random_select
+    ty: Selector
+    config:
+      ty: RandomSelectorConfig
+    output:
+      ty:
+        Object: Record
+    upstreams: [iterator_reader]
+  - name: redis_writer_1
+    ty: Exporter
+    config:
+      ty: RedisWriterConfig
+      path: catalogs/redis_writer.yml
+    upstreams: [random_select]
+  - name: redis_writer_2
+    ty: Exporter
+    config:
+      ty: RedisWriterConfig
+      path: catalogs/redis_writer.yml
+    upstreams: [random_select]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, LeftRight]
+    fields:
+      - name: key
+        ty: String
+        metas:
+          - tag: Left
+      - name: value
+        ty: UnsignedInteger
+        metas:
+          - tag: Right
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml

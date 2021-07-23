@@ -4,36 +4,36 @@ use async_trait::async_trait;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct RoundRobinConfig {}
+pub struct RoundRobinSelectorConfig {}
 
 #[async_trait]
-impl FromPath for RoundRobinConfig {
+impl FromPath for RoundRobinSelectorConfig {
     async fn from_path<P>(_path: P) -> anyhow::Result<Self>
     where
         P: AsRef<std::path::Path> + Send,
     {
-        Ok(RoundRobinConfig {})
+        Ok(RoundRobinSelectorConfig {})
     }
 }
 
 #[async_trait]
-impl ConfigInto<RoundRobin> for RoundRobinConfig {}
+impl ConfigInto<RoundRobinSelector> for RoundRobinSelectorConfig {}
 
 /// Select candidates use round robin
-pub struct RoundRobin {
+pub struct RoundRobinSelector {
     pub i: usize,
 }
 
 #[async_trait]
-impl FromConfig<RoundRobinConfig> for RoundRobin {
-    async fn from_config(_config: RoundRobinConfig) -> anyhow::Result<Self> {
-        Ok(RoundRobin { i: 0 })
+impl FromConfig<RoundRobinSelectorConfig> for RoundRobinSelector {
+    async fn from_config(_config: RoundRobinSelectorConfig) -> anyhow::Result<Self> {
+        Ok(RoundRobinSelector { i: 0 })
     }
 }
 
 /// # Parameters
 /// * T: input
-impl<T> Select<T, RoundRobinConfig> for RoundRobin {
+impl<T> Select<T, RoundRobinSelectorConfig> for RoundRobinSelector {
     /// `candidates`: index of downstreams
     fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
         let i = self.i % candidates.len();
