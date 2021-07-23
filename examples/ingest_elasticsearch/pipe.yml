@@ -27,13 +27,6 @@ pipes:
       ty: String
       path: text_collector.yml
     upstreams: [file_path_visitor]
-  - name: string_encoder
-    ty: Mapper
-    config:
-      ty: StringUTF8Encoder
-    upstreams: [file_line_reader]
-    output:
-      ty: UnsignedBytes
   - name: reqwest_poster
     ty: Exporter
     config:

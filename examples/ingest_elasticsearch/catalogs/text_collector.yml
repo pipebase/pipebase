@@ -1,2 +1,3 @@
 flush_period:
   Secs: 3
+separator: "\n"
