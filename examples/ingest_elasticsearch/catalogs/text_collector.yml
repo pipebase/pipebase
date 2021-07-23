@@ -1,3 +1,2 @@
 flush_period:
-  Period:
-    Secs: 5
+  Secs: 3

@@ -1,9 +1,8 @@
 use serde::Deserialize;
-use std::time::Duration;
 use tokio::time::Interval;
 
 use super::Collect;
-use crate::common::{Bag, ConfigInto, FromConfig, FromPath};
+use crate::common::{Bag, ConfigInto, FromConfig, FromPath, Period};
 use async_trait::async_trait;
 
 /// Collect items
@@ -30,7 +29,7 @@ where
 
 #[derive(Deserialize)]
 pub struct InMemoryBagCollectorConfig {
-    pub flush_period_in_millis: u64,
+    pub flush_period: Period,
 }
 
 impl FromPath for InMemoryBagCollectorConfig {}
@@ -40,8 +39,8 @@ impl<T> ConfigInto<InMemoryBagCollector<T>> for InMemoryBagCollectorConfig {}
 
 /// In memory cache items
 pub struct InMemoryBagCollector<T> {
-    /// Caller should flush cache every flush_period millis
-    pub flush_period_in_millis: u64,
+    /// Caller should flush cache every flush_period
+    pub flush_period: Period,
     pub buffer: Vec<T>,
 }
 
@@ -49,7 +48,7 @@ pub struct InMemoryBagCollector<T> {
 impl<T> FromConfig<InMemoryBagCollectorConfig> for InMemoryBagCollector<T> {
     async fn from_config(config: InMemoryBagCollectorConfig) -> anyhow::Result<Self> {
         Ok(InMemoryBagCollector {
-            flush_period_in_millis: config.flush_period_in_millis,
+            flush_period: config.flush_period,
             buffer: vec![],
         })
     }
@@ -83,7 +82,8 @@ where
 
     /// Call by collector pipe to flush bag in period
     fn get_flush_interval(&self) -> Interval {
-        tokio::time::interval(Duration::from_millis(self.flush_period_in_millis))
+        let flush_period = self.flush_period.clone();
+        tokio::time::interval(flush_period.into())
     }
 }
 
