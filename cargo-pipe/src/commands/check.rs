@@ -10,7 +10,7 @@ pub fn cmd() -> Cmd {
         .args(vec![
             Arg::new("name")
                 .short('n')
-                .about("Specify app name")
+                .about("Specify the app name")
                 .takes_value(true),
             Arg::new("warning").short('w').about("Enable warning"),
             Arg::new("verbose").short('v').about("Enable verbose"),
