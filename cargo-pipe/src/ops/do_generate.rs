@@ -5,8 +5,28 @@ use crate::print::Printer;
 use crate::Config;
 use pipegen::models::App;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process;
+
+fn do_apply_additional_dependency(
+    app: &App,
+    toml_path: &Path,
+    printer: &mut Printer,
+) -> anyhow::Result<()> {
+    printer.status("Generate", "add toml manifest dependencies")?;
+    // fetch package dependency
+    let additionals = app.get_package_dependency();
+    let toml_content = fs::read_to_string(toml_path)?;
+    let mut manifest = toml::from_str::<PipeTomlManifest>(&toml_content)?;
+    manifest.init();
+    for add in additionals.to_owned() {
+        manifest.add_dependency(add.get_package(), add.into());
+    }
+    let toml_content = toml::to_string(&manifest)?;
+    fs::write(toml_path, toml_content)?;
+    printer.status("Generate", "toml manifest dependencies added")?;
+    Ok(())
+}
 
 pub fn do_generate(
     app: &App,
@@ -21,13 +41,15 @@ pub fn do_generate(
         None => app.generate(),
     };
     fs::write(main_path, contents)?;
-    // cargo format
     // pop main.rs
     path_buf.pop();
     // pop src
     path_buf.pop();
     path_buf.push(CARGO_MANIFEST_FILE);
+    // replace dependency in cargo.toml
+    do_apply_additional_dependency(app, path_buf.as_path(), printer)?;
     let manifest_path = path_buf.as_path();
+    // cargo format
     let status_code = do_cargo_fmt(manifest_path, printer)?;
     match status_code {
         0 => (),

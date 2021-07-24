@@ -8,7 +8,7 @@ pub fn cmd() -> Cmd {
     Cmd::new("build").about("Cargo build pipe app").args(vec![
         Arg::new("name")
             .short('n')
-            .about("Specify app name")
+            .about("Specify the app name")
             .takes_value(true),
         Arg::new("out")
             .short('o')
