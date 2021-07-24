@@ -37,12 +37,11 @@ impl FromConfig<FieldVisitConfig> for FieldVisit {
 impl<T, U> Map<T, U, FieldVisitConfig> for FieldVisit
 where
     T: FieldAccept<U> + Send + 'static,
-    U: Clone,
 {
     async fn map(&mut self, t: T) -> anyhow::Result<U> {
         let mut visitor = FieldVisitor::new();
         t.accept(&mut visitor);
-        Ok(visitor.get_value().unwrap().to_owned())
+        Ok(visitor.get_value().expect("field is none"))
     }
 }
 

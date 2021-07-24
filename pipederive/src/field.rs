@@ -14,8 +14,8 @@ pub fn impl_field_visit(ident: &Ident, data: &Data, generics: &Generics) -> Toke
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
         impl #impl_generics FieldAccept<#field_type> for #ident #type_generics #where_clause {
-            fn accept(&self, visitor: &mut FieldVisitor<#field_type>) {
-                visitor.visit(&self.#field_ident)
+            fn accept(self, visitor: &mut FieldVisitor<#field_type>) {
+                visitor.visit(self.#field_ident)
             }
         }
     }

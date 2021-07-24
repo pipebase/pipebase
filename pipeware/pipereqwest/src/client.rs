@@ -67,7 +67,7 @@ impl ReqwestClient {
         Ok(resp)
     }
 
-    pub async fn get<Q>(&self, query: Option<Q>) -> anyhow::Result<Response>
+    pub async fn query<Q>(&self, query: Option<Q>) -> anyhow::Result<Response>
     where
         Q: Serialize,
     {
