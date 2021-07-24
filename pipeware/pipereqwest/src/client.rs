@@ -1,3 +1,4 @@
+use pipebase::common::Render;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -76,6 +77,34 @@ impl ReqwestClient {
             Some(ref query) => req.query(query),
             None => req,
         };
+        let req = match self.basic_auth {
+            Some(ref basic_auth) => req.basic_auth(basic_auth.username(), basic_auth.password()),
+            None => req,
+        };
+        let req = match self.bearer_auth_token {
+            Some(ref token) => req.bearer_auth(token),
+            None => req,
+        };
+        let resp = req.send().await?;
+        Ok(resp)
+    }
+
+    pub async fn get<R>(&self, r: Option<R>) -> anyhow::Result<Response>
+    where
+        R: Render,
+    {
+        let url = match r {
+            Some(r) => {
+                let path = r.render();
+                let url = match path.starts_with("/") {
+                    true => format!("{}{}", self.url, path),
+                    false => format!("{}/{}", self.url, path),
+                };
+                url
+            }
+            None => self.url.to_owned(),
+        };
+        let req = self.client.get(&url).headers(self.headers.to_owned());
         let req = match self.basic_auth {
             Some(ref basic_auth) => req.basic_auth(basic_auth.username(), basic_auth.password()),
             None => req,
