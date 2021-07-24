@@ -14,6 +14,7 @@ Pipes
 | `Mapper` | RedisUnorderedGroupAddAggregator | doc | [`group_sum_redis`] |
 | `Mapper` | RocksDBUnorderedGroupAddAggregator | doc | [`group_sum_rocksdb`] |
 | `Mapper` | KafkaJsonRecordConverter | doc | [`ingest_kafka`] |
+| `Mapper` | ReqwestGetter | doc | [`get_stripe_charge`] |
 | `Mapper` | ReqwestQuery | doc | [`query_stripe_charge`] |
 | `Exporter` | CqlWriter | doc | [`ingest_cassandra`] |
 | `Exporter` | PsqlWriter | doc | [`ingest_postgres`] |
@@ -37,4 +38,5 @@ Pipes
 [`upload_s3`]: https://github.com/pipebase/pipebase/tree/main/examples/upload_s3
 [`ingest_mysql`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_mysql
 [`ingest_elasticsearch`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_elasticsearch
+[`get_stripe_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/get_stripe_charge
 [`query_stripe_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/query_stripe_charge
