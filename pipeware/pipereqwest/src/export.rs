@@ -1,4 +1,4 @@
-use crate::client::{BasicAuth, ReqwestPostClient};
+use crate::client::{BasicAuth, ReqwestClient};
 use async_trait::async_trait;
 use pipebase::{
     common::{ConfigInto, FromConfig, FromPath},
@@ -21,14 +21,14 @@ impl FromPath for ReqwestPosterConfig {}
 impl ConfigInto<ReqwestPoster> for ReqwestPosterConfig {}
 
 pub struct ReqwestPoster {
-    client: ReqwestPostClient,
+    client: ReqwestClient,
 }
 
 #[async_trait]
 impl FromConfig<ReqwestPosterConfig> for ReqwestPoster {
     async fn from_config(config: ReqwestPosterConfig) -> anyhow::Result<Self> {
         Ok(ReqwestPoster {
-            client: ReqwestPostClient::new(
+            client: ReqwestClient::new(
                 config.url,
                 config.basic_auth,
                 config.bear_auth_token,

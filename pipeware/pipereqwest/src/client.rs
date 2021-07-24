@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use reqwest::{
@@ -22,7 +22,7 @@ impl BasicAuth {
     }
 }
 
-pub struct ReqwestPostClient {
+pub struct ReqwestClient {
     client: Client,
     url: String,
     basic_auth: Option<BasicAuth>,
@@ -30,7 +30,7 @@ pub struct ReqwestPostClient {
     headers: HeaderMap,
 }
 
-impl ReqwestPostClient {
+impl ReqwestClient {
     pub fn new(
         url: String,
         basic_auth: Option<BasicAuth>,
@@ -41,7 +41,7 @@ impl ReqwestPostClient {
         for (name, value) in &headers {
             hmap.insert::<HeaderName>(name.parse()?, value.parse()?);
         }
-        Ok(ReqwestPostClient {
+        Ok(ReqwestClient {
             client: Client::new(),
             url: url,
             basic_auth: basic_auth,
@@ -64,6 +64,27 @@ impl ReqwestPostClient {
             None => req,
         };
         let resp = req.body(body).send().await?;
+        Ok(resp)
+    }
+
+    pub async fn get<Q>(&self, query: Option<Q>) -> anyhow::Result<Response>
+    where
+        Q: Serialize,
+    {
+        let req = self.client.get(&self.url).headers(self.headers.to_owned());
+        let req = match query {
+            Some(ref query) => req.query(query),
+            None => req,
+        };
+        let req = match self.basic_auth {
+            Some(ref basic_auth) => req.basic_auth(basic_auth.username(), basic_auth.password()),
+            None => req,
+        };
+        let req = match self.bearer_auth_token {
+            Some(ref token) => req.bearer_auth(token),
+            None => req,
+        };
+        let resp = req.send().await?;
         Ok(resp)
     }
 }
