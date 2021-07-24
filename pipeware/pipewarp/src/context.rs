@@ -137,6 +137,7 @@ mod filters {
         context_query_v1(repository.to_owned())
             .or(context_get_v1(repository.to_owned()))
             .or(context_list_v1(repository.to_owned()))
+            .or(health())
     }
 
     pub fn context_list_v1(
@@ -173,6 +174,12 @@ mod filters {
     {
         warp::any().map(move || repository.clone())
     }
+
+    pub fn health() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::path!("v1" / "health")
+            .and(warp::get())
+            .and_then(handlers::health)
+    }
 }
 
 mod handlers {
@@ -207,5 +214,9 @@ mod handlers {
     ) -> Result<impl warp::Reply, Infallible> {
         let contexts = repository.query_context(query);
         Ok(warp::reply::json(&contexts))
+    }
+
+    pub async fn health() -> Result<impl warp::Reply, Infallible> {
+        Ok(StatusCode::OK)
     }
 }
