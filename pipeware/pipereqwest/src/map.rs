@@ -44,16 +44,16 @@ where
     T: Serialize + Send + 'static,
 {
     async fn map(&mut self, data: Option<T>) -> anyhow::Result<Vec<u8>> {
-        self.get(data).await
+        self.query(data).await
     }
 }
 
 impl ReqwestQuery {
-    async fn get<Q>(&self, query: Option<Q>) -> anyhow::Result<Vec<u8>>
+    async fn query<Q>(&self, query: Option<Q>) -> anyhow::Result<Vec<u8>>
     where
         Q: Serialize,
     {
-        let resp = self.client.get(query).await?;
+        let resp = self.client.query(query).await?;
         let bytes = resp.bytes().await?;
         Ok(bytes.to_vec())
     }
