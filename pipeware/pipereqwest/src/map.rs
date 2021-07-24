@@ -9,25 +9,25 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Deserialize)]
-pub struct ReqwestGetterConfig {
+pub struct ReqwestQueryConfig {
     base_url: String,
     basic_auth: Option<BasicAuth>,
     bear_auth_token: Option<String>,
     headers: Option<HashMap<String, String>>,
 }
 
-impl FromPath for ReqwestGetterConfig {}
+impl FromPath for ReqwestQueryConfig {}
 
-impl ConfigInto<ReqwestGetter> for ReqwestGetterConfig {}
+impl ConfigInto<ReqwestQuery> for ReqwestQueryConfig {}
 
-pub struct ReqwestGetter {
+pub struct ReqwestQuery {
     client: ReqwestClient,
 }
 
 #[async_trait]
-impl FromConfig<ReqwestGetterConfig> for ReqwestGetter {
-    async fn from_config(config: ReqwestGetterConfig) -> anyhow::Result<Self> {
-        Ok(ReqwestGetter {
+impl FromConfig<ReqwestQueryConfig> for ReqwestQuery {
+    async fn from_config(config: ReqwestQueryConfig) -> anyhow::Result<Self> {
+        Ok(ReqwestQuery {
             client: ReqwestClient::new(
                 config.base_url,
                 config.basic_auth,
@@ -39,7 +39,7 @@ impl FromConfig<ReqwestGetterConfig> for ReqwestGetter {
 }
 
 #[async_trait]
-impl<T> Map<Option<T>, Vec<u8>, ReqwestGetterConfig> for ReqwestGetter
+impl<T> Map<Option<T>, Vec<u8>, ReqwestQueryConfig> for ReqwestQuery
 where
     T: Serialize + Send + 'static,
 {
@@ -48,7 +48,7 @@ where
     }
 }
 
-impl ReqwestGetter {
+impl ReqwestQuery {
     async fn get<Q>(&self, query: Option<Q>) -> anyhow::Result<Vec<u8>>
     where
         Q: Serialize,
