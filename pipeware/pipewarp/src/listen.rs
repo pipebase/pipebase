@@ -66,7 +66,7 @@ mod filters {
     pub fn ingest(
         sender: Sender<Vec<u8>>,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        ingest_v1(sender)
+        ingest_v1(sender).or(health())
     }
 
     pub fn ingest_v1(
@@ -83,6 +83,12 @@ mod filters {
         sender: Sender<Vec<u8>>,
     ) -> impl Filter<Extract = (Sender<Vec<u8>>,), Error = std::convert::Infallible> + Clone {
         warp::any().map(move || sender.clone())
+    }
+
+    pub fn health() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::path!("v1" / "health")
+            .and(warp::get())
+            .and_then(handlers::health)
     }
 }
 
@@ -111,6 +117,10 @@ mod handlers {
                     .body(serde_json::to_string(&failure).unwrap()))
             }
         }
+    }
+
+    pub async fn health() -> Result<impl warp::Reply, Infallible> {
+        Ok(StatusCode::OK)
     }
 }
 
