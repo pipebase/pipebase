@@ -1,7 +1,8 @@
 use async_trait::async_trait;
 use std::{collections::HashMap, net::SocketAddr};
 
-use pipebase::common::{ConfigInto, Context, FromConfig, FromPath, PipeContext, StoreContext};
+use pipebase::common::{ConfigInto, Context, FromConfig, FromPath, PipeContext};
+use pipebase::context::StoreContext;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

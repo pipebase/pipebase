@@ -1,19 +1,13 @@
-use super::{ConfigInto, FromConfig, FromPath, Period, Result};
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fmt::Display;
 use std::sync::{
     atomic::{AtomicU64, AtomicU8, Ordering},
     Arc,
 };
-use std::time::Duration;
-use tokio::time::{sleep, Interval};
 
 use strum::{Display, EnumString};
 
 #[derive(Clone, Display, EnumString)]
-
 /// Pipe running state
 #[derive(PartialEq, Debug)]
 pub enum State {
@@ -130,150 +124,6 @@ impl Display for PipeContext {
     }
 }
 
-#[async_trait]
-pub trait StoreContext<C>: FromConfig<C> {
-    fn store_context(&mut self, pipe_name: String, context: std::sync::Arc<Context>);
-
-    fn load_context(&self, pipe_name: &str) -> Option<&std::sync::Arc<Context>>;
-
-    async fn run(&mut self) -> anyhow::Result<()>;
-}
-
-pub struct ContextStore<'a> {
-    name: &'a str,
-}
-
-impl<'a> ContextStore<'a> {
-    pub async fn run<S, C>(
-        &mut self,
-        config: C,
-        contexts: Vec<(String, std::sync::Arc<Context>)>,
-    ) -> Result<()>
-    where
-        S: StoreContext<C>,
-        C: ConfigInto<S> + Send,
-    {
-        let mut store = config.config_into().await?;
-        // add context
-        for (name, context) in contexts {
-            store.store_context(name, context);
-        }
-        log::info!("context store {} run ...", self.name);
-        store.run().await?;
-        log::info!("context store {} exit ...", self.name);
-        Ok(())
-    }
-}
-
-impl<'a> ContextStore<'a> {
-    pub fn new(name: &'a str) -> Self {
-        ContextStore { name }
-    }
-}
-
-#[macro_export]
-macro_rules! cstore {
-    (
-        $name:expr
-    ) => {{
-        ContextStore::new($name)
-    }};
-}
-
-#[macro_export]
-macro_rules! run_cstore {
-    (
-        $cstore:ident, $config:ty, $path:expr, [$( $pipe:expr ), *]
-    ) => {
-        {
-            let mut contexts = vec![];
-            $(
-                contexts.push(($pipe.get_name(), $pipe.get_context()));
-            )*
-            tokio::spawn(async move {
-                let config = <$config>::from_path($path).await.expect(&format!("invalid config file location {}", $path));
-                match $cstore.run(config, contexts).await {
-                    Ok(_) => Ok(()),
-                    Err(err) => {
-                        log::error!("context store exit with error {:#?}", err);
-                        Err(err)
-                    }
-                }
-            })
-        }
-    };
-}
-
-#[derive(Deserialize)]
-pub struct ContextPrinterConfig {
-    pub interval: Period,
-    pub delay: Option<Period>,
-}
-
-impl FromPath for ContextPrinterConfig {}
-
-#[async_trait]
-impl ConfigInto<ContextPrinter> for ContextPrinterConfig {}
-
-pub struct ContextPrinter {
-    interval: Interval,
-    delay: Duration,
-    contexts: HashMap<String, std::sync::Arc<Context>>,
-}
-
-#[async_trait]
-impl FromConfig<ContextPrinterConfig> for ContextPrinter {
-    async fn from_config(config: ContextPrinterConfig) -> anyhow::Result<Self> {
-        let delay = match config.delay {
-            Some(period) => period.into(),
-            None => Duration::from_micros(0),
-        };
-        Ok(ContextPrinter {
-            interval: tokio::time::interval(config.interval.into()),
-            delay: delay,
-            contexts: HashMap::new(),
-        })
-    }
-}
-
-#[async_trait]
-impl StoreContext<ContextPrinterConfig> for ContextPrinter {
-    fn store_context(&mut self, pipe_name: String, context: std::sync::Arc<Context>) {
-        self.contexts.insert(pipe_name, context);
-    }
-
-    fn load_context(&self, pipe_name: &str) -> Option<&std::sync::Arc<Context>> {
-        self.contexts.get(pipe_name)
-    }
-
-    async fn run(&mut self) -> anyhow::Result<()> {
-        sleep(self.delay).await;
-        loop {
-            self.interval.tick().await;
-            let mut done: usize = 0;
-            for (pipe_name, ctx) in &self.contexts {
-                let ref state = ctx.get_state();
-                let total_run = ctx.get_total_run();
-                let failure_run = ctx.get_failure_run();
-                let display = PipeContext::new(
-                    pipe_name.to_owned(),
-                    state.to_owned(),
-                    total_run,
-                    failure_run,
-                );
-                print!("{}", display);
-                if state == &State::Done {
-                    done += 1;
-                }
-            }
-            if done == self.contexts.len() {
-                log::info!("all pipe in Done state, exit context printer");
-                break;
-            }
-        }
-        Ok(())
-    }
-}
 pub trait HasContext {
     fn get_name(&self) -> String;
     fn get_context(&self) -> Arc<Context>;
