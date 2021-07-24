@@ -1,25 +1,25 @@
 /// Field visitor visits object's field
-pub struct FieldVisitor<F: Clone> {
+pub struct FieldVisitor<F> {
     value: Option<F>,
 }
 
-impl<F: Clone> FieldVisitor<F> {
+impl<F> FieldVisitor<F> {
     pub fn new() -> Self {
         FieldVisitor { value: None }
     }
 
-    pub fn visit(&mut self, value: &F) {
-        self.value = Some(value.to_owned());
+    pub fn visit(&mut self, value: F) {
+        self.value = Some(value);
     }
 
-    pub fn get_value(&self) -> Option<&F> {
-        self.value.as_ref()
+    pub fn get_value(self) -> Option<F> {
+        self.value
     }
 }
 
 /// Accept field visitor
-pub trait FieldAccept<F: Clone> {
-    fn accept(&self, visitor: &mut FieldVisitor<F>);
+pub trait FieldAccept<F> {
+    fn accept(self, visitor: &mut FieldVisitor<F>);
 }
 
 #[cfg(test)]
