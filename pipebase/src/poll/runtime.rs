@@ -63,6 +63,8 @@ where
                     error!("poller {} error '{}'", self.name, e);
                     self.context.inc_total_run();
                     self.context.inc_failure_run();
+                    // wait for next poll period
+                    interval.tick().await;
                     continue;
                 }
             };
