@@ -1,12 +1,11 @@
-use std::time::Duration;
-
-use crate::client::{SQSClient, SQSClientConfig};
+use crate::client::{SQSClient, SQSClientConfig, SQSMessageAttributeValue};
 use async_trait::async_trait;
 use pipebase::{
     common::{ConfigInto, FromConfig, FromPath, Period},
     poll::{Poll, PollResponse},
 };
 use serde::Deserialize;
+use std::{collections::HashMap, time::Duration};
 
 #[derive(Deserialize)]
 pub struct SQSMessageReceiverConfig {
@@ -38,8 +37,13 @@ impl FromConfig<SQSMessageReceiverConfig> for SQSMessageReceiver {
 }
 
 #[async_trait]
-impl Poll<Vec<String>, SQSMessageReceiverConfig> for SQSMessageReceiver {
-    async fn poll(&mut self) -> anyhow::Result<PollResponse<Vec<String>>> {
+impl Poll<Vec<(String, HashMap<String, SQSMessageAttributeValue>)>, SQSMessageReceiverConfig>
+    for SQSMessageReceiver
+{
+    async fn poll(
+        &mut self,
+    ) -> anyhow::Result<PollResponse<Vec<(String, HashMap<String, SQSMessageAttributeValue>)>>>
+    {
         let messages = self.receive_message().await?;
         if messages.is_empty() {
             return Ok(PollResponse::PollResult(None));
@@ -58,10 +62,15 @@ impl Poll<Vec<String>, SQSMessageReceiverConfig> for SQSMessageReceiver {
 }
 
 impl SQSMessageReceiver {
-    async fn receive_message(&self) -> anyhow::Result<Vec<String>> {
+    async fn receive_message(
+        &self,
+    ) -> anyhow::Result<Vec<(String, HashMap<String, SQSMessageAttributeValue>)>> {
         let msg_output = self.client.receive_message().await?;
         let messages = msg_output.messages.unwrap_or_default();
-        let messages: Vec<String> = messages.into_iter().filter_map(|m| m.body).collect();
+        let messages: Vec<(String, HashMap<String, SQSMessageAttributeValue>)> = messages
+            .into_iter()
+            .map(|m| SQSClient::handle_message(m))
+            .collect();
         Ok(messages)
     }
 }
