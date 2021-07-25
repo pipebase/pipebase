@@ -6,7 +6,7 @@ use tokio::{
     time::sleep,
 };
 
-use super::Poll;
+use super::{Poll, PollResponse};
 use crate::common::{
     filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
     ConfigInto, Context, HasContext, Pipe, Result, State,
@@ -56,9 +56,9 @@ where
                 }
                 false => (),
             }
-            let u = poller.poll().await;
-            let u = match u {
-                Ok(u) => u,
+            let resp = poller.poll().await;
+            let resp = match resp {
+                Ok(resp) => resp,
                 Err(e) => {
                     error!("poller {} error '{}'", self.name, e);
                     self.context.inc_total_run();
@@ -66,10 +66,16 @@ where
                     continue;
                 }
             };
-            let u = match u {
+            let resp = match resp {
+                PollResponse::Exit => break,
+                PollResponse::PollResult(resp) => resp,
+            };
+            let u = match resp {
                 Some(u) => u,
                 None => {
-                    break;
+                    // wait for next poll period
+                    interval.tick().await;
+                    continue;
                 }
             };
             self.context.set_state(State::Send);

@@ -4,7 +4,7 @@ use crate::client::{SQSClient, SQSClientConfig};
 use async_trait::async_trait;
 use pipebase::{
     common::{ConfigInto, FromConfig, FromPath, Period},
-    poll::Poll,
+    poll::{Poll, PollResponse},
 };
 use serde::Deserialize;
 
@@ -39,9 +39,12 @@ impl FromConfig<SQSReceiverConfig> for SQSReceiver {
 
 #[async_trait]
 impl Poll<Vec<String>, SQSReceiverConfig> for SQSReceiver {
-    async fn poll(&mut self) -> anyhow::Result<Option<Vec<String>>> {
+    async fn poll(&mut self) -> anyhow::Result<PollResponse<Vec<String>>> {
         let messages = self.receive_message().await?;
-        Ok(Some(messages))
+        if messages.is_empty() {
+            return Ok(PollResponse::PollResult(None));
+        }
+        Ok(PollResponse::PollResult(Some(messages)))
     }
 
     fn get_initial_delay(&self) -> Duration {

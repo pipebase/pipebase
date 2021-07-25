@@ -3,7 +3,7 @@ use serde::Deserialize;
 use std::time::Duration;
 use std::u128;
 
-use super::Poll;
+use super::{Poll, PollResponse};
 use crate::common::{ConfigInto, FromConfig, FromPath, Period};
 use tokio::time::Interval;
 
@@ -49,14 +49,14 @@ impl FromConfig<TimerConfig> for Timer {
 /// * u128: output
 #[async_trait]
 impl Poll<u128, TimerConfig> for Timer {
-    async fn poll(&mut self) -> anyhow::Result<Option<u128>> {
+    async fn poll(&mut self) -> anyhow::Result<PollResponse<u128>> {
         let tick = match self.ticks > 0 {
             true => self.tick,
-            false => return Ok(None),
+            false => return Ok(PollResponse::Exit),
         };
         self.tick += 1;
         self.ticks -= 1;
-        Ok(Some(tick))
+        Ok(PollResponse::PollResult(Some(tick)))
     }
 
     fn get_initial_delay(&self) -> Duration {
