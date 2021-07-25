@@ -2,10 +2,10 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use std::time::Duration;
 use std::u128;
-use tokio::time::{sleep, Interval};
 
 use super::Poll;
 use crate::common::{ConfigInto, FromConfig, FromPath, Period};
+use tokio::time::Interval;
 
 #[derive(Deserialize)]
 pub struct TimerConfig {
@@ -22,7 +22,7 @@ impl ConfigInto<Timer> for TimerConfig {}
 /// Use tokio::time::Interval and emit tick in period
 pub struct Timer {
     /// Interval between ticks
-    pub interval: Interval,
+    pub interval: Duration,
     /// Initial delay
     pub delay: Duration,
     pub ticks: u128,
@@ -37,7 +37,7 @@ impl FromConfig<TimerConfig> for Timer {
             None => Duration::from_micros(0),
         };
         Ok(Timer {
-            interval: tokio::time::interval(config.interval.into()),
+            interval: config.interval.into(),
             delay: delay,
             ticks: config.ticks,
             tick: 0,
@@ -54,14 +54,18 @@ impl Poll<u128, TimerConfig> for Timer {
             true => self.tick,
             false => return Ok(None),
         };
-        if tick == 0 {
-            // apply initial deplay
-            sleep(self.delay).await;
-        }
-        self.interval.tick().await;
         self.tick += 1;
         self.ticks -= 1;
         Ok(Some(tick))
+    }
+
+    fn get_initial_delay(&self) -> Duration {
+        self.delay.to_owned()
+    }
+
+    fn get_interval(&self) -> Interval {
+        let interval = self.interval.to_owned();
+        tokio::time::interval(interval)
     }
 }
 

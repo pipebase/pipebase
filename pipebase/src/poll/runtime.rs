@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 use log::{error, info};
-use tokio::sync::mpsc::error::SendError;
-use tokio::sync::mpsc::Receiver;
-use tokio::sync::mpsc::Sender;
-use tokio::task::JoinHandle;
+use tokio::{
+    sync::mpsc::{error::SendError, Receiver, Sender},
+    task::JoinHandle,
+    time::sleep,
+};
 
 use super::Poll;
 use crate::common::{
@@ -42,8 +43,12 @@ where
         let mut poller = config.config_into().await?;
         let mut txs = senders_as_map(txs);
         info!("source {} run ...", self.name);
+        let delay = poller.get_initial_delay();
+        let mut interval = poller.get_interval();
+        // initial delay
+        sleep(delay).await;
+        self.context.set_state(State::Poll);
         loop {
-            self.context.set_state(State::Poll);
             // if all receiver dropped, sender drop as well
             match txs.is_empty() {
                 true => {
@@ -82,6 +87,9 @@ where
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
             self.context.inc_total_run();
+            // wait for next poll period
+            self.context.set_state(State::Poll);
+            interval.tick().await;
         }
         info!("source {} exit ...", self.name);
         self.context.set_state(State::Done);
