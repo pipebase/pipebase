@@ -73,6 +73,9 @@ pub enum DataType {
         lty: Box<DataType>,
         rty: Box<DataType>,
     },
+    Tuples {
+        tys: Vec<DataType>,
+    },
     Pairs {
         lty: Box<DataType>,
         rty: Box<DataType>,
@@ -211,6 +214,12 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
             let lty = data_ty_to_literal(lty);
             let rty = data_ty_to_literal(rty);
             format!("Pair<{}, {}>", lty, rty)
+        }
+        DataType::Tuples { tys } => {
+            let ty_lit = data_ty_to_literal(&DataType::Tuple {
+                tys: tys.to_owned(),
+            });
+            format!("std::vec::Vec<{}>", ty_lit)
         }
         DataType::Pairs { lty, rty } => {
             let ty_lit = data_ty_to_literal(&DataType::Pair {
