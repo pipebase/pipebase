@@ -1,0 +1,6 @@
+client:
+  url: https://sqs.REGION.amazonaws.com/*
+initial_delay:
+  Secs: 1
+interval:
+  Secs: 30

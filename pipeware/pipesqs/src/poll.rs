@@ -9,27 +9,27 @@ use pipebase::{
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct SQSReceiverConfig {
+pub struct SQSMessageReceiverConfig {
     client: SQSClientConfig,
     initial_delay: Period,
     interval: Period,
 }
 
-impl FromPath for SQSReceiverConfig {}
+impl FromPath for SQSMessageReceiverConfig {}
 
-impl ConfigInto<SQSReceiver> for SQSReceiverConfig {}
+impl ConfigInto<SQSMessageReceiver> for SQSMessageReceiverConfig {}
 
-pub struct SQSReceiver {
+pub struct SQSMessageReceiver {
     client: SQSClient,
     initial_delay: Duration,
     interval: Duration,
 }
 
 #[async_trait]
-impl FromConfig<SQSReceiverConfig> for SQSReceiver {
-    async fn from_config(config: SQSReceiverConfig) -> anyhow::Result<Self> {
+impl FromConfig<SQSMessageReceiverConfig> for SQSMessageReceiver {
+    async fn from_config(config: SQSMessageReceiverConfig) -> anyhow::Result<Self> {
         let client_config = config.client;
-        Ok(SQSReceiver {
+        Ok(SQSMessageReceiver {
             client: SQSClient::new(client_config),
             initial_delay: config.initial_delay.into(),
             interval: config.interval.into(),
@@ -38,7 +38,7 @@ impl FromConfig<SQSReceiverConfig> for SQSReceiver {
 }
 
 #[async_trait]
-impl Poll<Vec<String>, SQSReceiverConfig> for SQSReceiver {
+impl Poll<Vec<String>, SQSMessageReceiverConfig> for SQSMessageReceiver {
     async fn poll(&mut self) -> anyhow::Result<PollResponse<Vec<String>>> {
         let messages = self.receive_message().await?;
         if messages.is_empty() {
@@ -57,7 +57,7 @@ impl Poll<Vec<String>, SQSReceiverConfig> for SQSReceiver {
     }
 }
 
-impl SQSReceiver {
+impl SQSMessageReceiver {
     async fn receive_message(&self) -> anyhow::Result<Vec<String>> {
         let msg_output = self.client.receive_message().await?;
         let messages = msg_output.messages.unwrap_or_default();

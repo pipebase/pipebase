@@ -1,6 +1,6 @@
 Demo `S3Writer` pipe
-### Config S3
-S3Writer config file
+### Configuration
+Config S3Writer
 ```
 # catalogs/s3_writer.yml
 region: MY_REGION
