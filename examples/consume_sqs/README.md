@@ -4,7 +4,8 @@ Config sqs
 ```
 # catalogs/sqs_msg_receiver.yml
 client:
-  url: 
+  url: https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME
+  message_attribute_names: [Topic, Code]
 initial_delay:
   Secs: 1
 interval:
@@ -31,7 +32,11 @@ Run app
 ```
 ./sqs
 ```
-### Populate SQS Message
+### Populate SQS Message (terminal 2)
 ```
-aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/*" --message-body '{"msg": "Hello World"}' --message-attributes file://attribute.json
+aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME" --message-body '{"msg": "Hello World"}' --message-attributes file://attribute.json
+```
+checkout stdout in terminal 1
+```
+("{\"msg\": \"Good Morning\"}", {"Code": SQSMessageAttributeValue { ty: "Number", data: String("1") }, "Topic": SQSMessageAttributeValue { ty: "String", data: String("Pipe") }})
 ```

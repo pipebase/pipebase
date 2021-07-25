@@ -1,5 +1,6 @@
 client:
-  url: https://sqs.REGION.amazonaws.com/*
+  url: https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME
+  message_attribute_names: [Topic, Code]
 initial_delay:
   Secs: 1
 interval:
