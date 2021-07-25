@@ -23,6 +23,7 @@ Pipes
 | `Exporter` | KafkaProducer | doc | [`ingest_kafka`] |
 | `Exporter` | S3Writer | doc | [`upload_s3`] |
 | `Exporter` | MySQLWriter | doc | [`ingest_mysql`] |
+| `Poller` | SQSMessageReceiver | doc | [`consume_sqs`] |
 
 [`pipeware`]: https://github.com/pipebase/pipebase/tree/main/pipeware
 [`group_sum_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/group_sum_redis
@@ -40,3 +41,4 @@ Pipes
 [`ingest_elasticsearch`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_elasticsearch
 [`get_stripe_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/get_stripe_charge
 [`query_stripe_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/query_stripe_charge
+[`consume_sqs`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_sqs

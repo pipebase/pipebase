@@ -1,0 +1,42 @@
+name: consume_sqs
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - package: pipesqs
+    path: ../../../pipeware/pipesqs
+    modules: ["pipesqs::*"]
+pipes:
+  - name: consume_sqs
+    ty: Poller
+    config:
+      ty: SQSMessageReceiverConfig
+      path: catalogs/sqs_msg_receiver.yml
+    output:
+      ty: 
+        Tuples:
+          tys:
+            - String
+            - HashMap:
+                kty: String
+                vty: 
+                  Object: SQSMessageAttributeValue
+  - name: read_iterator
+    ty: Streamer
+    config:
+      ty: IteratorReaderConfig
+    output:
+      ty: 
+        Tuple:
+          tys:
+            - String
+            - HashMap:
+                kty: String
+                vty: 
+                  Object: SQSMessageAttributeValue
+    upstreams: [consume_sqs]
+  - name: print_msg
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [read_iterator]
