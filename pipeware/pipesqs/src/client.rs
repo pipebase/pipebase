@@ -2,7 +2,7 @@ use crate::message::*;
 use serde::Deserialize;
 use sqs::{
     model::{Message, MessageAttributeValue},
-    output::ReceiveMessageOutput,
+    output::{DeleteMessageOutput, ReceiveMessageOutput},
 };
 use std::collections::HashMap;
 
@@ -32,11 +32,24 @@ impl SQSClient {
         for name in &self.message_attribute_names {
             receive_msg = receive_msg.message_attribute_names(name);
         }
-        let msg_output = receive_msg.send().await?;
-        Ok(msg_output)
+        let receive_msg_output = receive_msg.send().await?;
+        Ok(receive_msg_output)
     }
 
-    pub fn handle_message(message: Message) -> SQSMessage {
+    pub async fn delete_message(
+        &self,
+        receipt_handle: String,
+    ) -> anyhow::Result<DeleteMessageOutput> {
+        let delete_msg = self
+            .client
+            .delete_message()
+            .queue_url(&self.url)
+            .receipt_handle(receipt_handle);
+        let delete_msg_output = delete_msg.send().await?;
+        Ok(delete_msg_output)
+    }
+
+    pub async fn handle_message(&self, message: Message) -> SQSMessage {
         let message_attributes = message.message_attributes.unwrap_or_default();
         let body = message.body.unwrap_or_default();
         let message_attribute_values: HashMap<String, SQSMessageAttributeValue> =
@@ -44,6 +57,17 @@ impl SQSClient {
                 .into_iter()
                 .map(|(name, value)| (name, Self::handle_message_attribute_value(value)))
                 .collect();
+        // Amazon SQS doesn't automatically delete the message
+        // consumer must delete the message from the queue after receiving and processing it
+        match message.receipt_handle {
+            Some(receipt_handle) => {
+                match self.delete_message(receipt_handle).await {
+                    Ok(_) => (),
+                    Err(e) => log::error!("delete message error '{}'", e),
+                };
+            }
+            None => (),
+        };
         SQSMessage {
             body,
             message_attributes: SQSMessageAttributes {

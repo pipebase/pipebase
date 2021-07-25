@@ -63,10 +63,11 @@ impl SQSMessageReceiver {
     async fn receive_message(&self) -> anyhow::Result<Vec<SQSMessage>> {
         let msg_output = self.client.receive_message().await?;
         let messages = msg_output.messages.unwrap_or_default();
-        let messages: Vec<SQSMessage> = messages
-            .into_iter()
-            .map(|m| SQSClient::handle_message(m))
-            .collect();
-        Ok(messages)
+        let mut sqs_messages: Vec<SQSMessage> = Vec::new();
+        for message in messages {
+            let sqs_message = self.client.handle_message(message).await;
+            sqs_messages.push(sqs_message);
+        }
+        Ok(sqs_messages)
     }
 }
