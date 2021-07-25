@@ -7,19 +7,22 @@ use pipebase::{
     poll::Poll,
 };
 use serde::Deserialize;
-use tokio::time::Interval;
 
 #[derive(Deserialize)]
 pub struct SQSReceiverConfig {
     client: SQSClientConfig,
-    poll_period: Period,
+    initial_delay: Period,
+    interval: Period,
 }
 
 impl FromPath for SQSReceiverConfig {}
 
+impl ConfigInto<SQSReceiver> for SQSReceiverConfig {}
+
 pub struct SQSReceiver {
     client: SQSClient,
-    poll_interval: Interval,
+    initial_delay: Duration,
+    interval: Duration,
 }
 
 #[async_trait]
@@ -28,8 +31,26 @@ impl FromConfig<SQSReceiverConfig> for SQSReceiver {
         let client_config = config.client;
         Ok(SQSReceiver {
             client: SQSClient::new(client_config),
-            poll_interval: tokio::time::interval(config.poll_period.into()),
+            initial_delay: config.initial_delay.into(),
+            interval: config.interval.into(),
         })
+    }
+}
+
+#[async_trait]
+impl Poll<Vec<String>, SQSReceiverConfig> for SQSReceiver {
+    async fn poll(&mut self) -> anyhow::Result<Option<Vec<String>>> {
+        let messages = self.receive_message().await?;
+        Ok(Some(messages))
+    }
+
+    fn get_initial_delay(&self) -> Duration {
+        self.initial_delay.to_owned()
+    }
+
+    fn get_interval(&self) -> tokio::time::Interval {
+        let interval = self.interval.to_owned();
+        tokio::time::interval(interval)
     }
 }
 
