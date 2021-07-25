@@ -20,11 +20,13 @@ pub struct SQSMessageAttributeValue {
 #[derive(Deserialize)]
 pub struct SQSClientConfig {
     url: String,
+    message_attribute_names: Option<Vec<String>>,
 }
 
 pub struct SQSClient {
     client: sqs::Client,
     url: String,
+    message_attribute_names: Vec<String>,
 }
 
 impl SQSClient {
@@ -32,16 +34,16 @@ impl SQSClient {
         SQSClient {
             client: sqs::Client::from_env(),
             url: config.url,
+            message_attribute_names: config.message_attribute_names.unwrap_or_default(),
         }
     }
 
     pub async fn receive_message(&self) -> anyhow::Result<ReceiveMessageOutput> {
-        let msg_output = self
-            .client
-            .receive_message()
-            .queue_url(&self.url)
-            .send()
-            .await?;
+        let mut receive_msg = self.client.receive_message().queue_url(&self.url);
+        for name in &self.message_attribute_names {
+            receive_msg = receive_msg.message_attribute_names(name);
+        }
+        let msg_output = receive_msg.send().await?;
         Ok(msg_output)
     }
 
