@@ -1,11 +1,14 @@
-use crate::client::{SQSClient, SQSClientConfig, SQSMessageAttributeValue};
+use crate::{
+    client::{SQSClient, SQSClientConfig},
+    message::SQSMessage,
+};
 use async_trait::async_trait;
 use pipebase::{
     common::{ConfigInto, FromConfig, FromPath, Period},
     poll::{Poll, PollResponse},
 };
 use serde::Deserialize;
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 #[derive(Deserialize)]
 pub struct SQSMessageReceiverConfig {
@@ -37,13 +40,8 @@ impl FromConfig<SQSMessageReceiverConfig> for SQSMessageReceiver {
 }
 
 #[async_trait]
-impl Poll<Vec<(String, HashMap<String, SQSMessageAttributeValue>)>, SQSMessageReceiverConfig>
-    for SQSMessageReceiver
-{
-    async fn poll(
-        &mut self,
-    ) -> anyhow::Result<PollResponse<Vec<(String, HashMap<String, SQSMessageAttributeValue>)>>>
-    {
+impl Poll<Vec<SQSMessage>, SQSMessageReceiverConfig> for SQSMessageReceiver {
+    async fn poll(&mut self) -> anyhow::Result<PollResponse<Vec<SQSMessage>>> {
         let messages = self.receive_message().await?;
         if messages.is_empty() {
             return Ok(PollResponse::PollResult(None));
@@ -62,15 +60,14 @@ impl Poll<Vec<(String, HashMap<String, SQSMessageAttributeValue>)>, SQSMessageRe
 }
 
 impl SQSMessageReceiver {
-    async fn receive_message(
-        &self,
-    ) -> anyhow::Result<Vec<(String, HashMap<String, SQSMessageAttributeValue>)>> {
+    async fn receive_message(&self) -> anyhow::Result<Vec<SQSMessage>> {
         let msg_output = self.client.receive_message().await?;
         let messages = msg_output.messages.unwrap_or_default();
-        let messages: Vec<(String, HashMap<String, SQSMessageAttributeValue>)> = messages
-            .into_iter()
-            .map(|m| SQSClient::handle_message(m))
-            .collect();
-        Ok(messages)
+        let mut sqs_messages: Vec<SQSMessage> = Vec::new();
+        for message in messages {
+            let sqs_message = self.client.handle_message(message).await;
+            sqs_messages.push(sqs_message);
+        }
+        Ok(sqs_messages)
     }
 }

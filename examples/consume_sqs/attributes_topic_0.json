@@ -1,0 +1,10 @@
+{
+    "Topic": {
+        "DataType": "String",
+        "StringValue": "Zero"
+    },
+    "Code": {
+        "DataType": "Number",
+        "StringValue": "0"
+    }
+}
