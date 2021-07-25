@@ -47,6 +47,8 @@ where
         let mut interval = poller.get_interval();
         // initial delay
         sleep(delay).await;
+        // first tick start immediately
+        interval.tick().await;
         self.context.set_state(State::Poll);
         loop {
             // if all receiver dropped, sender drop as well
