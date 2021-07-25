@@ -34,7 +34,8 @@ Run app
 ```
 ### Populate SQS Message (terminal 2)
 ```
-aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME" --message-body '{"msg": "Hello World"}' --message-attributes file://attribute.json
+aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME" --message-body '{"msg": "Hello World Zero"}' --message-attributes file://attributes_0.json
+aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME" --message-body '{"msg": "Hello World One"}' --message-attributes file://attributes_1.json
 ```
 checkout stdout in terminal 1
 ```

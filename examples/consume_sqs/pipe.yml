@@ -14,26 +14,14 @@ pipes:
       path: catalogs/sqs_msg_receiver.yml
     output:
       ty: 
-        Tuples:
-          tys:
-            - String
-            - HashMap:
-                kty: String
-                vty: 
-                  Object: SQSMessageAttributeValue
+        Objects: SQSMessage
   - name: read_iterator
     ty: Streamer
     config:
       ty: IteratorReaderConfig
     output:
       ty: 
-        Tuple:
-          tys:
-            - String
-            - HashMap:
-                kty: String
-                vty: 
-                  Object: SQSMessageAttributeValue
+        Object: SQSMessage
     upstreams: [consume_sqs]
   - name: print_msg
     ty: Exporter

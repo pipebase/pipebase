@@ -1,5 +1,6 @@
 mod client;
+mod message;
 mod poll;
 
-pub use client::{SQSMessageAttributeData, SQSMessageAttributeValue};
+pub use message::*;
 pub use poll::*;

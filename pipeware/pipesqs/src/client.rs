@@ -1,21 +1,10 @@
-use serde::{Deserialize, Serialize};
+use crate::message::*;
+use serde::Deserialize;
 use sqs::{
     model::{Message, MessageAttributeValue},
     output::ReceiveMessageOutput,
 };
 use std::collections::HashMap;
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum SQSMessageAttributeData {
-    String(String),
-    Binary(Vec<u8>),
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SQSMessageAttributeValue {
-    pub ty: String,
-    pub data: SQSMessageAttributeData,
-}
 
 #[derive(Deserialize)]
 pub struct SQSClientConfig {
@@ -47,14 +36,20 @@ impl SQSClient {
         Ok(msg_output)
     }
 
-    pub fn handle_message(message: Message) -> (String, HashMap<String, SQSMessageAttributeValue>) {
+    pub fn handle_message(message: Message) -> SQSMessage {
         let message_attributes = message.message_attributes.unwrap_or_default();
         let body = message.body.unwrap_or_default();
-        let message_attributes: HashMap<String, SQSMessageAttributeValue> = message_attributes
-            .into_iter()
-            .map(|(name, value)| (name, Self::handle_message_attribute_value(value)))
-            .collect();
-        (body, message_attributes)
+        let message_attribute_values: HashMap<String, SQSMessageAttributeValue> =
+            message_attributes
+                .into_iter()
+                .map(|(name, value)| (name, Self::handle_message_attribute_value(value)))
+                .collect();
+        SQSMessage {
+            body,
+            message_attributes: SQSMessageAttributes {
+                values: message_attribute_values,
+            },
+        }
     }
 
     fn handle_message_attribute_value(value: MessageAttributeValue) -> SQSMessageAttributeValue {
