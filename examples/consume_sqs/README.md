@@ -34,10 +34,13 @@ Run app
 ```
 ### Populate SQS Message (terminal 2)
 ```
-aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME" --message-body '{"msg": "Hello World Zero"}' --message-attributes file://attributes_0.json
-aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME" --message-body '{"msg": "Hello World One"}' --message-attributes file://attributes_1.json
+aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME" --message-body '{"msg": "Missing topic"}'
+aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME" --message-body '{"msg": "Hello World Zero"}' --message-attributes file://attributes_topic_0.json
+aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/ACCOUNTID/QUEUE_NAME" --message-body '{"msg": "Hello World One"}' --message-attributes file://attributes_topic_1.json
 ```
 checkout stdout in terminal 1
 ```
-("{\"msg\": \"Good Morning\"}", {"Code": SQSMessageAttributeValue { ty: "Number", data: String("1") }, "Topic": SQSMessageAttributeValue { ty: "String", data: String("Pipe") }})
+CustomMessage { body: "{\"msg\": \"Hello World Zero\"}", topic: Some("Zero") }
+CustomMessage { body: "{\"msg\": \"Hello World One\"}", topic: Some("One") }
 ```
+note that message with no topic is filtered

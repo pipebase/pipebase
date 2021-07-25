@@ -15,16 +15,79 @@ pipes:
     output:
       ty: 
         Objects: SQSMessage
+  - name: message_conversion
+    ty: Mapper
+    config:
+      ty: ConversionConfig
+    output:
+      ty: 
+        Objects: FilterableMessage
+    upstreams: [consume_sqs]
+  - name: filter_no_topic
+    ty: Mapper
+    config:
+      ty: FilterMapConfig
+    output:
+      ty: 
+        Objects: FilterableMessage
+    upstreams: [message_conversion]
+  - name: project_custom_message
+    ty: Mapper
+    config:
+      ty: ProjectionConfig
+    output:
+      ty:
+        Objects: CustomMessage
+    upstreams: [filter_no_topic]
   - name: read_iterator
     ty: Streamer
     config:
       ty: IteratorReaderConfig
     output:
       ty: 
-        Object: SQSMessage
-    upstreams: [consume_sqs]
+        Object: CustomMessage
+    upstreams: [project_custom_message]
   - name: print_msg
     ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [read_iterator]
+objects:
+  - ty: FilterableMessage
+    metas:
+      - derives: [Clone, Debug, Convert, Filter]
+      - filter:
+          predicate: m.attributes.has_attribute("Topic", "String")
+          alias: m
+      - convert:
+          input: SQSMessage
+    fields:
+      - name: body
+        metas:
+          - convert:
+              from: body
+        ty: String
+      - name: attributes
+        metas:
+          - convert:
+              from: message_attributes
+        ty: 
+          Object: SQSMessageAttributes
+  - ty: CustomMessage
+    metas: 
+      - derives: [Clone, Debug, Project]
+      - project:
+          input: FilterableMessage
+    fields:
+      - name: body
+        metas: 
+          - project:
+              from: body
+        ty: String
+      - name: topic
+        metas:
+          - project:
+              expr: m.attributes.get_attribute_string_value("Topic", "String")
+              alias: m
+        ty: String
+        is_optional: true
