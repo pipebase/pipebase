@@ -33,5 +33,5 @@ Run app
 ```
 ### Populate SQS Message
 ```
-aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/*" --message-body "Hello World" --message-attributes file://attribute.json
+aws sqs send-message --queue-url "https://sqs.REGION.amazonaws.com/*" --message-body '{"msg": "Hello World"}' --message-attributes file://attribute.json
 ```

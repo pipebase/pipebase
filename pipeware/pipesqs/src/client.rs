@@ -1,15 +1,17 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqs::{
     model::{Message, MessageAttributeValue},
     output::ReceiveMessageOutput,
 };
 use std::collections::HashMap;
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum SQSMessageAttributeData {
     String(String),
     Binary(Vec<u8>),
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct SQSMessageAttributeValue {
     pub ty: String,
     pub data: SQSMessageAttributeData,
