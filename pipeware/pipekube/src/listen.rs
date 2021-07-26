@@ -1,3 +1,4 @@
+use crate::model::*;
 use async_trait::async_trait;
 use futures::{StreamExt, TryStreamExt};
 use k8s_openapi::api::core::v1::Pod;
@@ -6,7 +7,7 @@ use kube::{
     Client,
 };
 use pipebase::{
-    common::{ConfigInto, FromConfig, FromPath, Pair},
+    common::{ConfigInto, FromConfig, FromPath},
     listen::Listen,
 };
 use serde::Deserialize;
@@ -28,7 +29,7 @@ pub struct KubeLogReader {
     namespace: String,
     pod: String,
     container: String,
-    tx: Option<Sender<Pair<String, String>>>,
+    tx: Option<Sender<KubeLog>>,
 }
 
 #[async_trait]
@@ -47,12 +48,12 @@ impl FromConfig<KubeLogReaderConfig> for KubeLogReader {
 }
 
 #[async_trait]
-impl Listen<Pair<String, String>, KubeLogReaderConfig> for KubeLogReader {
+impl Listen<KubeLog, KubeLogReaderConfig> for KubeLogReader {
     async fn run(&mut self) -> anyhow::Result<()> {
         self.do_log().await
     }
 
-    fn set_sender(&mut self, sender: Sender<Pair<String, String>>) {
+    fn set_sender(&mut self, sender: Sender<KubeLog>) {
         self.tx = Some(sender)
     }
 }
@@ -70,9 +71,13 @@ impl KubeLogReader {
         loop {
             match logs.try_next().await? {
                 Some(line) => {
-                    let key = format!("{}.{}.{}", self.namespace, self.pod, self.container);
-                    let value = String::from_utf8(line.to_vec())?;
-                    tx.send(Pair::new(key, value)).await?;
+                    let log = KubeLog::new(
+                        self.namespace.to_owned(),
+                        self.pod.to_owned(),
+                        self.container.to_owned(),
+                        String::from_utf8(line.to_vec())?,
+                    );
+                    tx.send(log).await?;
                 }
                 None => (),
             }
