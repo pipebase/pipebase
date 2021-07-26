@@ -31,6 +31,7 @@ pub enum DataType {
     Count32,
     Averagef32,
     Object(String),
+    ExternalObject(String),
     Booleans,
     Characters,
     Strings,
@@ -52,6 +53,7 @@ pub enum DataType {
     Count32s,
     Averagef32s,
     Objects(String),
+    ExternalObjects(String),
     Vec {
         ty: Box<DataType>,
     },
@@ -105,6 +107,7 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
         DataType::Count32 => "Count32".to_owned(),
         DataType::Averagef32 => "Averagef32".to_owned(),
         DataType::Object(object) => object.to_owned(),
+        DataType::ExternalObject(object) => object.to_owned(),
         DataType::Booleans => {
             let ty_lit = data_ty_to_literal(&DataType::Boolean);
             format!("std::vec::Vec<{}>", ty_lit)
@@ -187,6 +190,10 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
         }
         DataType::Objects(object) => {
             let ty_lit = data_ty_to_literal(&DataType::Object(object.to_owned()));
+            format!("std::vec::Vec<{}>", ty_lit)
+        }
+        DataType::ExternalObjects(object) => {
+            let ty_lit = data_ty_to_literal(&DataType::ExternalObject(object.to_owned()));
             format!("std::vec::Vec<{}>", ty_lit)
         }
         DataType::Vec { ty } => {
