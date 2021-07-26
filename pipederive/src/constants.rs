@@ -44,6 +44,7 @@ pub const JOIN_PIPES_MACRO: &str = "join_pipes!";
 pub const AGGREGATE_SUM: &str = "agg.sum";
 pub const AGGREGATE_TOP: &str = "agg.top";
 pub const AGGREGATE_AVG_F32: &str = "agg.avgf32";
+pub const AGGREGATE_AVG_F32_DEFAULT_TYPE: &str = "Averagef32";
 pub const AGGREGATE_COUNT32: &str = "agg.count32";
 
 pub const GROUP: &str = "group";

@@ -1,6 +1,12 @@
-use crate::constants::{AGGREGATE_AVG_F32, AGGREGATE_COUNT32, AGGREGATE_SUM, AGGREGATE_TOP};
+use crate::constants::{
+    AGGREGATE_AVG_F32, AGGREGATE_AVG_F32_DEFAULT_TYPE, AGGREGATE_COUNT32, AGGREGATE_SUM,
+    AGGREGATE_TOP,
+};
 
-use crate::utils::{get_any_attribute_by_meta_prefix, resolve_first_field};
+use crate::utils::{
+    get_any_attribute_by_meta_prefix, get_meta, get_meta_string_value_by_meta_path,
+    resolve_first_field,
+};
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{Attribute, Data, Field, Generics};
@@ -40,6 +46,16 @@ fn is_sum_field(field: &Field) -> bool {
 
 fn is_avgf32_field(field: &Field) -> bool {
     get_any_attribute_by_meta_prefix(AGGREGATE_AVG_F32, &field.attrs, false).is_some()
+}
+
+fn get_avgf32_ty(field: &Field) -> TokenStream {
+    let ref attribute =
+        get_any_attribute_by_meta_prefix(AGGREGATE_AVG_F32, &field.attrs, true).unwrap();
+    let ty = get_meta_string_value_by_meta_path(AGGREGATE_AVG_F32, &get_meta(attribute), false);
+    match ty {
+        Some(ty) => ty.parse().unwrap(),
+        None => AGGREGATE_AVG_F32_DEFAULT_TYPE.parse().unwrap(),
+    }
 }
 
 fn is_top(attributes: &Vec<Attribute>) -> bool {
@@ -95,11 +111,13 @@ fn aggregate_for_avgf32(field: Option<Field>, ident: &Ident, generics: &Generics
         None => return quote! {},
     };
     let agg_field_ident = field.ident.as_ref().unwrap();
+    let avgf32_ty = get_avgf32_ty(field);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
-        impl #impl_generics AggregateAs<Averagef32> for #ident #type_generics #where_clause {
-            fn aggregate_value(&self) -> Averagef32 {
-                Averagef32::new(self.#agg_field_ident.to_owned() as f32, 1.0)
+        impl #impl_generics AggregateAs<#avgf32_ty> for #ident #type_generics #where_clause {
+            fn aggregate_value(&self) -> #avgf32_ty {
+                let avg = Averagef32::new(self.#agg_field_ident.to_owned() as f32, 1.0);
+                avg.into()
             }
         }
     }
