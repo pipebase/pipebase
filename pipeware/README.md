@@ -7,6 +7,7 @@ Pipes
 | `Listener`  | WarpIngestionServer | doc | `ingest_*` |
 | `Listener` | KafkaConsumer | doc | [`consume_kafka`] |
 | `Listener` | KubeLogReader | doc | [`kube_log`] |
+| `Listener` | KubeEventReader | doc | [`kube_event`] |
 | `Poller` | SQSMessageReceiver | doc | [`consume_sqs`] |
 | `Mapper` | JsonSer | doc |  |
 | `Mapper` | JsonDeser | doc | `ingest_*` |
@@ -36,6 +37,7 @@ Pipes
 [`consume_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_kafka
 [`ingest_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_kafka
 [`kube_log`]: https://github.com/pipebase/pipebase/tree/main/examples/kube_log
+[`kube_event`]: https://github.com/pipebase/pipebase/tree/main/examples/kube_event
 [`convert_csv`]: https://github.com/pipebase/pipebase/tree/main/examples/convert_csv
 [`upload_s3`]: https://github.com/pipebase/pipebase/tree/main/examples/upload_s3
 [`ingest_mysql`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_mysql

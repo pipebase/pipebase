@@ -89,7 +89,8 @@ impl KubeLogReader {
 
 #[derive(Deserialize)]
 pub struct KubeEventReaderConfig {
-    namespace: Option<String>,
+    // leave as empty if monitor all namespaces
+    namespace: String,
 }
 
 #[async_trait]
@@ -106,9 +107,10 @@ pub struct KubeEventReader {
 impl FromConfig<KubeEventReaderConfig> for KubeEventReader {
     async fn from_config(config: KubeEventReaderConfig) -> anyhow::Result<Self> {
         let client = Client::try_default().await?;
-        let events: Api<Event> = match config.namespace {
-            Some(ref ns) => Api::namespaced(client, ns),
-            None => Api::all(client),
+        let namespace = config.namespace;
+        let events: Api<Event> = match namespace.is_empty() {
+            false => Api::namespaced(client, &namespace),
+            true => Api::all(client),
         };
         Ok(KubeEventReader { events, tx: None })
     }
