@@ -1,0 +1,36 @@
+name: log_kube
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - package: pipekafka
+    path: ../../../pipeware/pipekafka
+    modules: ["pipekafka::*"]
+  - package: pipekube
+    path: ../../../pipeware/pipekube
+    modules: ["pipekube::*"]
+pipes:
+  - name: kube_event
+    ty: Listener
+    config:
+      ty: KubeEventReaderConfig
+      path: catalogs/kube_event_reader.yml
+    output: 
+      ty:
+        ExternalObject: KubeEvent
+  - name: kafka_json_message
+    ty: Mapper
+    config:
+      ty: KafkaJsonRecordConverterConfig
+    output:
+      ty:
+        Pair:
+          lty: String
+          rty: UnsignedBytes
+    upstreams: [kube_event]
+  - name: kafka_producer
+    ty: Exporter
+    config:
+      ty: KafkaProducerConfig
+      path: catalogs/kafka_producer.yml
+    upstreams: [kafka_json_message]
