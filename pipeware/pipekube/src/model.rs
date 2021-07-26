@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use pipebase::common::{Convert, Pair};
+use pipebase::common::GroupAs;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -21,11 +21,9 @@ impl KubeLog {
     }
 }
 
-impl Convert<KubeLog> for Pair<String, String> {
-    fn convert(rhs: KubeLog) -> Self {
-        let l = format!("{}/{}/{}", rhs.namespace, rhs.pod, rhs.container);
-        let r = rhs.log;
-        Pair::<String, String>::new(l, r)
+impl GroupAs<String> for KubeLog {
+    fn group(&self) -> String {
+        format!("{}/{}/{}", self.namespace, self.pod, self.container)
     }
 }
 
@@ -42,10 +40,9 @@ pub struct KubeEvent {
     pub event_time: DateTime<Utc>,
 }
 
-impl Convert<KubeEvent> for Pair<String, KubeEvent> {
-    fn convert(rhs: KubeEvent) -> Self {
-        let l = format!("{}/{}/{}", rhs.namespace, rhs.kind, rhs.name);
-        Pair::<String, KubeEvent>::new(l, rhs)
+impl GroupAs<String> for KubeEvent {
+    fn group(&self) -> String {
+        format!("{}/{}/{}", self.namespace, self.kind, self.name)
     }
 }
 

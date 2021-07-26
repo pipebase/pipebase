@@ -18,19 +18,19 @@ pipes:
     output: 
       ty:
         ExternalObject: KubeLog
-  - name: convert_log
+  - name: kafka_json_message
     ty: Mapper
     config:
-      ty: ConversionConfig
+      ty: KafkaJsonRecordConverterConfig
     output:
       ty:
         Pair:
           lty: String
-          rty: String
+          rty: UnsignedBytes
     upstreams: [kube_logger]
   - name: kafka_producer
     ty: Exporter
     config:
       ty: KafkaProducerConfig
       path: catalogs/kafka_producer.yml
-    upstreams: [convert_log]
+    upstreams: [kafka_json_message]
