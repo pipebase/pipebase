@@ -6,7 +6,8 @@ Pipes
 | --------- | -------------- | -------------- | ------- |
 | `Listener`  | WarpIngestionServer | doc | `ingest_*` |
 | `Listener` | KafkaConsumer | doc | [`consume_kafka`] |
-| `Listener` | KubeLogReader | doc | [`log_kube`] |
+| `Listener` | KubeLogReader | doc | [`kube_log`] |
+| `Poller` | SQSMessageReceiver | doc | [`consume_sqs`] |
 | `Mapper` | JsonSer | doc |  |
 | `Mapper` | JsonDeser | doc | `ingest_*` |
 | `Mapper` | CsvSer | doc | [`convert_csv`] |
@@ -23,7 +24,7 @@ Pipes
 | `Exporter` | KafkaProducer | doc | [`ingest_kafka`] |
 | `Exporter` | S3Writer | doc | [`upload_s3`] |
 | `Exporter` | MySQLWriter | doc | [`ingest_mysql`] |
-| `Poller` | SQSMessageReceiver | doc | [`consume_sqs`] |
+
 
 [`pipeware`]: https://github.com/pipebase/pipebase/tree/main/pipeware
 [`group_sum_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/group_sum_redis
@@ -34,7 +35,7 @@ Pipes
 [`relay`]: https://github.com/pipebase/pipebase/tree/main/examples/relay
 [`consume_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_kafka
 [`ingest_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_kafka
-[`log_kube`]: https://github.com/pipebase/pipebase/tree/main/examples/log_kube
+[`kube_log`]: https://github.com/pipebase/pipebase/tree/main/examples/kube_log
 [`convert_csv`]: https://github.com/pipebase/pipebase/tree/main/examples/convert_csv
 [`upload_s3`]: https://github.com/pipebase/pipebase/tree/main/examples/upload_s3
 [`ingest_mysql`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_mysql
