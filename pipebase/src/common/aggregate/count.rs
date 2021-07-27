@@ -1,7 +1,8 @@
 use super::AggregateAs;
+use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, fmt::Debug};
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq)]
 pub struct Count32(pub u32);
 
 impl Count32 {
