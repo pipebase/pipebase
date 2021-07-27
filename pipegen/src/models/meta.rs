@@ -58,7 +58,7 @@ pub enum Tag {
 pub enum AggregateMeta {
     Top,
     Sum,
-    Count32,
+    Count32(Option<String>),
     Avgf32(Option<String>),
 }
 
@@ -223,8 +223,11 @@ fn expand_avgf32(avgf32_ty: Option<String>) -> Meta {
     }
 }
 
-fn expand_count32() -> Meta {
-    new_path("count32".to_owned())
+fn expand_count32(count32_ty: Option<String>) -> Meta {
+    match count32_ty {
+        Some(ty) => meta_value_str("count32", &ty, false),
+        None => new_path("count32".to_owned()),
+    }
 }
 
 fn expand_sum() -> Meta {
@@ -239,7 +242,7 @@ fn expand_aggregate(agg: &AggregateMeta) -> Meta {
     let meta = match agg {
         AggregateMeta::Sum => expand_sum(),
         AggregateMeta::Top => expand_top(),
-        AggregateMeta::Count32 => expand_count32(),
+        AggregateMeta::Count32(ty) => expand_count32(ty.to_owned()),
         AggregateMeta::Avgf32(ty) => expand_avgf32(ty.to_owned()),
     };
     Meta::List {
