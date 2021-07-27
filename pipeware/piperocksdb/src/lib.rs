@@ -1,4 +1,3 @@
-mod byteops;
 mod client;
 mod map;
 

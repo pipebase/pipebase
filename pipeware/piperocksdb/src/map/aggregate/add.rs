@@ -1,10 +1,10 @@
 use super::table::RocksDBGroupTable;
-use crate::byteops::{FromBytes, IntoBytes};
 use async_trait::async_trait;
 use pipebase::{
     common::{AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Pair},
     map::Map,
 };
+use pipebytes::{FromBytes, IntoBytes};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::{hash::Hash, iter::FromIterator};

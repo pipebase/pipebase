@@ -9,9 +9,9 @@ edition = "2018"
 [dependencies]
 async-trait = "0.1.50"
 anyhow = "1.0"
-byteorder = "1.4.3"
 log = "0.4.14"
 pipebase = { path = "../../pipebase" }
+pipebytes = { path = "../pipebytes" }
 rocksdb = { version = "0.16.0" }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.6.1", features = ["rt", "sync", "macros"] }

@@ -1,4 +1,4 @@
-use crate::byteops::{FromBytes, IntoBytes};
+use pipebytes::{FromBytes, IntoBytes};
 use pipebase::common::LeftRight;
 use rocksdb::{DBWithThreadMode, SingleThreaded, WriteBatch, DB};
 
