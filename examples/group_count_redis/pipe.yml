@@ -1,0 +1,67 @@
+name: group_avg_redis
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: piperedis
+    path: ../../../pipeware/piperedis
+    modules: ["piperedis::*"]
+  - package: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - package: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      ty: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty: 
+        Objects: Record
+    upstreams: [ingestion_server]
+  - name: redis_group_count
+    ty: Mapper
+    config:
+      ty: RedisUnorderedGroupAddAggregatorConfig
+      path: catalogs/redis_group_count.yml
+    output:
+      ty:
+        Pairs:
+          lty: String
+          rty: 
+            ExternalObject: RedisCount32
+    upstreams: [json]
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [redis_group_count]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, GroupAs, AggregateAs]
+      - agg:
+          Count32: RedisCount32
+    fields:
+      - name: key
+        ty: String
+        metas:
+          - tag: Group
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml
