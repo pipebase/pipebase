@@ -1,6 +1,6 @@
 use crate::constants::{
-    AGGREGATE_AVG_F32, AGGREGATE_AVG_F32_DEFAULT_TYPE, AGGREGATE_COUNT32, AGGREGATE_SUM,
-    AGGREGATE_TOP,
+    AGGREGATE_AVG_F32, AGGREGATE_AVG_F32_DEFAULT_TYPE, AGGREGATE_COUNT32,
+    AGGREGATE_COUNT32_DEFAULT_TYPE, AGGREGATE_SUM, AGGREGATE_TOP,
 };
 
 use crate::utils::{
@@ -25,9 +25,9 @@ pub fn impl_aggregate_as(
         true => aggregate_for_top(ident, generics),
         false => quote! {},
     };
-    let aggregate_for_count32 = match is_count32(attributes) {
-        true => aggregate_for_count32(ident, generics),
-        false => quote! {},
+    let aggregate_for_count32 = match get_count32_attribute(attributes) {
+        Some(ref attribute) => aggregate_for_count32(ident, generics, attribute),
+        None => quote! {},
     };
     quote! {
         #aggregate_for_sum
@@ -62,8 +62,16 @@ fn is_top(attributes: &Vec<Attribute>) -> bool {
     get_any_attribute_by_meta_prefix(AGGREGATE_TOP, attributes, false).is_some()
 }
 
-fn is_count32(attributes: &Vec<Attribute>) -> bool {
-    get_any_attribute_by_meta_prefix(AGGREGATE_COUNT32, attributes, false).is_some()
+fn get_count32_attribute(attributes: &Vec<Attribute>) -> Option<Attribute> {
+    get_any_attribute_by_meta_prefix(AGGREGATE_COUNT32, attributes, false)
+}
+
+fn get_count32_ty(attribute: &Attribute) -> TokenStream {
+    let ty = get_meta_string_value_by_meta_path(AGGREGATE_COUNT32, &get_meta(attribute), false);
+    match ty {
+        Some(ty) => ty.parse().unwrap(),
+        None => AGGREGATE_COUNT32_DEFAULT_TYPE.parse().unwrap(),
+    }
 }
 
 fn aggregate_for_sum(field: Option<Field>, ident: &Ident, generics: &Generics) -> TokenStream {
@@ -94,12 +102,14 @@ fn aggregate_for_top(ident: &Ident, generics: &Generics) -> TokenStream {
     }
 }
 
-fn aggregate_for_count32(ident: &Ident, generics: &Generics) -> TokenStream {
+fn aggregate_for_count32(ident: &Ident, generics: &Generics, attribute: &Attribute) -> TokenStream {
+    let count32_ty = get_count32_ty(attribute);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
-        impl #impl_generics AggregateAs<Count32> for #ident #type_generics #where_clause {
-            fn aggregate_value(&self) -> Count32 {
-                Count32::new(1)
+        impl #impl_generics AggregateAs<#count32_ty> for #ident #type_generics #where_clause {
+            fn aggregate_value(&self) -> #count32_ty {
+                let count32 = Count32::new(1);
+                count32.into()
             }
         }
     }
