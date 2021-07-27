@@ -8,3 +8,4 @@ mod record;
 pub use export::*;
 pub use listen::*;
 pub use map::*;
+pub use record::*;
