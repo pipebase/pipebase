@@ -58,8 +58,8 @@ pub enum Tag {
 pub enum AggregateMeta {
     Top,
     Sum,
-    Count32,
-    Avgf32,
+    Count32(Option<String>),
+    Avgf32(Option<String>),
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -216,14 +216,35 @@ fn expand_tag(tag: &Tag) -> Meta {
     }
 }
 
+fn expand_avgf32(avgf32_ty: Option<String>) -> Meta {
+    match avgf32_ty {
+        Some(ty) => meta_value_str("avgf32", &ty, false),
+        None => new_path("avgf32".to_owned()),
+    }
+}
+
+fn expand_count32(count32_ty: Option<String>) -> Meta {
+    match count32_ty {
+        Some(ty) => meta_value_str("count32", &ty, false),
+        None => new_path("count32".to_owned()),
+    }
+}
+
+fn expand_sum() -> Meta {
+    new_path("sum".to_owned())
+}
+
+fn expand_top() -> Meta {
+    new_path("top".to_owned())
+}
+
 fn expand_aggregate(agg: &AggregateMeta) -> Meta {
-    let op = match agg {
-        AggregateMeta::Sum => "sum",
-        AggregateMeta::Top => "top",
-        AggregateMeta::Count32 => "count32",
-        AggregateMeta::Avgf32 => "avgf32",
+    let meta = match agg {
+        AggregateMeta::Sum => expand_sum(),
+        AggregateMeta::Top => expand_top(),
+        AggregateMeta::Count32(ty) => expand_count32(ty.to_owned()),
+        AggregateMeta::Avgf32(ty) => expand_avgf32(ty.to_owned()),
     };
-    let meta = new_path(op.to_owned());
     Meta::List {
         name: "agg".to_owned(),
         metas: vec![meta],

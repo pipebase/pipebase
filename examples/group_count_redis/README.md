@@ -1,4 +1,4 @@
-Demo summation with `RedisUnorderedGroupAddAggregator` pipe
+Demo count with `RedisUnorderedGroupAddAggregator` pipe
 ### Setup Redis (terminal 1)
 Launch redis
 ```
@@ -17,11 +17,11 @@ Build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
-cargo pipe build -o sum_redis -r
+cargo pipe build -o cnt_redis -r
 ```
 Run app
 ```
-./sum_redis
+./cnt_redis
 ```
 ### Ingest Data and Monitor Pipe 
 Open new terinal and ingest sample data
@@ -31,11 +31,14 @@ curl -i -X POST \
 -d @records.json  \
 http://localhost:9000/v1/ingest
 ```
+Checkout terminal 2
+```
+[Pair("bar", RedisCount32(Count32(2))), Pair("foo", RedisCount32(Count32(3)))]
+```
 Query Redis (terminal 1)
 ```
 redis-cli get "foo" && \
 redis-cli get "bar"
 "3"
-"1"
+"2"
 ```
-Open [browser](http://localhost:8000/v1/pipe) and list all pipes

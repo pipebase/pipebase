@@ -1,4 +1,4 @@
-Demo summation with `RocksDBUnorderedGroupAddAggregator` pipe
+Demo count with `RocksDBUnorderedGroupAddAggregator` pipe
 ### Build and Run (terminal 1)
 Init
 ```
@@ -8,11 +8,11 @@ Build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
-cargo pipe build -o sum_rocksdb -r
+cargo pipe build -o cnt_rocksdb -r
 ```
 Run app
 ```
-./sum_rocksdb
+./cnt_rocksdb
 ```
 ### Ingest Data and Monitor Pipe (terminal 2)
 Ingest sample data
@@ -22,8 +22,12 @@ curl -i -X POST \
 -d @records.json  \
 http://localhost:9000/v1/ingest
 ```
-Group sum stdout (terminal 1)
+Group count stdout (terminal 1)
 ```
-[Pair("foo", 3), Pair("bar", 1)]
+[Pair("bar", Count32(2)), Pair("foo", Count32(3))]
+```
+Kill app and restart, ingest one more time
+```
+[Pair("bar", Count32(4)), Pair("foo", Count32(6))]
 ```
 Open [browser](http://localhost:8000/v1/pipe) and list all pipes

@@ -1,0 +1,26 @@
+[
+    {
+	    "key": "foo",
+	    "value": 1
+    },
+    {
+	    "key": "foo",
+	    "value": 2
+    },
+    {
+	    "key": "foo",
+	    "value": 3
+    },
+    {
+	    "key": "bar",
+	    "value": 4
+    },
+    {
+	    "key": "bar",
+	    "value": 5
+    },
+    {
+	    "key": "bar",
+	    "value": 6
+    }
+]

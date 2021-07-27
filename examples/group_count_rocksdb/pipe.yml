@@ -1,4 +1,4 @@
-name: group_sum_rocksdb
+name: group_count_rocksdb
 dependencies:
   - package: pipebase
     path: ../../../pipebase
@@ -32,35 +32,33 @@ pipes:
       ty: 
         Objects: Record
     upstreams: [ingestion_server]
-  - name: rocksdb_group_sum
+  - name: rocksdb_group_count
     ty: Mapper
     config:
       ty: RocksDBUnorderedGroupAddAggregatorConfig
-      path: catalogs/rocksdb_group_sum.yml
+      path: catalogs/rocksdb_group_count.yml
     output:
       ty:
         Pairs:
           lty: String
-          rty: UnsignedInteger
+          rty: Count32
     upstreams: [json]
   - name: printer
     ty: Exporter
     config:
       ty: PrinterConfig
-    upstreams: [rocksdb_group_sum]
+    upstreams: [rocksdb_group_count]
 objects:
   - ty: Record
     metas:
       - derives: [Clone, Debug, Deserialize, GroupAs, AggregateAs]
+      - agg: 
+          Count32: # leave as empty since we use builtin Count32
     fields:
       - name: key
         ty: String
         metas:
           - tag: Group
-      - name: value
-        ty: UnsignedInteger
-        metas:
-          - agg: Sum
 cstores:
   - name: context_server
     config:

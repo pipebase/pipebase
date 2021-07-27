@@ -1,4 +1,4 @@
-name: group_sum_rocksdb
+name: group_avg_rocksdb
 dependencies:
   - package: pipebase
     path: ../../../pipebase
@@ -32,22 +32,22 @@ pipes:
       ty: 
         Objects: Record
     upstreams: [ingestion_server]
-  - name: rocksdb_group_sum
+  - name: rocksdb_group_avg
     ty: Mapper
     config:
       ty: RocksDBUnorderedGroupAddAggregatorConfig
-      path: catalogs/rocksdb_group_sum.yml
+      path: catalogs/rocksdb_group_avg.yml
     output:
       ty:
         Pairs:
           lty: String
-          rty: UnsignedInteger
+          rty: Averagef32
     upstreams: [json]
   - name: printer
     ty: Exporter
     config:
       ty: PrinterConfig
-    upstreams: [rocksdb_group_sum]
+    upstreams: [rocksdb_group_avg]
 objects:
   - ty: Record
     metas:
@@ -60,7 +60,8 @@ objects:
       - name: value
         ty: UnsignedInteger
         metas:
-          - agg: Sum
+          - agg: 
+              Avgf32: # leave empty since we use builtin 'Averagef32'
 cstores:
   - name: context_server
     config:
