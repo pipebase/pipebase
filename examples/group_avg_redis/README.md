@@ -31,10 +31,14 @@ curl -i -X POST \
 -d @records.json  \
 http://localhost:9000/v1/ingest
 ```
+Checkout terminal 2
+```
+[Pair("foo", RedisAveragef32(Averagef32(6.0, 3.0))), Pair("bar", RedisAveragef32(Averagef32(15.0, 3.0)))]
+```
 Query Redis (terminal 1)
 ```
 redis-cli get "foo" && \
 redis-cli get "bar"
-"3"
-"1"
+"6,3"
+"15,3"
 ```

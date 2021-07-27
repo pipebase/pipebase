@@ -13,7 +13,7 @@ Pipes
 | `Mapper` | JsonDeser | doc | `ingest_*` |
 | `Mapper` | CsvSer | doc | [`convert_csv`] |
 | `Mapper` | CsvDeser | doc |  |
-| `Mapper` | RedisUnorderedGroupAddAggregator | doc | [`group_sum_redis`] |
+| `Mapper` | RedisUnorderedGroupAddAggregator | doc | [`group_sum_redis`], [`group_avg_redis`] |
 | `Mapper` | RocksDBUnorderedGroupAddAggregator | doc | [`group_sum_rocksdb`] |
 | `Mapper` | KafkaJsonRecordConverter | doc | [`ingest_kafka`] |
 | `Mapper` | ReqwestGetter | doc | [`get_stripe_charge`] |
@@ -29,6 +29,7 @@ Pipes
 
 [`pipeware`]: https://github.com/pipebase/pipebase/tree/main/pipeware
 [`group_sum_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/group_sum_redis
+[`group_avg_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/group_avg_redis
 [`group_sum_rocksdb`]: https://github.com/pipebase/pipebase/tree/main/examples/group_sum_rocksdb
 [`ingest_cassandra`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_cassandra
 [`ingest_postgres`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_postgres
