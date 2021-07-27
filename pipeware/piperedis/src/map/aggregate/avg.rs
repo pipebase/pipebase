@@ -1,8 +1,10 @@
-use pipebase::common::{Averagef32, Convert};
+use pipebase::common::{Averagef32, Convert, Init};
 use redis::{FromRedisValue, ToRedisArgs};
+use serde::{Deserialize, Serialize};
 use std::ops::AddAssign;
 
-struct RedisAveragef32(pub Averagef32);
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct RedisAveragef32(pub Averagef32);
 
 impl ToRedisArgs for RedisAveragef32 {
     fn write_redis_args<W>(&self, out: &mut W)
@@ -45,5 +47,11 @@ impl Convert<RedisAveragef32> for Averagef32 {
 impl AddAssign<RedisAveragef32> for RedisAveragef32 {
     fn add_assign(&mut self, rhs: RedisAveragef32) {
         self.0 += rhs.0;
+    }
+}
+
+impl Init for RedisAveragef32 {
+    fn init() -> Self {
+        RedisAveragef32(Averagef32::init())
     }
 }

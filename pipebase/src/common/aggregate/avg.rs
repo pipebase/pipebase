@@ -1,9 +1,10 @@
+use serde::{Deserialize, Serialize};
 use std::ops::AddAssign;
 
 use super::AggregateAs;
 
 // Average is (sum, count) pair
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Averagef32(pub f32, pub f32);
 
 impl Averagef32 {
