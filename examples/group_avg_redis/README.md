@@ -1,4 +1,4 @@
-Demo summation with `RedisUnorderedGroupAddAggregator` pipe
+Demo average with `RedisUnorderedGroupAddAggregator` pipe
 ### Setup Redis (terminal 1)
 Launch redis
 ```
