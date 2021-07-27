@@ -7,11 +7,11 @@ docker exec -it kafka /bin/sh
 ```
 Create topic
 ```
-kafka-topics --create --topic kube --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1
+kafka-topics --create --topic kube-log --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1
 ```
 Start consumer
 ```
-kafka-console-consumer --topic kube --bootstrap-server kafka:9092
+kafka-console-consumer --topic kube-log --bootstrap-server kafka:9092
 ```
 ### Kube client configuration
 ```
@@ -29,11 +29,11 @@ Build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
-cargo pipe build -o log_kube -r
+cargo pipe build -o kube_log -r
 ```
 Run app
 ```
-./log_kube
+./kube_log
 ```
 ### Monitor log (terminal 1)
 Check container log ingest to kafka

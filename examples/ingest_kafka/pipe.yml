@@ -39,9 +39,7 @@ pipes:
     upstreams: [json]
     output:
       ty:
-        Pair:
-          lty: String
-          rty: UnsignedBytes
+        ExternalObject: KafkaRecord<String, Vec<u8>>
   - name: kafka_producer
     ty: Exporter
     config:
