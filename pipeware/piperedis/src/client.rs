@@ -41,8 +41,7 @@ impl RedisClient {
         V: ToRedisArgs + Clone,
     {
         self.reconnect()?;
-        let k = p.left().to_owned();
-        let v = p.right().to_owned();
+        let (k, v) = p.as_tuple();
         match self.connection.set::<K, V, ()>(k, v) {
             Ok(_) => Ok(()),
             Err(e) => {
@@ -62,6 +61,23 @@ impl RedisClient {
         self.reconnect()?;
         let entries: Vec<(K, V)> = entries.into_iter().map(|entry| entry.as_tuple()).collect();
         match self.connection.set_multiple::<K, V, ()>(entries.as_slice()) {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                self.set_reconnect();
+                Err(err)
+            }
+        }
+    }
+
+    pub fn publish<C, M, P>(&mut self, p: P) -> RedisResult<()>
+    where
+        C: ToRedisArgs,
+        M: ToRedisArgs,
+        P: LeftRight<L = C, R = M>,
+    {
+        self.reconnect()?;
+        let (channel, message) = p.as_tuple();
+        match self.connection.publish::<C, M, ()>(channel, message) {
             Ok(_) => Ok(()),
             Err(err) => {
                 self.set_reconnect();

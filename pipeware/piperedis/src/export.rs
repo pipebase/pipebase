@@ -42,3 +42,39 @@ where
         Ok(())
     }
 }
+
+#[derive(Deserialize)]
+pub struct RedisPublisherConfig {
+    // connection parameter: https://docs.rs/redis/0.20.2/redis/#connection-parameters
+    url: String,
+}
+
+impl FromPath for RedisPublisherConfig {}
+
+impl ConfigInto<RedisPublisher> for RedisPublisherConfig {}
+
+pub struct RedisPublisher {
+    client: RedisClient,
+}
+
+#[async_trait]
+impl FromConfig<RedisPublisherConfig> for RedisPublisher {
+    async fn from_config(config: RedisPublisherConfig) -> anyhow::Result<Self> {
+        Ok(RedisPublisher {
+            client: RedisClient::new(config.url)?,
+        })
+    }
+}
+
+#[async_trait]
+impl<K, V, P> Export<P, RedisPublisherConfig> for RedisPublisher
+where
+    P: LeftRight<L = K, R = V> + Send + 'static,
+    K: ToRedisArgs + Clone + Send + 'static,
+    V: ToRedisArgs + Clone + Send + 'static,
+{
+    async fn export(&mut self, p: P) -> anyhow::Result<()> {
+        self.client.publish(p)?;
+        Ok(())
+    }
+}
