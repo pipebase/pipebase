@@ -12,7 +12,9 @@ pub fn do_build(
 ) -> anyhow::Result<()> {
     let manifest_path = path_buf.as_path();
     printer.status(&"Build", manifest_path.to_str().unwrap())?;
-    let status_code = do_cargo_build(manifest_path, opts.release(), printer)?;
+    let release = opts.release();
+    let debug = opts.debug();
+    let status_code = do_cargo_build(manifest_path, release, debug, printer)?;
     match status_code {
         0 => (),
         _ => process::exit(status_code),

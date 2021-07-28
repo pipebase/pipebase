@@ -63,6 +63,7 @@ pub fn do_cargo_check(
     manifest_path: &Path,
     warning: bool,
     verbose: bool,
+    debug: bool,
     printer: &mut Printer,
 ) -> anyhow::Result<i32> {
     printer.status(&"Cargo", "check ...")?;
@@ -77,7 +78,13 @@ pub fn do_cargo_check(
     let (status_code, out) = run_cmd(cmd)?;
     match status_code {
         0 => printer.status(&"Cargo", "check succeed")?,
-        _ => printer.error(format!("{}", out))?,
+        _ => {
+            printer.error("cargo check failed")?;
+            if debug {
+                // TODO Filter out
+                printer.error(format!("{}", out))?
+            }
+        }
     };
     Ok(status_code)
 }
@@ -85,6 +92,7 @@ pub fn do_cargo_check(
 pub fn do_cargo_build(
     manifest_path: &Path,
     release: bool,
+    debug: bool,
     printer: &mut Printer,
 ) -> anyhow::Result<i32> {
     printer.status(&"Cargo", "build ...")?;
@@ -96,7 +104,13 @@ pub fn do_cargo_build(
     let (status_code, out) = run_cmd(cmd)?;
     match status_code {
         0 => printer.status(&"Cargo", "build succeed")?,
-        _ => printer.error(format!("{}", out))?,
+        _ => {
+            printer.error("cargo build failed")?;
+            if debug {
+                // TODO Filter out
+                printer.error(format!("{}", out))?
+            }
+        }
     };
     Ok(status_code)
 }

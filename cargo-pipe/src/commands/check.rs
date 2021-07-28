@@ -14,6 +14,7 @@ pub fn cmd() -> Cmd {
                 .takes_value(true),
             Arg::new("warning").short('w').about("Enable warning"),
             Arg::new("verbose").short('v').about("Enable verbose"),
+            Arg::new("debug").short('d').about("Enable debug"),
         ])
 }
 
@@ -24,7 +25,8 @@ pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
     };
     let warning = args.is_present("warning");
     let verbose = args.is_present("verbose");
-    let opts = CheckOptions::new(app_name, warning, verbose);
+    let debug = args.is_present("debug");
+    let opts = CheckOptions::new(app_name, warning, verbose, debug);
     do_exec(config, &opts)?;
     Ok(())
 }
@@ -33,14 +35,16 @@ pub struct CheckOptions {
     app_name: Option<String>,
     warning: bool,
     verbose: bool,
+    debug: bool,
 }
 
 impl CheckOptions {
-    pub fn new(app_name: Option<String>, warning: bool, verbose: bool) -> Self {
+    pub fn new(app_name: Option<String>, warning: bool, verbose: bool, debug: bool) -> Self {
         CheckOptions {
             app_name,
             warning,
             verbose,
+            debug,
         }
     }
 
@@ -54,5 +58,9 @@ impl CheckOptions {
 
     pub fn verbose(&self) -> bool {
         self.verbose
+    }
+
+    pub fn debug(&self) -> bool {
+        self.debug
     }
 }
