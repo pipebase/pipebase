@@ -1,0 +1,42 @@
+name: fix_missing_package
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - package: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      ty: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty: 
+        Object: Record
+    upstreams: [ingestion_server]
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+      path: catalogs/redis_writer.yml
+    upstreams: [json]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize]
+    fields:
+      - name: key
+        ty: String
+      - name: value
+        ty: UnsignedInteger

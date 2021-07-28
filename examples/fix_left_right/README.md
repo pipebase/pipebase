@@ -1,4 +1,4 @@
-Debug LeftRight Meta
+Debug `LeftRight` Meta
 ### Build and Run
 Init
 ```
