@@ -1,5 +1,5 @@
 use pipebase::common::LeftRight;
-use redis::{Client, Commands, Connection, FromRedisValue, PubSub, RedisResult, ToRedisArgs};
+use redis::{aio::PubSub, Client, Commands, Connection, FromRedisValue, RedisResult, ToRedisArgs};
 
 pub struct RedisClient {
     client: Client,
@@ -86,12 +86,13 @@ impl RedisClient {
         }
     }
 
-    pub fn subscribe<C>(&mut self, channel: C) -> RedisResult<PubSub>
+    pub async fn subscribe<C>(&mut self, channel: C) -> RedisResult<PubSub>
     where
         C: ToRedisArgs,
     {
-        let mut pubsub = self.connection.as_pubsub();
-        pubsub.subscribe(channel)?;
+        let conn = self.client.get_async_connection().await?;
+        let mut pubsub = conn.into_pubsub();
+        pubsub.subscribe(channel).await?;
         Ok(pubsub)
     }
 

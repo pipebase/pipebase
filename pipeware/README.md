@@ -8,6 +8,7 @@ Pipes
 | `Listener` | KafkaConsumer | doc | [`consume_kafka`] |
 | `Listener` | KubeLogReader | doc | [`kube_log`] |
 | `Listener` | KubeEventReader | doc | [`kube_event`] |
+| `Listener` | RedisSubscriber | doc | [`pubsub_redis`] |
 | `Poller` | SQSMessageReceiver | doc | [`consume_sqs`] |
 | `Mapper` | JsonSer | doc |  |
 | `Mapper` | JsonDeser | doc | `ingest_*` |
@@ -21,6 +22,7 @@ Pipes
 | `Exporter` | CqlWriter | doc | [`ingest_cassandra`] |
 | `Exporter` | PsqlWriter | doc | [`ingest_postgres`] |
 | `Exporter` | RedisStringWriter | doc | [`ingest_redis`] |
+| `Exporter` | RedisPublisher | doc | [`pubsub_redis`] |
 | `Exporter` | ReqwestPoster | doc | [`relay`], [`ingest_elasticsearch`] |
 | `Exporter` | KafkaProducer | doc | [`ingest_kafka`] |
 | `Exporter` | S3Writer | doc | [`upload_s3`] |
@@ -49,3 +51,4 @@ Pipes
 [`get_stripe_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/get_stripe_charge
 [`query_stripe_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/query_stripe_charge
 [`consume_sqs`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_sqs
+[`pubsub_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_redis

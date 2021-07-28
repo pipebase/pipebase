@@ -9,6 +9,7 @@ use pipebase::{
 use redis::FromRedisValue;
 use serde::Deserialize;
 use tokio::sync::mpsc::Sender;
+use tokio_stream::StreamExt;
 
 #[derive(Deserialize)]
 pub struct RedisSubscriberConfig {
@@ -62,15 +63,16 @@ where
     T: Debug + FromRedisValue + Send + Sync + 'static,
 {
     async fn do_run(&mut self) -> anyhow::Result<()> {
-        let mut pubsub = self.client.subscribe(&self.channel)?;
+        let mut pubsub = self.client.subscribe(&self.channel).await?;
         let tx = self
             .tx
             .as_ref()
             .expect("sender not inited for redis subscriber");
-        loop {
-            let msg = pubsub.get_message()?;
+        let mut on_message = pubsub.on_message();
+        while let Some(msg) = on_message.next().await {
             let payload: T = msg.get_payload()?;
             tx.send(payload).await?;
         }
+        Ok(())
     }
 }
