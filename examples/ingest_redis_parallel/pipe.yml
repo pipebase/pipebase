@@ -51,13 +51,13 @@ pipes:
   - name: redis_writer_1
     ty: Exporter
     config:
-      ty: RedisWriterConfig
+      ty: RedisStringWriterConfig
       path: catalogs/redis_writer.yml
     upstreams: [random_select]
   - name: redis_writer_2
     ty: Exporter
     config:
-      ty: RedisWriterConfig
+      ty: RedisStringWriterConfig
       path: catalogs/redis_writer.yml
     upstreams: [random_select]
 objects:

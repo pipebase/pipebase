@@ -53,7 +53,7 @@ pub struct KafkaJsonRecordConverter {}
 
 impl<K, T> IntoKafkaRecord<K, T> for KafkaJsonRecordConverter
 where
-    K: Clone + ToBytes + ?Sized,
+    K: Clone + ToBytes,
     T: GroupAs<K> + Serialize,
 {
     fn serialize(t: &T) -> anyhow::Result<Vec<u8>> {

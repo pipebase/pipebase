@@ -40,7 +40,7 @@ pipes:
   - name: redis_writer
     ty: Exporter
     config:
-      ty: RedisWriterConfig
+      ty: RedisStringWriterConfig
       path: catalogs/redis_writer.yml
     upstreams: [json]
 objects:

@@ -20,7 +20,7 @@ Pipes
 | `Mapper` | ReqwestQuery | doc | [`query_stripe_charge`] |
 | `Exporter` | CqlWriter | doc | [`ingest_cassandra`] |
 | `Exporter` | PsqlWriter | doc | [`ingest_postgres`] |
-| `Exporter` | RedisWriter | doc | [`ingest_redis`] |
+| `Exporter` | RedisStringWriter | doc | [`ingest_redis`] |
 | `Exporter` | ReqwestPoster | doc | [`relay`], [`ingest_elasticsearch`] |
 | `Exporter` | KafkaProducer | doc | [`ingest_kafka`] |
 | `Exporter` | S3Writer | doc | [`upload_s3`] |
