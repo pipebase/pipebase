@@ -30,12 +30,13 @@ impl FromConfig<KafkaJsonRecordConverterConfig> for KafkaJsonRecordConverter {
 }
 
 #[async_trait]
-impl<K, T> Map<T, Pair<K, Vec<u8>>, KafkaJsonRecordConverterConfig> for KafkaJsonRecordConverter
+impl<K, T> Map<T, Pair<Option<K>, Vec<u8>>, KafkaJsonRecordConverterConfig>
+    for KafkaJsonRecordConverter
 where
-    K: Clone + ToBytes + ?Sized,
+    K: Clone + ToBytes,
     T: GroupAs<K> + Serialize + Send + 'static,
 {
-    async fn map(&mut self, data: T) -> anyhow::Result<Pair<K, Vec<u8>>> {
+    async fn map(&mut self, data: T) -> anyhow::Result<Pair<Option<K>, Vec<u8>>> {
         Ok(Self::convert(&data)?)
     }
 }

@@ -59,12 +59,12 @@ impl FromConfig<KafkaProducerConfig> for KafkaProducer {
 #[async_trait]
 impl<K, P, T> Export<T, KafkaProducerConfig> for KafkaProducer
 where
-    K: ToBytes + ?Sized + Send + Sync,
-    P: ToBytes + ?Sized + Send + Sync,
-    T: LeftRight<L = K, R = P> + Send + 'static,
+    K: ToBytes + Send + Sync,
+    P: ToBytes + Send + Sync,
+    T: LeftRight<L = Option<K>, R = P> + Send + 'static,
 {
     async fn export(&mut self, t: T) -> anyhow::Result<()> {
-        let record = self.create_record(&t);
+        let record = Self::create_record(&self.topic, &t);
         match self.client.send(record, self.queue_timeout).await {
             Ok(_) => Ok(()),
             Err((e, _)) => return Err(e.into()),
@@ -73,14 +73,18 @@ where
 }
 
 impl KafkaProducer {
-    fn create_record<'a, K, P, T>(&'a self, t: &'a T) -> FutureRecord<K, P>
+    fn create_record<'a, K, P, T>(topic: &'a str, t: &'a T) -> FutureRecord<'a, K, P>
     where
-        K: ToBytes + ?Sized,
-        P: ToBytes + ?Sized,
-        T: LeftRight<L = K, R = P>,
+        K: ToBytes,
+        P: ToBytes,
+        T: LeftRight<L = Option<K>, R = P>,
     {
-        FutureRecord::to(self.topic.as_str())
-            .key(t.left())
-            .payload(t.right())
+        let key = t.left().as_ref();
+        let payload = t.right();
+        let record = FutureRecord::to(topic).payload(payload);
+        match key {
+            Some(key) => record.key(key),
+            None => record,
+        }
     }
 }

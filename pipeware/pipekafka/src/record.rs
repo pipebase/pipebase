@@ -3,7 +3,7 @@ use rdkafka::message::ToBytes;
 use serde::Serialize;
 pub trait IntoKafkaRecord<K, T>
 where
-    K: Clone + ToBytes + ?Sized,
+    K: Clone + ToBytes,
     T: GroupAs<K>,
 {
     fn key(t: &T) -> K {
@@ -12,9 +12,9 @@ where
 
     fn serialize(t: &T) -> anyhow::Result<Vec<u8>>;
 
-    fn convert(t: &T) -> anyhow::Result<Pair<K, Vec<u8>>> {
+    fn convert(t: &T) -> anyhow::Result<Pair<Option<K>, Vec<u8>>> {
         let payload = Self::serialize(t)?;
-        Ok(Pair::new(Self::key(t), payload))
+        Ok(Pair::new(Some(Self::key(t)), payload))
     }
 }
 
