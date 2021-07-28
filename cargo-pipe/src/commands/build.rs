@@ -17,6 +17,8 @@ pub fn cmd() -> Cmd {
         Arg::new("release")
             .short('r')
             .about("Specify build in release mode with optimizations"),
+        Arg::new("debug").short('d').about("Enable debug"),
+        Arg::new("verbose").short('v').about("Enable verbose"),
     ])
 }
 
@@ -30,7 +32,9 @@ pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
         None => None,
     };
     let release = args.is_present("release");
-    let opts = BuildOptions::new(app_name, out, release);
+    let debug = args.is_present("debug");
+    let verbose = args.is_present("verbose");
+    let opts = BuildOptions::new(app_name, out, release, debug, verbose);
     do_exec(config, &opts)?;
     Ok(())
 }
@@ -39,14 +43,24 @@ pub struct BuildOptions {
     app_name: Option<String>,
     out: Option<String>,
     release: bool,
+    debug: bool,
+    verbose: bool,
 }
 
 impl BuildOptions {
-    pub fn new(app_name: Option<String>, out: Option<String>, release: bool) -> Self {
+    pub fn new(
+        app_name: Option<String>,
+        out: Option<String>,
+        release: bool,
+        debug: bool,
+        verbose: bool,
+    ) -> Self {
         BuildOptions {
             app_name,
             out,
             release,
+            debug,
+            verbose,
         }
     }
 
@@ -60,5 +74,13 @@ impl BuildOptions {
 
     pub fn release(&self) -> bool {
         self.release
+    }
+
+    pub fn debug(&self) -> bool {
+        self.debug
+    }
+
+    pub fn verbose(&self) -> bool {
+        self.verbose
     }
 }

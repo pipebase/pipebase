@@ -55,10 +55,10 @@ pub enum DataType {
     Objects(String),
     ExternalObjects(String),
     Box {
-        ty: Box<DataType>
+        ty: Box<DataType>,
     },
     Option {
-        ty: Box<DataType>
+        ty: Box<DataType>,
     },
     Vec {
         ty: Box<DataType>,

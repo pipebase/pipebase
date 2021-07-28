@@ -18,7 +18,8 @@ pub fn do_check(config: &Config, opts: &CheckOptions, printer: &mut Printer) -> 
     printer.status(&"Check", manifest_path.to_str().unwrap())?;
     let warning = opts.warning();
     let verbose = opts.verbose();
-    let status_code = do_cargo_check(manifest_path, warning, verbose, printer)?;
+    let debug = opts.debug();
+    let status_code = do_cargo_check(manifest_path, warning, verbose, debug, printer)?;
     match status_code {
         0 => (),
         _ => process::exit(status_code),

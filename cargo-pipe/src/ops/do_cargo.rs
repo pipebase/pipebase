@@ -1,4 +1,6 @@
 use crate::print::Printer;
+use lazy_static::lazy_static;
+use regex::RegexSet;
 use std::ffi::OsString;
 use std::path::Path;
 use std::process::Command;
@@ -9,6 +11,24 @@ pub(crate) const CARGO_TARGET_DIRECTORY: &'static str = "target";
 pub(crate) const CARGO_RELEASE_DIRECTORY: &'static str = "release";
 pub(crate) const CARGO_DEBUG_DIRECTORY: &'static str = "debug";
 pub(crate) const CARGO_APP_MAIN: &'static str = "main.rs";
+
+fn capture_error(line: &str) -> bool {
+    lazy_static! {
+        static ref RE: RegexSet = RegexSet::new(&[r"error\[E\d{4}\]:.*", r"error:.*",]).unwrap();
+    }
+    RE.is_match(line)
+}
+
+fn capture_errors(out: String, printer: &mut Printer) -> anyhow::Result<()> {
+    let lines: Vec<&str> = out.split("\n").collect();
+    for line in lines {
+        if capture_error(line) {
+            printer.error(format!("{}", line))?;
+            continue;
+        }
+    }
+    Ok(())
+}
 
 fn run_cmd(mut cmd: Command) -> anyhow::Result<(i32, String)> {
     let output = cmd.output()?;
@@ -63,6 +83,7 @@ pub fn do_cargo_check(
     manifest_path: &Path,
     warning: bool,
     verbose: bool,
+    debug: bool,
     printer: &mut Printer,
 ) -> anyhow::Result<i32> {
     printer.status(&"Cargo", "check ...")?;
@@ -77,7 +98,16 @@ pub fn do_cargo_check(
     let (status_code, out) = run_cmd(cmd)?;
     match status_code {
         0 => printer.status(&"Cargo", "check succeed")?,
-        _ => printer.error(format!("{}", out))?,
+        _ => {
+            printer.error("cargo check failed")?;
+            if debug {
+                if verbose {
+                    printer.error(format!("{}", out))?
+                } else {
+                    capture_errors(out, printer)?
+                }
+            }
+        }
     };
     Ok(status_code)
 }
@@ -85,6 +115,8 @@ pub fn do_cargo_check(
 pub fn do_cargo_build(
     manifest_path: &Path,
     release: bool,
+    debug: bool,
+    verbose: bool,
     printer: &mut Printer,
 ) -> anyhow::Result<i32> {
     printer.status(&"Cargo", "build ...")?;
@@ -96,7 +128,16 @@ pub fn do_cargo_build(
     let (status_code, out) = run_cmd(cmd)?;
     match status_code {
         0 => printer.status(&"Cargo", "build succeed")?,
-        _ => printer.error(format!("{}", out))?,
+        _ => {
+            printer.error("cargo build failed")?;
+            if debug {
+                if verbose {
+                    printer.error(format!("{}", out))?
+                } else {
+                    capture_errors(out, printer)?
+                }
+            }
+        }
     };
     Ok(status_code)
 }
