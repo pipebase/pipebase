@@ -14,7 +14,8 @@ pub fn do_build(
     printer.status(&"Build", manifest_path.to_str().unwrap())?;
     let release = opts.release();
     let debug = opts.debug();
-    let status_code = do_cargo_build(manifest_path, release, debug, printer)?;
+    let verbose = opts.verbose();
+    let status_code = do_cargo_build(manifest_path, release, debug, verbose, printer)?;
     match status_code {
         0 => (),
         _ => process::exit(status_code),

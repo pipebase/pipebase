@@ -9,6 +9,49 @@ pub(crate) const CARGO_TARGET_DIRECTORY: &'static str = "target";
 pub(crate) const CARGO_RELEASE_DIRECTORY: &'static str = "release";
 pub(crate) const CARGO_DEBUG_DIRECTORY: &'static str = "debug";
 pub(crate) const CARGO_APP_MAIN: &'static str = "main.rs";
+pub(crate) const RUST_COMPILER_ERROR_TYPE_MISMATCH: &'static str = "E0271";
+pub(crate) const RUST_COMPILER_ERROR_TRAIT_STRICTER_REQUIREMENTS: &'static str = "E0276";
+pub(crate) const RUST_COMPILER_ERROR_TRAIT_NOT_IMPLEMENTED: &'static str = "E0277";
+
+fn error_tag(error_index: &str) -> String {
+    format!("error[{}]", error_index)
+}
+
+fn is_error_line(line: &str, error_index: &str) -> bool {
+    let tag = error_tag(error_index);
+    line.starts_with(&tag)
+}
+
+fn is_type_miss_match(line: &str) -> bool {
+    is_error_line(line, RUST_COMPILER_ERROR_TYPE_MISMATCH)
+}
+
+fn is_trait_not_implemented(line: &str) -> bool {
+    is_error_line(line, RUST_COMPILER_ERROR_TRAIT_NOT_IMPLEMENTED)
+}
+
+fn is_trait_stricter_requirement(line: &str) -> bool {
+    is_error_line(line, RUST_COMPILER_ERROR_TRAIT_STRICTER_REQUIREMENTS)
+}
+
+fn print_error(out: String, printer: &mut Printer) -> anyhow::Result<()> {
+    let lines: Vec<&str> = out.split("\n").collect();
+    for line in lines {
+        if is_type_miss_match(line) {
+            printer.error(format!("{}", line))?;
+            continue;
+        }
+        if is_trait_not_implemented(line) {
+            printer.error(format!("{}", line))?;
+            continue;
+        }
+        if is_trait_stricter_requirement(line) {
+            printer.error(format!("{}", line))?;
+            continue;
+        }
+    }
+    Ok(())
+}
 
 fn run_cmd(mut cmd: Command) -> anyhow::Result<(i32, String)> {
     let output = cmd.output()?;
@@ -81,8 +124,11 @@ pub fn do_cargo_check(
         _ => {
             printer.error("cargo check failed")?;
             if debug {
-                // TODO Filter out
-                printer.error(format!("{}", out))?
+                if verbose {
+                    printer.error(format!("{}", out))?
+                } else {
+                    print_error(out, printer)?
+                }
             }
         }
     };
@@ -93,6 +139,7 @@ pub fn do_cargo_build(
     manifest_path: &Path,
     release: bool,
     debug: bool,
+    verbose: bool,
     printer: &mut Printer,
 ) -> anyhow::Result<i32> {
     printer.status(&"Cargo", "build ...")?;
@@ -107,8 +154,11 @@ pub fn do_cargo_build(
         _ => {
             printer.error("cargo build failed")?;
             if debug {
-                // TODO Filter out
-                printer.error(format!("{}", out))?
+                if verbose {
+                    printer.error(format!("{}", out))?
+                } else {
+                    print_error(out, printer)?
+                }
             }
         }
     };
