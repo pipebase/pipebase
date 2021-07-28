@@ -1,6 +1,6 @@
 use crate::print::Printer;
 use lazy_static::lazy_static;
-use regex::Regex;
+use regex::RegexSet;
 use std::ffi::OsString;
 use std::path::Path;
 use std::process::Command;
@@ -14,7 +14,7 @@ pub(crate) const CARGO_APP_MAIN: &'static str = "main.rs";
 
 fn capture_error(line: &str) -> bool {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"error\[E\d{4}\].*").unwrap();
+        static ref RE: RegexSet = RegexSet::new(&[r"error\[E\d{4}\]:.*", r"error:.*",]).unwrap();
     }
     RE.is_match(line)
 }
