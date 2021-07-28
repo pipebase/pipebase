@@ -3,7 +3,7 @@ use super::constants::{
     DEFAULT_APP_OBJECT, PIPEBASE_MAIN,
 };
 use super::context::ContextStore;
-use super::meta::{Meta, MetaValue};
+use super::meta::{metas_to_literal, Meta, MetaValue};
 use super::package::PackageDependency;
 use super::pipe::Pipe;
 use super::utils::indent_literal;
@@ -45,10 +45,8 @@ impl Entity for App {
     }
 
     fn to_literal(&self, indent: usize) -> String {
-        // app metas
-        let metas = self.get_metas();
         // create app object
-        let app = Object::new(APP_OBJECT_NAME.to_owned(), metas.to_owned(), vec![]);
+        let app = Object::new(APP_OBJECT_NAME.to_owned(), vec![], vec![]);
         app.to_literal(indent)
     }
 }
@@ -204,8 +202,9 @@ impl App {
         function.to_literal(indent)
     }
 
-    fn get_metas(&self) -> &Vec<Meta> {
-        self.metas.as_ref().unwrap()
+    pub(crate) fn get_app_metas_lit(&self, indent: usize) -> String {
+        let metas = self.metas.as_ref().expect("app metas not inited");
+        metas_to_literal(metas, indent)
     }
 
     pub fn get_context_stores(&self) -> &Vec<ContextStore> {

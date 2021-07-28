@@ -171,6 +171,10 @@ impl AppGenerator {
         self.get_app().to_literal(indent)
     }
 
+    fn generate_app_metas(&self, indent: usize) -> String {
+        self.get_app().get_app_metas_lit(indent)
+    }
+
     fn generate_bootstrap_app_function(&self, indent: usize) -> String {
         self.get_app().get_bootstrap_function_literal(indent)
     }
@@ -190,6 +194,7 @@ impl AppGenerator {
         let indent: usize = self.indent + 1;
         sections.push(self.generate_use_modules(indent));
         sections.push(self.generate_objects(indent));
+        sections.push(self.generate_app_metas(indent));
         sections.push(self.generate_pipes(indent));
         sections.push(self.generate_context_store(indent));
         sections.push(self.generate_app_object(indent));
