@@ -17,8 +17,8 @@ Pipes
 | `Mapper` | RedisUnorderedGroupAddAggregator | doc | [`group_sum_redis`], [`group_avg_redis`], [`group_count_redis`] |
 | `Mapper` | RocksDBUnorderedGroupAddAggregator | doc | [`group_sum_rocksdb`], [`group_avg_rocksdb`], [`group_count_rocksdb`] |
 | `Mapper` | KafkaJsonRecordConverter | doc | [`ingest_kafka`] |
-| `Mapper` | ReqwestGetter | doc | [`get_stripe_charge`] |
-| `Mapper` | ReqwestQuery | doc | [`query_stripe_charge`] |
+| `Mapper` | ReqwestGetter | doc | [`stripe_get_charge`] |
+| `Mapper` | ReqwestQuery | doc | [`stripe_query_charge`] |
 | `Exporter` | CqlWriter | doc | [`ingest_cassandra`] |
 | `Exporter` | PsqlWriter | doc | [`ingest_postgres`] |
 | `Exporter` | RedisStringWriter | doc | [`ingest_redis`] |
@@ -48,7 +48,7 @@ Pipes
 [`upload_s3`]: https://github.com/pipebase/pipebase/tree/main/examples/upload_s3
 [`ingest_mysql`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_mysql
 [`ingest_elasticsearch`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_elasticsearch
-[`get_stripe_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/get_stripe_charge
-[`query_stripe_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/query_stripe_charge
+[`stripe_get_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/stripe_get_charge
+[`stripe_query_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/stripe_query_charge
 [`consume_sqs`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_sqs
 [`pubsub_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_redis

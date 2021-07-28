@@ -16,8 +16,9 @@ objects:
       - name: key
         ty: String
       - name: optional_value
-        ty: Integer
-        is_optional: true
+        ty: 
+          Option:
+            ty: Integer
       - name: array_int
         ty:
           Array:

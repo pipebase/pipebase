@@ -24,7 +24,11 @@ pipes:
       ty: KafkaJsonRecordConverterConfig
     output:
       ty:
-        ExternalObject: KafkaRecord<String, Vec<u8>>
+        Pair:
+          lty: 
+            Option:
+              ty: String
+          rty: UnsignedBytes
     upstreams: [kube_logger]
   - name: kafka_producer
     ty: Exporter

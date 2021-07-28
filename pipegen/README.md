@@ -73,8 +73,6 @@ Meta defines additional attributes of an object so that it fits trait bounds of 
 | name | field name | false  |
 | ty | [`data type`] | true |
 | metas | list of [`meta`]s per field | false |
-| is_boxed | field is boxed or not | false |
-| is_optional | field is optional or not | false |
 | is_public | field is public or not | false |
 
 ## Data Type
@@ -100,6 +98,8 @@ Meta defines additional attributes of an object so that it fits trait bounds of 
 | `PathBuf` | std::path::PathBuf |
 | `Count32` | pipebase::common::Count32(pub u32) |
 | `Averagef32` | pipebase::common::Averagef32(pub f32, pub f32) |
+| `Box` | Box<T> |
+| `Option` | Option<T> |
 | `Vec` | Vec<T> |
 | `Array` | [T; N] |
 | `Tuple` | (T,) |

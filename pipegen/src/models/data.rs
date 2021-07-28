@@ -54,6 +54,12 @@ pub enum DataType {
     Averagef32s,
     Objects(String),
     ExternalObjects(String),
+    Box {
+        ty: Box<DataType>
+    },
+    Option {
+        ty: Box<DataType>
+    },
     Vec {
         ty: Box<DataType>,
     },
@@ -196,6 +202,14 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
             let ty_lit = data_ty_to_literal(&DataType::ExternalObject(object.to_owned()));
             format!("std::vec::Vec<{}>", ty_lit)
         }
+        DataType::Box { ty } => {
+            let ty_lit = data_ty_to_literal(ty);
+            format!("Box<{}>", ty_lit)
+        }
+        DataType::Option { ty } => {
+            let ty_lit = data_ty_to_literal(ty);
+            format!("Option<{}>", ty_lit)
+        }
         DataType::Vec { ty } => {
             let ty_lit = data_ty_to_literal(ty);
             format!("std::vec::Vec<{}>", ty_lit)
@@ -244,19 +258,11 @@ pub struct DataField {
     name: Option<String>,
     ty: DataType,
     metas: Option<Vec<Meta>>,
-    is_boxed: Option<bool>,
-    is_optional: Option<bool>,
     is_public: Option<bool>,
 }
 
 impl DataField {
     pub fn init(&mut self) {
-        if self.is_boxed.is_none() {
-            self.is_boxed = Some(false);
-        }
-        if self.is_optional.is_none() {
-            self.is_optional = Some(false);
-        }
         if self.is_public.is_none() {
             self.is_public = Some(true);
         }
@@ -267,14 +273,6 @@ impl DataField {
 
     pub fn get_data_type_literal(&self, indent: usize) -> String {
         let ty_lit = data_ty_to_literal(&self.ty);
-        let ty_lit = match self.is_boxed.expect("is_boxed not inited") {
-            true => format!("Box<{}>", ty_lit),
-            false => ty_lit,
-        };
-        let ty_lit = match self.is_optional.expect("is_optional not inited") {
-            true => format!("Option<{}>", ty_lit),
-            false => ty_lit,
-        };
         let indent_lit = indent_literal(indent);
         format!("{}{}", indent_lit, ty_lit)
     }

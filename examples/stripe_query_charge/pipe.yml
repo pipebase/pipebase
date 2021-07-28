@@ -1,4 +1,4 @@
-name: get_stripe_charge
+name: query_stripe_charge
 dependencies:
   - package: pipebase
     path: ../../../pipebase
@@ -15,7 +15,7 @@ dependencies:
   - package: serde
     version: "1.0"
     features: ["derive"]
-    modules: ["serde::Deserialize"]
+    modules: ["serde::Deserialize", "serde::Serialize"]
 pipes:
   - name: ingestion_server
     ty: Listener
@@ -32,47 +32,52 @@ pipes:
       ty: 
         Object: QueryRequest
     upstreams: [ingestion_server]
-  - name: visit_path_url
+  - name: visit_query_field
     ty: Mapper
     config:
       ty: FieldVisitConfig
     output:
-      ty: 
-        Object: UrlPath
-      is_optional: true
+      ty:
+        Object:
+          Option:
+            ty:
+              Object: Query
     upstreams: [json_query_request]
-  - name: get_stripe
+  - name: query_stripe
     ty: Mapper
     config:
-      ty: ReqwestGetterConfig
-      path: catalogs/reqwest_getter.yml
+      ty: ReqwestQueryConfig
+      path: catalogs/reqwest_query.yml
     output:
       ty: UnsignedBytes
-    upstreams: [visit_path_url]
-  - name: json_charge
+    upstreams: [visit_query_field]
+  - name: json_query_response
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       ty: 
-        Object: Charge
-    upstreams: [get_stripe]
+        Object: QueryResponse
+    upstreams: [query_stripe]
+  - name: visit_data_field
+    ty: Mapper
+    config:
+      ty: FieldVisitConfig
+    output:
+      ty:
+        Objects: Charge
+    upstreams: [json_query_response]
   - name: print_charge
     ty: Exporter
     config:
       ty: PrinterConfig
-    upstreams: [json_charge]
+    upstreams: [visit_data_field]
 objects:
-  - ty: UrlPath
+  - ty: Query
     metas:
-      - derives: [Clone, Deserialize, Debug, Render]
-      - render:
-          template: "{}"
+      - derives: [Clone, Deserialize, Debug, Serialize]
     fields:
-      - name: id
-        metas:
-          - render:
-              pos: 0
+      - name: customer
         ty: String
   - ty: QueryRequest
     metas:
@@ -81,9 +86,11 @@ objects:
       - name: query
         metas:
           - tag: Visit
-        ty:
-          Object: UrlPath
-        is_optional: true
+        ty: 
+          Object:
+            Option:
+              ty:
+                Object: Query
   - ty: Charge
     metas:
       - derives: [Clone, Deserialize, Debug]
@@ -92,3 +99,12 @@ objects:
         ty: String
       - name: amount
         ty: UnsignedInteger
+  - ty: QueryResponse
+    metas:
+      - derives: [Clone, Deserialize, Debug, FieldAccept]
+    fields:
+      - name: data
+        metas:
+          - tag: Visit
+        ty:
+          Objects: Charge
