@@ -1,5 +1,5 @@
-use pipebytes::{FromBytes, IntoBytes};
 use pipebase::common::LeftRight;
+use pipebytes::{FromBytes, IntoBytes};
 use rocksdb::{DBWithThreadMode, SingleThreaded, WriteBatch, DB};
 
 pub struct RocksDBClient {

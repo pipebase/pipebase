@@ -24,7 +24,7 @@ Run app
 ./avg_redis
 ```
 ### Ingest Data and Monitor Pipe 
-Open new terinal and ingest sample data
+Open new terinal and ingest sample data **twice**
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
@@ -34,11 +34,5 @@ http://localhost:9000/v1/ingest
 Checkout terminal 2
 ```
 [Pair("foo", RedisAveragef32(Averagef32(6.0, 3.0))), Pair("bar", RedisAveragef32(Averagef32(15.0, 3.0)))]
-```
-Query Redis (terminal 1)
-```
-redis-cli get "foo" && \
-redis-cli get "bar"
-"6,3"
-"15,3"
+[Pair("foo", RedisAveragef32(Averagef32(12.0, 6.0))), Pair("bar", RedisAveragef32(Averagef32(30.0, 6.0)))]
 ```
