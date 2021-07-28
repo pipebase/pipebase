@@ -1,7 +1,7 @@
-use crate::record::{IntoKafkaRecord, KafkaJsonRecordConverter, KafkaRecord};
+use crate::record::{IntoKafkaRecord, KafkaJsonRecordConverter};
 use async_trait::async_trait;
 use pipebase::{
-    common::{ConfigInto, FromConfig, FromPath, GroupAs},
+    common::{ConfigInto, FromConfig, FromPath, GroupAs, Pair},
     map::Map,
 };
 use rdkafka::message::ToBytes;
@@ -30,13 +30,13 @@ impl FromConfig<KafkaJsonRecordConverterConfig> for KafkaJsonRecordConverter {
 }
 
 #[async_trait]
-impl<K, T> Map<T, KafkaRecord<K, Vec<u8>>, KafkaJsonRecordConverterConfig>
+impl<K, T> Map<T, Pair<Option<K>, Vec<u8>>, KafkaJsonRecordConverterConfig>
     for KafkaJsonRecordConverter
 where
     K: Clone + ToBytes,
     T: GroupAs<K> + Serialize + Send + 'static,
 {
-    async fn map(&mut self, data: T) -> anyhow::Result<KafkaRecord<K, Vec<u8>>> {
+    async fn map(&mut self, data: T) -> anyhow::Result<Pair<Option<K>, Vec<u8>>> {
         Ok(Self::convert(&data)?)
     }
 }

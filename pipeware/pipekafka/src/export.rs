@@ -1,10 +1,7 @@
-use crate::{
-    config::{create_kafka_client, KafkaClientConfig, KafkaProducerClientConfig},
-    record::KafkaRecord,
-};
+use crate::config::{create_kafka_client, KafkaClientConfig, KafkaProducerClientConfig};
 use async_trait::async_trait;
 use pipebase::{
-    common::{ConfigInto, FromConfig, FromPath},
+    common::{ConfigInto, FromConfig, FromPath, LeftRight},
     export::Export,
 };
 use rdkafka::{
@@ -60,13 +57,14 @@ impl FromConfig<KafkaProducerConfig> for KafkaProducer {
 }
 
 #[async_trait]
-impl<K, P> Export<KafkaRecord<K, P>, KafkaProducerConfig> for KafkaProducer
+impl<K, P, T> Export<T, KafkaProducerConfig> for KafkaProducer
 where
-    K: ToBytes + Send + Sync + 'static,
-    P: ToBytes + Send + Sync + 'static,
+    K: ToBytes + Send + Sync,
+    P: ToBytes + Send + Sync,
+    T: LeftRight<L = Option<K>, R = P> + Send + 'static,
 {
-    async fn export(&mut self, r: KafkaRecord<K, P>) -> anyhow::Result<()> {
-        let record = self.create_record(&r);
+    async fn export(&mut self, t: T) -> anyhow::Result<()> {
+        let record = Self::create_record(&self.topic, &t);
         match self.client.send(record, self.queue_timeout).await {
             Ok(_) => Ok(()),
             Err((e, _)) => return Err(e.into()),
@@ -75,17 +73,18 @@ where
 }
 
 impl KafkaProducer {
-    fn create_record<'a, K, P>(&'a self, r: &'a KafkaRecord<K, P>) -> FutureRecord<K, P>
+    fn create_record<'a, K, P, T>(topic: &'a str, t: &'a T) -> FutureRecord<'a, K, P>
     where
         K: ToBytes,
         P: ToBytes,
+        T: LeftRight<L = Option<K>, R = P>,
     {
-        let key = r.key.as_ref();
-        let ref payload = r.payload;
-        let future_record = FutureRecord::to(self.topic.as_str()).payload(payload);
+        let key = t.left().as_ref();
+        let payload = t.right();
+        let record = FutureRecord::to(topic).payload(payload);
         match key {
-            Some(key) => future_record.key(key),
-            None => future_record,
+            Some(key) => record.key(key),
+            None => record,
         }
     }
 }

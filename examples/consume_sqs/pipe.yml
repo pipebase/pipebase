@@ -89,5 +89,7 @@ objects:
           - project:
               expr: m.attributes.get_attribute_string_value("Topic", "String")
               alias: m
-        ty: String
-        is_optional: true
+        ty: 
+          Option:
+            ty: String
+

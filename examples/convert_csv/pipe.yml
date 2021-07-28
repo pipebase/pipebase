@@ -74,8 +74,9 @@ objects:
       - name: charge
         ty: Float
       - name: description
-        ty: String
-        is_optional: true
+        ty: 
+          Option: 
+            ty: String
   - ty: Record
     metas:
       - derives: [Clone, Debug, Convert, Serialize]
