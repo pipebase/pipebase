@@ -1,4 +1,6 @@
 use crate::print::Printer;
+use lazy_static::lazy_static;
+use regex::Regex;
 use std::ffi::OsString;
 use std::path::Path;
 use std::process::Command;
@@ -9,43 +11,18 @@ pub(crate) const CARGO_TARGET_DIRECTORY: &'static str = "target";
 pub(crate) const CARGO_RELEASE_DIRECTORY: &'static str = "release";
 pub(crate) const CARGO_DEBUG_DIRECTORY: &'static str = "debug";
 pub(crate) const CARGO_APP_MAIN: &'static str = "main.rs";
-pub(crate) const RUST_COMPILER_ERROR_TYPE_MISMATCH: &'static str = "E0271";
-pub(crate) const RUST_COMPILER_ERROR_TRAIT_STRICTER_REQUIREMENTS: &'static str = "E0276";
-pub(crate) const RUST_COMPILER_ERROR_TRAIT_NOT_IMPLEMENTED: &'static str = "E0277";
 
-fn error_tag(error_index: &str) -> String {
-    format!("error[{}]", error_index)
+fn capture_error(line: &str) -> bool {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"error\[E\d{4}\].*").unwrap();
+    }
+    RE.is_match(line)
 }
 
-fn is_error_line(line: &str, error_index: &str) -> bool {
-    let tag = error_tag(error_index);
-    line.starts_with(&tag)
-}
-
-fn is_type_miss_match(line: &str) -> bool {
-    is_error_line(line, RUST_COMPILER_ERROR_TYPE_MISMATCH)
-}
-
-fn is_trait_not_implemented(line: &str) -> bool {
-    is_error_line(line, RUST_COMPILER_ERROR_TRAIT_NOT_IMPLEMENTED)
-}
-
-fn is_trait_stricter_requirement(line: &str) -> bool {
-    is_error_line(line, RUST_COMPILER_ERROR_TRAIT_STRICTER_REQUIREMENTS)
-}
-
-fn print_error(out: String, printer: &mut Printer) -> anyhow::Result<()> {
+fn capture_errors(out: String, printer: &mut Printer) -> anyhow::Result<()> {
     let lines: Vec<&str> = out.split("\n").collect();
     for line in lines {
-        if is_type_miss_match(line) {
-            printer.error(format!("{}", line))?;
-            continue;
-        }
-        if is_trait_not_implemented(line) {
-            printer.error(format!("{}", line))?;
-            continue;
-        }
-        if is_trait_stricter_requirement(line) {
+        if capture_error(line) {
             printer.error(format!("{}", line))?;
             continue;
         }
@@ -127,7 +104,7 @@ pub fn do_cargo_check(
                 if verbose {
                     printer.error(format!("{}", out))?
                 } else {
-                    print_error(out, printer)?
+                    capture_errors(out, printer)?
                 }
             }
         }
@@ -157,7 +134,7 @@ pub fn do_cargo_build(
                 if verbose {
                     printer.error(format!("{}", out))?
                 } else {
-                    print_error(out, printer)?
+                    capture_errors(out, printer)?
                 }
             }
         }
