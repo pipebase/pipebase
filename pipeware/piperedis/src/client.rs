@@ -1,5 +1,5 @@
 use pipebase::common::LeftRight;
-use redis::{Client, Commands, Connection, FromRedisValue, RedisResult, ToRedisArgs};
+use redis::{Client, Commands, Connection, FromRedisValue, PubSub, RedisResult, ToRedisArgs};
 
 pub struct RedisClient {
     client: Client,
@@ -84,6 +84,15 @@ impl RedisClient {
                 Err(err)
             }
         }
+    }
+
+    pub fn subscribe<C>(&mut self, channel: C) -> RedisResult<PubSub>
+    where
+        C: ToRedisArgs,
+    {
+        let mut pubsub = self.connection.as_pubsub();
+        pubsub.subscribe(channel)?;
+        Ok(pubsub)
     }
 
     fn reconnect(&mut self) -> RedisResult<()> {
