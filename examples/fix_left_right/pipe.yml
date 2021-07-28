@@ -1,4 +1,4 @@
-name: debug_io
+name: fix_left_right
 dependencies:
   - package: pipebase
     path: ../../../pipebase
@@ -32,11 +32,6 @@ pipes:
       ty: 
         Object: Record
     upstreams: [ingestion_server]
-  - name: printer
-    ty: Exporter
-    config:
-      ty: PrinterConfig
-    upstreams: [json]
   - name: redis_writer
     ty: Exporter
     config:
