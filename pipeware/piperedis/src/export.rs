@@ -8,30 +8,30 @@ use redis::ToRedisArgs;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct RedisWriterConfig {
+pub struct RedisStringWriterConfig {
     // connection parameter: https://docs.rs/redis/0.20.2/redis/#connection-parameters
     url: String,
 }
 
-impl FromPath for RedisWriterConfig {}
+impl FromPath for RedisStringWriterConfig {}
 
-impl ConfigInto<RedisWriter> for RedisWriterConfig {}
+impl ConfigInto<RedisStringWriter> for RedisStringWriterConfig {}
 
-pub struct RedisWriter {
+pub struct RedisStringWriter {
     client: RedisClient,
 }
 
 #[async_trait]
-impl FromConfig<RedisWriterConfig> for RedisWriter {
-    async fn from_config(config: RedisWriterConfig) -> anyhow::Result<Self> {
-        Ok(RedisWriter {
+impl FromConfig<RedisStringWriterConfig> for RedisStringWriter {
+    async fn from_config(config: RedisStringWriterConfig) -> anyhow::Result<Self> {
+        Ok(RedisStringWriter {
             client: RedisClient::new(config.url)?,
         })
     }
 }
 
 #[async_trait]
-impl<K, V, P> Export<P, RedisWriterConfig> for RedisWriter
+impl<K, V, P> Export<P, RedisStringWriterConfig> for RedisStringWriter
 where
     P: LeftRight<L = K, R = V> + Send + 'static,
     K: ToRedisArgs + Clone + Send + 'static,
@@ -39,6 +39,42 @@ where
 {
     async fn export(&mut self, p: P) -> anyhow::Result<()> {
         self.client.set(p)?;
+        Ok(())
+    }
+}
+
+#[derive(Deserialize)]
+pub struct RedisPublisherConfig {
+    // connection parameter: https://docs.rs/redis/0.20.2/redis/#connection-parameters
+    url: String,
+}
+
+impl FromPath for RedisPublisherConfig {}
+
+impl ConfigInto<RedisPublisher> for RedisPublisherConfig {}
+
+pub struct RedisPublisher {
+    client: RedisClient,
+}
+
+#[async_trait]
+impl FromConfig<RedisPublisherConfig> for RedisPublisher {
+    async fn from_config(config: RedisPublisherConfig) -> anyhow::Result<Self> {
+        Ok(RedisPublisher {
+            client: RedisClient::new(config.url)?,
+        })
+    }
+}
+
+#[async_trait]
+impl<K, V, P> Export<P, RedisPublisherConfig> for RedisPublisher
+where
+    P: LeftRight<L = K, R = V> + Send + 'static,
+    K: ToRedisArgs + Clone + Send + 'static,
+    V: ToRedisArgs + Clone + Send + 'static,
+{
+    async fn export(&mut self, p: P) -> anyhow::Result<()> {
+        self.client.publish(p)?;
         Ok(())
     }
 }

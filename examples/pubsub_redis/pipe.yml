@@ -1,4 +1,4 @@
-name: ingest_redis
+name: pubsub_redis
 dependencies:
   - package: pipebase
     path: ../../../pipebase
@@ -32,17 +32,24 @@ pipes:
       ty: 
         Object: Record
     upstreams: [ingestion_server]
+  - name: pub_redis
+    ty: Exporter
+    config:
+      ty: RedisPublisherConfig
+      path: catalogs/redis_pub.yml
+    upstreams: [json]
+  - name: sub_redis
+    ty: Listener
+    config:
+      ty: RedisSubscriberConfig
+      path: catalogs/redis_sub.yml
+    output:
+      ty: String
   - name: printer
     ty: Exporter
     config:
       ty: PrinterConfig
-    upstreams: [json]
-  - name: redis_writer
-    ty: Exporter
-    config:
-      ty: RedisStringWriterConfig
-      path: catalogs/redis_writer.yml
-    upstreams: [json]
+    upstreams: [sub_redis]
 objects:
   - ty: Record
     metas:
@@ -53,7 +60,7 @@ objects:
         metas:
           - tag: Left
       - name: value
-        ty: UnsignedInteger
+        ty: String
         metas:
           - tag: Right
 cstores:

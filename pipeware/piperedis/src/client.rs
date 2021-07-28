@@ -1,5 +1,5 @@
 use pipebase::common::LeftRight;
-use redis::{Client, Commands, Connection, FromRedisValue, RedisResult, ToRedisArgs};
+use redis::{aio::PubSub, Client, Commands, Connection, FromRedisValue, RedisResult, ToRedisArgs};
 
 pub struct RedisClient {
     client: Client,
@@ -41,8 +41,7 @@ impl RedisClient {
         V: ToRedisArgs + Clone,
     {
         self.reconnect()?;
-        let k = p.left().to_owned();
-        let v = p.right().to_owned();
+        let (k, v) = p.as_tuple();
         match self.connection.set::<K, V, ()>(k, v) {
             Ok(_) => Ok(()),
             Err(e) => {
@@ -68,6 +67,33 @@ impl RedisClient {
                 Err(err)
             }
         }
+    }
+
+    pub fn publish<C, M, P>(&mut self, p: P) -> RedisResult<()>
+    where
+        C: ToRedisArgs,
+        M: ToRedisArgs,
+        P: LeftRight<L = C, R = M>,
+    {
+        self.reconnect()?;
+        let (channel, message) = p.as_tuple();
+        match self.connection.publish::<C, M, ()>(channel, message) {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                self.set_reconnect();
+                Err(err)
+            }
+        }
+    }
+
+    pub async fn subscribe<C>(&mut self, channel: C) -> RedisResult<PubSub>
+    where
+        C: ToRedisArgs,
+    {
+        let conn = self.client.get_async_connection().await?;
+        let mut pubsub = conn.into_pubsub();
+        pubsub.subscribe(channel).await?;
+        Ok(pubsub)
     }
 
     fn reconnect(&mut self) -> RedisResult<()> {
