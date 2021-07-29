@@ -201,7 +201,7 @@ pub fn resolve_first_field(
     data: &Data,
     predicate: &dyn Fn(&Field) -> bool,
     required: bool,
-    panic_msg: String,
+    panic_msg: Option<String>,
 ) -> Option<Field> {
     let fields = resolve_all_fields(data, predicate);
     let field = fields.into_iter().next();
@@ -209,7 +209,7 @@ pub fn resolve_first_field(
         Some(field) => Some(field),
         None => {
             if required {
-                panic!("error: {}", panic_msg)
+                panic!("error: {}", panic_msg.unwrap_or_default())
             }
             None
         }

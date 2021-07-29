@@ -11,7 +11,7 @@ pub fn impl_ordered_by(ident: &Ident, data: &Data, generics: &Generics) -> Token
         data,
         &is_ord_field,
         true,
-        meta_not_found_in_all_fields(ORDER, &ident.to_string()),
+        meta_not_found_in_all_fields(ORDER, &ident.to_string()).into(),
     )
     .unwrap();
     let field_ident = field.ident;

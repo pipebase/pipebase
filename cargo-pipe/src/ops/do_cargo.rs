@@ -1,6 +1,6 @@
 use crate::print::Printer;
 use lazy_static::lazy_static;
-use regex::RegexSet;
+use regex::{Captures, Regex};
 use std::ffi::OsString;
 use std::path::Path;
 use std::process::Command;
@@ -12,20 +12,40 @@ pub(crate) const CARGO_RELEASE_DIRECTORY: &'static str = "release";
 pub(crate) const CARGO_DEBUG_DIRECTORY: &'static str = "debug";
 pub(crate) const CARGO_APP_MAIN: &'static str = "main.rs";
 
-fn capture_error(line: &str) -> bool {
-    lazy_static! {
-        static ref RE: RegexSet = RegexSet::new(&[r"error\[E\d{4}\]:.*", r"error:.*",]).unwrap();
+fn capture_error_message(captures: Option<Captures>) -> Option<String> {
+    let m = match captures {
+        Some(captures) => captures.get(1),
+        None => return None,
+    };
+    match m {
+        Some(m) => Some(m.as_str().to_owned()),
+        None => None,
     }
-    RE.is_match(line)
+}
+
+fn capture_error(line: &str) -> Option<String> {
+    lazy_static! {
+        static ref ERROR_CODE: Regex = Regex::new(r"error\[E\d{4}\]:\s*(.*)").unwrap();
+        static ref ERROR: Regex = Regex::new(r"error:\s*(.*)").unwrap();
+    }
+    match capture_error_message(ERROR_CODE.captures(line)) {
+        Some(error_message) => return Some(error_message),
+        None => (),
+    };
+    match capture_error_message(ERROR.captures(line)) {
+        Some(error_message) => return Some(error_message),
+        None => (),
+    };
+    return None;
 }
 
 fn capture_errors(out: String, printer: &mut Printer) -> anyhow::Result<()> {
     let lines: Vec<&str> = out.split("\n").collect();
     for line in lines {
-        if capture_error(line) {
-            printer.error(format!("{}", line))?;
-            continue;
-        }
+        match capture_error(line) {
+            Some(error_message) => printer.error(format!("{}", error_message))?,
+            None => (),
+        };
     }
     Ok(())
 }

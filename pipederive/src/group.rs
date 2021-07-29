@@ -11,7 +11,7 @@ pub fn impl_group_as(ident: &Ident, data: &Data, generics: &Generics) -> TokenSt
         data,
         &is_group_field,
         true,
-        meta_not_found_in_all_fields(GROUP, &ident.to_string()),
+        meta_not_found_in_all_fields(GROUP, &ident.to_string()).into(),
     )
     .unwrap();
     let group_as_ty = group_field.ty;

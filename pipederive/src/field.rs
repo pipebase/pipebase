@@ -12,7 +12,7 @@ pub fn impl_field_visit(ident: &Ident, data: &Data, generics: &Generics) -> Toke
         data,
         &is_visit_field,
         true,
-        meta_not_found_in_all_fields(FIELD_VISIT, &ident.to_string()),
+        meta_not_found_in_all_fields(FIELD_VISIT, &ident.to_string()).into(),
     )
     .unwrap();
     let field_type = field.ty;

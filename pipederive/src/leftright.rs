@@ -11,14 +11,14 @@ pub fn impl_left_right(ident: &Ident, data: &Data, generics: &Generics) -> Token
         data,
         &is_left_field,
         true,
-        meta_not_found_in_all_fields(LEFT, &ident.to_string()),
+        meta_not_found_in_all_fields(LEFT, &ident.to_string()).into(),
     )
     .unwrap();
     let right_field = resolve_first_field(
         data,
         &is_right_field,
         true,
-        meta_not_found_in_all_fields(RIGHT, &ident.to_string()),
+        meta_not_found_in_all_fields(RIGHT, &ident.to_string()).into(),
     )
     .unwrap();
     let left_field_ident = left_field.ident;
