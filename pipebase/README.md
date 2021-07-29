@@ -2,22 +2,22 @@
 
 ## Basic Pipes
 Here is a list of basic pipes built in `pipebase`
-| pipe type | implementation | input / output | example |
-| --------- | -------------- | -------------- | ------- |
-| `Exporter` | `Printer` | doc | [`printer`] |
-| `Poller` | `Timer` | doc | [`timer`] |
-| `Listener` | `LocalFilePathVisitor` | doc | [`file_path`] |
-| `Streamer` | `FileLineReader` | doc | [`stateless_word_count`] |
-| `Streamer` | `IteratorReader` | doc | [`stateless_word_count`] |
-| `Mapper` | `FieldVisit` | doc | [`field_filter`] |
-| `Mapper` | `FilterMap` | doc | [`field_filter`] |
-| `Mapper` | `StringSplitter` | doc | [`stateless_word_count`] |
-| `Mapper` | `Projection` | doc | [`project_file`] |
-| `Mapper` | `FileReader` | doc | [`project_file`] |
-| `Mapper` | `FileWriter` | doc | [`convert_csv`] |
-| `Mapper` | `Conversion` | doc | [`convert_csv`] |
-| `Selector` | `RandomSelector` | doc | [`ingest_redis_parallel`] |
-| `Collector` | `TextCollector` | doc | [`ingest_elasticsearch`] |
+| pipe type | implementation | example |
+| --------- | -------------- | ------- |
+| `Exporter` | `Printer` | [`printer`] |
+| `Poller` | `Timer` | [`timer`] |
+| `Listener` | `LocalFilePathVisitor` | [`file_path`] |
+| `Streamer` | `FileLineReader` | [`stateless_word_count`] |
+| `Streamer` | `IteratorReader` | [`stateless_word_count`] |
+| `Mapper` | `FieldVisit` | [`field_filter`] |
+| `Mapper` | `FilterMap` | [`field_filter`] |
+| `Mapper` | `StringSplitter` | [`stateless_word_count`] |
+| `Mapper` | `Projection` | [`project_file`] |
+| `Mapper` | `FileReader` | [`project_file`] |
+| `Mapper` | `FileWriter` | [`convert_csv`] |
+| `Mapper` | `Conversion` | [`convert_csv`] |
+| `Selector` | `RandomSelector` | [`ingest_redis_parallel`] |
+| `Collector` | `TextCollector` | [`ingest_elasticsearch`] |
 
 [`pipebase`]: https://github.com/pipebase/pipebase/tree/main/pipebase
 [`tokio`]: https://github.com/tokio-rs/tokio

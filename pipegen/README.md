@@ -30,7 +30,7 @@ Specification
 | output | output data type (unnamed [`data field`]) | false if [`pipe type`] is `Exporter` |
 
 Note that:
-* pipes are wired as **directed acyclic graph** using upstreams
+* pipes are wired as **directed acyclic graph** with upstreams
 * upstreams of a pipe should have **same** output type, i.e a pipe's input type is **determined** in runtime
 * pipe defines trait bounds for input, upstreams' output should satisfy the constraint
 
@@ -65,7 +65,7 @@ Specification
 | fields | list of [`data field`]s | true |
 
 ## Meta
-Meta defines additional attributes of an object so that it fits trait bounds of a pipe's input 
+Meta defines additional attributes of an object so that it matched trait bounds of a pipe's input 
 
 ## Data Field
 | Field | Description | Required |
@@ -78,34 +78,34 @@ Meta defines additional attributes of an object so that it fits trait bounds of 
 ## Data Type
 | Type | In Rust |
 | ---- | ------- |
-| `Boolean` | bool |
-| `Character` | char |
-| `String` | String |
-| `Byte` | i8 |
-| `UnsignedByte` | u8 |
-| `Short` | i16 |
-| `UnsignedShort` | u16 |
-| `Integer` | i32 |
-| `UnsignedInteger` | u32 |
-| `Size` | size |
-| `UnsignedSize` | usize |
-| `Long` | i64 |
-| `UnsignedLong` | u64 |
-| `LongLong` | i128 |
-| `UnsignedLongLong` | u128 |
-| `Float` | f32 |
-| `Double` | f64 |
-| `PathBuf` | std::path::PathBuf |
-| `Count32` | pipebase::common::Count32(pub u32) |
-| `Averagef32` | pipebase::common::Averagef32(pub f32, pub f32) |
-| `Box` | Box<T> |
-| `Option` | Option<T> |
-| `Vec` | Vec<T> |
-| `Array` | [T; N] |
-| `Tuple` | (T,) |
-| `HashMap` | HashMap<K, V> |
-| `HashSet` | HashSet<T> |
-| `Pair` | pipebase::common::Pair<L, R>(pub L, pub R) |
+| `Boolean` | `bool` |
+| `Character` | `char` |
+| `String` | `String` |
+| `Byte` | `i8` |
+| `UnsignedByte` | `u8` |
+| `Short` | `i16` |
+| `UnsignedShort` | `u16` |
+| `Integer` | `i32` |
+| `UnsignedInteger` | `u32` |
+| `Size` | `size` |
+| `UnsignedSize` | `usize` |
+| `Long` | `i64` |
+| `UnsignedLong` | `u64` |
+| `LongLong` | `i128` |
+| `UnsignedLongLong` | `u128` |
+| `Float` | `f32` |
+| `Double` | `f64` |
+| `PathBuf` | `std::path::PathBuf` |
+| `Count32` | `pipebase::common::Count32` |
+| `Averagef32` | `pipebase::common::Averagef32` |
+| `Box` | `Box<T>` |
+| `Option` | `Option<T>` |
+| `Vec` | `Vec<T>` |
+| `Array` | `[T; N]` |
+| `Tuple` | `(T,)` |
+| `HashMap` | `HashMap<K, V>` |
+| `HashSet` | `HashSet<T>` |
+| `Pair` | `pipebase::common::Pair<L, R>` |
 
 [`data field`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-field
 [`data type`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-type
