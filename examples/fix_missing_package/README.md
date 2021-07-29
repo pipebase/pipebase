@@ -1,4 +1,4 @@
-Debug missing package 
+Debug missing `dependencies` 
 ### Build and Run
 Init
 ```

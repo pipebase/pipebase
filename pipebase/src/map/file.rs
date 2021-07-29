@@ -15,6 +15,7 @@ const DEFAULT_FILENAME_LENGTH: usize = 16;
 pub struct FileWriterConfig {
     directory: String,
     filename_length: Option<usize>,
+    filename_ext: Option<String>,
 }
 
 impl FromPath for FileWriterConfig {}
@@ -26,6 +27,7 @@ pub struct FileWriter {
     directory: PathBuf,
     /// Random file name length
     filename_length: usize,
+    filename_ext: Option<String>,
 }
 
 #[async_trait]
@@ -34,6 +36,7 @@ impl FromConfig<FileWriterConfig> for FileWriter {
         Ok(FileWriter {
             directory: PathBuf::from(config.directory),
             filename_length: config.filename_length.unwrap_or(DEFAULT_FILENAME_LENGTH),
+            filename_ext: config.filename_ext,
         })
     }
 }
@@ -56,6 +59,10 @@ impl FileWriter {
             .take(self.filename_length)
             .map(char::from)
             .collect();
+        let filename = match self.filename_ext {
+            Some(ref ext) => format!("{}.{}", filename, ext),
+            None => filename,
+        };
         path.push(filename);
         let mut wrt = BufWriter::new(fs::File::create(path.as_path())?);
         wrt.write_all(data.as_slice())?;

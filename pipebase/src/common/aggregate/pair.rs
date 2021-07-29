@@ -184,14 +184,27 @@ mod left_right_tests {
 mod pair_tests {
 
     use crate::prelude::*;
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    fn get_hash<H>(h: &H) -> u64
+    where
+        H: Hash,
+    {
+        let mut hasher = DefaultHasher::new();
+        h.hash(&mut hasher);
+        hasher.finish()
+    }
 
     #[test]
     fn test_right_ordered_pair_cmp() {
         let p0 = Pair::new("foo".to_owned(), 1);
         let p1 = Pair::new("foo".to_owned(), 2);
         assert!(p0 < p1);
+        assert_eq!(get_hash(&p0), get_hash(&p1));
         let p2 = Pair::new("bar".to_owned(), 2);
         assert_eq!(p1, p2);
+        assert_ne!(get_hash(&p1), get_hash(&p2));
         assert!(p0 < p2);
     }
 

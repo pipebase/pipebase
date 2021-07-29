@@ -65,7 +65,7 @@ Specification
 | fields | list of [`data field`]s | true |
 
 ## Meta
-Meta defines additional attributes of an object so that it matched trait bounds of a pipe's input 
+Meta defines additional attributes of an object so that it matches trait bounds of a pipe's input 
 
 ## Data Field
 | Field | Description | Required |
