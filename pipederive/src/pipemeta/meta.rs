@@ -99,11 +99,11 @@ impl PipeMeta {
         &self.downstream_names
     }
 
-    pub fn parse(attribute: &Attribute) -> Self {
+    pub fn parse(attribute: &Attribute, ident_location: &str) -> Self {
         PipeMeta {
-            name: Self::parse_name(attribute),
-            ty: Self::parse_ty(attribute),
-            config_meta: Self::parse_config_meta(attribute),
+            name: Self::parse_name(attribute, ident_location),
+            ty: Self::parse_ty(attribute, ident_location),
+            config_meta: Self::parse_config_meta(attribute, ident_location),
             output_type_name: Self::parse_output_meta(attribute),
             upstream_names: Self::parse_upstream_names(attribute),
             upstream_output_type_name: None,
@@ -111,12 +111,24 @@ impl PipeMeta {
         }
     }
 
-    fn parse_name(attribute: &Attribute) -> String {
-        get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_NAME, &get_meta(attribute), true).unwrap()
+    fn parse_name(attribute: &Attribute, ident_location: &str) -> String {
+        get_meta_string_value_by_meta_path(
+            BOOTSTRAP_PIPE_NAME,
+            &get_meta(attribute),
+            true,
+            ident_location,
+        )
+        .unwrap()
     }
 
-    fn parse_ty(attribute: &Attribute) -> String {
-        get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_TYPE, &get_meta(attribute), true).unwrap()
+    fn parse_ty(attribute: &Attribute, ident_location: &str) -> String {
+        get_meta_string_value_by_meta_path(
+            BOOTSTRAP_PIPE_TYPE,
+            &get_meta(attribute),
+            true,
+            ident_location,
+        )
+        .unwrap()
     }
 
     fn parse_upstream_names(attribute: &Attribute) -> Vec<String> {
@@ -124,6 +136,7 @@ impl PipeMeta {
             BOOTSTRAP_PIPE_UPSTREAM,
             &get_meta(attribute),
             false,
+            "",
         ) {
             Some(upstream_names) => {
                 // split into vector of upstreams
@@ -141,24 +154,30 @@ impl PipeMeta {
         }
     }
 
-    fn parse_config_meta(attribute: &Attribute) -> PipeConfigMeta {
+    fn parse_config_meta(attribute: &Attribute, ident_location: &str) -> PipeConfigMeta {
         let ty = get_meta_string_value_by_meta_path(
             BOOTSTRAP_PIPE_CONFIG_TYPE,
             &get_meta(attribute),
             true,
+            ident_location,
         )
         .unwrap();
         let path = get_meta_string_value_by_meta_path(
             BOOTSTRAP_PIPE_CONFIG_PATH,
             &get_meta(attribute),
             false,
+            ident_location,
         );
         PipeConfigMeta { ty: ty, path: path }
     }
 
     fn parse_output_meta(attribute: &Attribute) -> Option<String> {
-        match get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_OUTPUT, &get_meta(attribute), false)
-        {
+        match get_meta_string_value_by_meta_path(
+            BOOTSTRAP_PIPE_OUTPUT,
+            &get_meta(attribute),
+            false,
+            "",
+        ) {
             Some(ty) => Some(ty),
             None => None,
         }
@@ -177,14 +196,14 @@ pub struct PipeMetas {
 }
 
 impl PipeMetas {
-    pub fn parse(attributes: &Vec<Attribute>) -> Self {
+    pub fn parse(attributes: &Vec<Attribute>, ident_location: &str) -> Self {
         let mut pipe_metas: HashMap<String, PipeMeta> = HashMap::new();
         let mut pipe_names: HashSet<String> = HashSet::new();
         let mut pipe_output_type_names: HashMap<String, Option<String>> = HashMap::new();
         let mut downstream_pipe_names: HashMap<String, Vec<String>> = HashMap::new();
         let mut upstream_pipe_names: HashMap<String, HashSet<String>> = HashMap::new();
         for attribute in attributes {
-            let ref pipe_meta = PipeMeta::parse(&attribute);
+            let ref pipe_meta = PipeMeta::parse(&attribute, ident_location);
             let pipe_name = pipe_meta.get_name();
             assert!(
                 pipe_names.insert(pipe_name.to_owned()),
@@ -315,29 +334,37 @@ impl ContextStoreMeta {
         &self.config_meta
     }
 
-    pub fn parse(attribute: &Attribute) -> Self {
+    pub fn parse(attribute: &Attribute, ident_location: &str) -> Self {
         ContextStoreMeta {
-            name: Self::parse_name(attribute),
-            config_meta: Self::parse_config_meta(attribute),
+            name: Self::parse_name(attribute, ident_location),
+            config_meta: Self::parse_config_meta(attribute, ident_location),
             pipe_names: Vec::new(),
         }
     }
 
-    fn parse_name(attribute: &Attribute) -> String {
-        get_meta_string_value_by_meta_path(CONTEXT_STORE_NAME, &get_meta(attribute), true).unwrap()
+    fn parse_name(attribute: &Attribute, ident_location: &str) -> String {
+        get_meta_string_value_by_meta_path(
+            CONTEXT_STORE_NAME,
+            &get_meta(attribute),
+            true,
+            ident_location,
+        )
+        .unwrap()
     }
 
-    fn parse_config_meta(attribute: &Attribute) -> ContextStoreConfigMeta {
+    fn parse_config_meta(attribute: &Attribute, ident_location: &str) -> ContextStoreConfigMeta {
         let ty = get_meta_string_value_by_meta_path(
             CONTEXT_STORE_CONFIG_TYPE,
             &get_meta(attribute),
             true,
+            ident_location,
         )
         .unwrap();
         let path = get_meta_string_value_by_meta_path(
             CONTEXT_STORE_CONFIG_PATH,
             &get_meta(attribute),
             false,
+            "",
         );
         ContextStoreConfigMeta { ty: ty, path: path }
     }
@@ -354,10 +381,10 @@ pub struct ContextStoreMetas {
 }
 
 impl ContextStoreMetas {
-    pub fn parse(attributes: &Vec<Attribute>) -> Self {
+    pub fn parse(attributes: &Vec<Attribute>, ident_location: &str) -> Self {
         let metas: Vec<ContextStoreMeta> = attributes
             .into_iter()
-            .map(|attribute| ContextStoreMeta::parse(attribute))
+            .map(|attribute| ContextStoreMeta::parse(attribute, ident_location))
             .collect();
         ContextStoreMetas { metas }
     }

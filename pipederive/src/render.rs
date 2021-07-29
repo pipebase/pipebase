@@ -6,7 +6,7 @@ use crate::constants::{RENDER_EXPR, RENDER_POSITION, RENDER_TEMPLATE};
 
 use crate::utils::{
     get_any_attribute_by_meta_prefix, get_meta, get_meta_number_value_by_meta_path,
-    get_meta_string_value_by_meta_path, resolve_all_fields,
+    get_meta_string_value_by_meta_path, meta_not_found_in_all_fields, resolve_all_fields,
 };
 
 pub fn impl_render(
@@ -15,11 +15,17 @@ pub fn impl_render(
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
-    let attribute = get_any_render_template_attribute(attributes);
-    let template = get_render_template(&attribute);
-    let mut fields = resolve_all_fields(data, &is_render_param);
-    sort_render_params(&mut fields);
-    let parameter_tokens = resolve_render_params(&fields);
+    let ident_location = ident.to_string();
+    let attribute = get_any_render_template_attribute(attributes, &ident_location);
+    let template = get_render_template(&attribute, &ident_location);
+    let mut fields = resolve_all_fields(
+        data,
+        true,
+        &is_render_param,
+        &meta_not_found_in_all_fields(RENDER_POSITION, &ident_location),
+    );
+    sort_render_params(&mut fields, &ident_location);
+    let parameter_tokens = resolve_render_params(&fields, &ident_location);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
         impl #impl_generics Render for #ident #type_generics #where_clause {
@@ -30,52 +36,72 @@ pub fn impl_render(
     }
 }
 
-fn get_any_render_template_attribute(attributes: &Vec<Attribute>) -> Attribute {
-    get_any_attribute_by_meta_prefix(RENDER_TEMPLATE, attributes, true).unwrap()
+fn get_any_render_template_attribute(
+    attributes: &Vec<Attribute>,
+    ident_location: &str,
+) -> Attribute {
+    get_any_attribute_by_meta_prefix(RENDER_TEMPLATE, attributes, true, ident_location).unwrap()
 }
 
-fn get_render_template(attribute: &Attribute) -> String {
-    get_meta_string_value_by_meta_path(RENDER_TEMPLATE, &get_meta(attribute), true).unwrap()
+fn get_render_template(attribute: &Attribute, ident_location: &str) -> String {
+    get_meta_string_value_by_meta_path(RENDER_TEMPLATE, &get_meta(attribute), true, ident_location)
+        .unwrap()
 }
 
 fn is_render_param(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(RENDER_POSITION, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(RENDER_POSITION, &field.attrs, false, "").is_some()
 }
 
-fn sort_render_params(fields: &mut Vec<Field>) {
-    fields.sort_by(|f0, f1| get_field_pos(f0).partial_cmp(&get_field_pos(f1)).unwrap())
+fn sort_render_params(fields: &mut Vec<Field>, ident_location: &str) {
+    fields.sort_by(|f0, f1| {
+        get_field_pos(f0, ident_location)
+            .partial_cmp(&get_field_pos(f1, ident_location))
+            .unwrap()
+    })
 }
 
-fn get_field_pos(field: &Field) -> usize {
-    let attribute = get_pos_attribute(&field.attrs);
-    let number =
-        get_meta_number_value_by_meta_path(RENDER_POSITION, &get_meta(&attribute), true).unwrap();
+fn get_field_pos(field: &Field, ident_location: &str) -> usize {
+    let ident_location = format!(
+        "{}.{}",
+        ident_location,
+        field.ident.as_ref().unwrap().to_string()
+    );
+    let attribute = get_pos_attribute(&field.attrs, &ident_location);
+    let number = get_meta_number_value_by_meta_path(
+        RENDER_POSITION,
+        &get_meta(&attribute),
+        true,
+        &ident_location,
+    )
+    .unwrap();
     number
         .parse()
         .expect(&format!("parse number {} failed", number))
 }
 
-fn get_pos_attribute(attributes: &Vec<Attribute>) -> Attribute {
-    get_any_attribute_by_meta_prefix(RENDER_POSITION, attributes, true).unwrap()
+fn get_pos_attribute(attributes: &Vec<Attribute>, ident_location: &str) -> Attribute {
+    get_any_attribute_by_meta_prefix(RENDER_POSITION, attributes, true, ident_location).unwrap()
 }
 
-fn resolve_render_params(fields: &Vec<Field>) -> TokenStream {
-    let params = fields.into_iter().map(|field| resolve_render_param(field));
+fn resolve_render_params(fields: &Vec<Field>, ident_location: &str) -> TokenStream {
+    let params = fields
+        .into_iter()
+        .map(|field| resolve_render_param(field, ident_location));
     quote! {
         #(#params),*
     }
 }
 
-fn resolve_render_param(field: &Field) -> TokenStream {
+fn resolve_render_param(field: &Field, ident_location: &str) -> TokenStream {
     let span = field.span();
-    let tokens = get_render_param_tokens(field);
+    let tokens = get_render_param_tokens(field, ident_location);
     quote_spanned! { span =>
         #tokens
     }
 }
 
-fn get_render_param_tokens(field: &Field) -> TokenStream {
-    let expr = get_any_render_expr(field);
+fn get_render_param_tokens(field: &Field, ident_location: &str) -> TokenStream {
+    let expr = get_any_render_expr(field, ident_location);
     let ident = &field.ident;
     let ty = &field.ty;
     match expr {
@@ -95,11 +121,20 @@ fn get_render_param_tokens(field: &Field) -> TokenStream {
     }
 }
 
-fn get_any_render_expr(field: &Field) -> Option<String> {
-    let attribute = get_any_attribute_by_meta_prefix(RENDER_EXPR, &field.attrs, false);
+fn get_any_render_expr(field: &Field, ident_location: &str) -> Option<String> {
+    let attribute = get_any_attribute_by_meta_prefix(RENDER_EXPR, &field.attrs, false, "");
     match attribute {
         Some(attribute) => {
-            get_meta_string_value_by_meta_path(RENDER_EXPR, &get_meta(&attribute), true)
+            let ident_location = match field.ident {
+                Some(ref field_ident) => format!("{}.{}", ident_location, field_ident.to_string()),
+                None => ident_location.to_owned(),
+            };
+            get_meta_string_value_by_meta_path(
+                RENDER_EXPR,
+                &get_meta(&attribute),
+                true,
+                &ident_location,
+            )
         }
         None => None,
     }

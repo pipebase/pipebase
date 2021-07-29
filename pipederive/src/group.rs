@@ -7,11 +7,12 @@ use quote::quote;
 use syn::{Data, Field, Generics};
 
 pub fn impl_group_as(ident: &Ident, data: &Data, generics: &Generics) -> TokenStream {
+    let ident_location = ident.to_string();
     let group_field = resolve_first_field(
         data,
         &is_group_field,
         true,
-        meta_not_found_in_all_fields(GROUP, &ident.to_string()).into(),
+        &meta_not_found_in_all_fields(GROUP, &ident_location),
     )
     .unwrap();
     let group_as_ty = group_field.ty;
@@ -27,5 +28,5 @@ pub fn impl_group_as(ident: &Ident, data: &Data, generics: &Generics) -> TokenSt
 }
 
 fn is_group_field(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(GROUP, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(GROUP, &field.attrs, false, "").is_some()
 }

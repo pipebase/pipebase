@@ -19,9 +19,9 @@ pub fn impl_bootstrap(
     let pipe_attributes = get_all_pipe_attributes(attributes);
     let cstore_attributes = get_all_context_store_attribute(attributes);
     // parse metas
-    let pipe_metas = PipeMetas::parse(&pipe_attributes);
+    let pipe_metas = PipeMetas::parse(&pipe_attributes, &ident.to_string());
     let pipe_names = pipe_metas.list_pipe_name();
-    let mut cstore_metas = ContextStoreMetas::parse(&cstore_attributes);
+    let mut cstore_metas = ContextStoreMetas::parse(&cstore_attributes, &ident.to_string());
     cstore_metas.add_pipes(pipe_names);
     // generate all exprs to print
     let all_exprs = resolve_all_exprs(&pipe_metas, &cstore_metas);
@@ -194,10 +194,10 @@ fn find_bootstrap_module(args: &Vec<NestedMeta>) -> TokenStream {
             NestedMeta::Meta(meta) => meta,
             _ => continue,
         };
-        match get_meta_string_value_by_meta_path(BOOTSTRAP_MODULE, meta, false) {
+        match get_meta_string_value_by_meta_path(BOOTSTRAP_MODULE, meta, false, "") {
             Some(ref module_path) => return resolve_module_path_token(module_path),
             None => continue,
         }
     }
-    panic!("bootstrap module not found")
+    panic!("error: bootstrap module not found at 'main'")
 }

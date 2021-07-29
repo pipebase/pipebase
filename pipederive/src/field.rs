@@ -8,11 +8,12 @@ use crate::{
 };
 
 pub fn impl_field_visit(ident: &Ident, data: &Data, generics: &Generics) -> TokenStream {
+    let ident_location = ident.to_string();
     let field = resolve_first_field(
         data,
         &is_visit_field,
         true,
-        meta_not_found_in_all_fields(FIELD_VISIT, &ident.to_string()).into(),
+        &meta_not_found_in_all_fields(FIELD_VISIT, &ident_location),
     )
     .unwrap();
     let field_type = field.ty;
@@ -28,5 +29,5 @@ pub fn impl_field_visit(ident: &Ident, data: &Data, generics: &Generics) -> Toke
 }
 
 fn is_visit_field(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(FIELD_VISIT, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(FIELD_VISIT, &field.attrs, false, "").is_some()
 }
