@@ -4,7 +4,7 @@ Launch redis
 ```
 docker-compose up -d
 ```
-### Build and Run (terminal 1)
+### Build and Run
 Init
 ```
 cargo pipe new

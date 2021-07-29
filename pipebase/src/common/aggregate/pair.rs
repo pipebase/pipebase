@@ -1,5 +1,5 @@
 use super::{AggregateAs, GroupAs};
-use crate::common::Project;
+use crate::common::Convert;
 use std::{
     cmp::{Ord, Ordering, PartialOrd},
     fmt::Debug,
@@ -62,14 +62,15 @@ impl<L, R> From<(L, R)> for Pair<L, R> {
     }
 }
 
-impl<L, R, P> Project<P> for Pair<L, R>
+impl<L, R, P> Convert<P> for Pair<L, R>
 where
     P: LeftRight<L = L, R = R>,
     L: Clone,
     R: Clone,
 {
-    fn project(rhs: &P) -> Self {
-        Pair::new(rhs.left().to_owned(), rhs.right().to_owned())
+    fn convert(rhs: P) -> Self {
+        let (l, r) = rhs.as_tuple();
+        Pair::new(l, r)
     }
 }
 
@@ -146,6 +147,15 @@ where
     }
 }
 
+impl<L, R> Hash for Pair<L, R>
+where
+    L: Hash,
+{
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state)
+    }
+}
+
 #[cfg(test)]
 mod left_right_tests {
 
@@ -174,14 +184,27 @@ mod left_right_tests {
 mod pair_tests {
 
     use crate::prelude::*;
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    fn get_hash<H>(h: &H) -> u64
+    where
+        H: Hash,
+    {
+        let mut hasher = DefaultHasher::new();
+        h.hash(&mut hasher);
+        hasher.finish()
+    }
 
     #[test]
     fn test_right_ordered_pair_cmp() {
         let p0 = Pair::new("foo".to_owned(), 1);
         let p1 = Pair::new("foo".to_owned(), 2);
         assert!(p0 < p1);
+        assert_eq!(get_hash(&p0), get_hash(&p1));
         let p2 = Pair::new("bar".to_owned(), 2);
         assert_eq!(p1, p2);
+        assert_ne!(get_hash(&p1), get_hash(&p2));
         assert!(p0 < p2);
     }
 
