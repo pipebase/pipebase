@@ -147,6 +147,15 @@ where
     }
 }
 
+impl<L, R> Hash for Pair<L, R>
+where
+    L: Hash,
+{
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state)
+    }
+}
+
 #[cfg(test)]
 mod left_right_tests {
 
