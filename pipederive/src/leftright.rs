@@ -1,12 +1,26 @@
 use crate::constants::{LEFT, RIGHT};
-use crate::utils::{get_any_attribute_by_meta_prefix, resolve_first_field};
+use crate::utils::{
+    get_any_attribute_by_meta_prefix, meta_not_found_in_all_fields, resolve_first_field,
+};
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{Data, Field, Generics};
 
 pub fn impl_left_right(ident: &Ident, data: &Data, generics: &Generics) -> TokenStream {
-    let left_field = resolve_first_field(data, &is_left_field, true).unwrap();
-    let right_field = resolve_first_field(data, &is_right_field, true).unwrap();
+    let left_field = resolve_first_field(
+        data,
+        &is_left_field,
+        true,
+        meta_not_found_in_all_fields(LEFT, &ident.to_string()),
+    )
+    .unwrap();
+    let right_field = resolve_first_field(
+        data,
+        &is_right_field,
+        true,
+        meta_not_found_in_all_fields(RIGHT, &ident.to_string()),
+    )
+    .unwrap();
     let left_field_ident = left_field.ident;
     let left_field_ty = left_field.ty;
     let right_field_ident = right_field.ident;

@@ -118,7 +118,7 @@ pub fn get_any_attribute_by_meta_prefix(
         }
     }
     if is_required {
-        panic!("attribute not found based on prefix {}", prefix)
+        panic!("error: meta prefix '{}' not found", prefix)
     }
     return None;
 }
@@ -164,7 +164,7 @@ pub fn get_meta_value_by_meta_path(
         }
     }
     if is_required {
-        panic!("value for full path {} not found in attribute", full_path)
+        panic!("error: meta value not found give meta path {}", full_path)
     }
     None
 }
@@ -201,6 +201,7 @@ pub fn resolve_first_field(
     data: &Data,
     predicate: &dyn Fn(&Field) -> bool,
     required: bool,
+    panic_msg: String,
 ) -> Option<Field> {
     let fields = resolve_all_fields(data, predicate);
     let field = fields.into_iter().next();
@@ -208,7 +209,7 @@ pub fn resolve_first_field(
         Some(field) => Some(field),
         None => {
             if required {
-                panic!("required field not found")
+                panic!("error: {}", panic_msg)
             }
             None
         }
@@ -279,4 +280,8 @@ fn resolve_fields_named(
     quote! {
         #(#resolved_fields),*
     }
+}
+
+pub fn meta_not_found_in_all_fields(meta_path: &str, ty: &str) -> String {
+    format!("meta '{}' not found in '{}' fields", meta_path, ty)
 }

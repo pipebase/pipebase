@@ -17,8 +17,8 @@ pub fn impl_aggregate_as(
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
-    let sum_field = resolve_first_field(data, &is_sum_field, false);
-    let avgf32_field = resolve_first_field(data, &is_avgf32_field, false);
+    let sum_field = resolve_first_field(data, &is_sum_field, false, String::new());
+    let avgf32_field = resolve_first_field(data, &is_avgf32_field, false, String::new());
     let aggregate_for_sum = aggregate_for_sum(sum_field, ident, generics);
     let aggregate_for_avgf32 = aggregate_for_avgf32(avgf32_field, ident, generics);
     let aggregate_for_top = match is_top(attributes) {
