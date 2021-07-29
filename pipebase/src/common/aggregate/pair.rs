@@ -1,5 +1,5 @@
 use super::{AggregateAs, GroupAs};
-use crate::common::Project;
+use crate::common::Convert;
 use std::{
     cmp::{Ord, Ordering, PartialOrd},
     fmt::Debug,
@@ -62,14 +62,15 @@ impl<L, R> From<(L, R)> for Pair<L, R> {
     }
 }
 
-impl<L, R, P> Project<P> for Pair<L, R>
+impl<L, R, P> Convert<P> for Pair<L, R>
 where
     P: LeftRight<L = L, R = R>,
     L: Clone,
     R: Clone,
 {
-    fn project(rhs: &P) -> Self {
-        Pair::new(rhs.left().to_owned(), rhs.right().to_owned())
+    fn convert(rhs: P) -> Self {
+        let (l, r) = rhs.as_tuple();
+        Pair::new(l, r)
     }
 }
 
