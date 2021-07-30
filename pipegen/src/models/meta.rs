@@ -41,6 +41,7 @@ pub enum DeriveMeta {
     GroupAs,
     LeftRight,
     Render,
+    IntoAttributes,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -136,6 +137,7 @@ fn expand_derive(derive: &DeriveMeta) -> Meta {
         DeriveMeta::GroupAs => "GroupAs",
         DeriveMeta::LeftRight => "LeftRight",
         DeriveMeta::Render => "Render",
+        DeriveMeta::IntoAttributes => "IntoAttributes",
     };
     new_path(name.to_owned())
 }

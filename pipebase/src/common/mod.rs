@@ -13,6 +13,7 @@ mod project;
 mod render;
 mod set;
 mod split;
+mod value;
 
 pub use aggregate::*;
 pub use bag::*;
@@ -28,5 +29,6 @@ pub use project::*;
 pub use render::*;
 pub use set::*;
 pub use split::*;
+pub use value::*;
 
 pub use error::*;
