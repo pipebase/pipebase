@@ -7,7 +7,7 @@ use crate::constants::{
 };
 use crate::utils::{
     get_any_attribute_by_meta_prefix, get_meta, get_meta_string_value_by_meta_path,
-    get_type_name_token, resolve_data, resolve_field_path_token,
+    get_type_name_token, meta_value_not_found, resolve_data, resolve_field_path_token,
 };
 
 pub fn impl_project(
@@ -16,11 +16,20 @@ pub fn impl_project(
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
-    let ref project_attribute = get_any_project_attribute(attributes);
-    let input_type_token =
-        get_type_name_token(&project_attribute.parse_meta().unwrap(), PROJECT_INPUT);
+    let ident_location = ident.to_string();
+    let ref project_attribute = get_any_project_attribute(attributes, &ident_location);
+    let input_type_token = get_type_name_token(
+        &project_attribute.parse_meta().unwrap(),
+        PROJECT_INPUT,
+        &ident_location,
+    );
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
-    let resolved_data = resolve_data(data, &input_type_token, &resolve_field_named);
+    let resolved_data = resolve_data(
+        data,
+        &input_type_token,
+        &ident.to_string(),
+        &resolve_field_named,
+    );
     let expanded = quote! {
       // Project trait
       impl #impl_generics Project<#input_type_token> for #ident #type_generics #where_clause {
@@ -32,11 +41,15 @@ pub fn impl_project(
     expanded
 }
 
-fn resolve_field_named(field: &Field, input_type_ident: &TokenStream) -> TokenStream {
+fn resolve_field_named(
+    field: &Field,
+    input_type_ident: &TokenStream,
+    ident_location: &str,
+) -> TokenStream {
     let ref attributes = field.attrs;
     let ref field_ident = field.ident;
     let ref field_type = field.ty;
-    let ref project_attribute = get_any_project_attribute(attributes);
+    let ref project_attribute = get_any_project_attribute(attributes, ident_location);
     let project_from = get_project_from(project_attribute);
     let project_expr = get_project_expr(project_attribute);
     match project_from {
@@ -57,7 +70,16 @@ fn resolve_field_named(field: &Field, input_type_ident: &TokenStream) -> TokenSt
         }
         None => (),
     };
-    panic!("field require one of attributes project(from, expr)")
+    let meta_path = format!("{} or {}", PROJECT_FROM, PROJECT_EXPR);
+    let ident_location = format!(
+        "{}.{}",
+        ident_location,
+        field.ident.as_ref().unwrap().to_string()
+    );
+    panic!(
+        "error: {}",
+        meta_value_not_found(&meta_path, &ident_location)
+    )
 }
 
 fn handle_project_from(
@@ -94,20 +116,20 @@ fn handle_project_expr(
 }
 
 fn get_project_alias(attribute: &Attribute) -> String {
-    match get_meta_string_value_by_meta_path(PROJECT_ALIAS, &get_meta(attribute), false) {
+    match get_meta_string_value_by_meta_path(PROJECT_ALIAS, &get_meta(attribute), false, "") {
         Some(alias) => alias,
         None => PROJECT_ALIAS_DEFAULT.to_owned(),
     }
 }
 
-fn get_any_project_attribute(attributes: &Vec<Attribute>) -> Attribute {
-    get_any_attribute_by_meta_prefix(PROJECT, attributes, true).unwrap()
+fn get_any_project_attribute(attributes: &Vec<Attribute>, ident_location: &str) -> Attribute {
+    get_any_attribute_by_meta_prefix(PROJECT, attributes, true, ident_location).unwrap()
 }
 
 fn get_project_from(attribute: &Attribute) -> Option<String> {
-    get_meta_string_value_by_meta_path(PROJECT_FROM, &get_meta(attribute), false)
+    get_meta_string_value_by_meta_path(PROJECT_FROM, &get_meta(attribute), false, "")
 }
 
 fn get_project_expr(attribute: &Attribute) -> Option<String> {
-    get_meta_string_value_by_meta_path(PROJECT_EXPR, &get_meta(attribute), false)
+    get_meta_string_value_by_meta_path(PROJECT_EXPR, &get_meta(attribute), false, "")
 }

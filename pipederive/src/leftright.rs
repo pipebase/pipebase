@@ -11,14 +11,14 @@ pub fn impl_left_right(ident: &Ident, data: &Data, generics: &Generics) -> Token
         data,
         &is_left_field,
         true,
-        meta_not_found_in_all_fields(LEFT, &ident.to_string()).into(),
+        &meta_not_found_in_all_fields(LEFT, &ident.to_string()),
     )
     .unwrap();
     let right_field = resolve_first_field(
         data,
         &is_right_field,
         true,
-        meta_not_found_in_all_fields(RIGHT, &ident.to_string()).into(),
+        &meta_not_found_in_all_fields(RIGHT, &ident.to_string()),
     )
     .unwrap();
     let left_field_ident = left_field.ident;
@@ -47,9 +47,9 @@ pub fn impl_left_right(ident: &Ident, data: &Data, generics: &Generics) -> Token
 }
 
 fn is_left_field(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(LEFT, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(LEFT, &field.attrs, false, "").is_some()
 }
 
 fn is_right_field(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(RIGHT, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(RIGHT, &field.attrs, false, "").is_some()
 }

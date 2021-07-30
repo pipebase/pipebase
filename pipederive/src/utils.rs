@@ -110,6 +110,7 @@ pub fn get_any_attribute_by_meta_prefix(
     prefix: &str,
     attributes: &Vec<Attribute>,
     is_required: bool,
+    ident_location: &str,
 ) -> Option<Attribute> {
     let prefix_path = prefix.split(".").collect::<Vec<&str>>();
     for attribute in attributes {
@@ -118,7 +119,7 @@ pub fn get_any_attribute_by_meta_prefix(
         }
     }
     if is_required {
-        panic!("error: meta prefix '{}' not found", prefix)
+        panic!("error: {}", meta_prefix_not_found(prefix, ident_location))
     }
     return None;
 }
@@ -139,22 +140,37 @@ pub fn get_meta_number_value_by_meta_path(
     full_path: &str,
     meta: &Meta,
     is_required: bool,
+    ident_location: &str,
 ) -> Option<String> {
-    get_meta_value_by_meta_path(full_path, meta, is_required, &parse_lit_as_number)
+    get_meta_value_by_meta_path(
+        full_path,
+        meta,
+        is_required,
+        ident_location,
+        &parse_lit_as_number,
+    )
 }
 
 pub fn get_meta_string_value_by_meta_path(
     full_path: &str,
     meta: &Meta,
     is_required: bool,
+    ident_location: &str,
 ) -> Option<String> {
-    get_meta_value_by_meta_path(full_path, meta, is_required, &parse_lit_as_string)
+    get_meta_value_by_meta_path(
+        full_path,
+        meta,
+        is_required,
+        ident_location,
+        &parse_lit_as_string,
+    )
 }
 
 pub fn get_meta_value_by_meta_path(
     full_path: &str,
     meta: &Meta,
     is_required: bool,
+    ident_location: &str,
     parse: &dyn Fn(&Lit) -> Option<String>,
 ) -> Option<String> {
     let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
@@ -164,13 +180,19 @@ pub fn get_meta_value_by_meta_path(
         }
     }
     if is_required {
-        panic!("error: meta value not found give meta path {}", full_path)
+        panic!("error: {}", meta_value_not_found(full_path, ident_location))
     }
     None
 }
 
-pub fn get_type_name_token(meta: &Meta, type_name_meta_path: &str) -> TokenStream {
-    let type_literal = get_meta_string_value_by_meta_path(type_name_meta_path, meta, true).unwrap();
+pub fn get_type_name_token(
+    meta: &Meta,
+    type_name_meta_path: &str,
+    ident_location: &str,
+) -> TokenStream {
+    let type_literal =
+        get_meta_string_value_by_meta_path(type_name_meta_path, meta, true, ident_location)
+            .unwrap();
     resolve_type_name_token(&type_literal)
 }
 
@@ -201,22 +223,18 @@ pub fn resolve_first_field(
     data: &Data,
     predicate: &dyn Fn(&Field) -> bool,
     required: bool,
-    panic_msg: Option<String>,
+    panic_msg: &str,
 ) -> Option<Field> {
-    let fields = resolve_all_fields(data, predicate);
-    let field = fields.into_iter().next();
-    match field {
-        Some(field) => Some(field),
-        None => {
-            if required {
-                panic!("error: {}", panic_msg.unwrap_or_default())
-            }
-            None
-        }
-    }
+    let fields = resolve_all_fields(data, required, predicate, panic_msg);
+    fields.into_iter().next()
 }
 
-pub fn resolve_all_fields(data: &Data, predicate: &dyn Fn(&Field) -> bool) -> Vec<Field> {
+pub fn resolve_all_fields(
+    data: &Data,
+    at_least_one: bool,
+    predicate: &dyn Fn(&Field) -> bool,
+    panic_msg: &str,
+) -> Vec<Field> {
     let data_struct = match *data {
         Data::Struct(ref data_struct) => data_struct,
         Data::Enum(_) | Data::Union(_) => unimplemented!(),
@@ -225,6 +243,9 @@ pub fn resolve_all_fields(data: &Data, predicate: &dyn Fn(&Field) -> bool) -> Ve
         Fields::Named(ref fields) => find_all_fields(fields, predicate),
         Fields::Unnamed(_) | Fields::Unit => unimplemented!(),
     };
+    if at_least_one && fields.is_empty() {
+        panic!("error: {}", panic_msg)
+    }
     fields
 }
 
@@ -260,11 +281,14 @@ pub fn get_meta(attribute: &Attribute) -> Meta {
 pub fn resolve_data(
     data: &Data,
     input_type_token: &TokenStream,
-    resolve: &dyn Fn(&Field, &TokenStream) -> TokenStream,
+    ident_location: &str,
+    resolve: &dyn Fn(&Field, &TokenStream, &str) -> TokenStream,
 ) -> TokenStream {
     match *data {
         Data::Struct(ref data) => match data.fields {
-            Fields::Named(ref fields) => resolve_fields_named(fields, input_type_token, resolve),
+            Fields::Named(ref fields) => {
+                resolve_fields_named(fields, input_type_token, ident_location, resolve)
+            }
             Fields::Unnamed(_) | Fields::Unit => unimplemented!(),
         },
         Data::Enum(_) | Data::Union(_) => unimplemented!(),
@@ -274,9 +298,13 @@ pub fn resolve_data(
 fn resolve_fields_named(
     fields: &FieldsNamed,
     input_type_token: &TokenStream,
-    resolve: &dyn Fn(&Field, &TokenStream) -> TokenStream,
+    ident_location: &str,
+    resolve: &dyn Fn(&Field, &TokenStream, &str) -> TokenStream,
 ) -> TokenStream {
-    let resolved_fields = fields.named.iter().map(|f| resolve(f, input_type_token));
+    let resolved_fields = fields
+        .named
+        .iter()
+        .map(|f| resolve(f, input_type_token, ident_location));
     quote! {
         #(#resolved_fields),*
     }
@@ -284,4 +312,18 @@ fn resolve_fields_named(
 
 pub fn meta_not_found_in_all_fields(meta_path: &str, ty: &str) -> String {
     format!("meta '{}' not found in '{}' fields", meta_path, ty)
+}
+
+pub fn meta_value_not_found(meta_path: &str, ident_location: &str) -> String {
+    format!(
+        "meta value not found for meta '{}' at '{}'",
+        meta_path, ident_location
+    )
+}
+
+pub fn meta_prefix_not_found(meta_prefix: &str, ident_location: &str) -> String {
+    format!(
+        "meta prefix '{}' not found at '{}'",
+        meta_prefix, ident_location
+    )
 }

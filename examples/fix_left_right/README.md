@@ -8,11 +8,11 @@ Build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
-cargo pipe build -o fix_it -r -d
+cargo pipe build -r -d
 ```
 Error
 ```
-Error error[E0277]: the trait bound `debug_io::Record: LeftRight` is not satisfied
+Error the trait bound `debug_io::Record: LeftRight` is not satisfied
 ```
 `RedisStringsWriter` requires input implement `LeftRight` trait, fix it
 ```

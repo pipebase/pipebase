@@ -11,7 +11,7 @@ pub fn impl_ordered_by(ident: &Ident, data: &Data, generics: &Generics) -> Token
         data,
         &is_ord_field,
         true,
-        meta_not_found_in_all_fields(ORDER, &ident.to_string()).into(),
+        &meta_not_found_in_all_fields(ORDER, &ident.to_string()),
     )
     .unwrap();
     let field_ident = field.ident;
@@ -32,5 +32,5 @@ pub fn impl_ordered_by(ident: &Ident, data: &Data, generics: &Generics) -> Token
 }
 
 fn is_ord_field(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(ORDER, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(ORDER, &field.attrs, false, "").is_some()
 }

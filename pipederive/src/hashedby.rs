@@ -4,11 +4,17 @@ use syn::{spanned::Spanned, Data, Field, Generics};
 
 use crate::{
     constants::HASH,
-    utils::{get_any_attribute_by_meta_prefix, resolve_all_fields},
+    utils::{get_any_attribute_by_meta_prefix, meta_not_found_in_all_fields, resolve_all_fields},
 };
 
 pub fn impl_hashed_by(ident: &Ident, data: &Data, generics: &Generics) -> TokenStream {
-    let fields = resolve_all_fields(data, &is_hash_field);
+    let ident_location = ident.to_string();
+    let fields = resolve_all_fields(
+        data,
+        true,
+        &is_hash_field,
+        &meta_not_found_in_all_fields(HASH, &ident_location),
+    );
     let hash_fields_token = hash_fields_token(&fields);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
@@ -21,7 +27,7 @@ pub fn impl_hashed_by(ident: &Ident, data: &Data, generics: &Generics) -> TokenS
 }
 
 fn is_hash_field(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(HASH, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(HASH, &field.attrs, false, "").is_some()
 }
 
 fn hash_fields_token(fields: &Vec<Field>) -> TokenStream {

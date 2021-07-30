@@ -17,8 +17,8 @@ pub fn impl_aggregate_as(
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
-    let sum_field = resolve_first_field(data, &is_sum_field, false, None);
-    let avgf32_field = resolve_first_field(data, &is_avgf32_field, false, None);
+    let sum_field = resolve_first_field(data, &is_sum_field, false, "");
+    let avgf32_field = resolve_first_field(data, &is_avgf32_field, false, "");
     let aggregate_for_sum = aggregate_for_sum(sum_field, ident, generics);
     let aggregate_for_avgf32 = aggregate_for_avgf32(avgf32_field, ident, generics);
     let aggregate_for_top = match is_top(attributes) {
@@ -41,17 +41,23 @@ pub fn impl_aggregate_as(
 }
 
 fn is_sum_field(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(AGGREGATE_SUM, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(AGGREGATE_SUM, &field.attrs, false, "").is_some()
 }
 
 fn is_avgf32_field(field: &Field) -> bool {
-    get_any_attribute_by_meta_prefix(AGGREGATE_AVG_F32, &field.attrs, false).is_some()
+    get_any_attribute_by_meta_prefix(AGGREGATE_AVG_F32, &field.attrs, false, "").is_some()
 }
 
-fn get_avgf32_ty(field: &Field) -> TokenStream {
+fn get_avgf32_ty(field: &Field, ident_location: &str) -> TokenStream {
+    let ident_location = format!(
+        "{}.{}",
+        field.ident.as_ref().unwrap().to_string(),
+        ident_location
+    );
     let ref attribute =
-        get_any_attribute_by_meta_prefix(AGGREGATE_AVG_F32, &field.attrs, true).unwrap();
-    let ty = get_meta_string_value_by_meta_path(AGGREGATE_AVG_F32, &get_meta(attribute), false);
+        get_any_attribute_by_meta_prefix(AGGREGATE_AVG_F32, &field.attrs, true, &ident_location)
+            .unwrap();
+    let ty = get_meta_string_value_by_meta_path(AGGREGATE_AVG_F32, &get_meta(attribute), false, "");
     match ty {
         Some(ty) => ty.parse().unwrap(),
         None => AGGREGATE_AVG_F32_DEFAULT_TYPE.parse().unwrap(),
@@ -59,15 +65,15 @@ fn get_avgf32_ty(field: &Field) -> TokenStream {
 }
 
 fn is_top(attributes: &Vec<Attribute>) -> bool {
-    get_any_attribute_by_meta_prefix(AGGREGATE_TOP, attributes, false).is_some()
+    get_any_attribute_by_meta_prefix(AGGREGATE_TOP, attributes, false, "").is_some()
 }
 
 fn get_count32_attribute(attributes: &Vec<Attribute>) -> Option<Attribute> {
-    get_any_attribute_by_meta_prefix(AGGREGATE_COUNT32, attributes, false)
+    get_any_attribute_by_meta_prefix(AGGREGATE_COUNT32, attributes, false, "")
 }
 
 fn get_count32_ty(attribute: &Attribute) -> TokenStream {
-    let ty = get_meta_string_value_by_meta_path(AGGREGATE_COUNT32, &get_meta(attribute), false);
+    let ty = get_meta_string_value_by_meta_path(AGGREGATE_COUNT32, &get_meta(attribute), false, "");
     match ty {
         Some(ty) => ty.parse().unwrap(),
         None => AGGREGATE_COUNT32_DEFAULT_TYPE.parse().unwrap(),
@@ -121,7 +127,8 @@ fn aggregate_for_avgf32(field: Option<Field>, ident: &Ident, generics: &Generics
         None => return quote! {},
     };
     let agg_field_ident = field.ident.as_ref().unwrap();
-    let avgf32_ty = get_avgf32_ty(field);
+    let ident_location = format!("{}.{}", ident.to_string(), agg_field_ident.to_string());
+    let avgf32_ty = get_avgf32_ty(field, &ident_location);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {
         impl #impl_generics AggregateAs<#avgf32_ty> for #ident #type_generics #where_clause {

@@ -8,8 +8,9 @@ use crate::utils::{
 };
 
 pub fn impl_filter(ident: &Ident, attributes: &Vec<Attribute>, generics: &Generics) -> TokenStream {
-    let ref attribute = get_filter_attribute(attributes);
-    let predicate = get_filter_predicate(attribute);
+    let ident_location = ident.to_string();
+    let ref attribute = get_filter_attribute(attributes, &ident_location);
+    let predicate = get_filter_predicate(attribute, &ident_location);
     let alias = get_filter_alias(attribute);
     let do_filter = impl_do_filter(ident, &alias, &predicate);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
@@ -31,17 +32,18 @@ fn impl_do_filter(ident: &Ident, alias: &str, predicate: &str) -> TokenStream {
     }
 }
 
-fn get_filter_attribute(attributes: &Vec<Attribute>) -> Attribute {
-    get_any_attribute_by_meta_prefix(FILTER, attributes, true).unwrap()
+fn get_filter_attribute(attributes: &Vec<Attribute>, ident_location: &str) -> Attribute {
+    get_any_attribute_by_meta_prefix(FILTER, attributes, true, ident_location).unwrap()
 }
 
 fn get_filter_alias(attribute: &Attribute) -> String {
-    match get_meta_string_value_by_meta_path(FILTER_ALIAS, &get_meta(attribute), false) {
+    match get_meta_string_value_by_meta_path(FILTER_ALIAS, &get_meta(attribute), false, "") {
         Some(alias) => alias,
         None => FILTER_ALIAS_DEFAULT.to_owned(),
     }
 }
 
-fn get_filter_predicate(attribute: &Attribute) -> String {
-    get_meta_string_value_by_meta_path(FILTER_PREDICATE, &get_meta(attribute), true).unwrap()
+fn get_filter_predicate(attribute: &Attribute, ident_location: &str) -> String {
+    get_meta_string_value_by_meta_path(FILTER_PREDICATE, &get_meta(attribute), true, ident_location)
+        .unwrap()
 }
