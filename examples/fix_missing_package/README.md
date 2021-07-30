@@ -8,12 +8,12 @@ Build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
-cargo pipe build -o fix_it -r -d
+cargo pipe build -r -d
 ```
 Error
 ```
-Error error: cannot find derive macro `Deserialize` in this scope
-Error error[E0277]: the trait bound `for<'de> fix_missing_package::Record: serde::de::Deserialize<'de>` is not satisfied
+Error cannot find derive macro `Deserialize` in this scope
+Error the trait bound `for<'de> fix_missing_package::Record: serde::de::Deserialize<'de>` is not satisfied
 ```
 `JsonDeser` requires input implements `Deserialize` trait, we need to include crate [`serde`] as app dependency, fix it
 ```

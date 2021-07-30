@@ -65,7 +65,7 @@ Specification
 | fields | list of [`data field`]s | true |
 
 ## Meta
-Meta defines additional attributes of an object so that it matches trait bounds of a pipe's input 
+Meta defines additional attributes of an object so that it satisfy trait bounds of a pipe's input. See example [`fix_left_right`], [`fix_convert`] understand when and how to use metas
 
 ## Data Field
 | Field | Description | Required |
@@ -114,3 +114,5 @@ Meta defines additional attributes of an object so that it matches trait bounds 
 [`pipegen`]: https://github.com/pipebase/pipebase/tree/main/pipegen
 [`pipes`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipes
 [`pipe type`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipe-type
+[`fix_left_right`]: https://github.com/pipebase/pipebase/tree/main/examples/fix_left_right
+[`fix_convert`]: https://github.com/pipebase/pipebase/tree/main/examples/fix_convert
