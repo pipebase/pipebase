@@ -10,11 +10,11 @@ pipes:
   - name: consume_sqs
     ty: Poller
     config:
-      ty: SQSMessageReceiverConfig
+      ty: SqsMessageReceiverConfig
       path: catalogs/sqs_msg_receiver.yml
     output:
       ty: 
-        ExternalObjects: SQSMessage
+        ExternalObjects: SqsMessage
   - name: message_conversion
     ty: Mapper
     config:
@@ -60,7 +60,7 @@ objects:
           predicate: m.attributes.has_attribute("Topic", "String")
           alias: m
       - convert:
-          input: SQSMessage
+          input: SqsMessage
     fields:
       - name: body
         metas:
@@ -72,7 +72,7 @@ objects:
           - convert:
               from: message_attributes
         ty: 
-          ExternalObject: SQSMessageAttributes
+          ExternalObject: SqsMessageAttributes
   - ty: CustomMessage
     metas: 
       - derives: [Clone, Debug, Project]

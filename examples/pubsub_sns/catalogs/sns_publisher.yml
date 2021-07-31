@@ -1,5 +1,5 @@
-topic_arn: arn:aws:sns:us-west-2:500660570663:pipesns
-region: us-west-2
+topic_arn: 
+region: 
 subscribers:
   - protocol: email
-    endpoint: tchief108@gmail.com
+    endpoint: 

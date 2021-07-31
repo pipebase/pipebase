@@ -9,7 +9,7 @@ Pipes
 | `Listener` | KubeLogReader | [`kube_log`] |
 | `Listener` | KubeEventReader | [`kube_event`] |
 | `Listener` | RedisSubscriber | [`pubsub_redis`] |
-| `Poller` | SQSMessageReceiver | [`consume_sqs`] |
+| `Poller` | SqsMessageReceiver | [`consume_sqs`] |
 | `Mapper` | JsonSer |  |
 | `Mapper` | JsonDeser | `ingest_*` |
 | `Mapper` | CsvSer | [`convert_csv`] |

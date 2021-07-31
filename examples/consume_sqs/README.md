@@ -1,4 +1,4 @@
-Demo `SQSMessageReceiver` pipe
+Demo `SqsMessageReceiver` pipe
 ### Configuration
 Config sqs
 ```
