@@ -1,0 +1,56 @@
+name: pubsub_sns
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - package: pipesns
+    path: ../../../pipeware/pipesns
+    modules: ["pipesns::*"]
+  - package: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      ty: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty: 
+        Object: Message
+    upstreams: [ingestion_server]
+  - name: visit_text
+    ty: Mapper
+    config:
+      ty: FieldVisitConfig
+    output:
+      ty: String
+    upstreams: [json]
+  - name: publish_sns
+    ty: Exporter
+    config:
+      ty: SnsPublisherConfig
+      path: catalogs/sns_publisher.yml
+    upstreams: [visit_text]
+objects:
+  - ty: Message
+    metas:
+      - derives: [Clone, Debug, Deserialize, FieldAccept]
+    fields:
+      - name: text
+        ty: String
+        metas:
+          - tag: Visit

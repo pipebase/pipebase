@@ -1,0 +1,5 @@
+topic_arn: 
+region: 
+subscribers:
+  - protocol: email
+    endpoint: 

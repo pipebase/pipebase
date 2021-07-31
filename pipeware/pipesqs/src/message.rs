@@ -2,29 +2,29 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum SQSMessageAttributeData {
+pub enum SqsMessageAttributeData {
     String(String),
     Binary(Vec<u8>),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SQSMessageAttributeValue {
+pub struct SqsMessageAttributeValue {
     pub ty: String,
-    pub data: SQSMessageAttributeData,
+    pub data: SqsMessageAttributeData,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SQSMessageAttributes {
-    pub values: HashMap<String, SQSMessageAttributeValue>,
+pub struct SqsMessageAttributes {
+    pub values: HashMap<String, SqsMessageAttributeValue>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SQSMessage {
+pub struct SqsMessage {
     pub body: String,
-    pub message_attributes: SQSMessageAttributes,
+    pub message_attributes: SqsMessageAttributes,
 }
 
-impl SQSMessageAttributes {
+impl SqsMessageAttributes {
     pub fn has_attribute(&self, name: &str, ty: &str) -> bool {
         if !self.values.contains_key(name) {
             return false;
@@ -38,7 +38,7 @@ impl SQSMessageAttributes {
         return true;
     }
 
-    fn get_attribute_value(&self, name: &str) -> Option<&SQSMessageAttributeValue> {
+    fn get_attribute_value(&self, name: &str) -> Option<&SqsMessageAttributeValue> {
         self.values.get(name)
     }
 
@@ -50,8 +50,8 @@ impl SQSMessageAttributes {
             .get_attribute_value(name)
             .expect(&format!("attribute {} not found", name));
         match &attribute_value.data {
-            SQSMessageAttributeData::Binary(_) => false,
-            SQSMessageAttributeData::String(data) => data.eq(other_data),
+            SqsMessageAttributeData::Binary(_) => false,
+            SqsMessageAttributeData::String(data) => data.eq(other_data),
         }
     }
 
@@ -63,8 +63,8 @@ impl SQSMessageAttributes {
             .get_attribute_value(name)
             .expect(&format!("attribute {} not found", name));
         match &attribute_value.data {
-            SQSMessageAttributeData::Binary(_) => None,
-            SQSMessageAttributeData::String(data) => Some(data.to_owned()),
+            SqsMessageAttributeData::Binary(_) => None,
+            SqsMessageAttributeData::String(data) => Some(data.to_owned()),
         }
     }
 }

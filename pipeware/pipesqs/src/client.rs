@@ -7,20 +7,20 @@ use sqs::{
 use std::collections::HashMap;
 
 #[derive(Deserialize)]
-pub struct SQSClientConfig {
+pub struct SqsClientConfig {
     url: String,
     message_attribute_names: Option<Vec<String>>,
 }
 
-pub struct SQSClient {
+pub struct SqsClient {
     client: sqs::Client,
     url: String,
     message_attribute_names: Vec<String>,
 }
 
-impl SQSClient {
-    pub fn new(config: SQSClientConfig) -> Self {
-        SQSClient {
+impl SqsClient {
+    pub fn new(config: SqsClientConfig) -> Self {
+        SqsClient {
             client: sqs::Client::from_env(),
             url: config.url,
             message_attribute_names: config.message_attribute_names.unwrap_or_default(),
@@ -49,10 +49,10 @@ impl SQSClient {
         Ok(delete_msg_output)
     }
 
-    pub async fn handle_message(&self, message: Message) -> SQSMessage {
+    pub async fn handle_message(&self, message: Message) -> SqsMessage {
         let message_attributes = message.message_attributes.unwrap_or_default();
         let body = message.body.unwrap_or_default();
-        let message_attribute_values: HashMap<String, SQSMessageAttributeValue> =
+        let message_attribute_values: HashMap<String, SqsMessageAttributeValue> =
             message_attributes
                 .into_iter()
                 .map(|(name, value)| (name, Self::handle_message_attribute_value(value)))
@@ -68,30 +68,30 @@ impl SQSClient {
             }
             None => (),
         };
-        SQSMessage {
+        SqsMessage {
             body,
-            message_attributes: SQSMessageAttributes {
+            message_attributes: SqsMessageAttributes {
                 values: message_attribute_values,
             },
         }
     }
 
-    fn handle_message_attribute_value(value: MessageAttributeValue) -> SQSMessageAttributeValue {
+    fn handle_message_attribute_value(value: MessageAttributeValue) -> SqsMessageAttributeValue {
         let ty = value.data_type.unwrap_or_default();
         match value.string_value {
             Some(string_value) => {
-                return SQSMessageAttributeValue {
+                return SqsMessageAttributeValue {
                     ty,
-                    data: SQSMessageAttributeData::String(string_value),
+                    data: SqsMessageAttributeData::String(string_value),
                 }
             }
             None => (),
         };
         match value.binary_value {
             Some(blob) => {
-                return SQSMessageAttributeValue {
+                return SqsMessageAttributeValue {
                     ty,
-                    data: SQSMessageAttributeData::Binary(blob.into_inner()),
+                    data: SqsMessageAttributeData::Binary(blob.into_inner()),
                 }
             }
             None => (),

@@ -9,7 +9,7 @@ Pipes
 | `Listener` | KubeLogReader | [`kube_log`] |
 | `Listener` | KubeEventReader | [`kube_event`] |
 | `Listener` | RedisSubscriber | [`pubsub_redis`] |
-| `Poller` | SQSMessageReceiver | [`consume_sqs`] |
+| `Poller` | SqsMessageReceiver | [`consume_sqs`] |
 | `Mapper` | JsonSer |  |
 | `Mapper` | JsonDeser | `ingest_*` |
 | `Mapper` | CsvSer | [`convert_csv`] |
@@ -28,6 +28,7 @@ Pipes
 | `Exporter` | S3Writer | [`upload_s3`] |
 | `Exporter` | MySQLWriter | [`ingest_mysql`] |
 | `Exporter` | DynamoDBWriter | [`ingest_dynamodb`] |
+| `Exporter` | SnsPublisher | [`pubsub_sns`] |
 
 
 [`pipeware`]: https://github.com/pipebase/pipebase/tree/main/pipeware
@@ -54,3 +55,4 @@ Pipes
 [`consume_sqs`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_sqs
 [`pubsub_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_redis
 [`ingest_dynamodb`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_dynamodb
+[`pubsub_sns`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_sns

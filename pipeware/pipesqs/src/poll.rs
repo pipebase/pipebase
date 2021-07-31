@@ -1,6 +1,6 @@
 use crate::{
-    client::{SQSClient, SQSClientConfig},
-    message::SQSMessage,
+    client::{SqsClient, SqsClientConfig},
+    message::SqsMessage,
 };
 use async_trait::async_trait;
 use pipebase::{
@@ -11,28 +11,28 @@ use serde::Deserialize;
 use std::time::Duration;
 
 #[derive(Deserialize)]
-pub struct SQSMessageReceiverConfig {
-    client: SQSClientConfig,
+pub struct SqsMessageReceiverConfig {
+    client: SqsClientConfig,
     initial_delay: Period,
     interval: Period,
 }
 
-impl FromPath for SQSMessageReceiverConfig {}
+impl FromPath for SqsMessageReceiverConfig {}
 
-impl ConfigInto<SQSMessageReceiver> for SQSMessageReceiverConfig {}
+impl ConfigInto<SqsMessageReceiver> for SqsMessageReceiverConfig {}
 
-pub struct SQSMessageReceiver {
-    client: SQSClient,
+pub struct SqsMessageReceiver {
+    client: SqsClient,
     initial_delay: Duration,
     interval: Duration,
 }
 
 #[async_trait]
-impl FromConfig<SQSMessageReceiverConfig> for SQSMessageReceiver {
-    async fn from_config(config: SQSMessageReceiverConfig) -> anyhow::Result<Self> {
+impl FromConfig<SqsMessageReceiverConfig> for SqsMessageReceiver {
+    async fn from_config(config: SqsMessageReceiverConfig) -> anyhow::Result<Self> {
         let client_config = config.client;
-        Ok(SQSMessageReceiver {
-            client: SQSClient::new(client_config),
+        Ok(SqsMessageReceiver {
+            client: SqsClient::new(client_config),
             initial_delay: config.initial_delay.into(),
             interval: config.interval.into(),
         })
@@ -40,8 +40,8 @@ impl FromConfig<SQSMessageReceiverConfig> for SQSMessageReceiver {
 }
 
 #[async_trait]
-impl Poll<Vec<SQSMessage>, SQSMessageReceiverConfig> for SQSMessageReceiver {
-    async fn poll(&mut self) -> anyhow::Result<PollResponse<Vec<SQSMessage>>> {
+impl Poll<Vec<SqsMessage>, SqsMessageReceiverConfig> for SqsMessageReceiver {
+    async fn poll(&mut self) -> anyhow::Result<PollResponse<Vec<SqsMessage>>> {
         let messages = self.receive_message().await?;
         if messages.is_empty() {
             return Ok(PollResponse::PollResult(None));
@@ -59,11 +59,11 @@ impl Poll<Vec<SQSMessage>, SQSMessageReceiverConfig> for SQSMessageReceiver {
     }
 }
 
-impl SQSMessageReceiver {
-    async fn receive_message(&self) -> anyhow::Result<Vec<SQSMessage>> {
+impl SqsMessageReceiver {
+    async fn receive_message(&self) -> anyhow::Result<Vec<SqsMessage>> {
         let msg_output = self.client.receive_message().await?;
         let messages = msg_output.messages.unwrap_or_default();
-        let mut sqs_messages: Vec<SQSMessage> = Vec::new();
+        let mut sqs_messages: Vec<SqsMessage> = Vec::new();
         for message in messages {
             let sqs_message = self.client.handle_message(message).await;
             sqs_messages.push(sqs_message);
