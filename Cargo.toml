@@ -8,6 +8,7 @@ members = [
 	"pipeware/pipebytes",
 	"pipeware/pipecql",
 	"pipeware/pipecsv",
+	"pipeware/pipedynamodb",
 	"pipeware/pipejson",
 	"pipeware/pipekafka",
 	"pipeware/pipekube",

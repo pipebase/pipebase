@@ -1,7 +1,6 @@
 [package]
-name = "pipes3"
+name = "pipedynamodb"
 version = "0.1.0"
-authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,4 +12,4 @@ log = "0.4.14"
 pipebase = { path = "../../pipebase" }
 rand = "0.8.4"
 serde = { version = "1.0", features = ["derive"] }
-s3 = { git = "https://github.com/awslabs/aws-sdk-rust", tag = "v0.0.12-alpha", package = "aws-sdk-s3" }
+dynamodb = { git = "https://github.com/awslabs/aws-sdk-rust", tag = "v0.0.12-alpha", package = "aws-sdk-dynamodb" }

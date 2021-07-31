@@ -13,5 +13,5 @@ log = "0.4.14"
 pipebase = { path = "../../pipebase" }
 rand = "0.8.4"
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1.6.1", features = ["full"] }
+tokio = { version = "1.6.1", features = ["time"] }
 sqs = { git = "https://github.com/awslabs/aws-sdk-rust", tag = "v0.0.12-alpha", package = "aws-sdk-sqs" }
