@@ -1,19 +1,19 @@
 Demo `PsqlWriter` pipe
 ### Prepare Postgres (terminal 1)
-Start postgres
+start postgres
 ```
 docker-compose up -d
 ```
-Login container
+login container
 ```
 docker exec -it postgres /bin/sh
 ```
-Psql login
+psql login
 ```
 psql -h localhost -p 5432 -U postgres -d postgres -W
 Password:postgres
 ```
-Create table
+create table
 ```
 CREATE TABLE IF NOT EXISTS records (
     key TEXT PRIMARY KEY,
@@ -21,30 +21,29 @@ CREATE TABLE IF NOT EXISTS records (
 );
 ```
 ### Build and Run (terminal 2)
-Init
+init
 ```
 cargo pipe new
 ```
-Build 
+build 
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o psql -r
 ```
-Run app
+run app
 ```
 ./psql
 ```
-### Ingest Data and Monitor
-Open new terinal and ingest sample data
+### Ingest Data and Monitor (terminal 3)
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
 -d @record.json  \
 http://localhost:9000/v1/ingest
 ```
-Query postgres (terminal 1)
+query postgres (terminal 1)
 ```
 SELECT * FROM records;
 ```
-Open [browser](http://localhost:8000/v1/pipe) and list all pipes
+open [browser](http://localhost:8000/v1/pipe) and list all pipes

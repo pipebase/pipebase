@@ -18,17 +18,17 @@ basic_auth:
 }
 ```
 ### Build and Run (terminal 1)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o query_stripe -r
 ```
-Run app
+run app
 ```
 ./query_stripe
 ```

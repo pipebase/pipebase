@@ -1,30 +1,30 @@
 Demo average with `RedisUnorderedGroupAddAggregator` pipe
 ### Setup Redis (terminal 1)
-Launch redis
+launch redis
 ```
 docker-compose up -d
 ```
-Login container
+login container
 ```
 docker exec -it redis /bin/sh
 ```
 ### Build and Run (terminal 2)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o avg_redis -r
 ```
-Run app
+run app
 ```
 ./avg_redis
 ```
-### Ingest Data and Monitor Pipe 
-Open new terinal and ingest sample data **twice**
+### Ingest Data and Monitor Pipe (terminal 3)
+ingest sample data **twice**
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \

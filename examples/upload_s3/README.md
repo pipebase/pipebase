@@ -8,23 +8,23 @@ bucket: MY_BUCKET
 directory: MY_S3_DIRECTORY_AS_KEY_PREFIX
 filename_ext: json
 ```
-S3 environment variable
+aws environment variable
 ```
 export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
 ```
 ### Build and Run (terminal 1)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o s3 -r
 ```
-Run app
+run app
 ```
 ./s3
 ```

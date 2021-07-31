@@ -1,16 +1,16 @@
 Demo `Timer` pipe
 ### Build and Run (terminal 1)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o timer -r
 ```
-Run app
+run app
 ```
 ./timer
 0

@@ -1,15 +1,15 @@
 Demo `KubeLogReader` `KafkaProducer` pipe
 ### Setup Kafka (terminal 1)
-Launch kafka and zookeeper
+launch kafka and zookeeper
 ```
 docker-compose up -d && \
 docker exec -it kafka /bin/sh
 ```
-Create topic
+create topic
 ```
 kafka-topics --create --topic kube-log --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1
 ```
-Start consumer
+start consumer
 ```
 kafka-console-consumer --topic kube-log --bootstrap-server kafka:9092
 ```
@@ -21,19 +21,19 @@ pod: YOUR_POD
 container: YOUR_CONTAINER
 ```
 ### Build and Run (terminal 2)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o kube_log -r
 ```
-Run app
+run app
 ```
 ./kube_log
 ```
 ### Monitor log (terminal 1)
-Check container log ingest to kafka
+check container log ingest to kafka

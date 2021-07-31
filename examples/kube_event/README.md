@@ -1,15 +1,15 @@
 Demo `KubeEventReader` pipe
 ### Setup Kafka (terminal 1)
-Launch kafka and zookeeper
+launch kafka and zookeeper
 ```
 docker-compose up -d && \
 docker exec -it kafka /bin/sh
 ```
-Create topic
+create topic
 ```
 kafka-topics --create --topic kube-event --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1
 ```
-Start consumer
+start consumer
 ```
 kafka-console-consumer --topic kube-event --bootstrap-server kafka:9092
 ```
@@ -19,19 +19,19 @@ kafka-console-consumer --topic kube-event --bootstrap-server kafka:9092
 namespace: YOUR_NAMESPACE # optional
 ```
 ### Build and Run (terminal 2)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o kube_event -r
 ```
-Run app
+run app
 ```
 ./kube_event
 ```
 ### Monitor log (terminal 1)
-Check kube events ingest to kafka
+check kube events ingest to kafka

@@ -1,16 +1,16 @@
 Debug `LeftRight` Meta
 ### Build and Run
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -r -d
 ```
-Error
+error
 ```
 Error the trait bound `debug_io::Record: LeftRight` is not satisfied
 ```

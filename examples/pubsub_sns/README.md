@@ -32,17 +32,17 @@ subscribers:
     endpoint: YOUR_EMAIL
 ```
 ### Build and Run
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o sns -r
 ```
-Run app
+run app
 ```
 ./sns
 ```

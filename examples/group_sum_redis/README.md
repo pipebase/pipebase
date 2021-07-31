@@ -1,41 +1,41 @@
 Demo summation with `RedisUnorderedGroupAddAggregator` pipe
 ### Setup Redis (terminal 1)
-Launch redis
+launch redis
 ```
 docker-compose up -d
 ```
-Login container
+login container
 ```
 docker exec -it redis /bin/sh
 ```
 ### Build and Run (terminal 2)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o sum_redis -r
 ```
-Run app
+run app
 ```
 ./sum_redis
 ```
-### Ingest Data and Monitor Pipe 
-Open new terinal and ingest sample data
+### Ingest Data and Monitor Pipe (terminal 3)
+ingest sample data
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
 -d @records.json  \
 http://localhost:9000/v1/ingest
 ```
-Query Redis (terminal 1)
+query redis (terminal 1)
 ```
 redis-cli get "foo" && \
 redis-cli get "bar"
 "3"
 "1"
 ```
-Open [browser](http://localhost:8000/v1/pipe) and list all pipes
+open [browser](http://localhost:8000/v1/pipe) and list all pipes

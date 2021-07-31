@@ -15,17 +15,17 @@ kafka-console-producer --topic records --bootstrap-server kafka:9092
 > {"key": "foo", "value": 1}
 ```
 ### Build and Run (terminal 2)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o consume_kafka -r
 ```
-Run app
+run app
 ```
 ./consume_kafka
 Record { key: "foo", value: 1 }

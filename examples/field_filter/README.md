@@ -1,16 +1,16 @@
 Demo `FieldVisit` and `FilterMap` pipe
 ### Build and Run (terminal 1)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o field_filter -r
 ```
-Run app
+run app
 ```
 ./field_filter
 ```
@@ -21,7 +21,7 @@ curl -i -X POST \
 -d @records.json  \
 http://localhost:9000/v1/ingest
 ```
-Stdout in terminal 1
+stdout in terminal 1
 ```
 [Record { key: "three", value: 3 }, Record { key: "four", value: 4 }]
 ```

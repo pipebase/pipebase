@@ -1,16 +1,16 @@
 Debug missing `dependencies` 
 ### Build and Run
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -r -d
 ```
-Error
+error
 ```
 Error cannot find derive macro `Deserialize` in this scope
 Error the trait bound `for<'de> fix_missing_package::Record: serde::de::Deserialize<'de>` is not satisfied

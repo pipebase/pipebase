@@ -4,17 +4,17 @@ Init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -r -d
 ```
-Error
+error
 ```
 Error the trait bound `RecordV2: Convert<_>` is not satisfied
 ```
-We try to convert RecordV2 from RecordV1 but trait bound not satisfied, try add metas for object
+try to convert RecordV2 from RecordV1 but trait bound not satisfied, try add metas for object
 
 ```
 @@ -57,7 +57,7 @@ objects:
@@ -31,7 +31,7 @@ Build again, and see different error
 ```
 Error meta prefix 'convert.input' not found at 'RecordV2'
 ```
-We need to specify input to convert from
+need to specify input to convert from
 ```
 @@ -58,6 +58,8 @@ objects:
    - ty: RecordV2
@@ -43,11 +43,11 @@ We need to specify input to convert from
        - name: id
          ty: String
 ```
-Build again, and see different error ...
+build again, and see different error ...
 ```
 Error meta prefix 'convert.from' not found at 'RecordV2.id'
 ```
-We need to specify field mapping
+need to specify field mapping
 ```
      fields:
        - name: id
@@ -62,4 +62,4 @@ We need to specify field mapping
 +          - convert:
 +              from: value.amount
 ```  
-Build and succeed
+build and succeed

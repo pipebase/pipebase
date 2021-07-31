@@ -1,17 +1,17 @@
 Demo `Printer` pipe
 ### Build and Run (terminal 1)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe check && \
 cargo pipe build -o printer -r
 ```
-Run app
+run app
 ```
 ./printer
 ```
@@ -22,7 +22,7 @@ curl -i -X POST \
 -d @record.json  \
 http://localhost:9000/v1/ingest
 ```
-Stdout in terminal 1
+stdout in terminal 1
 ```
 Record { key: "foo", value: 1 }
 ```

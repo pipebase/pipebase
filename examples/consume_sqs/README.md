@@ -1,6 +1,6 @@
 Demo `SqsMessageReceiver` pipe
 ### Configuration
-Config sqs
+config sqs
 ```
 # catalogs/sqs_msg_receiver.yml
 client:
@@ -11,24 +11,24 @@ initial_delay:
 interval:
   Secs: 30
 ```
-SQS environment variable
+aws environment variable
 ```
 export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
 export AWS_DEFAULT_REGION=
 ```
 ### Build and Run (terminal 1)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o sqs -r
 ```
-Run app
+run app
 ```
 ./sqs
 ```

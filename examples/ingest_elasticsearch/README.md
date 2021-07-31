@@ -1,30 +1,30 @@
 Demo `TextCollector` `ReqwestPoster` pipe
 ### Setup Elasticsearch (terminal 1)
-Launch elasticsearch
+launch elasticsearch
 ```
 docker-compose up -d
 ```
-Create index
+create index
 ```
 curl -X PUT localhost:9200/records
 ```
 ### Build and Run (terminal 2)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o ingest_es -r
 ```
-Run app
+run app
 ```
 ./ingest_es
 ```
 ### Ingest Data (terminal 3)
-Open new terminal and ingest sample data
+ingest sample data
 ```
 for (( i=0; i < 10; i++ )) 
 do

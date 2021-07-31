@@ -1,16 +1,16 @@
 Demo `FileLineReader` `StringSplitter` `IteratorStreamer` `UnorderedGroupAddAggregator` pipes
 ### Build and Run (terminal 1)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o wc -r
 ```
-Run app
+run app
 ```
 ./wc
 Pair("languages.", Count32(1))

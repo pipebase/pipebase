@@ -1,19 +1,19 @@
 Demo `MySQLWriter` pipe
 ### Prepare MySQL (terminal 1)
-Start mysql
+start mysql
 ```
 docker-compose up -d
 ```
-Login container
+login container
 ```
 docker exec -it mysql /bin/sh
 ```
-MySQL login
+mysql login
 ```
 mysql --user=foo --password foo
 Enter password: foo
 ```
-Create table
+create table
 ```
 CREATE TABLE IF NOT EXISTS records (
     `key` VARCHAR(64) NOT NULL PRIMARY KEY,
@@ -21,30 +21,30 @@ CREATE TABLE IF NOT EXISTS records (
 );
 ```
 ### Build and Run (terminal 2)
-Init
+init
 ```
 cargo pipe new
 ```
-Build 
+build 
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o mysql -r
 ```
-Run app
+run app
 ```
 ./mysql
 ```
-### Ingest Data and Monitor
-Open new terinal and ingest sample data
+### Ingest Data and Monitor (terminal 3)
+ingest sample data
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
 -d @record.json  \
 http://localhost:9000/v1/ingest
 ```
-Query mysql (terminal 1)
+query mysql (terminal 1)
 ```
 SELECT * FROM records;
 ```
-Open [browser](http://localhost:8000/v1/pipe) and list all pipes
+open [browser](http://localhost:8000/v1/pipe) and list all pipes

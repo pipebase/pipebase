@@ -1,21 +1,21 @@
 Demo `RedisPublisher` `RedisSubscriber` pipe
 ### Setup Redis (terminal 1)
-Launch redis
+launch redis
 ```
 docker-compose up -d
 ```
 ### Build and Run
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o pubsub_redis -r
 ```
-Run app
+run app
 ```
 ./pubsub_redis
 ```

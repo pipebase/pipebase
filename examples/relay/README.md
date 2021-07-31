@@ -1,21 +1,21 @@
 Demo `ReqwestPoster` pipe
 ### Build Sender
-Init
+init
 ```
 cargo pipe -d send new
 ```
-Build
+build
 ```
 cargo pipe -d send validate -o -p && \
 cargo pipe -d send generate && \
 cargo pipe -d send build -o sender -r
 ```
 ### Build Receiver
-Init
+init
 ```
 cargo pipe -d receive new
 ```
-Build
+build
 ```
 cargo pipe -d receive validate -o -p && \
 cargo pipe -d receive generate && \
@@ -36,7 +36,7 @@ curl -i -X POST \
 -d @record.json  \
 http://localhost:9000/v1/ingest
 ```
-Monitor terminal 2
+check terminal 2
 ```
 $ ./receiver
 Record { key: "foo", value: 1 }

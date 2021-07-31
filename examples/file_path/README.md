@@ -1,16 +1,16 @@
 Demo `LocalFilePathVisitor` pipe
 ### Build and Run (terminal 1)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o file_path -r
 ```
-Run app, scan files under directory in period
+run app, scan files under directory in period
 ```
 ./file_path
 "resources/file1.txt"

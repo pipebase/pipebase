@@ -1,5 +1,11 @@
 Demo `DynamoDBWriter`
 ### Create DynamoDB Table (terminal 1)
+aws environment variable
+```
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
+export AWS_DEFAULT_REGION=
+```
 create `records` table for test
 ```
 aws dynamodb create-table --attribute-definitions AttributeName=id,AttributeType=S AttributeName=value,AttributeType=N \
@@ -8,17 +14,17 @@ aws dynamodb create-table --attribute-definitions AttributeName=id,AttributeType
     --billing-mode PAY_PER_REQUEST
 ```
 ### Build and Run (terminal 2)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o ingest_dynamodb -r
 ```
-Run app
+run app
 ```
 ./ingest_dynamodb
 ```

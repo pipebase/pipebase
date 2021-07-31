@@ -1,10 +1,10 @@
 Demo `Conversion` `CsvSer` `FileWriter` pipe
 ### Build and Run (terminal 1)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
@@ -14,9 +14,9 @@ Create data folder where csv file dump
 ```
 mkdir data
 ```
-Run app
+run app
 ```
 ./convert_csv
 "data/Xj3ec8n3yrg83zbR"
 ```
-Open csv file under data folder
+open csv file under data folder

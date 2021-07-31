@@ -1,21 +1,21 @@
-Demo average with `RedisUnorderedGroupAddAggregator` pipe
+Demo average with `RocksDBUnorderedGroupAddAggregator` pipe
 ### Build and Run (terminal 1)
-Init
+init
 ```
 cargo pipe new
 ```
-Build
+build
 ```
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o avg_rocksdb -r
 ```
-Run app
+run app
 ```
 ./avg_rocksdb
 ```
 ### Ingest Data and Monitor Pipe (terminal 2)
-Open new terinal and ingest sample data
+ingest sample data
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
