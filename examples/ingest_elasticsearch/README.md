@@ -24,7 +24,7 @@ Run app
 ./ingest_es
 ```
 ### Ingest Data (terminal 3)
-Open new terinal and ingest sample data
+Open new terminal and ingest sample data
 ```
 for (( i=0; i < 10; i++ )) 
 do

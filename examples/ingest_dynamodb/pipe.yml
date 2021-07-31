@@ -1,0 +1,54 @@
+name: ingest_dynamodb
+dependencies:
+  - package: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - package: pipedynamodb
+    path: ../../../pipeware/pipedynamodb
+    modules: ["pipedynamodb::*"]
+  - package: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - package: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - package: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      ty: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty: 
+        Object: Record
+    upstreams: [ingestion_server]
+  - name: dynamodb_writer
+    ty: Exporter
+    config:
+      ty: DynamoDBWriterConfig
+      path: catalogs/dynamodb_writer.yml
+    upstreams: [json]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, IntoAttributes]
+    fields:
+      - name: id
+        ty: String
+      - name: value
+        ty: UnsignedInteger
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml

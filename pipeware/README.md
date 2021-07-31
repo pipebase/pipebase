@@ -2,31 +2,32 @@
 
 ## Plugins
 Pipes
-| pipe type | implementation | input / output | example |
-| --------- | -------------- | -------------- | ------- |
-| `Listener`  | WarpIngestionServer | doc | `ingest_*` |
-| `Listener` | KafkaConsumer | doc | [`consume_kafka`] |
-| `Listener` | KubeLogReader | doc | [`kube_log`] |
-| `Listener` | KubeEventReader | doc | [`kube_event`] |
-| `Listener` | RedisSubscriber | doc | [`pubsub_redis`] |
-| `Poller` | SQSMessageReceiver | doc | [`consume_sqs`] |
-| `Mapper` | JsonSer | doc |  |
-| `Mapper` | JsonDeser | doc | `ingest_*` |
-| `Mapper` | CsvSer | doc | [`convert_csv`] |
-| `Mapper` | CsvDeser | doc |  |
-| `Mapper` | RedisUnorderedGroupAddAggregator | doc | [`group_sum_redis`], [`group_avg_redis`], [`group_count_redis`] |
-| `Mapper` | RocksDBUnorderedGroupAddAggregator | doc | [`group_sum_rocksdb`], [`group_avg_rocksdb`], [`group_count_rocksdb`] |
-| `Mapper` | KafkaJsonRecordConverter | doc | [`ingest_kafka`] |
-| `Mapper` | ReqwestGetter | doc | [`stripe_get_charge`] |
-| `Mapper` | ReqwestQuery | doc | [`stripe_query_charge`] |
-| `Exporter` | CqlWriter | doc | [`ingest_cassandra`] |
-| `Exporter` | PsqlWriter | doc | [`ingest_postgres`] |
-| `Exporter` | RedisStringWriter | doc | [`ingest_redis`] |
-| `Exporter` | RedisPublisher | doc | [`pubsub_redis`] |
-| `Exporter` | ReqwestPoster | doc | [`relay`], [`ingest_elasticsearch`] |
-| `Exporter` | KafkaProducer | doc | [`ingest_kafka`] |
-| `Exporter` | S3Writer | doc | [`upload_s3`] |
-| `Exporter` | MySQLWriter | doc | [`ingest_mysql`] |
+| pipe type | implementation | example |
+| --------- | -------------- | ------- |
+| `Listener`  | WarpIngestionServer | `ingest_*` |
+| `Listener` | KafkaConsumer | [`consume_kafka`] |
+| `Listener` | KubeLogReader | [`kube_log`] |
+| `Listener` | KubeEventReader | [`kube_event`] |
+| `Listener` | RedisSubscriber | [`pubsub_redis`] |
+| `Poller` | SQSMessageReceiver | [`consume_sqs`] |
+| `Mapper` | JsonSer |  |
+| `Mapper` | JsonDeser | `ingest_*` |
+| `Mapper` | CsvSer | [`convert_csv`] |
+| `Mapper` | CsvDeser |  |
+| `Mapper` | RedisUnorderedGroupAddAggregator | [`group_sum_redis`], [`group_avg_redis`], [`group_count_redis`] |
+| `Mapper` | RocksDBUnorderedGroupAddAggregator | [`group_sum_rocksdb`], [`group_avg_rocksdb`], [`group_count_rocksdb`] |
+| `Mapper` | KafkaJsonRecordConverter | [`ingest_kafka`] |
+| `Mapper` | ReqwestGetter | [`stripe_get_charge`] |
+| `Mapper` | ReqwestQuery | [`stripe_query_charge`] |
+| `Exporter` | CqlWriter | [`ingest_cassandra`] |
+| `Exporter` | PsqlWriter | [`ingest_postgres`] |
+| `Exporter` | RedisStringWriter | [`ingest_redis`] |
+| `Exporter` | RedisPublisher | [`pubsub_redis`] |
+| `Exporter` | ReqwestPoster | [`relay`], [`ingest_elasticsearch`] |
+| `Exporter` | KafkaProducer | [`ingest_kafka`] |
+| `Exporter` | S3Writer | [`upload_s3`] |
+| `Exporter` | MySQLWriter | [`ingest_mysql`] |
+| `Exporter` | DynamoDBWriter | [`ingest_dynamodb`] |
 
 
 [`pipeware`]: https://github.com/pipebase/pipebase/tree/main/pipeware
@@ -52,3 +53,4 @@ Pipes
 [`stripe_query_charge`]: https://github.com/pipebase/pipebase/tree/main/examples/stripe_query_charge
 [`consume_sqs`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_sqs
 [`pubsub_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_redis
+[`ingest_dynamodb`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_dynamodb
