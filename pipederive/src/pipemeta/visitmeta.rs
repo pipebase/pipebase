@@ -85,9 +85,10 @@ pub struct PipeExpr {
 impl VisitPipeMeta for PipeExpr {
     fn visit(&mut self, meta: &PipeMeta) {
         let pipe_name = meta.get_name();
+        let pipe_ident = meta.get_ident();
         let ty = meta.get_ty();
         let rhs = format!(r#"{}("{}")"#, Self::pipe_type_macro(&ty), pipe_name,);
-        self.lhs = Some(Self::as_mut(&pipe_name));
+        self.lhs = Some(Self::as_mut(&pipe_ident));
         self.rhs = Some(rhs);
     }
 }
@@ -116,27 +117,23 @@ pub struct RunPipeExpr {
 impl VisitPipeMeta for RunPipeExpr {
     fn visit(&mut self, meta: &PipeMeta) {
         let pipe_name = meta.get_name();
+        let pipe_ident = meta.get_ident();
         let config_meta = meta.get_config_meta();
         let config_ty = config_meta.get_ty();
         let config_path = config_meta.get_path();
         let upstream_output_type_name = meta.get_upstream_output_type_name();
         let downstream_pipe_names = meta.get_downstream_names();
         let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
-        // reveiver is optional for source pipe
-        let rhs = match upstream_output_type_name {
-            Some(_) => {
-                let receiver_expr = Self::gen_recevier_expr(&pipe_name);
-                format!(
-                    r#"{}({}, {}, "{}", {}, {})"#,
-                    RUN_PIPE_MACRO, pipe_name, config_ty, config_path, senders_expr, receiver_expr
-                )
-            }
-            None => format!(
-                r#"{}({}, {}, "{}", {})"#,
-                RUN_PIPE_MACRO, pipe_name, config_ty, config_path, senders_expr
-            ),
+        // receiver is none for poller and listener
+        let receiver_expr = match upstream_output_type_name {
+            Some(_) => Self::gen_recevier_expr(&pipe_name),
+            None => String::from("{ None }"),
         };
-        self.lhs = Some(pipe_name.to_owned());
+        let rhs = format!(
+            r#"{}({}, {}, "{}", {}, {})"#,
+            RUN_PIPE_MACRO, pipe_ident, config_ty, config_path, senders_expr, receiver_expr
+        );
+        self.lhs = Some(pipe_ident.to_owned());
         self.rhs = Some(rhs);
     }
 }
@@ -167,39 +164,39 @@ impl RunPipeExpr {
 
 #[derive(Default)]
 pub struct JoinExpr {
-    pipe_names: Vec<String>,
-    cstore_names: Vec<String>,
-    error_handler_name: Option<String>,
+    pipe_idents: Vec<String>,
+    cstore_idents: Vec<String>,
+    error_handler_ident: Option<String>,
 }
 
 impl VisitPipeMeta for JoinExpr {
     fn visit(&mut self, meta: &PipeMeta) {
-        self.pipe_names.push(meta.get_name().to_owned());
+        self.pipe_idents.push(meta.get_ident().to_owned());
     }
 }
 
 impl VisitContextStoreMeta for JoinExpr {
     fn visit(&mut self, meta: &ContextStoreMeta) {
-        self.cstore_names.push(meta.get_name().to_owned())
+        self.cstore_idents.push(meta.get_ident().to_owned())
     }
 }
 
 impl VisitErrorHandlerMeta for JoinExpr {
     fn visit(&mut self, _meta: &ErrorHandlerMeta) {
-        self.error_handler_name = Some(ERROR_HANDLER_DEFAULT_IDENT.to_owned())
+        self.error_handler_ident = Some(ERROR_HANDLER_DEFAULT_IDENT.to_owned())
     }
 }
 
 impl Expr for JoinExpr {
     fn get_expr(&self) -> Option<String> {
-        let mut all_names = vec![];
-        all_names.extend(self.pipe_names.to_owned());
-        all_names.extend(self.cstore_names.to_owned());
-        match self.error_handler_name {
-            Some(ref name) => all_names.push(name.to_owned()),
+        let mut all_idents = vec![];
+        all_idents.extend(self.pipe_idents.to_owned());
+        all_idents.extend(self.cstore_idents.to_owned());
+        match self.error_handler_ident {
+            Some(ref ident) => all_idents.push(ident.to_owned()),
             None => (),
         };
-        let all_exprs = format!("{}([{}])", JOIN_PIPES_MACRO, all_names.join(","));
+        let all_exprs = format!("{}([{}])", JOIN_PIPES_MACRO, all_idents.join(","));
         Some(all_exprs)
     }
 }
@@ -216,9 +213,10 @@ pub struct ContextStoreExpr {
 
 impl VisitContextStoreMeta for ContextStoreExpr {
     fn visit(&mut self, meta: &ContextStoreMeta) {
-        let context_store_name = meta.get_name();
-        let rhs = format!(r#"{}("{}")"#, CONTEXT_STORE_MACRO, context_store_name);
-        self.lhs = Some(Self::as_mut(&context_store_name));
+        let name = meta.get_name();
+        let ident = meta.get_ident();
+        let rhs = format!(r#"{}("{}")"#, CONTEXT_STORE_MACRO, name);
+        self.lhs = Some(Self::as_mut(&ident));
         self.rhs = Some(rhs);
     }
 }
@@ -240,16 +238,16 @@ pub struct RunContextStoreExpr {
 
 impl VisitContextStoreMeta for RunContextStoreExpr {
     fn visit(&mut self, meta: &ContextStoreMeta) {
-        let name = meta.get_name();
+        let ident = meta.get_ident();
         let pipe_exprs = meta.get_pipes().join(",");
         let config_meta = meta.get_config_meta();
         let config_ty = config_meta.get_ty();
         let config_path = config_meta.get_path();
         let rhs = format!(
             r#"{}({}, {}, "{}", [{}])"#,
-            RUN_CONTEXT_STORE_MACRO, name, config_ty, config_path, pipe_exprs
+            RUN_CONTEXT_STORE_MACRO, ident, config_ty, config_path, pipe_exprs
         );
-        self.lhs = Some(name.to_owned());
+        self.lhs = Some(ident.to_owned());
         self.rhs = Some(rhs);
     }
 }

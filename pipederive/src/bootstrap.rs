@@ -25,14 +25,14 @@ pub fn impl_bootstrap(
     let error_handler_attribute = get_any_error_handler_attribute(attributes);
     // parse metas
     let pipe_metas = PipeMetas::parse(&pipe_attributes, &ident_location);
-    let ref pipe_names = pipe_metas.list_pipe_name();
+    let ref pipe_idents = pipe_metas.list_pipe_ident();
     let mut cstore_metas = ContextStoreMetas::parse(&cstore_attributes, &ident_location);
-    cstore_metas.add_pipes(pipe_names.to_owned());
+    cstore_metas.add_pipes(pipe_idents.to_owned());
     let error_handler_meta =
         ErrorHandlerMeta::parse(error_handler_attribute.as_ref(), &ident_location);
     let error_handler_meta = match error_handler_meta {
         Some(mut meta) => {
-            meta.set_pipes(pipe_names.to_owned());
+            meta.set_pipes(pipe_idents.to_owned());
             Some(meta)
         }
         None => None,
