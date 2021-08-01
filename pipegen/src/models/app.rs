@@ -3,6 +3,7 @@ use super::constants::{
     DEFAULT_APP_OBJECT, PIPEBASE_MAIN,
 };
 use super::context::ContextStore;
+use super::error::ErrorHandler;
 use super::meta::{metas_to_literal, Meta, MetaValue};
 use super::package::PackageDependency;
 use super::pipe::Pipe;
@@ -26,6 +27,7 @@ pub struct App {
     metas: Option<Vec<Meta>>,
     dependencies: Option<Vec<PackageDependency>>,
     cstores: Option<Vec<ContextStore>>,
+    error: Option<ErrorHandler>,
     pipes: Vec<Pipe>,
     objects: Option<Vec<Object>>,
 }
@@ -207,8 +209,12 @@ impl App {
         metas_to_literal(metas, indent)
     }
 
-    pub fn get_context_stores(&self) -> &Vec<ContextStore> {
+    pub(crate) fn get_context_stores(&self) -> &Vec<ContextStore> {
         self.cstores.as_ref().expect("stores")
+    }
+
+    pub(crate) fn get_error_handler(&self) -> Option<&ErrorHandler> {
+        self.error.as_ref()
     }
 
     pub(crate) fn get_objects(&self) -> &Vec<Object> {

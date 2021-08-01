@@ -1,4 +1,6 @@
-use crate::models::{App, ContextStore, Entity, EntityAccept, Object, Pipe, VisitEntity};
+use crate::models::{
+    App, ContextStore, Entity, EntityAccept, ErrorHandler, Object, Pipe, VisitEntity,
+};
 use std::collections::HashSet;
 pub trait Generate {
     fn new(indent: usize) -> Self;
@@ -27,7 +29,7 @@ impl Generate for PipeGenerator {
     fn generate(&self) -> String {
         self.pipe
             .as_ref()
-            .expect("pipe inited")
+            .expect("pipe not inited")
             .to_literal(self.indent)
     }
 }
@@ -54,7 +56,7 @@ impl Generate for ObjectGenerator {
     fn generate(&self) -> String {
         self.object
             .as_ref()
-            .expect("object inited")
+            .expect("object not inited")
             .to_literal(self.indent)
     }
 }
@@ -81,7 +83,34 @@ impl Generate for ContextStoreGenerator {
     fn generate(&self) -> String {
         self.cstore
             .as_ref()
-            .expect("cstore inited")
+            .expect("cstore not inited")
+            .to_literal(self.indent)
+    }
+}
+
+pub struct ErrorHandlerGenerator {
+    indent: usize,
+    error_handler: Option<ErrorHandler>,
+}
+
+impl VisitEntity<ErrorHandler> for ErrorHandlerGenerator {
+    fn visit(&mut self, error_handler: &ErrorHandler) {
+        self.error_handler = Some(error_handler.to_owned())
+    }
+}
+
+impl Generate for ErrorHandlerGenerator {
+    fn new(indent: usize) -> Self {
+        ErrorHandlerGenerator {
+            indent: indent,
+            error_handler: None,
+        }
+    }
+
+    fn generate(&self) -> String {
+        self.error_handler
+            .as_ref()
+            .expect("error handler not inited")
             .to_literal(self.indent)
     }
 }
@@ -167,6 +196,15 @@ impl AppGenerator {
         Self::generate_entities::<ContextStore, ContextStoreGenerator>(cstores, indent, "\n")
     }
 
+    fn generate_error_handler(&self, indent: usize) -> String {
+        let error_handler = self.get_app().get_error_handler();
+        let error_handler = match error_handler {
+            Some(error_handler) => error_handler,
+            None => return String::new(),
+        };
+        Self::generate_entity::<ErrorHandler, ErrorHandlerGenerator>(error_handler, indent)
+    }
+
     fn generate_app_object(&self, indent: usize) -> String {
         self.get_app().to_literal(indent)
     }
@@ -197,6 +235,7 @@ impl AppGenerator {
         sections.push(self.generate_app_metas(indent));
         sections.push(self.generate_pipes(indent));
         sections.push(self.generate_context_store(indent));
+        sections.push(self.generate_error_handler(indent));
         sections.push(self.generate_app_object(indent));
         sections.push(self.generate_bootstrap_app_function(indent));
         let module_lit = Self::generate_module(&module_name, &sections);
