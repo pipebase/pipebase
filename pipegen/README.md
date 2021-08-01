@@ -117,7 +117,7 @@ Store all pipe runtime contexts including: `pipe name`, [`pipe state`], `total r
 | `Init` | all |
 | `Receive` | except `Poller` |
 | `Poll` | `Poller` |
-| `Process` | `Mapper` |
+| `Map` | `Mapper` |
 | `Send` | except `Exporter` |
 | `Export` | `Exporter` |
 | `Done` | all |

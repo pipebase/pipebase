@@ -23,6 +23,7 @@ pub const CONTEXT_STORE_CONFIG_PATH: &str = "cstore.config.path";
 pub const CONTEXT_STORE_CONFIG_EMPTY_PATH: &str = "";
 pub const CONTEXT_STORE_MACRO: &str = "cstore!";
 pub const RUN_CONTEXT_STORE_MACRO: &str = "run_cstore!";
+pub const CONTEXT_STORE_IDENT_SUFFIX: &str = "_c";
 
 pub const ERROR_HANDLER: &str = "error";
 pub const ERROR_HANDLER_CONFIG_TYPE: &str = "error.config.ty";
@@ -48,6 +49,7 @@ pub const BOOTSTRAP_PIPE_OUTPUT: &str = "pipe.output";
 pub const BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER: usize = 1024;
 pub const BOOTSTRAP_MODULE: &str = "bootstrap";
 pub const BOOTSTRAP_FUNCTION: &str = "bootstrap";
+pub const BOOTSTRAP_PIPE_IDENT_SUFFIX: &str = "_p";
 
 pub const CHANNEL_MACRO: &str = "channel!";
 pub const RUN_PIPE_MACRO: &str = "run_pipe!";

@@ -17,8 +17,8 @@ pub enum State {
     Receive,
     #[strum(to_string = "poll")]
     Poll,
-    #[strum(to_string = "process")]
-    Process,
+    #[strum(to_string = "map")]
+    Map,
     #[strum(to_string = "send")]
     Send,
     #[strum(to_string = "export")]
@@ -32,7 +32,7 @@ fn code_to_state(state_code: u8) -> State {
         0 => State::Init,
         1 => State::Receive,
         2 => State::Poll,
-        3 => State::Process,
+        3 => State::Map,
         4 => State::Send,
         5 => State::Export,
         6 => State::Done,

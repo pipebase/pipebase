@@ -7,9 +7,10 @@ use syn::Attribute;
 use crate::constants::BOOTSTRAP_PIPE_UPSTREAM_NAME_SEP;
 use crate::constants::{
     BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH, BOOTSTRAP_PIPE_CONFIG_TYPE,
-    BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE, BOOTSTRAP_PIPE_UPSTREAM,
-    CONTEXT_STORE_CONFIG_EMPTY_PATH, CONTEXT_STORE_CONFIG_PATH, CONTEXT_STORE_CONFIG_TYPE,
-    CONTEXT_STORE_NAME, ERROR_HANDLER_CONFIG_PATH, ERROR_HANDLER_CONFIG_TYPE,
+    BOOTSTRAP_PIPE_IDENT_SUFFIX, BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE,
+    BOOTSTRAP_PIPE_UPSTREAM, CONTEXT_STORE_CONFIG_EMPTY_PATH, CONTEXT_STORE_CONFIG_PATH,
+    CONTEXT_STORE_CONFIG_TYPE, CONTEXT_STORE_IDENT_SUFFIX, CONTEXT_STORE_NAME,
+    ERROR_HANDLER_CONFIG_PATH, ERROR_HANDLER_CONFIG_TYPE,
 };
 use crate::utils::{get_meta, get_meta_string_value_by_meta_path};
 
@@ -37,6 +38,7 @@ impl PipeConfigMeta {
 #[derive(Clone)]
 pub struct PipeMeta {
     pub name: String,
+    pub ident: String,
     pub ty: String,
     pub config_meta: PipeConfigMeta,
     pub output_type_name: Option<String>,
@@ -52,6 +54,10 @@ impl PipeMeta {
 
     pub fn get_name(&self) -> &String {
         &self.name
+    }
+
+    pub fn get_ident(&self) -> &String {
+        &self.ident
     }
 
     pub fn get_ty(&self) -> &String {
@@ -98,8 +104,11 @@ impl PipeMeta {
     }
 
     pub fn parse(attribute: &Attribute, ident_location: &str) -> Self {
+        let name = Self::parse_name(attribute, ident_location);
+        let ident = format!("{}{}", name, BOOTSTRAP_PIPE_IDENT_SUFFIX);
         PipeMeta {
-            name: Self::parse_name(attribute, ident_location),
+            name,
+            ident,
             ty: Self::parse_ty(attribute, ident_location),
             config_meta: Self::parse_config_meta(attribute, ident_location),
             output_type_name: Self::parse_output_meta(attribute),
@@ -257,11 +266,11 @@ impl PipeMetas {
         }
     }
 
-    pub fn list_pipe_name(&self) -> Vec<String> {
+    pub fn list_pipe_ident(&self) -> Vec<String> {
         self.pipe_metas
-            .keys()
+            .values()
             .into_iter()
-            .map(|k| k.to_owned())
+            .map(|k| k.get_ident().to_owned())
             .collect()
     }
 
@@ -301,8 +310,9 @@ impl ContextStoreConfigMeta {
 
 pub struct ContextStoreMeta {
     name: String,
+    ident: String,
     config_meta: ContextStoreConfigMeta,
-    pipe_names: Vec<String>,
+    pipe_idents: Vec<String>,
 }
 
 impl ContextStoreMeta {
@@ -314,12 +324,16 @@ impl ContextStoreMeta {
         &self.name
     }
 
-    pub fn set_pipes(&mut self, pipe_names: Vec<String>) {
-        self.pipe_names = pipe_names
+    pub fn get_ident(&self) -> &String {
+        &self.ident
+    }
+
+    pub fn set_pipes(&mut self, pipe_idents: Vec<String>) {
+        self.pipe_idents = pipe_idents
     }
 
     pub fn get_pipes(&self) -> Vec<String> {
-        self.pipe_names.to_owned()
+        self.pipe_idents.to_owned()
     }
 
     pub fn get_config_meta(&self) -> &ContextStoreConfigMeta {
@@ -327,10 +341,13 @@ impl ContextStoreMeta {
     }
 
     pub fn parse(attribute: &Attribute, ident_location: &str) -> Self {
+        let name = Self::parse_name(attribute, ident_location);
+        let ident = format!("{}{}", name, CONTEXT_STORE_IDENT_SUFFIX);
         ContextStoreMeta {
-            name: Self::parse_name(attribute, ident_location),
+            name,
+            ident,
             config_meta: Self::parse_config_meta(attribute, ident_location),
-            pipe_names: Vec::new(),
+            pipe_idents: Vec::new(),
         }
     }
 
@@ -381,9 +398,9 @@ impl ContextStoreMetas {
         ContextStoreMetas { metas }
     }
 
-    pub fn add_pipes(&mut self, pipe_names: Vec<String>) {
+    pub fn add_pipes(&mut self, pipe_idents: Vec<String>) {
         for meta in &mut self.metas {
-            meta.set_pipes(pipe_names.to_owned())
+            meta.set_pipes(pipe_idents.to_owned())
         }
     }
 
@@ -421,7 +438,7 @@ impl ErrorHandlerConfigMeta {
 
 pub struct ErrorHandlerMeta {
     config_meta: ErrorHandlerConfigMeta,
-    pipe_names: Vec<String>,
+    pipe_idents: Vec<String>,
 }
 
 impl ErrorHandlerMeta {
@@ -429,12 +446,12 @@ impl ErrorHandlerMeta {
         visitor.visit(self)
     }
 
-    pub fn set_pipes(&mut self, pipe_names: Vec<String>) {
-        self.pipe_names = pipe_names;
+    pub fn set_pipes(&mut self, pipe_idents: Vec<String>) {
+        self.pipe_idents = pipe_idents;
     }
 
     pub fn get_pipes(&self) -> Vec<String> {
-        self.pipe_names.to_owned()
+        self.pipe_idents.to_owned()
     }
 
     pub fn get_config_meta(&self) -> &ErrorHandlerConfigMeta {
@@ -449,7 +466,7 @@ impl ErrorHandlerMeta {
         let config_meta = Self::parse_config_meta(attribute, ident_location);
         Some(ErrorHandlerMeta {
             config_meta,
-            pipe_names: Vec::new(),
+            pipe_idents: Vec::new(),
         })
     }
 
