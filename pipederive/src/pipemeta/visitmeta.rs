@@ -1,7 +1,10 @@
-use super::meta::{ContextStoreMeta, PipeMeta};
+use super::meta::{ContextStoreMeta, ErrorHandlerMeta, PipeMeta};
 use crate::constants::{
-    BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, CHANNEL_MACRO, CONTEXT_STORE_MACRO, JOIN_PIPES_MACRO,
-    RUN_CONTEXT_STORE_MACRO, RUN_PIPE_MACRO,
+    BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, CHANNEL_MACRO, CONTEXT_STORE_MACRO,
+    ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER, ERROR_HANDLER_CHANNEL_DEFAULT_TYPE,
+    ERROR_HANDLER_DEFAULT_IDENT, ERROR_HANDLER_DEFAULT_RX, ERROR_HANDLER_DEFAULT_TX,
+    ERROR_HANDLER_MACRO, JOIN_PIPES_MACRO, RUN_CONTEXT_STORE_MACRO, RUN_ERROR_HANDLER_MACRO,
+    RUN_PIPE_MACRO, SUBSCRIBE_ERROR_HANDLER_MACRO,
 };
 
 pub trait VisitPipeMeta: Default {
@@ -166,6 +169,7 @@ impl RunPipeExpr {
 pub struct JoinExpr {
     pipe_names: Vec<String>,
     cstore_names: Vec<String>,
+    error_handler_name: Option<String>,
 }
 
 impl VisitPipeMeta for JoinExpr {
@@ -180,11 +184,21 @@ impl VisitContextStoreMeta for JoinExpr {
     }
 }
 
+impl VisitErrorHandlerMeta for JoinExpr {
+    fn visit(&mut self, _meta: &ErrorHandlerMeta) {
+        self.error_handler_name = Some(ERROR_HANDLER_DEFAULT_IDENT.to_owned())
+    }
+}
+
 impl Expr for JoinExpr {
     fn get_expr(&self) -> Option<String> {
         let mut all_names = vec![];
         all_names.extend(self.pipe_names.to_owned());
         all_names.extend(self.cstore_names.to_owned());
+        match self.error_handler_name {
+            Some(ref name) => all_names.push(name.to_owned()),
+            None => (),
+        };
         let all_exprs = format!("{}([{}])", JOIN_PIPES_MACRO, all_names.join(","));
         Some(all_exprs)
     }
@@ -246,5 +260,114 @@ impl Expr for RunContextStoreExpr {
     }
     fn get_rhs(&self) -> Option<String> {
         self.rhs.to_owned()
+    }
+}
+
+pub trait VisitErrorHandlerMeta: Default {
+    fn visit(&mut self, meta: &ErrorHandlerMeta);
+}
+
+#[derive(Default)]
+pub struct ErrorChannelExpr {
+    pub lhs: Option<String>,
+    pub rhs: Option<String>,
+}
+
+impl Expr for ErrorChannelExpr {
+    fn get_lhs(&self) -> Option<String> {
+        self.lhs.to_owned()
+    }
+    fn get_rhs(&self) -> Option<String> {
+        self.rhs.to_owned()
+    }
+}
+
+impl VisitErrorHandlerMeta for ErrorChannelExpr {
+    fn visit(&mut self, _meta: &ErrorHandlerMeta) {
+        self.lhs = Some(format!(
+            "({}, {})",
+            ERROR_HANDLER_DEFAULT_TX, ERROR_HANDLER_DEFAULT_RX
+        ));
+        self.rhs = Some(format!(
+            "{}({}, {})",
+            CHANNEL_MACRO, ERROR_HANDLER_CHANNEL_DEFAULT_TYPE, ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER
+        ));
+    }
+}
+
+#[derive(Default)]
+pub struct SubscribeErrorExpr {
+    pub rhs: Option<String>,
+}
+
+impl VisitErrorHandlerMeta for SubscribeErrorExpr {
+    fn visit(&mut self, meta: &ErrorHandlerMeta) {
+        let pipe_exprs = meta.get_pipes().join(",");
+        let rhs = format!(
+            "{}([{}], {})",
+            SUBSCRIBE_ERROR_HANDLER_MACRO, pipe_exprs, ERROR_HANDLER_DEFAULT_TX
+        );
+        self.rhs = Some(rhs);
+    }
+}
+
+impl Expr for SubscribeErrorExpr {
+    fn get_rhs(&self) -> Option<String> {
+        self.rhs.to_owned()
+    }
+}
+
+#[derive(Default)]
+pub struct ErrorHandlerExpr {
+    pub lhs: Option<String>,
+    pub rhs: Option<String>,
+}
+
+impl Expr for ErrorHandlerExpr {
+    fn get_lhs(&self) -> Option<String> {
+        self.lhs.to_owned()
+    }
+    fn get_rhs(&self) -> Option<String> {
+        self.rhs.to_owned()
+    }
+}
+
+impl VisitErrorHandlerMeta for ErrorHandlerExpr {
+    fn visit(&mut self, _meta: &ErrorHandlerMeta) {
+        self.lhs = Some(Self::as_mut(ERROR_HANDLER_DEFAULT_IDENT));
+        self.rhs = Some(format!("{}()", ERROR_HANDLER_MACRO));
+    }
+}
+
+#[derive(Default)]
+pub struct RunErrorHandlerExpr {
+    pub lhs: Option<String>,
+    pub rhs: Option<String>,
+}
+
+impl Expr for RunErrorHandlerExpr {
+    fn get_lhs(&self) -> Option<String> {
+        self.lhs.to_owned()
+    }
+    fn get_rhs(&self) -> Option<String> {
+        self.rhs.to_owned()
+    }
+}
+
+impl VisitErrorHandlerMeta for RunErrorHandlerExpr {
+    fn visit(&mut self, meta: &ErrorHandlerMeta) {
+        let config_meta = meta.get_config_meta();
+        let config_ty = config_meta.get_ty();
+        let config_path = config_meta.get_path();
+        let rhs = format!(
+            r#"{}({}, {}, "{}", {})"#,
+            RUN_ERROR_HANDLER_MACRO,
+            ERROR_HANDLER_DEFAULT_IDENT,
+            config_ty,
+            config_path,
+            ERROR_HANDLER_DEFAULT_RX
+        );
+        self.lhs = Some(ERROR_HANDLER_DEFAULT_IDENT.to_owned());
+        self.rhs = Some(rhs);
     }
 }

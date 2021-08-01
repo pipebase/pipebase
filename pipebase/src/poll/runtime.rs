@@ -8,8 +8,9 @@ use tokio::{
 
 use super::{Poll, PollResponse};
 use crate::common::{
-    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, Context, HasContext, Pipe, Result, State,
+    filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
+    SubscribeError,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -17,6 +18,7 @@ use std::sync::Arc;
 pub struct Poller<'a> {
     name: &'a str,
     context: Arc<Context>,
+    etx: Option<Sender<PipeError>>,
 }
 
 /// Start loop
@@ -61,11 +63,13 @@ where
             let resp = poller.poll().await;
             let resp = match resp {
                 Ok(resp) => resp,
-                Err(e) => {
-                    error!("poller {} error '{}'", self.name, e);
+                Err(err) => {
+                    error!("poller {} error '{:#?}'", self.name, err);
                     self.context.inc_total_run();
                     self.context.inc_failure_run();
                     // wait for next poll period
+                    send_pipe_error(self.etx.as_ref(), PipeError::new(self.name.to_owned(), err))
+                        .await;
                     interval.tick().await;
                     continue;
                 }
@@ -101,7 +105,7 @@ where
             self.context.set_state(State::Poll);
             interval.tick().await;
         }
-        info!("source {} exit ...", self.name);
+        info!("poller {} exit ...", self.name);
         self.context.set_state(State::Done);
         Ok(())
     }
@@ -122,7 +126,14 @@ impl<'a> Poller<'a> {
         Poller {
             name: name,
             context: Default::default(),
+            etx: None,
         }
+    }
+}
+
+impl<'a> SubscribeError for Poller<'a> {
+    fn subscribe_error(&mut self, tx: Sender<crate::common::PipeError>) {
+        self.etx = Some(tx)
     }
 }
 

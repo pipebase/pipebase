@@ -6,13 +6,15 @@ use tokio::task::JoinHandle;
 
 use super::Stream;
 use crate::common::{
-    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, Context, HasContext, Pipe, Result, State,
+    filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
+    SubscribeError,
 };
 
 pub struct Streamer<'a> {
     name: &'a str,
     context: Arc<Context>,
+    etx: Option<Sender<PipeError>>,
 }
 
 /// Spawn two tasks
@@ -43,6 +45,7 @@ where
         streamer.set_sender(tx0);
         let name = self.name.to_owned();
         let context = self.context.clone();
+        let etx = self.etx.clone();
         let streamer_loop = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
             log::info!("streamer {} run ...", name);
@@ -54,9 +57,10 @@ where
                 };
                 context.set_state(State::Send);
                 match streamer.stream(t).await {
-                    Ok(_) => continue,
+                    Ok(_) => (),
                     Err(err) => {
-                        log::error!("streamer {} error '{}'", name, err);
+                        log::error!("streamer {} error '{:#?}'", name, err);
+                        send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await;
                         context.inc_failure_run();
                     }
                 }
@@ -117,11 +121,18 @@ impl<'a> HasContext for Streamer<'a> {
     }
 }
 
+impl<'a> SubscribeError for Streamer<'a> {
+    fn subscribe_error(&mut self, tx: Sender<crate::common::PipeError>) {
+        self.etx = Some(tx)
+    }
+}
+
 impl<'a> Streamer<'a> {
     pub fn new(name: &'a str) -> Self {
         Streamer {
             name: name,
             context: Default::default(),
+            etx: None,
         }
     }
 }

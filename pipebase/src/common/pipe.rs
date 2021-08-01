@@ -1,4 +1,4 @@
-use super::{ConfigInto, FromConfig, HasContext, Result};
+use super::{ConfigInto, FromConfig, HasContext, Result, SubscribeError};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use tokio::sync::mpsc::error::SendError;
@@ -6,7 +6,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::task::JoinHandle;
 
 #[async_trait]
-pub trait Pipe<T, U, R, C>: HasContext
+pub trait Pipe<T, U, R, C>: HasContext + SubscribeError
 where
     R: FromConfig<C>,
     C: ConfigInto<R>,
@@ -131,7 +131,7 @@ macro_rules! run_pipe {
                 let config = <$config>
                             ::from_path($path)
                             .await
-                            .expect(&format!("invalid config file location {}", $path));
+                            .expect(&format!("invalid config file '{}'", $path));
                 match $pipe.run(config, txs, $rx).await {
                     Ok(_) => Ok(()),
                     Err(err) => {

@@ -7,8 +7,9 @@ use tokio::task::JoinHandle;
 
 use super::Map;
 use crate::common::{
-    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, Context, HasContext, Pipe, Result, State,
+    filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
+    SubscribeError,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -16,6 +17,7 @@ use std::sync::Arc;
 pub struct Mapper<'a> {
     name: &'a str,
     context: Arc<Context>,
+    etx: Option<Sender<PipeError>>,
 }
 
 /// Start loop
@@ -64,10 +66,12 @@ where
             self.context.set_state(State::Process);
             let u = match mapper.map(t).await {
                 Ok(u) => u,
-                Err(e) => {
-                    error!("mapper {} error '{}'", self.name, e);
+                Err(err) => {
+                    error!("mapper {} error '{:#?}'", self.name, err);
                     self.context.inc_total_run();
                     self.context.inc_failure_run();
+                    send_pipe_error(self.etx.as_ref(), PipeError::new(self.name.to_owned(), err))
+                        .await;
                     continue;
                 }
             };
@@ -108,7 +112,14 @@ impl<'a> Mapper<'a> {
         Mapper {
             name: name,
             context: Default::default(),
+            etx: None,
         }
+    }
+}
+
+impl<'a> SubscribeError for Mapper<'a> {
+    fn subscribe_error(&mut self, tx: Sender<crate::common::PipeError>) {
+        self.etx = Some(tx)
     }
 }
 

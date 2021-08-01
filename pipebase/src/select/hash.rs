@@ -33,15 +33,19 @@ impl FromConfig<DefaultHashSelectorConfig> for DefaultHashSelector {
 
 /// # Parameters
 /// * T: input
-impl<T: Hash> Select<T, DefaultHashSelectorConfig> for DefaultHashSelector {
+#[async_trait]
+impl<T> Select<T, DefaultHashSelectorConfig> for DefaultHashSelector
+where
+    T: Hash + Sync,
+{
     /// `candidates`: index of downstreams
     /// `t`: input data reference
-    fn select(&mut self, t: &T, candidates: &[&usize]) -> Vec<usize> {
+    async fn select(&mut self, t: &T, candidates: &[&usize]) -> anyhow::Result<Vec<usize>> {
         let mut hasher = DefaultHasher::new();
         t.hash(&mut hasher);
         let h = hasher.finish();
         let i = h % (candidates.len() as u64);
-        vec![candidates[i as usize].to_owned()]
+        Ok(vec![candidates[i as usize].to_owned()])
     }
 }
 

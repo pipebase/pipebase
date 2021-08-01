@@ -1,11 +1,14 @@
-use crate::constants::{BOOTSTRAP_FUNCTION, BOOTSTRAP_MODULE, BOOTSTRAP_PIPE, CONTEXT_STORE};
+use crate::constants::{
+    BOOTSTRAP_FUNCTION, BOOTSTRAP_MODULE, BOOTSTRAP_PIPE, CONTEXT_STORE, ERROR_HANDLER,
+};
 use crate::pipemeta::{
-    ChannelExpr, ContextStoreExpr, ContextStoreMetas, Expr, JoinExpr, PipeExpr, PipeMetas,
-    RunContextStoreExpr, RunPipeExpr,
+    ChannelExpr, ContextStoreExpr, ContextStoreMetas, ErrorChannelExpr, ErrorHandlerExpr,
+    ErrorHandlerMeta, Expr, JoinExpr, PipeExpr, PipeMetas, RunContextStoreExpr,
+    RunErrorHandlerExpr, RunPipeExpr, SubscribeErrorExpr,
 };
 use crate::utils::{
-    get_all_attributes_by_meta_prefix, get_last_stmt_span, get_meta_string_value_by_meta_path,
-    resolve_ident, resolve_module_path_token,
+    get_all_attributes_by_meta_prefix, get_any_attribute_by_meta_prefix, get_last_stmt_span,
+    get_meta_string_value_by_meta_path, resolve_ident, resolve_module_path_token,
 };
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
@@ -16,15 +19,26 @@ pub fn impl_bootstrap(
     attributes: &Vec<Attribute>,
     generics: &Generics,
 ) -> TokenStream {
+    let ident_location = ident.to_string();
     let pipe_attributes = get_all_pipe_attributes(attributes);
     let cstore_attributes = get_all_context_store_attribute(attributes);
+    let error_handler_attribute = get_any_error_handler_attribute(attributes);
     // parse metas
-    let pipe_metas = PipeMetas::parse(&pipe_attributes, &ident.to_string());
-    let pipe_names = pipe_metas.list_pipe_name();
-    let mut cstore_metas = ContextStoreMetas::parse(&cstore_attributes, &ident.to_string());
-    cstore_metas.add_pipes(pipe_names);
+    let pipe_metas = PipeMetas::parse(&pipe_attributes, &ident_location);
+    let ref pipe_names = pipe_metas.list_pipe_name();
+    let mut cstore_metas = ContextStoreMetas::parse(&cstore_attributes, &ident_location);
+    cstore_metas.add_pipes(pipe_names.to_owned());
+    let error_handler_meta =
+        ErrorHandlerMeta::parse(error_handler_attribute.as_ref(), &ident_location);
+    let error_handler_meta = match error_handler_meta {
+        Some(mut meta) => {
+            meta.set_pipes(pipe_names.to_owned());
+            Some(meta)
+        }
+        None => None,
+    };
     // generate all exprs to print
-    let all_exprs = resolve_all_exprs(&pipe_metas, &cstore_metas);
+    let all_exprs = resolve_all_exprs(&pipe_metas, &cstore_metas, error_handler_meta.as_ref());
     let all_exprs = merge_all_exprs(&all_exprs, ";\n");
     // generate pipe exprs
     let channel_exprs = resolve_channel_exprs(&pipe_metas);
@@ -33,8 +47,14 @@ pub fn impl_bootstrap(
     // generate cstore exprs
     let cstore_expr = resolve_cstore_exprs(&cstore_metas);
     let run_cstore_expr = resolve_run_cstore_exprs(&cstore_metas);
+    // generate error handler exprs
+    let error_channel_expr = resolve_error_channel_exprs(error_handler_meta.as_ref());
+    let subscribe_error_expr = resolve_subscribe_error_exprs(error_handler_meta.as_ref());
+    let error_handler_expr = resolve_error_handler_exprs(error_handler_meta.as_ref());
+    let run_error_handler_expr = resolve_run_error_handler_exprs(error_handler_meta.as_ref());
     // generate join all exprs
-    let join_all_expr = resolve_join_all_expr(&pipe_metas, &cstore_metas);
+    let join_all_expr =
+        resolve_join_all_expr(&pipe_metas, &cstore_metas, error_handler_meta.as_ref());
     // generate tokens for pipe exprs
     let channel_expr_tokens = parse_exprs(&channel_exprs);
     let pipe_expr_tokens = parse_exprs(&pipe_exprs);
@@ -42,6 +62,11 @@ pub fn impl_bootstrap(
     // generate tokens for cstore exprs
     let cstore_expr_tokens = parse_exprs(&cstore_expr);
     let run_cstore_expr_tokens = parse_exprs(&run_cstore_expr);
+    // generate tokens for error handling exprs
+    let error_channel_tokens = parse_exprs(&error_channel_expr);
+    let subscribe_error_tokens = parse_exprs(&subscribe_error_expr);
+    let error_handler_tokens = parse_exprs(&error_handler_expr);
+    let run_error_handler_tokens = parse_exprs(&run_error_handler_expr);
     // generate token for join all - pipe and context store
     let join_all_expr_tokens = parse_exprs(&join_all_expr);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
@@ -58,6 +83,14 @@ pub fn impl_bootstrap(
                 #pipe_expr_tokens
                 ;
                 #cstore_expr_tokens
+                ;
+                #error_channel_tokens
+                ;
+                #error_handler_tokens
+                ;
+                #subscribe_error_tokens
+                ;
+                #run_error_handler_tokens
                 ;
                 #run_cstore_expr_tokens
                 ;
@@ -77,14 +110,26 @@ fn merge_all_exprs(exprs: &Vec<String>, sep: &str) -> String {
     exprs.join(sep)
 }
 
-fn resolve_all_exprs(pipe_metas: &PipeMetas, cstore_metas: &ContextStoreMetas) -> Vec<String> {
+fn resolve_all_exprs(
+    pipe_metas: &PipeMetas,
+    cstore_metas: &ContextStoreMetas,
+    error_handler_meta: Option<&ErrorHandlerMeta>,
+) -> Vec<String> {
     let mut all_exprs: Vec<String> = vec![];
     all_exprs.extend(resolve_channel_exprs(pipe_metas));
     all_exprs.extend(resolve_pipe_exprs(pipe_metas));
     all_exprs.extend(resolve_cstore_exprs(cstore_metas));
+    all_exprs.extend(resolve_error_channel_exprs(error_handler_meta));
+    all_exprs.extend(resolve_subscribe_error_exprs(error_handler_meta));
+    all_exprs.extend(resolve_error_handler_exprs(error_handler_meta));
+    all_exprs.extend(resolve_run_error_handler_exprs(error_handler_meta));
     all_exprs.extend(resolve_run_cstore_exprs(cstore_metas));
     all_exprs.extend(resolve_run_pipe_exprs(pipe_metas));
-    all_exprs.extend(resolve_join_all_expr(pipe_metas, cstore_metas));
+    all_exprs.extend(resolve_join_all_expr(
+        pipe_metas,
+        cstore_metas,
+        error_handler_meta,
+    ));
     all_exprs
 }
 
@@ -108,10 +153,66 @@ fn resolve_run_cstore_exprs(metas: &ContextStoreMetas) -> Vec<String> {
     metas.generate_cstore_meta_exprs::<RunContextStoreExpr>()
 }
 
-fn resolve_join_all_expr(pipe_metas: &PipeMetas, cstore_metas: &ContextStoreMetas) -> Vec<String> {
+fn resolve_error_channel_exprs(meta: Option<&ErrorHandlerMeta>) -> Vec<String> {
+    match meta {
+        Some(meta) => {
+            let expr = meta
+                .generate_error_handler_meta_expr::<ErrorChannelExpr>()
+                .expect("error channel expr not found");
+            vec![expr]
+        }
+        None => vec![],
+    }
+}
+
+fn resolve_subscribe_error_exprs(meta: Option<&ErrorHandlerMeta>) -> Vec<String> {
+    match meta {
+        Some(meta) => {
+            let expr = meta
+                .generate_error_handler_meta_expr::<SubscribeErrorExpr>()
+                .expect("subscribe error expr not found");
+            vec![expr]
+        }
+        None => vec![],
+    }
+}
+
+fn resolve_error_handler_exprs(meta: Option<&ErrorHandlerMeta>) -> Vec<String> {
+    match meta {
+        Some(meta) => {
+            let expr = meta
+                .generate_error_handler_meta_expr::<ErrorHandlerExpr>()
+                .expect("error handler expr not found");
+            vec![expr]
+        }
+        None => vec![],
+    }
+}
+
+fn resolve_run_error_handler_exprs(meta: Option<&ErrorHandlerMeta>) -> Vec<String> {
+    match meta {
+        Some(meta) => {
+            let expr = meta
+                .generate_error_handler_meta_expr::<RunErrorHandlerExpr>()
+                .expect("run error handler expr not found");
+            vec![expr]
+        }
+        None => vec![],
+    }
+}
+
+fn resolve_join_all_expr(
+    pipe_metas: &PipeMetas,
+    cstore_metas: &ContextStoreMetas,
+    error_handler_meta: Option<&ErrorHandlerMeta>,
+) -> Vec<String> {
     let mut join_expr = JoinExpr::default();
     pipe_metas.accept(&mut join_expr);
     cstore_metas.accept(&mut join_expr);
+    match error_handler_meta {
+        Some(meta) => meta.accept(&mut join_expr),
+        None => (),
+    };
     match join_expr.get_expr() {
         Some(expr) => vec![expr],
         None => vec![],
@@ -135,6 +236,10 @@ fn get_all_pipe_attributes(attributes: &Vec<Attribute>) -> Vec<Attribute> {
 
 fn get_all_context_store_attribute(attributes: &Vec<Attribute>) -> Vec<Attribute> {
     get_all_attributes_by_meta_prefix(CONTEXT_STORE, attributes)
+}
+
+fn get_any_error_handler_attribute(attributes: &Vec<Attribute>) -> Option<Attribute> {
+    get_any_attribute_by_meta_prefix(ERROR_HANDLER, attributes, false, "")
 }
 
 pub fn impl_bootstrap_macro(_args: Vec<NestedMeta>, mut function: ItemFn) -> TokenStream {
