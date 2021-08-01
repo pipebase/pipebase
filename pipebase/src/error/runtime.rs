@@ -41,11 +41,9 @@ macro_rules! run_error_handler {
     };
     ($error_handler:ident, $config:ty, $path:expr, $rx:ident) => {{
         tokio::spawn(async move {
-            let config = <$config>::from_path($path).await.expect(&format!(
-                "invalid error handler config file '{}' for '{}'",
-                $path,
-                stringify!($error_handler)
-            ));
+            let config = <$config>::from_path($path)
+                .await
+                .expect(&format!("invalid error handler config file '{}'", $path));
             match $error_handler.run(config, $rx).await {
                 Ok(_) => Ok(()),
                 Err(err) => {

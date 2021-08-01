@@ -131,7 +131,7 @@ macro_rules! run_pipe {
                 let config = <$config>
                             ::from_path($path)
                             .await
-                            .expect(&format!("invalid pipe config file '{}' for '{}'", $path, stringify!($pipe)));
+                            .expect(&format!("invalid pipe config file '{}' for '{}'", $path, $pipe.get_name()));
                 match $pipe.run(config, txs, $rx).await {
                     Ok(_) => Ok(()),
                     Err(err) => {

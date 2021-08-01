@@ -30,6 +30,10 @@ impl<'a> ContextStore<'a> {
     pub fn new(name: &'a str) -> Self {
         ContextStore { name }
     }
+
+    pub fn get_name(&self) -> String {
+        self.name.to_owned()
+    }
 }
 
 #[macro_export]
@@ -52,7 +56,7 @@ macro_rules! run_cstore {
                 contexts.push(($pipe.get_name(), $pipe.get_context()));
             )*
             tokio::spawn(async move {
-                let config = <$config>::from_path($path).await.expect(&format!("invalid context store config file '{}' for '{}'", $path, stringify!($cstore)));
+                let config = <$config>::from_path($path).await.expect(&format!("invalid context store config file '{}' for '{}'", $path, $cstore.get_name()));
                 match $cstore.run(config, contexts).await {
                     Ok(_) => Ok(()),
                     Err(err) => {
