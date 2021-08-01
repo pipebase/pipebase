@@ -56,7 +56,7 @@ macro_rules! run_cstore {
                 match $cstore.run(config, contexts).await {
                     Ok(_) => Ok(()),
                     Err(err) => {
-                        log::error!("context store exit with error {:#?}", err);
+                        log::error!("context store exit with error '{:#?}'", err);
                         Err(err)
                     }
                 }

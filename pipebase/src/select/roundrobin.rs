@@ -33,13 +33,17 @@ impl FromConfig<RoundRobinSelectorConfig> for RoundRobinSelector {
 
 /// # Parameters
 /// * T: input
-impl<T> Select<T, RoundRobinSelectorConfig> for RoundRobinSelector {
+#[async_trait]
+impl<T> Select<T, RoundRobinSelectorConfig> for RoundRobinSelector
+where
+    T: Sync,
+{
     /// `candidates`: index of downstreams
-    fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
+    async fn select(&mut self, _t: &T, candidates: &[&usize]) -> anyhow::Result<Vec<usize>> {
         let i = self.i % candidates.len();
         let selected = vec![candidates[i].clone()];
         self.i = i + 1;
-        selected
+        Ok(selected)
     }
 }
 

@@ -3,8 +3,9 @@ use tokio::task::JoinHandle;
 
 use super::Select;
 use crate::common::{
-    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, Context, HasContext, Pipe, Result, State,
+    filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
+    SubscribeError,
 };
 use async_trait::async_trait;
 use std::collections::HashMap;
@@ -15,6 +16,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 pub struct Selector<'a> {
     name: &'a str,
     context: Arc<Context>,
+    etx: Option<Sender<PipeError>>,
 }
 
 /// Start loop
@@ -26,7 +28,7 @@ pub struct Selector<'a> {
 #[async_trait]
 impl<'a, T, S, C> Pipe<T, T, S, C> for Selector<'a>
 where
-    T: Clone + Send + 'static,
+    T: Clone + Send + Sync + 'static,
     S: Select<T, C>,
     C: ConfigInto<S> + Send + Sync + 'static,
 {
@@ -60,7 +62,17 @@ where
             };
             self.context.set_state(State::Send);
             let candidates = txs.keys().collect::<Vec<&usize>>();
-            let selected = selector.select(&t, &candidates);
+            let selected = match selector.select(&t, &candidates).await {
+                Ok(selected) => selected,
+                Err(err) => {
+                    log::error!("selector {} error '{:#?}'", self.name, err);
+                    self.context.inc_failure_run();
+                    self.context.inc_total_run();
+                    send_pipe_error(self.etx.as_ref(), PipeError::new(self.name.to_owned(), err))
+                        .await;
+                    continue;
+                }
+            };
             let mut t_replicas = replicate(t, selected.len());
             let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<T>>>> = selected
                 .into_iter()
@@ -100,7 +112,14 @@ impl<'a> Selector<'a> {
         Selector {
             name: name,
             context: Default::default(),
+            etx: None,
         }
+    }
+}
+
+impl<'a> SubscribeError for Selector<'a> {
+    fn subscribe_error(&mut self, tx: Sender<crate::common::PipeError>) {
+        self.etx = Some(tx)
     }
 }
 

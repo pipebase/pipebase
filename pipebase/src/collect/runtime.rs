@@ -2,8 +2,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use super::Collect;
 use crate::common::{
-    filter_senders_by_indices, join_error, replicate, senders_as_map, spawn_send,
-    wait_join_handles, ConfigInto, Context, HasContext, Pipe, Result, State,
+    filter_senders_by_indices, join_error, replicate, send_pipe_error, senders_as_map, spawn_send,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
+    SubscribeError,
 };
 
 use async_trait::async_trait;
@@ -20,6 +21,7 @@ use tokio::{
 pub struct Collector<'a> {
     name: &'a str,
     context: Arc<Context>,
+    etx: Option<Sender<PipeError>>,
 }
 
 /// Spawn two tasks
@@ -56,6 +58,7 @@ where
         let exit_f = Arc::new(AtomicBool::new(false));
         let exit_f_clone = exit_f.to_owned();
         let name = self.name.to_owned();
+        let etx = self.etx.clone();
         let collect_loop = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
             loop {
@@ -72,13 +75,17 @@ where
                 let mut c = collector_clone.lock().await;
                 match (*c).collect(t).await {
                     Ok(()) => continue,
-                    Err(err) => log::error!("collector {} collect error '{}'", name, err),
+                    Err(err) => {
+                        log::error!("collector {} collect error '{}'", name, err);
+                        send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await;
+                    }
                 }
             }
         });
         let mut txs = senders_as_map(txs);
         let context = self.get_context();
         let name = self.name.to_owned();
+        let etx = self.etx.clone();
         let flush_loop = tokio::spawn(async move {
             let mut interval = {
                 let c = collector.lock().await;
@@ -100,7 +107,11 @@ where
                     let u = match c.flush().await {
                         Ok(u) => u,
                         Err(err) => {
-                            log::error!("collector {} flush error '{}'", name, err);
+                            log::error!("collector {} flush error '{:#?}'", name, err);
+                            context.inc_failure_run();
+                            context.inc_total_run();
+                            send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err))
+                                .await;
                             continue;
                         }
                     };
@@ -156,7 +167,14 @@ impl<'a> Collector<'a> {
         Collector {
             name: name,
             context: Default::default(),
+            etx: None,
         }
+    }
+}
+
+impl<'a> SubscribeError for Collector<'a> {
+    fn subscribe_error(&mut self, tx: Sender<crate::common::PipeError>) {
+        self.etx = Some(tx)
     }
 }
 

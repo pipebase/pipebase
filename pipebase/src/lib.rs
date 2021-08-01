@@ -1,6 +1,7 @@
 pub mod collect;
 pub mod common;
 pub mod context;
+pub mod error;
 pub mod export;
 pub mod listen;
 pub mod map;

@@ -32,12 +32,16 @@ impl FromConfig<RandomSelectorConfig> for RandomSelector {
 
 /// # Parameters
 /// * T: input
-impl<T> Select<T, RandomSelectorConfig> for RandomSelector {
+#[async_trait]
+impl<T> Select<T, RandomSelectorConfig> for RandomSelector
+where
+    T: Sync,
+{
     /// `candidates`: index of downstreams
-    fn select(&mut self, _t: &T, candidates: &[&usize]) -> Vec<usize> {
+    async fn select(&mut self, _t: &T, candidates: &[&usize]) -> anyhow::Result<Vec<usize>> {
         let mut rng = rand::thread_rng();
         let i = rng.gen_range(0..candidates.len());
-        vec![candidates[i].to_owned()]
+        Ok(vec![candidates[i].to_owned()])
     }
 }
 

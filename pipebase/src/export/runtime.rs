@@ -1,16 +1,18 @@
-use tokio::sync::mpsc::Sender;
-
 use async_trait::async_trait;
 use log::error;
 use std::sync::Arc;
-use tokio::sync::mpsc::Receiver;
+use tokio::sync::mpsc::{Receiver, Sender};
 
 use super::Export;
-use crate::common::{ConfigInto, Context, HasContext, Pipe, Result, State};
+use crate::common::{
+    send_pipe_error, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
+    SubscribeError,
+};
 
 pub struct Exporter<'a> {
     name: &'a str,
     context: Arc<Context>,
+    etx: Option<Sender<PipeError>>,
 }
 
 /// Start loop
@@ -49,8 +51,10 @@ where
             match exporter.export(t).await {
                 Ok(_) => (),
                 Err(err) => {
-                    error!("exporter {} error '{}'", self.name, err);
+                    error!("exporter {} error '{:#?}'", self.name, err);
                     self.context.inc_failure_run();
+                    send_pipe_error(self.etx.as_ref(), PipeError::new(self.name.to_owned(), err))
+                        .await
                 }
             };
             self.context.inc_total_run();
@@ -76,7 +80,14 @@ impl<'a> Exporter<'a> {
         Exporter {
             name: name,
             context: Default::default(),
+            etx: None,
         }
+    }
+}
+
+impl<'a> SubscribeError for Exporter<'a> {
+    fn subscribe_error(&mut self, tx: Sender<crate::common::PipeError>) {
+        self.etx = Some(tx)
     }
 }
 

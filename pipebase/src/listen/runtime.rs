@@ -6,8 +6,9 @@ use tokio::task::JoinHandle;
 
 use super::Listen;
 use crate::common::{
-    filter_senders_by_indices, replicate, senders_as_map, spawn_send, wait_join_handles,
-    ConfigInto, Context, HasContext, Pipe, Result, State,
+    filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
+    SubscribeError,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -16,6 +17,7 @@ use tokio::sync::mpsc::channel;
 pub struct Listener<'a> {
     name: &'a str,
     context: Arc<Context>,
+    etx: Option<Sender<PipeError>>,
 }
 
 /// Spawn two tasks
@@ -44,11 +46,15 @@ where
         let mut listener = config.config_into().await?;
         listener.set_sender(tx0);
         let name = self.name.to_owned();
+        let etx = self.etx.clone();
         // start listener
         let join_listener = tokio::spawn(async move {
             match listener.run().await {
                 Ok(_) => info!("listener exit ..."),
-                Err(e) => error!("listener {} exit with error '{}'", name, e),
+                Err(err) => {
+                    error!("listener {} exit with error '{:#?}'", name, err);
+                    send_pipe_error(etx.as_ref(), PipeError::new(name, err)).await
+                }
             };
         });
         // start event loop
@@ -117,7 +123,14 @@ impl<'a> Listener<'a> {
         Listener {
             name: name,
             context: Default::default(),
+            etx: None,
         }
+    }
+}
+
+impl<'a> SubscribeError for Listener<'a> {
+    fn subscribe_error(&mut self, tx: Sender<crate::common::PipeError>) {
+        self.etx = Some(tx)
     }
 }
 

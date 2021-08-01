@@ -1,7 +1,8 @@
 use std::fmt::{self, Debug, Display};
 use std::{error, result};
+use tokio::sync::mpsc::Sender;
 
-/// An error that happened when run the pipe
+/// Runtime error
 pub struct Error(Box<ErrorImpl>);
 
 pub type Result<T> = result::Result<T, Error>;
@@ -79,5 +80,34 @@ impl From<tokio::task::JoinError> for Error {
 impl From<anyhow::Error> for Error {
     fn from(err: anyhow::Error) -> Self {
         Error(Box::new(ErrorImpl::Any(err)))
+    }
+}
+
+#[derive(Debug)]
+pub struct PipeError {
+    pub pipe_name: String,
+    pub error: anyhow::Error,
+}
+
+impl PipeError {
+    pub fn new(pipe_name: String, error: anyhow::Error) -> Self {
+        PipeError { pipe_name, error }
+    }
+}
+
+pub trait SubscribeError {
+    fn subscribe_error(&mut self, tx: Sender<PipeError>);
+}
+
+pub(crate) async fn send_pipe_error(tx: Option<&Sender<PipeError>>, pipe_error: PipeError) {
+    let tx = match tx {
+        Some(tx) => tx,
+        None => return (),
+    };
+    match tx.send(pipe_error).await {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("send pipe error failed '{}'", e)
+        }
     }
 }
