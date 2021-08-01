@@ -8,14 +8,14 @@ pipes:
     ty: Poller
     config:
       ty: TimerConfig
-      path: catalogs/timer.yml
+      path: catalogs/timer1.yml
     output:
       ty: UnsignedLongLong
   - name: timer2
     ty: Poller
     config:
       ty: TimerConfig
-      path: catalogs/timer.yml
+      path: catalogs/timer2.yml
     output:
       ty: UnsignedLongLong
   - name: printer
@@ -52,3 +52,7 @@ cstores:
     config:
       ty: "ContextPrinterConfig"
       path: "catalogs/context_printer.yml"
+error:
+  config:
+    ty: "PipeErrorPrinterConfig"
+

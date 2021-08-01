@@ -1,0 +1,6 @@
+---
+delay:
+  Millis: 1000
+interval:
+  Millis: 1000
+ticks: 10
