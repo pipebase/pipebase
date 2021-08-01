@@ -1,6 +1,4 @@
-use super::Expr;
-use super::VisitContextStoreMeta;
-use super::VisitPipeMeta;
+use super::{Expr, VisitContextStoreMeta, VisitErrorHandlerMeta, VisitPipeMeta};
 
 use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
@@ -11,7 +9,7 @@ use crate::constants::{
     BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH, BOOTSTRAP_PIPE_CONFIG_TYPE,
     BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE, BOOTSTRAP_PIPE_UPSTREAM,
     CONTEXT_STORE_CONFIG_EMPTY_PATH, CONTEXT_STORE_CONFIG_PATH, CONTEXT_STORE_CONFIG_TYPE,
-    CONTEXT_STORE_NAME,
+    CONTEXT_STORE_NAME, ERROR_HANDLER_CONFIG_PATH, ERROR_HANDLER_CONFIG_TYPE,
 };
 use crate::utils::{get_meta, get_meta_string_value_by_meta_path};
 
@@ -316,14 +314,8 @@ impl ContextStoreMeta {
         &self.name
     }
 
-    pub fn add_pipes(&mut self, pipe_names: Vec<String>) {
-        for pipe_name in pipe_names {
-            self.add_pipe(pipe_name)
-        }
-    }
-
-    pub fn add_pipe(&mut self, pipe_name: String) {
-        self.pipe_names.push(pipe_name)
+    pub fn set_pipes(&mut self, pipe_names: Vec<String>) {
+        self.pipe_names = pipe_names
     }
 
     pub fn get_pipes(&self) -> Vec<String> {
@@ -391,7 +383,7 @@ impl ContextStoreMetas {
 
     pub fn add_pipes(&mut self, pipe_names: Vec<String>) {
         for meta in &mut self.metas {
-            meta.add_pipes(pipe_names.to_owned())
+            meta.set_pipes(pipe_names.to_owned())
         }
     }
 
@@ -406,5 +398,83 @@ impl ContextStoreMetas {
         for meta in &self.metas {
             visitor.visit(meta)
         }
+    }
+}
+
+pub struct ErrorHandlerConfigMeta {
+    ty: String,
+    path: Option<String>,
+}
+
+impl ErrorHandlerConfigMeta {
+    pub fn get_ty(&self) -> String {
+        self.ty.to_owned()
+    }
+
+    pub fn get_path(&self) -> String {
+        match self.path.to_owned() {
+            Some(path) => path,
+            None => CONTEXT_STORE_CONFIG_EMPTY_PATH.to_owned(),
+        }
+    }
+}
+
+pub struct ErrorHandlerMeta {
+    config_meta: ErrorHandlerConfigMeta,
+    pipe_names: Vec<String>,
+}
+
+impl ErrorHandlerMeta {
+    pub fn accept<V: VisitErrorHandlerMeta>(&self, visitor: &mut V) {
+        visitor.visit(self)
+    }
+
+    pub fn set_pipes(&mut self, pipe_names: Vec<String>) {
+        self.pipe_names = pipe_names;
+    }
+
+    pub fn get_pipes(&self) -> Vec<String> {
+        self.pipe_names.to_owned()
+    }
+
+    pub fn get_config_meta(&self) -> &ErrorHandlerConfigMeta {
+        &self.config_meta
+    }
+
+    pub fn parse(attribute: Option<&Attribute>, ident_location: &str) -> Option<Self> {
+        let attribute = match attribute {
+            Some(attribute) => attribute,
+            None => return None,
+        };
+        let config_meta = Self::parse_config_meta(attribute, ident_location);
+        Some(ErrorHandlerMeta {
+            config_meta,
+            pipe_names: Vec::new(),
+        })
+    }
+
+    fn parse_config_meta(attribute: &Attribute, ident_location: &str) -> ErrorHandlerConfigMeta {
+        let ty = get_meta_string_value_by_meta_path(
+            ERROR_HANDLER_CONFIG_TYPE,
+            &get_meta(attribute),
+            true,
+            ident_location,
+        )
+        .unwrap();
+        let path = get_meta_string_value_by_meta_path(
+            ERROR_HANDLER_CONFIG_PATH,
+            &get_meta(attribute),
+            false,
+            "",
+        );
+        ErrorHandlerConfigMeta { ty: ty, path: path }
+    }
+
+    pub fn generate_error_handler_meta_expr<V: VisitErrorHandlerMeta + Expr>(
+        &self,
+    ) -> Option<String> {
+        let mut visitor = V::default();
+        self.accept(&mut visitor);
+        visitor.get_expr()
     }
 }

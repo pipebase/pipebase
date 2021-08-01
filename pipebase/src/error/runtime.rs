@@ -44,7 +44,7 @@ macro_rules! run_error_handler {
             let config = <$config>::from_path($path)
                 .await
                 .expect(&format!("invalid config file location {}", $path));
-            match $error_handler.run(config, rx).await {
+            match $error_handler.run(config, $rx).await {
                 Ok(_) => Ok(()),
                 Err(err) => {
                     log::error!("error handler exit with error {:#?}", err);

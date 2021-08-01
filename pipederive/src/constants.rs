@@ -24,6 +24,18 @@ pub const CONTEXT_STORE_CONFIG_EMPTY_PATH: &str = "";
 pub const CONTEXT_STORE_MACRO: &str = "cstore!";
 pub const RUN_CONTEXT_STORE_MACRO: &str = "run_cstore!";
 
+pub const ERROR_HANDLER: &str = "error";
+pub const ERROR_HANDLER_CONFIG_TYPE: &str = "error.config.ty";
+pub const ERROR_HANDLER_CONFIG_PATH: &str = "error.config.path";
+pub const ERROR_HANDLER_MACRO: &str = "error_handler!";
+pub const SUBSCRIBE_ERROR_HANDLER_MACRO: &str = "subscribe_error_handler!";
+pub const RUN_ERROR_HANDLER_MACRO: &str = "run_error_handler!";
+pub const ERROR_HANDLER_DEFAULT_IDENT: &str = "_error_handler";
+pub const ERROR_HANDLER_DEFAULT_RX: &str = "_erx";
+pub const ERROR_HANDLER_DEFAULT_TX: &str = "_etx";
+pub const ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER: usize = 1024;
+pub const ERROR_HANDLER_CHANNEL_DEFAULT_TYPE: &str = "PipeError";
+
 pub const BOOTSTRAP_PIPE: &str = "pipe";
 pub const BOOTSTRAP_PIPE_NAME: &str = "pipe.name";
 pub const BOOTSTRAP_PIPE_TYPE: &str = "pipe.ty";
