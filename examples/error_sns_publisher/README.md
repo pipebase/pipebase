@@ -1,5 +1,5 @@
-Demo email notification `SnsPublisher` pipe
-### Create topic and subscription (terminal 1)
+Demo error notification `SnsPipeErrorPublisher` pipe
+### Create error topic and subscription (terminal 1)
 export aws environment variable
 ```
 export AWS_DEFAULT_REGION=
@@ -24,7 +24,7 @@ aws sns subscribe --topic-arn 'YOUR_TOPIC_ARN' \
 ```
 fill sns publisher config
 ```
-# catalogs/sns_publisher.yml
+# catalogs/sns_pipe_error_publisher.yml
 topic_arn: YOUR_TOPIC_ARN
 region: YOUR_REGION
 subscribers:
@@ -50,11 +50,14 @@ run app
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
--d @message.json  \
+-d @bad_record.json  \
 http://localhost:9000/v1/ingest
 ```
 check your email inbox
 ```
 AWS Notifications
-Hello World
+PipeError {
+    pipe_name: "json",
+    error: Error("missing field `key`", line: 1, column: 13),
+}
 ```

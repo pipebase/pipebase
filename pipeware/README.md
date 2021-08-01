@@ -30,6 +30,15 @@ Pipes
 | `Exporter` | DynamoDBWriter | [`ingest_dynamodb`] |
 | `Exporter` | SnsPublisher | [`pubsub_sns`] |
 
+Context Stores
+| implementation | example |
+| -------------- | ------- |
+| WarpContextServer | `ingest_*` |
+
+Error Handlers
+| implementation | example |
+| -------------- | ------- |
+| SnsPipeErrorHandler | [`error_sns_publisher`] |
 
 [`pipeware`]: https://github.com/pipebase/pipebase/tree/main/pipeware
 [`group_sum_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/group_sum_redis
@@ -56,3 +65,4 @@ Pipes
 [`pubsub_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_redis
 [`ingest_dynamodb`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_dynamodb
 [`pubsub_sns`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_sns
+[`error_sns_publisher`]: https://github.com/pipebase/pipebase/tree/main/examples/error_sns_publisher
