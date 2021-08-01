@@ -52,7 +52,7 @@ macro_rules! run_cstore {
                 contexts.push(($pipe.get_name(), $pipe.get_context()));
             )*
             tokio::spawn(async move {
-                let config = <$config>::from_path($path).await.expect(&format!("invalid config file location {}", $path));
+                let config = <$config>::from_path($path).await.expect(&format!("invalid context store config file '{}' for '{}'", $path, stringify!($cstore)));
                 match $cstore.run(config, contexts).await {
                     Ok(_) => Ok(()),
                     Err(err) => {
