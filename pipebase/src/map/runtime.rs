@@ -63,7 +63,7 @@ where
                     break;
                 }
             };
-            self.context.set_state(State::Process);
+            self.context.set_state(State::Map);
             let u = match mapper.map(t).await {
                 Ok(u) => u,
                 Err(err) => {
