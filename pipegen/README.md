@@ -4,11 +4,12 @@
 A `manifest` is composed of following sections:
 * `name`, name of application
 * `dependencies`, list of crates the application dependes on
-* [`pipes`], list of pipe definition
-* [`objects`], list of custom data object definition
-* `cstores`, list of pipe runtime context store definition
+* `pipes`, list of [`pipe`] definition
+* `objects`, list of custom data [`object`] definition
+* `cstores`, list of pipe runtime [`context store`] definition
+* `error`, pipe [`error handler`] definition
 
-## Pipes
+## Pipe
 Pipes are the smallest runtime unit that you can create, example:
 ```
 name: timer1
@@ -45,7 +46,7 @@ Note that:
 | `Selector` | send input to a subset of downstream | 1+ | 1+ |
 | `Exporter` | export input to remote | 1+ | 0 |
 
-## Objects
+## Object
 Cutstom data object transferred in pipeline, example:
 ```
 ty: Record
@@ -107,12 +108,33 @@ Meta defines additional attributes of an object so that it satisfy trait bounds 
 | `HashSet` | `HashSet<T>` |
 | `Pair` | `pipebase::common::Pair<L, R>` |
 
+## Context Store
+Store all pipe runtime contexts including: `pipe name`, [`pipe state`], `total run`, `failure run`
+
+## Pipe State
+| State | Pipe Type |
+| ----- | --------- |
+| `Init` | all |
+| `Receive` | except `Poller` |
+| `Poll` | `Poller` |
+| `Process` | `Mapper` |
+| `Send` | except `Exporter` |
+| `Export` | `Exporter` |
+| `Done` | all |
+
+## Error Handler
+Listen errors from all pipes, example [`error_printer`]
+
 [`data field`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-field
 [`data type`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-type
 [`meta`]: https://github.com/pipebase/pipebase/tree/main/pipegen#meta
-[`objects`]: https://github.com/pipebase/pipebase/tree/main/pipegen#objects
+[`object`]: https://github.com/pipebase/pipebase/tree/main/pipegen#object
 [`pipegen`]: https://github.com/pipebase/pipebase/tree/main/pipegen
-[`pipes`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipes
+[`pipe`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipe
 [`pipe type`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipe-type
+[`context store`]: https://github.com/pipebase/pipebase/tree/main/pipegen#context-store
+[`error handler`]: https://github.com/pipebase/pipebase/tree/main/pipegen#error-handler
+[`pipe state`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipe-state
 [`fix_left_right`]: https://github.com/pipebase/pipebase/tree/main/examples/fix_left_right
 [`fix_convert`]: https://github.com/pipebase/pipebase/tree/main/examples/fix_convert
+[`error_printer`]: https://github.com/pipebase/pipebase/tree/main/examples/error_printer
