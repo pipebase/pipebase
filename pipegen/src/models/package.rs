@@ -9,6 +9,7 @@ pub struct PackageDependency {
     branch: Option<String>,
     tag: Option<String>,
     features: Option<Vec<String>>,
+    package: Option<String>,
     // module path used in app
     modules: Vec<String>,
 }
@@ -30,6 +31,7 @@ impl PackageDependency {
         branch: Option<String>,
         tag: Option<String>,
         features: Option<Vec<String>>,
+        package: Option<String>,
         modules: Vec<String>,
     ) -> Self {
         PackageDependency {
@@ -40,6 +42,7 @@ impl PackageDependency {
             branch,
             tag,
             features,
+            package,
             modules,
         }
     }
@@ -72,6 +75,10 @@ impl PackageDependency {
         self.features.to_owned()
     }
 
+    pub fn get_package(&self) -> Option<String> {
+        self.package.to_owned()
+    }
+
     pub(crate) fn get_modules(&self) -> &Vec<String> {
         &self.modules
     }
@@ -86,6 +93,7 @@ pub(crate) fn default_tokio_package() -> PackageDependency {
         None,
         None,
         Some(vec!["full".to_owned()]),
+        None,
         vec![],
     )
 }
@@ -94,6 +102,7 @@ pub(crate) fn default_pipebase_package() -> PackageDependency {
     PackageDependency::new(
         "pipebase".to_owned(),
         Some("0.1.0".to_owned()),
+        None,
         None,
         None,
         None,
@@ -112,6 +121,7 @@ pub(crate) fn default_log_package() -> PackageDependency {
         None,
         None,
         None,
+        None,
         vec![],
     )
 }
@@ -120,6 +130,7 @@ pub(crate) fn default_env_log_package() -> PackageDependency {
     PackageDependency::new(
         "env_logger".to_owned(),
         Some("0.8.4".to_owned()),
+        None,
         None,
         None,
         None,
