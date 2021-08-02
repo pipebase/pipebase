@@ -81,26 +81,6 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(
-        name: String,
-        meta: Option<Meta>,
-        is_public: bool,
-        is_async: bool,
-        args: Vec<DataField>,
-        block: Block,
-        rtype: Option<DataType>,
-    ) -> Self {
-        Function {
-            name,
-            meta,
-            is_public,
-            is_async,
-            args,
-            block,
-            rtype,
-        }
-    }
-
     pub(crate) fn to_literal(&self, indent: usize) -> String {
         let signature_lit = self.get_signature_literal(indent);
         let block_lit = self.block.to_literal(indent + 1);
@@ -152,5 +132,71 @@ impl Function {
             None => return None,
         };
         Some(meta_to_literal(meta, indent))
+    }
+}
+
+#[derive(Default)]
+pub struct FunctionBuilder {
+    // TODO: Support generics
+    name: Option<String>,
+    meta: Option<Meta>,
+    is_public: bool,
+    is_async: bool,
+    args: Vec<DataField>,
+    block: Option<Block>,
+    // return type
+    rtype: Option<DataType>,
+}
+
+impl FunctionBuilder {
+    pub fn new() -> Self {
+        FunctionBuilder::default()
+    }
+
+    pub fn name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
+    }
+
+    pub fn meta(mut self, meta: Meta) -> Self {
+        self.meta = Some(meta);
+        self
+    }
+
+    pub fn public(mut self, is_public: bool) -> Self {
+        self.is_public = is_public;
+        self
+    }
+
+    pub fn asynchronous(mut self, is_async: bool) -> Self {
+        self.is_async = is_async;
+        self
+    }
+
+    pub fn args(mut self, args: Vec<DataField>) -> Self {
+        self.args = args;
+        self
+    }
+
+    pub fn block(mut self, block: Block) -> Self {
+        self.block = Some(block);
+        self
+    }
+
+    pub fn rtype(mut self, rtype: DataType) -> Self {
+        self.rtype = Some(rtype);
+        self
+    }
+
+    pub fn build(self) -> Function {
+        Function {
+            name: self.name.expect("function name not inited"),
+            meta: self.meta,
+            is_public: self.is_public,
+            is_async: self.is_async,
+            args: self.args,
+            block: self.block.expect("function block not inited"),
+            rtype: self.rtype,
+        }
     }
 }
