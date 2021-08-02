@@ -32,7 +32,7 @@ impl FromConfig<WarpContextServerConfig> for WarpContextServer {
         let ip_port = format!("{}:{}", config.ip, config.port);
         let socket: SocketAddr = ip_port.parse()?;
         Ok(WarpContextServer {
-            socket: socket,
+            socket,
             contexts: HashMap::new(),
         })
     }
@@ -136,7 +136,7 @@ mod filters {
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         context_query_v1(repository.to_owned())
             .or(context_get_v1(repository.to_owned()))
-            .or(context_list_v1(repository.to_owned()))
+            .or(context_list_v1(repository))
             .or(health())
     }
 

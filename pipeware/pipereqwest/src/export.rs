@@ -53,9 +53,8 @@ where
 impl ReqwestPoster {
     async fn log_response(resp: Response) {
         log::info!("response status: {}", resp.status());
-        match resp.text().await {
-            Ok(text) => log::info!("response text: {}", text),
-            Err(_) => (),
+        if let Ok(text) = resp.text().await {
+            log::info!("response text: {}", text)
         }
     }
 }

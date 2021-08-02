@@ -1,5 +1,5 @@
 use pipebase::common::{Averagef32, Convert, Init};
-use pipebytes::{FromBytes, IntoBytes};
+use pipebytes::{AsBytes, FromBytes};
 use redis::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use std::ops::AddAssign;
@@ -14,7 +14,7 @@ impl ToRedisArgs for RedisAveragef32 {
     {
         let bytes = self
             .0
-            .into_bytes()
+            .as_bytes()
             .expect("failed to encode Averagef32 as bytes");
         out.write_arg(&bytes);
     }

@@ -31,11 +31,11 @@ impl SqsMessageAttributes {
         }
         let attribute_value = self
             .get_attribute_value(name)
-            .expect(&format!("attribute {} not found", name));
+            .unwrap_or_else(|| panic!("attribute {} not found", name));
         if !attribute_value.ty.eq(ty) {
             return false;
         }
-        return true;
+        true
     }
 
     fn get_attribute_value(&self, name: &str) -> Option<&SqsMessageAttributeValue> {
@@ -48,7 +48,7 @@ impl SqsMessageAttributes {
         }
         let attribute_value = self
             .get_attribute_value(name)
-            .expect(&format!("attribute {} not found", name));
+            .unwrap_or_else(|| panic!("attribute {} not found", name));
         match &attribute_value.data {
             SqsMessageAttributeData::Binary(_) => false,
             SqsMessageAttributeData::String(data) => data.eq(other_data),
@@ -61,7 +61,7 @@ impl SqsMessageAttributes {
         }
         let attribute_value = self
             .get_attribute_value(name)
-            .expect(&format!("attribute {} not found", name));
+            .unwrap_or_else(|| panic!("attribute {} not found", name));
         match &attribute_value.data {
             SqsMessageAttributeData::Binary(_) => None,
             SqsMessageAttributeData::String(data) => Some(data.to_owned()),

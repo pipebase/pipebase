@@ -39,7 +39,9 @@ pub struct S3Writer {
 #[async_trait]
 impl FromConfig<S3WriterConfig> for S3Writer {
     async fn from_config(config: S3WriterConfig) -> anyhow::Result<Self> {
-        let region = config.region.unwrap_or(AWS_DEFAULT_REGION.to_owned());
+        let region = config
+            .region
+            .unwrap_or_else(|| AWS_DEFAULT_REGION.to_owned());
         let region = Region::new(region);
         let conf = Config::builder().region(region).build();
         let client = Client::from_conf(conf);

@@ -44,9 +44,9 @@ impl ReqwestClient {
         }
         Ok(ReqwestClient {
             client: Client::new(),
-            url: url,
-            basic_auth: basic_auth,
-            bearer_auth_token: bearer_auth_token,
+            url,
+            basic_auth,
+            bearer_auth_token,
             headers: hmap,
         })
     }
@@ -96,7 +96,7 @@ impl ReqwestClient {
         let url = match r {
             Some(r) => {
                 let path = r.render();
-                let url = match path.starts_with("/") {
+                let url = match path.starts_with('/') {
                     true => format!("{}{}", self.url, path),
                     false => format!("{}/{}", self.url, path),
                 };

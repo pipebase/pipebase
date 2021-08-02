@@ -14,7 +14,7 @@ impl PsqlClient {
                 eprintln!("connection error: {}", e);
             }
         });
-        Ok(PsqlClient { client: client })
+        Ok(PsqlClient { client })
     }
 
     pub async fn execute<R>(&mut self, r: R) -> anyhow::Result<()>

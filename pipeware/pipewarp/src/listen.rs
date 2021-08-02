@@ -27,10 +27,7 @@ impl FromConfig<WarpIngestionServerConfig> for WarpIngestionServer {
     async fn from_config(config: WarpIngestionServerConfig) -> anyhow::Result<Self> {
         let ip_port = format!("{}:{}", config.ip, config.port);
         let socket: SocketAddr = ip_port.parse()?;
-        Ok(WarpIngestionServer {
-            socket: socket,
-            tx: None,
-        })
+        Ok(WarpIngestionServer { socket, tx: None })
     }
 }
 
