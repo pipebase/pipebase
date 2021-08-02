@@ -72,17 +72,11 @@ impl Pipe {
     }
 
     pub fn is_source(&self) -> bool {
-        match &self.ty {
-            PipeType::Listener | PipeType::Poller => true,
-            _ => false,
-        }
+        matches!(&self.ty, PipeType::Listener | PipeType::Poller)
     }
 
     pub fn is_sink(&self) -> bool {
-        match &self.ty {
-            PipeType::Exporter => true,
-            _ => false,
-        }
+        matches!(&self.ty, PipeType::Exporter)
     }
 
     fn get_name_meta(&self) -> Meta {
@@ -106,25 +100,21 @@ impl Pipe {
     }
 
     fn get_config_meta(&self) -> Meta {
-        let mut config_metas = vec![];
-        config_metas.push(Meta::Value {
+        let mut config_metas = vec![Meta::Value {
             name: "ty".to_owned(),
             meta: MetaValue::Str {
                 value: self.config.get_config_type().to_owned(),
                 raw: false,
             },
-        });
-        match self.config.get_path() {
-            Some(path) => {
-                config_metas.push(Meta::Value {
-                    name: "path".to_owned(),
-                    meta: MetaValue::Str {
-                        value: path.to_owned(),
-                        raw: false,
-                    },
-                });
-            }
-            None => (),
+        }];
+        if let Some(path) = self.config.get_path() {
+            config_metas.push(Meta::Value {
+                name: "path".to_owned(),
+                meta: MetaValue::Str {
+                    value: path.to_owned(),
+                    raw: false,
+                },
+            });
         };
         Meta::List {
             name: "config".to_owned(),
@@ -199,21 +189,20 @@ impl Entity for Pipe {
 
     // to pipe meta
     fn to_literal(&self, indent: usize) -> String {
-        let mut metas: Vec<Meta> = Vec::new();
-        metas.push(self.get_name_meta());
-        metas.push(self.get_type_meta());
-        metas.push(self.get_config_meta());
-        match self.get_upstream_meta() {
-            Some(meta) => metas.push(meta),
-            None => (),
+        let mut metas: Vec<Meta> = vec![
+            self.get_name_meta(),
+            self.get_type_meta(),
+            self.get_config_meta(),
+        ];
+        if let Some(meta) = self.get_upstream_meta() {
+            metas.push(meta)
         };
-        match self.get_output_data_type_meta() {
-            Some(meta) => metas.push(meta),
-            None => (),
+        if let Some(meta) = self.get_output_data_type_meta() {
+            metas.push(meta)
         };
         let meta = Meta::List {
             name: "pipe".to_owned(),
-            metas: metas,
+            metas,
         };
         meta_to_literal(&meta, indent)
     }

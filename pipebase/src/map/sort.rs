@@ -21,34 +21,34 @@ pub struct TopAggregator {
 }
 
 impl TopAggregator {
-    fn qsort<U>(v: &mut [U], n: usize, desc: bool)
+    fn qsort<U>(array: &mut [U], n: usize, desc: bool)
     where
         U: Ord + Clone,
     {
-        let n = n.min(v.len());
-        let mut l = 0;
-        let mut r = v.len() - 1;
-        while l < r {
-            let p = Self::partition(v, l, r, desc);
-            if p + 1 == n {
+        let n = n.min(array.len());
+        let mut left = 0;
+        let mut right = array.len() - 1;
+        while left < right {
+            let position = Self::partition(array, left, right, desc);
+            if position + 1 == n {
                 return;
             }
-            if p + 1 > n {
-                r = p - 1;
+            if position + 1 > n {
+                right = position - 1;
                 continue;
             }
-            l = p + 1
+            left = position + 1
         }
     }
 
-    fn partition<U>(v: &mut [U], l: usize, mut r: usize, desc: bool) -> usize
+    fn partition<U>(v: &mut [U], left: usize, mut right: usize, desc: bool) -> usize
     where
         U: Ord + Clone,
     {
-        let pivot = v[l].to_owned();
-        let mut j = l;
-        let mut i = l + 1;
-        while i <= r {
+        let pivot = v[left].to_owned();
+        let mut j = left;
+        let mut i = left + 1;
+        while i <= right {
             let u = v[i].to_owned();
             if (u >= pivot && desc) || (u <= pivot && !desc) {
                 j += 1;
@@ -56,10 +56,10 @@ impl TopAggregator {
                 i += 1;
                 continue;
             }
-            v.swap(i, r);
-            r -= 1;
+            v.swap(i, right);
+            right -= 1;
         }
-        v.swap(l, j);
+        v.swap(left, j);
         j
     }
 }

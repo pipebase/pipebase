@@ -12,12 +12,12 @@ use crate::utils::{
 
 pub fn impl_project(
     ident: &Ident,
-    attributes: &Vec<Attribute>,
+    attributes: &[Attribute],
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
     let ident_location = ident.to_string();
-    let ref project_attribute = get_any_project_attribute(attributes, &ident_location);
+    let project_attribute = &get_any_project_attribute(attributes, &ident_location);
     let input_type_token = get_type_name_token(
         &project_attribute.parse_meta().unwrap(),
         PROJECT_INPUT,
@@ -46,30 +46,26 @@ fn resolve_field_named(
     input_type_ident: &TokenStream,
     ident_location: &str,
 ) -> TokenStream {
-    let ref attributes = field.attrs;
-    let ref field_ident = field.ident;
-    let ref field_type = field.ty;
-    let ref project_attribute = get_any_project_attribute(attributes, ident_location);
+    let attributes = &field.attrs;
+    let field_ident = &field.ident;
+    let field_type = &field.ty;
+    let project_attribute = &get_any_project_attribute(attributes, ident_location);
     let project_from = get_project_from(project_attribute);
     let project_expr = get_project_expr(project_attribute);
-    match project_from {
-        Some(project_from) => return handle_project_from(field.span(), field_ident, &project_from),
-        None => (),
+    if let Some(project_from) = project_from {
+        return handle_project_from(field.span(), field_ident, &project_from);
     };
-    match project_expr {
-        Some(project_expr) => {
-            let project_alias = get_project_alias(project_attribute);
-            return handle_project_expr(
-                field.span(),
-                field_ident,
-                field_type,
-                &project_expr,
-                input_type_ident,
-                &project_alias,
-            );
-        }
-        None => (),
-    };
+    if let Some(project_expr) = project_expr {
+        let project_alias = get_project_alias(project_attribute);
+        return handle_project_expr(
+            field.span(),
+            field_ident,
+            field_type,
+            &project_expr,
+            input_type_ident,
+            &project_alias,
+        );
+    }
     let meta_path = format!("{} or {}", PROJECT_FROM, PROJECT_EXPR);
     let ident_location = format!(
         "{}.{}",
@@ -122,7 +118,7 @@ fn get_project_alias(attribute: &Attribute) -> String {
     }
 }
 
-fn get_any_project_attribute(attributes: &Vec<Attribute>, ident_location: &str) -> Attribute {
+fn get_any_project_attribute(attributes: &[Attribute], ident_location: &str) -> Attribute {
     get_any_attribute_by_meta_prefix(PROJECT, attributes, true, ident_location).unwrap()
 }
 

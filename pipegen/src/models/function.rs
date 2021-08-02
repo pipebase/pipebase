@@ -25,7 +25,7 @@ pub struct Statement {
 
 impl Statement {
     pub fn new(lhs: Option<String>, rhs: Rhs) -> Self {
-        Statement { lhs: lhs, rhs: rhs }
+        Statement { lhs, rhs }
     }
 
     pub fn to_literal(&self, indent: usize) -> String {
@@ -56,9 +56,7 @@ pub struct Block {
 
 impl Block {
     pub fn new(statements: Vec<Statement>) -> Self {
-        Block {
-            statements: statements,
-        }
+        Block { statements }
     }
 
     pub fn to_literal(&self, indent: usize) -> String {
@@ -66,7 +64,7 @@ impl Block {
         for statement in &self.statements {
             statement_lits.push(statement.to_literal(indent));
         }
-        return statement_lits.join(";\n");
+        statement_lits.join(";\n")
     }
 }
 
@@ -83,26 +81,6 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(
-        name: String,
-        meta: Option<Meta>,
-        is_public: bool,
-        is_async: bool,
-        args: Vec<DataField>,
-        block: Block,
-        rtype: Option<DataType>,
-    ) -> Self {
-        Function {
-            name: name,
-            meta: meta,
-            is_public: is_public,
-            is_async: is_async,
-            args: args,
-            block: block,
-            rtype: rtype,
-        }
-    }
-
     pub(crate) fn to_literal(&self, indent: usize) -> String {
         let signature_lit = self.get_signature_literal(indent);
         let block_lit = self.block.to_literal(indent + 1);
@@ -125,10 +103,9 @@ impl Function {
         lits.push("fn".to_owned());
         let input_lit = self.get_input_literal();
         lits.push(format!("{}({})", self.name, input_lit));
-        match self.get_rtype_literal() {
-            Some(rtype_lit) => lits.push(rtype_lit),
-            None => (),
-        };
+        if let Some(rtype_lit) = self.get_rtype_literal() {
+            lits.push(rtype_lit)
+        }
         let indent_lit = indent_literal(indent);
         format!("{}{}", indent_lit, lits.join(" "))
     }
@@ -155,5 +132,71 @@ impl Function {
             None => return None,
         };
         Some(meta_to_literal(meta, indent))
+    }
+}
+
+#[derive(Default)]
+pub struct FunctionBuilder {
+    // TODO: Support generics
+    name: Option<String>,
+    meta: Option<Meta>,
+    is_public: bool,
+    is_async: bool,
+    args: Vec<DataField>,
+    block: Option<Block>,
+    // return type
+    rtype: Option<DataType>,
+}
+
+impl FunctionBuilder {
+    pub fn new() -> Self {
+        FunctionBuilder::default()
+    }
+
+    pub fn name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
+    }
+
+    pub fn meta(mut self, meta: Meta) -> Self {
+        self.meta = Some(meta);
+        self
+    }
+
+    pub fn public(mut self, is_public: bool) -> Self {
+        self.is_public = is_public;
+        self
+    }
+
+    pub fn asynchronous(mut self, is_async: bool) -> Self {
+        self.is_async = is_async;
+        self
+    }
+
+    pub fn args(mut self, args: Vec<DataField>) -> Self {
+        self.args = args;
+        self
+    }
+
+    pub fn block(mut self, block: Block) -> Self {
+        self.block = Some(block);
+        self
+    }
+
+    pub fn rtype(mut self, rtype: DataType) -> Self {
+        self.rtype = Some(rtype);
+        self
+    }
+
+    pub fn build(self) -> Function {
+        Function {
+            name: self.name.expect("function name not inited"),
+            meta: self.meta,
+            is_public: self.is_public,
+            is_async: self.is_async,
+            args: self.args,
+            block: self.block.expect("function block not inited"),
+            rtype: self.rtype,
+        }
     }
 }

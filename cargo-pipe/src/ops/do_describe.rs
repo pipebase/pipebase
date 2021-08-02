@@ -88,21 +88,16 @@ pub fn do_exec(config: &Config, opts: &DescribeOptions) -> anyhow::Result<()> {
     if opts.graph() {
         do_describe_pipe_graph(&app, &mut printer)?;
     }
-    match opts.pipe_name() {
-        Some(pipe_name) => do_describe_pipe(&app, pipe_name, &mut printer)?,
-        None => (),
+    if let Some(pipe_name) = opts.pipe_name() {
+        do_describe_pipe(&app, pipe_name, &mut printer)?
     };
     // describe particular object
-    match opts.object_name() {
-        Some(object_name) => do_describe_object(&app, object_name, &mut printer)?,
-        None => (),
+    if let Some(object_name) = opts.object_name() {
+        do_describe_object(&app, object_name, &mut printer)?
     };
     // desribe pipelines for particular pipe
-    match opts.pipe_name_in_line() {
-        Some(pipe_name) => {
-            do_describe_pipelines(&app, pipe_name, &mut printer)?;
-        }
-        None => (),
+    if let Some(pipe_name) = opts.pipe_name_in_line() {
+        do_describe_pipelines(&app, pipe_name, &mut printer)?;
     };
     Ok(())
 }

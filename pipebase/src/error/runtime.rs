@@ -11,11 +11,7 @@ impl ErrorHandler {
         H: HandleError<C>,
     {
         let mut handler = config.config_into().await?;
-        loop {
-            let pipe_error = match rx.recv().await {
-                Some(pipe_error) => pipe_error,
-                None => break,
-            };
+        while let Some(pipe_error) = rx.recv().await {
             match handler.handle_error(pipe_error).await {
                 Ok(_) => continue,
                 Err(e) => {

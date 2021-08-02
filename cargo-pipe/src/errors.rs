@@ -7,11 +7,8 @@ pub struct CmdError {
 }
 
 impl CmdError {
-    pub fn new(error: anyhow::Error, code: i32) -> CmdError {
-        CmdError {
-            error: error,
-            exit_code: code,
-        }
+    pub fn new(error: anyhow::Error, exit_code: i32) -> CmdError {
+        CmdError { error, exit_code }
     }
 }
 

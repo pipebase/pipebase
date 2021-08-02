@@ -39,7 +39,7 @@ pub fn impl_left_right(ident: &Ident, data: &Data, generics: &Generics) -> Token
                 &self.#right_field_ident
             }
 
-            fn as_tuple(self) -> (Self::L, Self::R) {
+            fn into_tuple(self) -> (Self::L, Self::R) {
                 (self.#left_field_ident, self.#right_field_ident)
             }
         }

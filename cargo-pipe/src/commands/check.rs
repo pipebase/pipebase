@@ -19,10 +19,7 @@ pub fn cmd() -> Cmd {
 }
 
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
-    let app_name = match args.value_of("name") {
-        Some(app_name) => Some(app_name.to_owned()),
-        None => None,
-    };
+    let app_name = args.value_of("name").map(|app_name| app_name.to_owned());
     let warning = args.is_present("warning");
     let verbose = args.is_present("verbose");
     let debug = args.is_present("debug");

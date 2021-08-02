@@ -30,7 +30,7 @@ impl Entity for ErrorHandler {
     }
 
     fn to_literal(&self, indent: usize) -> String {
-        let ref meta = self.get_meta();
+        let meta = &self.get_meta();
         meta_to_literal(meta, indent)
     }
 }
@@ -56,15 +56,14 @@ impl ErrorHandler {
                 raw: false,
             },
         }];
-        match config_path {
-            Some(path) => metas.push(Meta::Value {
+        if let Some(path) = config_path {
+            metas.push(Meta::Value {
                 name: "path".to_owned(),
                 meta: MetaValue::Str {
                     value: path.to_owned(),
                     raw: false,
                 },
-            }),
-            None => (),
+            })
         };
         Meta::List {
             name: "config".to_owned(),

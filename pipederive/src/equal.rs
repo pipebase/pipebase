@@ -30,7 +30,7 @@ fn is_equal_field(field: &Field) -> bool {
     get_any_attribute_by_meta_prefix(EQUAL, &field.attrs, false, "").is_some()
 }
 
-fn equal_fields_token(fields: &Vec<Field>) -> TokenStream {
+fn equal_fields_token(fields: &[Field]) -> TokenStream {
     let equal_fields = fields.iter().map(|f| equal_field_token(f));
     quote! {
         #(#equal_fields)&&*

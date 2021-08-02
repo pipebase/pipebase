@@ -17,6 +17,12 @@ impl<F> FieldVisitor<F> {
     }
 }
 
+impl<F> Default for FieldVisitor<F> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Accept field visitor
 pub trait FieldAccept<F> {
     fn accept(self, visitor: &mut FieldVisitor<F>);

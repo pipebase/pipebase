@@ -74,9 +74,7 @@ where
     G: GroupTable<K, V>,
 {
     /// Post merge operation
-    fn operate(&self, _v: &mut V) {
-        return;
-    }
+    fn operate(&self, _v: &mut V) {}
     /// Merge item into aggregated value per group
     fn merge(&self, v: &mut V, i: &I);
     fn group_table(&self) -> anyhow::Result<G>;

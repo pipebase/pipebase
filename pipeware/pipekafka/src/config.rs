@@ -19,7 +19,7 @@ pub struct KafkaClientConfig {
 impl From<KafkaClientConfig> for HashMap<&str, String> {
     fn from(config: KafkaClientConfig) -> Self {
         let mut params = HashMap::new();
-        params.insert(BOOTSTRAP_SERVERS, config.bootstrap_servers.to_owned());
+        params.insert(BOOTSTRAP_SERVERS, config.bootstrap_servers);
         params
     }
 }

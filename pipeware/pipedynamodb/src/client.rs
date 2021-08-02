@@ -23,7 +23,7 @@ impl DynamocDBClient {
         let attribute_values: HashMap<String, AttributeValue> = attribute_values
             .into_attributes()
             .into_iter()
-            .map(|(k, v)| (k, Self::as_attribute_value(v)))
+            .map(|(k, v)| (k, Self::convert_attribute_value(v)))
             .collect();
         let mut request = self.client.put_item().table_name(&self.table);
         for (name, value) in attribute_values {
@@ -33,7 +33,7 @@ impl DynamocDBClient {
         Ok(())
     }
 
-    pub fn as_attribute_value(v: Value) -> AttributeValue {
+    pub fn convert_attribute_value(v: Value) -> AttributeValue {
         match v {
             Value::Null => AttributeValue::Null(true),
             Value::Bool(v) => AttributeValue::Bool(v),
@@ -45,14 +45,12 @@ impl DynamocDBClient {
             Value::Double(v) => AttributeValue::N(format!("{}", v)),
             Value::String(v) => AttributeValue::S(v),
             Value::UnsignedBytes(bs) => AttributeValue::B(Blob::new(bs)),
-            Value::Array(vs) => AttributeValue::L(
-                vs.into_iter()
-                    .map(|v| Self::as_attribute_value(v))
-                    .collect(),
-            ),
+            Value::Array(vs) => {
+                AttributeValue::L(vs.into_iter().map(Self::convert_attribute_value).collect())
+            }
             Value::Attributes(vs) => AttributeValue::M(
                 vs.into_iter()
-                    .map(|(k, v)| (k, Self::as_attribute_value(v)))
+                    .map(|(k, v)| (k, Self::convert_attribute_value(v)))
                     .collect(),
             ),
         }

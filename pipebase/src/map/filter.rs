@@ -46,10 +46,7 @@ where
     async fn map(&mut self, data: U) -> anyhow::Result<V> {
         Ok(data
             .into_iter()
-            .filter_map(|item| match T::filter(&item) {
-                true => Some(item),
-                false => None,
-            })
+            .filter(|item| T::filter(&item))
             .collect::<V>())
     }
 }

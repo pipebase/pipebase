@@ -358,7 +358,7 @@ pub struct Object {
 impl Object {
     pub fn new(ty: String, metas: Vec<Meta>, fields: Vec<DataField>) -> Self {
         Object {
-            ty: ty,
+            ty,
             metas: Some(metas),
             fields: fields
                 .into_iter()
@@ -428,19 +428,15 @@ impl<V: VisitEntity<Object>> EntityAccept<V> for Object {}
 impl Display for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Type: {}", self.ty)?;
-        match self.metas {
-            Some(ref metas) => {
-                writeln!(f, "Type Metas: {}", metas_to_display(metas))?;
-            }
-            None => (),
-        };
+        if let Some(ref metas) = self.metas {
+            writeln!(f, "Type Metas: {}", metas_to_display(metas))?
+        }
         writeln!(f, "Fields:")?;
-        let mut displays: Vec<(String, String, String)> = Vec::new();
-        displays.push((
+        let mut displays: Vec<(String, String, String)> = vec![(
             OBJECY_DISPLAY_HEADER_NAME.to_owned(),
             OBJECY_DISPLAY_HEADER_TYPE.to_owned(),
             OBJECY_DISPLAY_HEADER_METAS.to_owned(),
-        ));
+        )];
         let mut name_width = OBJECY_DISPLAY_HEADER_NAME.len();
         let mut ty_width = OBJECY_DISPLAY_HEADER_TYPE.len();
         let mut metas_width = OBJECY_DISPLAY_HEADER_METAS.len();

@@ -5,7 +5,7 @@ use syn::{Data, Field, Fields, FieldsNamed};
 
 // traversal tree with full path
 pub fn find_meta_value_by_meta_path(full_path: &[&str], meta: &Meta) -> Option<Lit> {
-    assert!(full_path.len() > 0);
+    assert!(!full_path.is_empty(), "empty meta path");
     // reach last segment of full path
     if full_path.len() == 1 {
         if let Meta::NameValue(MetaNameValue {
@@ -28,8 +28,8 @@ pub fn find_meta_value_by_meta_path(full_path: &[&str], meta: &Meta) -> Option<L
         if !actual_path.eq(expected_path) {
             return None;
         }
-        let ref nested_metas = meta_list.nested;
-        for nested_meta in nested_metas.into_iter() {
+        let nested_metas = &meta_list.nested;
+        for nested_meta in nested_metas.iter() {
             if let NestedMeta::Meta(ref nested) = nested_meta {
                 match find_meta_value_by_meta_path(&full_path[1..], nested) {
                     Some(lit) => return Some(lit),
@@ -39,11 +39,11 @@ pub fn find_meta_value_by_meta_path(full_path: &[&str], meta: &Meta) -> Option<L
         }
         return None;
     }
-    return None;
+    None
 }
 
 pub fn is_meta_with_prefix(prefix_path: &[&str], meta: &Meta) -> bool {
-    assert!(prefix_path.len() > 0);
+    assert!(!prefix_path.is_empty(), "empty meta prefix path");
     if prefix_path.len() == 1 {
         let last_segment = prefix_path[0];
         match meta {
@@ -79,8 +79,8 @@ pub fn is_meta_with_prefix(prefix_path: &[&str], meta: &Meta) -> bool {
         if !actual_path.eq(expected_path) {
             return false;
         }
-        let ref nested_metas = meta_list.nested;
-        for nested_meta in nested_metas.into_iter() {
+        let nested_metas = &meta_list.nested;
+        for nested_meta in nested_metas.iter() {
             if let NestedMeta::Meta(ref nested) = nested_meta {
                 if is_meta_with_prefix(&prefix_path[1..], nested) {
                     return true;
@@ -89,30 +89,30 @@ pub fn is_meta_with_prefix(prefix_path: &[&str], meta: &Meta) -> bool {
         }
         return false;
     }
-    return false;
+    false
 }
 
 pub fn parse_lit_as_string(lit: &Lit) -> Option<String> {
     if let Lit::Str(lit) = lit {
         return Some(lit.value());
     }
-    return None;
+    None
 }
 
 pub fn parse_lit_as_number(lit: &Lit) -> Option<String> {
     if let Lit::Int(lit) = lit {
         return Some(lit.base10_digits().to_owned());
     }
-    return None;
+    None
 }
 
 pub fn get_any_attribute_by_meta_prefix(
     prefix: &str,
-    attributes: &Vec<Attribute>,
+    attributes: &[Attribute],
     is_required: bool,
     ident_location: &str,
 ) -> Option<Attribute> {
-    let prefix_path = prefix.split(".").collect::<Vec<&str>>();
+    let prefix_path = prefix.split('.').collect::<Vec<&str>>();
     for attribute in attributes {
         if is_meta_with_prefix(&prefix_path, &attribute.parse_meta().unwrap()) {
             return Some(attribute.clone());
@@ -121,14 +121,11 @@ pub fn get_any_attribute_by_meta_prefix(
     if is_required {
         panic!("error: {}", meta_prefix_not_found(prefix, ident_location))
     }
-    return None;
+    None
 }
 
-pub fn get_all_attributes_by_meta_prefix(
-    prefix: &str,
-    attributes: &Vec<Attribute>,
-) -> Vec<Attribute> {
-    let prefix_path = prefix.split(".").collect::<Vec<&str>>();
+pub fn get_all_attributes_by_meta_prefix(prefix: &str, attributes: &[Attribute]) -> Vec<Attribute> {
+    let prefix_path = prefix.split('.').collect::<Vec<&str>>();
     attributes
         .iter()
         .filter(|&attribute| is_meta_with_prefix(&prefix_path, &attribute.parse_meta().unwrap()))
@@ -173,7 +170,7 @@ pub fn get_meta_value_by_meta_path(
     ident_location: &str,
     parse: &dyn Fn(&Lit) -> Option<String>,
 ) -> Option<String> {
-    let ref full_path_vec = full_path.split(".").collect::<Vec<&str>>();
+    let full_path_vec = &full_path.split('.').collect::<Vec<&str>>();
     if let Some(ref lit) = find_meta_value_by_meta_path(full_path_vec, meta) {
         if let Some(value) = parse(lit) {
             return Some(value);
@@ -202,7 +199,7 @@ pub fn resolve_type_name_token(type_literal: &str) -> proc_macro2::TokenStream {
 
 /// Resolve dotted field ident
 pub fn resolve_field_path_token(field_path: &str) -> TokenStream {
-    let field_idents = field_path.split(".").map(resolve_ident);
+    let field_idents = field_path.split('.').map(resolve_ident);
     quote! {
         #(#field_idents).*
     }
@@ -249,10 +246,7 @@ pub fn resolve_all_fields(
     fields
 }
 
-pub fn find_all_fields<'a>(
-    fields: &'a FieldsNamed,
-    predicate: &dyn Fn(&Field) -> bool,
-) -> Vec<Field> {
+pub fn find_all_fields(fields: &FieldsNamed, predicate: &dyn Fn(&Field) -> bool) -> Vec<Field> {
     fields
         .named
         .iter()

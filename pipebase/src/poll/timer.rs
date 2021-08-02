@@ -38,7 +38,7 @@ impl FromConfig<TimerConfig> for Timer {
         };
         Ok(Timer {
             interval: config.interval.into(),
-            delay: delay,
+            delay,
             ticks: config.ticks,
             tick: 0,
         })

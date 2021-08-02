@@ -175,19 +175,11 @@ impl PipeMeta {
             false,
             ident_location,
         );
-        PipeConfigMeta { ty: ty, path: path }
+        PipeConfigMeta { ty, path }
     }
 
     fn parse_output_meta(attribute: &Attribute) -> Option<String> {
-        match get_meta_string_value_by_meta_path(
-            BOOTSTRAP_PIPE_OUTPUT,
-            &get_meta(attribute),
-            false,
-            "",
-        ) {
-            Some(ty) => Some(ty),
-            None => None,
-        }
+        get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_OUTPUT, &get_meta(attribute), false, "")
     }
 
     pub fn generate_pipe_meta_expr<T: VisitPipeMeta + Expr>(&self) -> Option<String> {
@@ -203,14 +195,14 @@ pub struct PipeMetas {
 }
 
 impl PipeMetas {
-    pub fn parse(attributes: &Vec<Attribute>, ident_location: &str) -> Self {
+    pub fn parse(attributes: &[Attribute], ident_location: &str) -> Self {
         let mut pipe_metas: HashMap<String, PipeMeta> = HashMap::new();
         let mut pipe_names: HashSet<String> = HashSet::new();
         let mut pipe_output_type_names: HashMap<String, Option<String>> = HashMap::new();
         let mut downstream_pipe_names: HashMap<String, Vec<String>> = HashMap::new();
         let mut upstream_pipe_names: HashMap<String, HashSet<String>> = HashMap::new();
         for attribute in attributes {
-            let ref pipe_meta = PipeMeta::parse(&attribute, ident_location);
+            let pipe_meta = &PipeMeta::parse(&attribute, ident_location);
             let pipe_name = pipe_meta.get_name();
             assert!(
                 pipe_names.insert(pipe_name.to_owned()),
@@ -232,7 +224,7 @@ impl PipeMetas {
             for upstream_pipe_name in pipe_meta.get_upstream_names() {
                 let ds = downstream_pipe_names
                     .entry(upstream_pipe_name.to_owned())
-                    .or_insert(vec![]);
+                    .or_insert_with(Vec::new);
                 ds.push(pipe_name.to_owned());
             }
         }
@@ -243,27 +235,26 @@ impl PipeMetas {
                 downstream_pipe_names
                     .get(pipe_name)
                     .cloned()
-                    .unwrap_or(vec![]),
+                    .unwrap_or_default(),
             );
             // setup upstream output as input type for channel
             for upstream_pipe_name in upstream_pipe_names.get(pipe_name).expect("upstreams") {
                 let upstream_output_type_name = pipe_output_type_names
                     .get(upstream_pipe_name)
-                    .expect(&format!(
-                        "upstream pipe {} does not exists",
-                        upstream_pipe_name
-                    ))
+                    .unwrap_or_else(|| {
+                        panic!("upstream pipe {} does not exists", upstream_pipe_name)
+                    })
                     .to_owned()
-                    .expect(&format!(
-                        "output type not found in upstream pipe {}",
-                        upstream_pipe_name
-                    ));
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "output type not found in upstream pipe {}",
+                            upstream_pipe_name
+                        )
+                    });
                 pipe_meta.set_upstream_output_type_name(upstream_output_type_name);
             }
         }
-        PipeMetas {
-            pipe_metas: pipe_metas,
-        }
+        PipeMetas { pipe_metas }
     }
 
     pub fn list_pipe_ident(&self) -> Vec<String> {
@@ -375,7 +366,7 @@ impl ContextStoreMeta {
             false,
             "",
         );
-        ContextStoreConfigMeta { ty: ty, path: path }
+        ContextStoreConfigMeta { ty, path }
     }
 
     pub fn generate_cstore_meta_expr<V: VisitContextStoreMeta + Expr>(&self) -> Option<String> {
@@ -390,9 +381,9 @@ pub struct ContextStoreMetas {
 }
 
 impl ContextStoreMetas {
-    pub fn parse(attributes: &Vec<Attribute>, ident_location: &str) -> Self {
+    pub fn parse(attributes: &[Attribute], ident_location: &str) -> Self {
         let metas: Vec<ContextStoreMeta> = attributes
-            .into_iter()
+            .iter()
             .map(|attribute| ContextStoreMeta::parse(attribute, ident_location))
             .collect();
         ContextStoreMetas { metas }
@@ -484,7 +475,7 @@ impl ErrorHandlerMeta {
             false,
             "",
         );
-        ErrorHandlerConfigMeta { ty: ty, path: path }
+        ErrorHandlerConfigMeta { ty, path }
     }
 
     pub fn generate_error_handler_meta_expr<V: VisitErrorHandlerMeta + Expr>(

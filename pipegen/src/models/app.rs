@@ -5,14 +5,14 @@ use super::constants::{
 use super::context::ContextStore;
 use super::error::ErrorHandler;
 use super::meta::{metas_to_literal, Meta, MetaValue};
-use super::package::PackageDependency;
+use super::package::Dependency;
 use super::pipe::Pipe;
 use super::utils::indent_literal;
 use super::{Entity, EntityAccept, Object, VisitEntity};
 use crate::error::*;
 use crate::models::{
-    default_env_log_package, default_log_package, default_pipebase_package, default_tokio_package,
-    Block, DataType, Function, Rhs, Statement,
+    default_env_log_dependency, default_log_dependency, default_pipebase_dependency,
+    default_tokio_dependency, Block, DataType, FunctionBuilder, Rhs, Statement,
 };
 use crate::ops::AppValidator;
 use crate::ops::{AppDescriber, AppGenerator};
@@ -25,7 +25,7 @@ use std::path::Path;
 pub struct App {
     name: String,
     metas: Option<Vec<Meta>>,
-    dependencies: Option<Vec<PackageDependency>>,
+    dependencies: Option<Vec<Dependency>>,
     cstores: Option<Vec<ContextStore>>,
     error: Option<ErrorHandler>,
     pipes: Vec<Pipe>,
@@ -117,31 +117,31 @@ impl App {
         }
     }
 
-    fn has_dependency(&self, other: &PackageDependency) -> bool {
+    fn has_dependency(&self, other: &Dependency) -> bool {
         let dependencies = self.dependencies.as_ref().unwrap();
         for dependency in dependencies {
             if dependency.eq(other) {
                 return true;
             }
         }
-        return false;
+        false
     }
 
-    fn add_dependency(&mut self, dependency: PackageDependency) {
+    fn add_dependency(&mut self, dependency: Dependency) {
         let dependencies = self.dependencies.as_mut().unwrap();
         dependencies.push(dependency);
     }
 
-    pub fn get_package_dependency(&self) -> &Vec<PackageDependency> {
+    pub fn get_package_dependency(&self) -> &Vec<Dependency> {
         self.dependencies.as_ref().unwrap()
     }
 
-    fn default_dependencies() -> Vec<PackageDependency> {
+    fn default_dependencies() -> Vec<Dependency> {
         vec![
-            default_pipebase_package(),
-            default_tokio_package(),
-            default_log_package(),
-            default_env_log_package(),
+            default_pipebase_dependency(),
+            default_tokio_dependency(),
+            default_log_dependency(),
+            default_env_log_dependency(),
         ]
     }
 
@@ -165,15 +165,14 @@ impl App {
             None,
             Rhs::Expr(DEFAULT_APP_OBJECT.to_owned()),
         )]);
-        let function = Function::new(
-            BOOTSTRAP_FUNCTION_NAME.to_owned(),
-            Some(meta),
-            true,
-            true,
-            vec![],
-            block,
-            Some(rtype),
-        );
+        let function = FunctionBuilder::new()
+            .name(BOOTSTRAP_FUNCTION_NAME.to_owned())
+            .meta(meta)
+            .public(true)
+            .asynchronous(true)
+            .block(block)
+            .rtype(rtype)
+            .build();
         function.to_literal(indent)
     }
 
@@ -192,15 +191,13 @@ impl App {
             None,
             Rhs::Expr("env_logger::init();".to_owned()),
         )]);
-        let function = Function::new(
-            "main".to_owned(),
-            Some(meta),
-            false,
-            true,
-            vec![],
-            block,
-            None,
-        );
+        let function = FunctionBuilder::new()
+            .name("main".to_owned())
+            .meta(meta)
+            .public(false)
+            .asynchronous(true)
+            .block(block)
+            .build();
         function.to_literal(indent)
     }
 

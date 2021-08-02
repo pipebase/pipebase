@@ -165,7 +165,7 @@ impl<'a> HasContext for Collector<'a> {
 impl<'a> Collector<'a> {
     pub fn new(name: &'a str) -> Self {
         Collector {
-            name: name,
+            name,
             context: Default::default(),
             etx: None,
         }

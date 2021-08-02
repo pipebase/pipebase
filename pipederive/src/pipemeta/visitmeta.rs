@@ -26,10 +26,10 @@ pub trait Expr {
             (None, None) => None,
         }
     }
-    fn as_mut(ident: &str) -> String {
+    fn prepend_mut(ident: &str) -> String {
         format!("mut {}", ident)
     }
-    fn to_owned(ident: &str) -> String {
+    fn append_to_owned(ident: &str) -> String {
         format!("{}.to_owned()", ident)
     }
 }
@@ -88,7 +88,7 @@ impl VisitPipeMeta for PipeExpr {
         let pipe_ident = meta.get_ident();
         let ty = meta.get_ty();
         let rhs = format!(r#"{}("{}")"#, Self::pipe_type_macro(&ty), pipe_name,);
-        self.lhs = Some(Self::as_mut(&pipe_ident));
+        self.lhs = Some(Self::prepend_mut(&pipe_ident));
         self.rhs = Some(rhs);
     }
 }
@@ -152,11 +152,11 @@ impl RunPipeExpr {
         ChannelExpr::gen_receiver_name(pipe_name)
     }
 
-    fn gen_senders_expr(pipe_names: &Vec<String>) -> String {
+    fn gen_senders_expr(pipe_names: &[String]) -> String {
         let mut sender_exprs: Vec<String> = vec![];
         for pipe_name in pipe_names {
             let sender_exp = ChannelExpr::gen_sender_name(pipe_name);
-            sender_exprs.push(Self::to_owned(&sender_exp))
+            sender_exprs.push(Self::append_to_owned(&sender_exp))
         }
         format!("[{}]", sender_exprs.join(", "))
     }
@@ -192,9 +192,8 @@ impl Expr for JoinExpr {
         let mut all_idents = vec![];
         all_idents.extend(self.pipe_idents.to_owned());
         all_idents.extend(self.cstore_idents.to_owned());
-        match self.error_handler_ident {
-            Some(ref ident) => all_idents.push(ident.to_owned()),
-            None => (),
+        if let Some(ref ident) = self.error_handler_ident {
+            all_idents.push(ident.to_owned())
         };
         let all_exprs = format!("{}([{}])", JOIN_PIPES_MACRO, all_idents.join(","));
         Some(all_exprs)
@@ -216,7 +215,7 @@ impl VisitContextStoreMeta for ContextStoreExpr {
         let name = meta.get_name();
         let ident = meta.get_ident();
         let rhs = format!(r#"{}("{}")"#, CONTEXT_STORE_MACRO, name);
-        self.lhs = Some(Self::as_mut(&ident));
+        self.lhs = Some(Self::prepend_mut(&ident));
         self.rhs = Some(rhs);
     }
 }
@@ -332,7 +331,7 @@ impl Expr for ErrorHandlerExpr {
 
 impl VisitErrorHandlerMeta for ErrorHandlerExpr {
     fn visit(&mut self, _meta: &ErrorHandlerMeta) {
-        self.lhs = Some(Self::as_mut(ERROR_HANDLER_DEFAULT_IDENT));
+        self.lhs = Some(Self::prepend_mut(ERROR_HANDLER_DEFAULT_IDENT));
         self.rhs = Some(format!("{}()", ERROR_HANDLER_MACRO));
     }
 }

@@ -8,7 +8,7 @@ where
     U: Convert<T>,
 {
     fn convert(input: Vec<T>) -> Vec<U> {
-        let to: Vec<U> = input.into_iter().map(|item| U::convert(item)).collect();
+        let to: Vec<U> = input.into_iter().map(U::convert).collect();
         to
     }
 }

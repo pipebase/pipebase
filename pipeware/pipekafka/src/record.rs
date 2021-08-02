@@ -7,7 +7,7 @@ where
     T: GroupAs<K>,
 {
     fn key(t: &T) -> K {
-        t.group().to_owned()
+        t.group()
     }
 
     fn serialize(t: &T) -> anyhow::Result<Vec<u8>>;

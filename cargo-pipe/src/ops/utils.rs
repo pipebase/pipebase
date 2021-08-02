@@ -1,6 +1,6 @@
 use crate::print::Printer;
 use pipegen::models::App;
-use pipegen::models::PackageDependency;
+use pipegen::models::Dependency;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -41,8 +41,8 @@ pub struct PipeTomlDependency {
     package: Option<String>,
 }
 
-impl From<PackageDependency> for PipeTomlDependency {
-    fn from(pd: PackageDependency) -> Self {
+impl From<Dependency> for PipeTomlDependency {
+    fn from(pd: Dependency) -> Self {
         PipeTomlDependency {
             version: pd.get_version(),
             path: pd.get_path(),

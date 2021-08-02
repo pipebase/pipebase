@@ -107,10 +107,7 @@ impl Project<String> for String {
 
 impl<T, U: Project<T>> Project<Option<T>> for Option<U> {
     fn project(from: &Option<T>) -> Option<U> {
-        match from {
-            Some(t) => Some(U::project(t)),
-            None => None,
-        }
+        from.as_ref().map(|t| U::project(t))
     }
 }
 
@@ -134,7 +131,7 @@ where
     U: Project<T>,
 {
     fn project(from: &Vec<T>) -> Vec<U> {
-        let to: Vec<U> = from.into_iter().map(|item| U::project(item)).collect();
+        let to: Vec<U> = from.iter().map(|item| U::project(item)).collect();
         to
     }
 }

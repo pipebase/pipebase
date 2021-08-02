@@ -70,20 +70,16 @@ impl KubeLogReader {
         };
         let mut logs = self.pods.log_stream(&self.pod, &params).await?.boxed();
         let tx = self.tx.as_ref().expect("sender not inited");
-        loop {
-            match logs.try_next().await? {
-                Some(line) => {
-                    let log = KubeLog::new(
-                        self.namespace.to_owned(),
-                        self.pod.to_owned(),
-                        self.container.to_owned(),
-                        String::from_utf8(line.to_vec())?,
-                    );
-                    tx.send(log).await?;
-                }
-                None => (),
-            }
+        while let Some(line) = logs.try_next().await? {
+            let log = KubeLogBuilder::new()
+                .namespace(self.namespace.to_owned())
+                .pod(self.pod.to_owned())
+                .container(self.container.to_owned())
+                .log(String::from_utf8(line.to_vec())?)
+                .build();
+            tx.send(log).await?;
         }
+        Ok(())
     }
 }
 
@@ -148,9 +144,17 @@ impl KubeEventReader {
                 Some(event_time) => event_time.0,
                 None => Utc::now(),
             };
-            tx.send(KubeEvent::new(
-                namespace, kind, name, message, action, count, component, instance, event_time,
-            ))
+            tx.send(KubeEvent {
+                namespace,
+                kind,
+                name,
+                message,
+                action,
+                count,
+                component,
+                instance,
+                event_time,
+            })
             .await?;
         }
         Ok(())

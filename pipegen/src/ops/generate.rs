@@ -20,10 +20,7 @@ impl VisitEntity<Pipe> for PipeGenerator {
 
 impl Generate for PipeGenerator {
     fn new(indent: usize) -> Self {
-        PipeGenerator {
-            indent: indent,
-            pipe: None,
-        }
+        PipeGenerator { indent, pipe: None }
     }
 
     fn generate(&self) -> String {
@@ -48,7 +45,7 @@ impl VisitEntity<Object> for ObjectGenerator {
 impl Generate for ObjectGenerator {
     fn new(indent: usize) -> Self {
         ObjectGenerator {
-            indent: indent,
+            indent,
             object: None,
         }
     }
@@ -75,7 +72,7 @@ impl VisitEntity<ContextStore> for ContextStoreGenerator {
 impl Generate for ContextStoreGenerator {
     fn new(indent: usize) -> Self {
         ContextStoreGenerator {
-            indent: indent,
+            indent,
             cstore: None,
         }
     }
@@ -102,7 +99,7 @@ impl VisitEntity<ErrorHandler> for ErrorHandlerGenerator {
 impl Generate for ErrorHandlerGenerator {
     fn new(indent: usize) -> Self {
         ErrorHandlerGenerator {
-            indent: indent,
+            indent,
             error_handler: None,
         }
     }
@@ -130,7 +127,7 @@ impl VisitEntity<App> for AppGenerator {
 impl Generate for AppGenerator {
     fn new(indent: usize) -> Self {
         AppGenerator {
-            indent: indent,
+            indent,
             app: None,
             pipe_filter: None,
         }
@@ -152,12 +149,12 @@ impl AppGenerator {
     }
 
     fn generate_entities<T: EntityAccept<G>, G: Generate + VisitEntity<T>>(
-        entities: &Vec<T>,
+        entities: &[T],
         indent: usize,
         join_sep: &str,
     ) -> String {
         let lits: Vec<String> = entities
-            .into_iter()
+            .iter()
             .map(|entity| Self::generate_entity(entity, indent))
             .collect();
         lits.join(join_sep)
@@ -169,9 +166,7 @@ impl AppGenerator {
 
     fn generate_objects(&self, indent: usize) -> String {
         let objects = self.get_app().get_objects();
-        let objects_lit =
-            Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n");
-        objects_lit
+        Self::generate_entities::<Object, ObjectGenerator>(objects, indent, "\n\n")
     }
 
     fn generate_pipes(&self, indent: usize) -> String {
@@ -187,8 +182,7 @@ impl AppGenerator {
                 .collect(),
             None => pipes,
         };
-        let pipes_lit = Self::generate_entities::<Pipe, PipeGenerator>(&pipes, indent, "\n");
-        pipes_lit
+        Self::generate_entities::<Pipe, PipeGenerator>(&pipes, indent, "\n")
     }
 
     fn generate_context_store(&self, indent: usize) -> String {
@@ -243,7 +237,7 @@ impl AppGenerator {
         format!("{}\n\n{}", module_lit, main_function_lit)
     }
 
-    fn generate_module(module: &str, sections: &Vec<String>) -> String {
+    fn generate_module(module: &str, sections: &[String]) -> String {
         let sections: Vec<String> = sections
             .to_owned()
             .into_iter()

@@ -124,7 +124,7 @@ impl<'a> HasContext for Poller<'a> {
 impl<'a> Poller<'a> {
     pub fn new(name: &'a str) -> Self {
         Poller {
-            name: name,
+            name,
             context: Default::default(),
             etx: None,
         }

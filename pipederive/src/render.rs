@@ -11,7 +11,7 @@ use crate::utils::{
 
 pub fn impl_render(
     ident: &Ident,
-    attributes: &Vec<Attribute>,
+    attributes: &[Attribute],
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
@@ -36,10 +36,7 @@ pub fn impl_render(
     }
 }
 
-fn get_any_render_template_attribute(
-    attributes: &Vec<Attribute>,
-    ident_location: &str,
-) -> Attribute {
+fn get_any_render_template_attribute(attributes: &[Attribute], ident_location: &str) -> Attribute {
     get_any_attribute_by_meta_prefix(RENDER_TEMPLATE, attributes, true, ident_location).unwrap()
 }
 
@@ -76,16 +73,16 @@ fn get_field_pos(field: &Field, ident_location: &str) -> usize {
     .unwrap();
     number
         .parse()
-        .expect(&format!("parse number {} failed", number))
+        .unwrap_or_else(|_| panic!("parse number '{}' failed at '{}'", number, ident_location))
 }
 
-fn get_pos_attribute(attributes: &Vec<Attribute>, ident_location: &str) -> Attribute {
+fn get_pos_attribute(attributes: &[Attribute], ident_location: &str) -> Attribute {
     get_any_attribute_by_meta_prefix(RENDER_POSITION, attributes, true, ident_location).unwrap()
 }
 
-fn resolve_render_params(fields: &Vec<Field>, ident_location: &str) -> TokenStream {
+fn resolve_render_params(fields: &[Field], ident_location: &str) -> TokenStream {
     let params = fields
-        .into_iter()
+        .iter()
         .map(|field| resolve_render_param(field, ident_location));
     quote! {
         #(#params),*

@@ -94,10 +94,10 @@ pub struct PipeContext {
 impl PipeContext {
     pub fn new(name: String, state: State, total_run: u64, failure_run: u64) -> Self {
         PipeContext {
-            name: name,
+            name,
             state: state.to_string(),
-            total_run: total_run,
-            failure_run: failure_run,
+            total_run,
+            failure_run,
         }
     }
 

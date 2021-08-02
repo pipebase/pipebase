@@ -54,7 +54,7 @@ impl LocalFilePathVisitor {
         };
         LocalFilePathVisitor {
             root: PathBuf::from(config.root),
-            mode: mode,
+            mode,
             tx: None,
         }
     }
@@ -92,10 +92,9 @@ impl ListFile for LocalFilePathVisitor {
                     }
                     false => self.filter(&entry).await,
                 };
-                match include {
-                    true => file_paths.push(path),
-                    _ => (),
-                };
+                if include {
+                    file_paths.push(path)
+                }
             }
         }
     }

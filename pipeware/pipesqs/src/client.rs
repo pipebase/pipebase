@@ -59,15 +59,11 @@ impl SqsClient {
                 .collect();
         // Amazon SQS doesn't automatically delete the message
         // consumer must delete the message from the queue after receiving and processing it
-        match message.receipt_handle {
-            Some(receipt_handle) => {
-                match self.delete_message(receipt_handle).await {
-                    Ok(_) => (),
-                    Err(e) => log::error!("delete message error '{}'", e),
-                };
+        if let Some(receipt_handle) = message.receipt_handle {
+            if let Err(e) = self.delete_message(receipt_handle).await {
+                log::error!("delete message error '{}'", e)
             }
-            None => (),
-        };
+        }
         SqsMessage {
             body,
             message_attributes: SqsMessageAttributes {
@@ -78,24 +74,18 @@ impl SqsClient {
 
     fn handle_message_attribute_value(value: MessageAttributeValue) -> SqsMessageAttributeValue {
         let ty = value.data_type.unwrap_or_default();
-        match value.string_value {
-            Some(string_value) => {
-                return SqsMessageAttributeValue {
-                    ty,
-                    data: SqsMessageAttributeData::String(string_value),
-                }
-            }
-            None => (),
-        };
-        match value.binary_value {
-            Some(blob) => {
-                return SqsMessageAttributeValue {
-                    ty,
-                    data: SqsMessageAttributeData::Binary(blob.into_inner()),
-                }
-            }
-            None => (),
-        };
+        if let Some(string_value) = value.string_value {
+            return SqsMessageAttributeValue {
+                ty,
+                data: SqsMessageAttributeData::String(string_value),
+            };
+        }
+        if let Some(blob) = value.binary_value {
+            return SqsMessageAttributeValue {
+                ty,
+                data: SqsMessageAttributeData::Binary(blob.into_inner()),
+            };
+        }
         unimplemented!("handle MessageAttributeValue not implemented")
     }
 }

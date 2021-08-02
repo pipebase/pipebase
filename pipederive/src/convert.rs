@@ -10,12 +10,12 @@ use crate::utils::{
 
 pub fn impl_convert(
     ident: &Ident,
-    attributes: &Vec<Attribute>,
+    attributes: &[Attribute],
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
     let ident_location = ident.to_string();
-    let ref input_attribute = get_any_input_attribute(attributes, &ident_location);
+    let input_attribute = &get_any_input_attribute(attributes, &ident_location);
     let input_type_token =
         get_type_name_token(&get_meta(input_attribute), CONVERT_INPUT, &ident_location);
     let resolved_data = resolve_data(
@@ -35,7 +35,7 @@ pub fn impl_convert(
     expanded
 }
 
-fn get_any_input_attribute(attributes: &Vec<Attribute>, ident_location: &str) -> Attribute {
+fn get_any_input_attribute(attributes: &[Attribute], ident_location: &str) -> Attribute {
     get_any_attribute_by_meta_prefix(CONVERT_INPUT, attributes, true, ident_location).unwrap()
 }
 
@@ -44,14 +44,14 @@ fn resolve_field_named(
     _input_type_ident: &TokenStream,
     ident_location: &str,
 ) -> TokenStream {
-    let ref attributes = field.attrs;
-    let ref field_ident = field.ident;
+    let attributes = &field.attrs;
+    let field_ident = &field.ident;
     let ident_location = format!(
         "{}.{}",
         ident_location,
         field_ident.as_ref().unwrap().to_string()
     );
-    let ref convert_from_attribute = get_any_convert_from_attribute(attributes, &ident_location);
+    let convert_from_attribute = &get_any_convert_from_attribute(attributes, &ident_location);
     let convert_from = get_convert_from(convert_from_attribute, &ident_location);
     let field_path_ident = resolve_field_path_token(&convert_from);
     quote_spanned! {field.span() =>
@@ -59,7 +59,7 @@ fn resolve_field_named(
     }
 }
 
-fn get_any_convert_from_attribute(attributes: &Vec<Attribute>, ident_location: &str) -> Attribute {
+fn get_any_convert_from_attribute(attributes: &[Attribute], ident_location: &str) -> Attribute {
     get_any_attribute_by_meta_prefix(CONVERT_FROM, attributes, true, ident_location).unwrap()
 }
 

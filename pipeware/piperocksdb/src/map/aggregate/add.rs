@@ -4,7 +4,7 @@ use pipebase::{
     common::{AggregateAs, ConfigInto, FromConfig, FromPath, GroupAggregate, GroupAs, Init, Pair},
     map::Map,
 };
-use pipebytes::{FromBytes, IntoBytes};
+use pipebytes::{AsBytes, FromBytes, IntoBytes};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::{hash::Hash, iter::FromIterator};
@@ -33,8 +33,8 @@ impl<I, T, K, V, U> GroupAggregate<I, T, K, V, U, RocksDBGroupTable<HashMap<K, V
     for RocksDBUnorderedGroupAddAggregator
 where
     I: GroupAs<K> + AggregateAs<V>,
-    K: Hash + Eq + PartialEq + Clone + IntoBytes,
-    V: std::ops::AddAssign<V> + Init + IntoBytes + FromBytes + Clone,
+    K: Hash + Eq + PartialEq + Clone + AsBytes + IntoBytes,
+    V: std::ops::AddAssign<V> + Init + AsBytes + IntoBytes + FromBytes + Clone,
     T: IntoIterator<Item = I>,
     U: FromIterator<Pair<K, V>>,
 {
@@ -52,8 +52,8 @@ impl<I, K, V, T> Map<T, Vec<Pair<K, V>>, RocksDBUnorderedGroupAddAggregatorConfi
     for RocksDBUnorderedGroupAddAggregator
 where
     I: GroupAs<K> + AggregateAs<V>,
-    K: Hash + Eq + PartialEq + Clone + IntoBytes,
-    V: std::ops::AddAssign<V> + Init + FromBytes + IntoBytes + Clone,
+    K: Hash + Eq + PartialEq + Clone + AsBytes + IntoBytes,
+    V: std::ops::AddAssign<V> + Init + FromBytes + AsBytes + IntoBytes + Clone,
     T: IntoIterator<Item = I> + Send + 'static,
 {
     async fn map(&mut self, data: T) -> anyhow::Result<Vec<Pair<K, V>>> {

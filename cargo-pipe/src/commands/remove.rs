@@ -28,7 +28,7 @@ pub struct RemoveOptions {
 
 impl RemoveOptions {
     pub fn new(app_name: Option<String>) -> Self {
-        RemoveOptions { app_name: app_name }
+        RemoveOptions { app_name }
     }
 
     pub fn get_app_name(&self) -> Option<&String> {
