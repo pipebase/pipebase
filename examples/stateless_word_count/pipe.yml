@@ -1,6 +1,6 @@
 name: stateless_word_count
 dependencies:
-  - package: pipebase
+  - name: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
 pipes:

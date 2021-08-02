@@ -1,6 +1,6 @@
 name: print_timer_tick
 dependencies:
-  - package: pipebase
+  - name: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
 pipes:

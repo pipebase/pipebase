@@ -1,15 +1,15 @@
 name: convert_csv
 dependencies:
-  - package: pipebase
+  - name: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
-  - package: pipejson
+  - name: pipejson
     path: ../../../pipeware/pipejson
     modules: ["pipejson::*"]
-  - package: pipecsv
+  - name: pipecsv
     path: ../../../pipeware/pipecsv
     modules: ["pipecsv::*"]
-  - package: serde
+  - name: serde
     version: "1.0"
     features: ["derive"]
     modules: ["serde::Deserialize", "serde::Serialize"]

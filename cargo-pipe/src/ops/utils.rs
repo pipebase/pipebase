@@ -38,6 +38,7 @@ pub struct PipeTomlDependency {
     branch: Option<String>,
     tag: Option<String>,
     features: Option<Vec<String>>,
+    package: Option<String>,
 }
 
 impl From<PackageDependency> for PipeTomlDependency {
@@ -49,6 +50,7 @@ impl From<PackageDependency> for PipeTomlDependency {
             branch: pd.get_branch(),
             tag: pd.get_tag(),
             features: pd.get_features(),
+            package: pd.get_package(),
         }
     }
 }
@@ -76,8 +78,8 @@ impl PipeTomlManifest {
         self.workspace = Some(PipeTomlWorkspace::new());
     }
 
-    pub fn add_dependency(&mut self, package: String, dependency: PipeTomlDependency) {
+    pub fn add_dependency(&mut self, name: String, dependency: PipeTomlDependency) {
         let dependencies = self.dependencies.as_mut().unwrap();
-        dependencies.insert(package, dependency);
+        dependencies.insert(name, dependency);
     }
 }

@@ -1,12 +1,12 @@
 name: sender
 dependencies:
-  - package: pipebase
+  - name: pipebase
     path: ../../../../pipebase
     modules: ["pipebase::prelude::*"]
-  - package: pipereqwest
+  - name: pipereqwest
     path: ../../../../pipeware/pipereqwest
     modules: ["pipereqwest::*"]
-  - package: pipewarp
+  - name: pipewarp
     path: ../../../../pipeware/pipewarp
     modules: ["pipewarp::*"]
 pipes:
