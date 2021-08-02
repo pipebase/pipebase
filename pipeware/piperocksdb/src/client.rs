@@ -1,5 +1,5 @@
 use pipebase::common::LeftRight;
-use pipebytes::{AsBytes, FromBytes};
+use pipebytes::{AsBytes, FromBytes, IntoBytes};
 use rocksdb::{DBWithThreadMode, SingleThreaded, WriteBatch, DB};
 
 pub struct RocksDBClient {
@@ -25,16 +25,15 @@ impl RocksDBClient {
 
     pub fn put_all<K, V, T, U>(&mut self, entries: U) -> anyhow::Result<()>
     where
-        K: AsBytes,
-        V: AsBytes,
+        K: IntoBytes,
+        V: IntoBytes,
         T: LeftRight<L = K, R = V>,
         U: IntoIterator<Item = T>,
     {
         let mut batch = WriteBatch::default();
         for entry in entries.into_iter() {
-            let key = entry.left();
-            let value = entry.right();
-            batch.put(key.as_bytes()?, value.as_bytes()?);
+            let (key, value) = entry.into_tuple();
+            batch.put(key.into_bytes()?, value.into_bytes()?);
         }
         self.db.write(batch)?;
         Ok(())

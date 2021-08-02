@@ -1,6 +1,6 @@
 use crate::client::RocksDBClient;
 use pipebase::common::GroupTable;
-use pipebytes::{AsBytes, FromBytes};
+use pipebytes::{AsBytes, FromBytes, IntoBytes};
 pub struct RocksDBGroupTable<C> {
     cache: C,
     client: RocksDBClient,
@@ -21,8 +21,8 @@ where
 impl<K, V, C> GroupTable<K, V> for RocksDBGroupTable<C>
 where
     C: GroupTable<K, V> + Clone,
-    K: AsBytes + Clone,
-    V: AsBytes + FromBytes,
+    K: AsBytes + IntoBytes + Clone,
+    V: AsBytes + IntoBytes + FromBytes,
 {
     fn contains_group(&mut self, gid: &K) -> anyhow::Result<bool> {
         if self.cache.contains_group(gid)? {

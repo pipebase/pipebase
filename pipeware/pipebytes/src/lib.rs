@@ -9,3 +9,7 @@ pub trait FromBytes: Sized {
 pub trait AsBytes {
     fn as_bytes(&self) -> anyhow::Result<Vec<u8>>;
 }
+
+pub trait IntoBytes {
+    fn into_bytes(self) -> anyhow::Result<Vec<u8>>;
+}
