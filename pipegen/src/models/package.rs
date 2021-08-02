@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct PackageDependency {
-    package: String,
+    name: String,
     version: Option<String>,
     path: Option<String>,
     git: Option<String>,
@@ -15,7 +15,7 @@ pub struct PackageDependency {
 
 impl PartialEq for PackageDependency {
     fn eq(&self, other: &Self) -> bool {
-        self.package.eq(&other.get_package())
+        self.name.eq(&other.get_name())
     }
 }
 
@@ -23,7 +23,7 @@ impl Eq for PackageDependency {}
 
 impl PackageDependency {
     pub(crate) fn new(
-        package: String,
+        name: String,
         version: Option<String>,
         path: Option<String>,
         git: Option<String>,
@@ -33,7 +33,7 @@ impl PackageDependency {
         modules: Vec<String>,
     ) -> Self {
         PackageDependency {
-            package,
+            name,
             version,
             path,
             git,
@@ -44,8 +44,8 @@ impl PackageDependency {
         }
     }
 
-    pub fn get_package(&self) -> String {
-        self.package.to_owned()
+    pub fn get_name(&self) -> String {
+        self.name.to_owned()
     }
 
     pub fn get_version(&self) -> Option<String> {

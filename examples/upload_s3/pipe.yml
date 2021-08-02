@@ -1,9 +1,9 @@
 name: project_file
 dependencies:
-  - package: pipebase
+  - name: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
-  - package: pipes3
+  - name: pipes3
     path: ../../../pipeware/pipes3
     modules: ["pipes3::*"]
 pipes:

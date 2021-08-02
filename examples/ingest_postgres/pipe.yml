@@ -1,18 +1,18 @@
 name: ingest_postgres
 dependencies:
-  - package: pipebase
+  - name: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
-  - package: pipejson
+  - name: pipejson
     path: ../../../pipeware/pipejson
     modules: ["pipejson::*"]
-  - package: pipepsql
+  - name: pipepsql
     path: ../../../pipeware/pipepsql
     modules: ["pipepsql::*"]
-  - package: pipewarp
+  - name: pipewarp
     path: ../../../pipeware/pipewarp
     modules: ["pipewarp::*"]
-  - package: serde
+  - name: serde
     version: "1.0"
     features: ["derive"]
     modules: ["serde::Deserialize"]

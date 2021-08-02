@@ -1,15 +1,15 @@
 name: consume_kafka
 dependencies:
-  - package: pipebase
+  - name: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
-  - package: pipekafka
+  - name: pipekafka
     path: ../../../pipeware/pipekafka
     modules: ["pipekafka::*"]
-  - package: pipejson
+  - name: pipejson
     path: ../../../pipeware/pipejson
     modules: ["pipejson::*"]
-  - package: serde
+  - name: serde
     version: "1.0"
     features: ["derive"]
     modules: ["serde::Deserialize"]

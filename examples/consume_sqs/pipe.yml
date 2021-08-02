@@ -1,9 +1,9 @@
 name: consume_sqs
 dependencies:
-  - package: pipebase
+  - name: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
-  - package: pipesqs
+  - name: pipesqs
     path: ../../../pipeware/pipesqs
     modules: ["pipesqs::*"]
 pipes:

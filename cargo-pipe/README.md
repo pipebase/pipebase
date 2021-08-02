@@ -16,14 +16,14 @@ cargo pipe --help
 ```
 
 ## Quick Start
-Go to resources folder
+go to resources folder
 ```
 cargo pipe new && \
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o timer -r
 ```
-Run app
+run app
 ```
 ./timer
 ```

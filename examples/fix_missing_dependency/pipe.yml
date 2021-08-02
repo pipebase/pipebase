@@ -1,12 +1,12 @@
-name: fix_missing_package
+name: fix_missing_dependency
 dependencies:
-  - package: pipebase
+  - name: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
-  - package: pipewarp
+  - name: pipewarp
     path: ../../../pipeware/pipewarp
     modules: ["pipewarp::*"]
-  - package: pipejson
+  - name: pipejson
     path: ../../../pipeware/pipejson
     modules: ["pipejson::*"]
 pipes:

@@ -1,12 +1,12 @@
 name: log_kube
 dependencies:
-  - package: pipebase
+  - name: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
-  - package: pipekafka
+  - name: pipekafka
     path: ../../../pipeware/pipekafka
     modules: ["pipekafka::*"]
-  - package: pipekube
+  - name: pipekube
     path: ../../../pipeware/pipekube
     modules: ["pipekube::*"]
 pipes:

@@ -76,8 +76,8 @@ impl PipeTomlManifest {
         self.workspace = Some(PipeTomlWorkspace::new());
     }
 
-    pub fn add_dependency(&mut self, package: String, dependency: PipeTomlDependency) {
+    pub fn add_dependency(&mut self, name: String, dependency: PipeTomlDependency) {
         let dependencies = self.dependencies.as_mut().unwrap();
-        dependencies.insert(package, dependency);
+        dependencies.insert(name, dependency);
     }
 }
