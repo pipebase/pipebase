@@ -20,14 +20,8 @@ pub fn cmd() -> Cmd {
 }
 
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
-    let app_name = match args.value_of("name") {
-        Some(app_name) => Some(app_name.to_owned()),
-        None => None,
-    };
-    let pipe_name = match args.value_of("line") {
-        Some(pipe_name) => Some(pipe_name.to_owned()),
-        None => None,
-    };
+    let app_name = args.value_of("name").map(|app_name| app_name.to_owned());
+    let pipe_name = args.value_of("line").map(|pipe_name| pipe_name.to_owned());
     let opts = GenerateOptions::new(app_name, pipe_name);
     do_exec(config, &opts)?;
     Ok(())
@@ -41,8 +35,8 @@ pub struct GenerateOptions {
 impl GenerateOptions {
     pub fn new(app_name: Option<String>, pipe_name: Option<String>) -> Self {
         GenerateOptions {
-            app_name: app_name,
-            pipe_name: pipe_name,
+            app_name,
+            pipe_name,
         }
     }
 

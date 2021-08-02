@@ -28,7 +28,7 @@ pub struct NewOptions {
 
 impl NewOptions {
     pub fn new(app_name: Option<String>) -> Self {
-        NewOptions { app_name: app_name }
+        NewOptions { app_name }
     }
 
     pub fn get_app_name(&self) -> Option<&String> {

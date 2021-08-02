@@ -32,18 +32,11 @@ pub fn cmd() -> Cmd {
 pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
     let all = args.is_present("all");
     let graph = args.is_present("graph");
-    let pipe_name = match args.value_of("pipe") {
-        Some(pipe_name) => Some(pipe_name.to_owned()),
-        None => None,
-    };
-    let object_name = match args.value_of("object") {
-        Some(object_name) => Some(object_name.to_owned()),
-        None => None,
-    };
-    let pipe_name_in_line = match args.value_of("line") {
-        Some(pipe_name) => Some(pipe_name.to_owned()),
-        None => None,
-    };
+    let pipe_name = args.value_of("pipe").map(|pipe_name| pipe_name.to_owned());
+    let object_name = args
+        .value_of("object")
+        .map(|object_name| object_name.to_owned());
+    let pipe_name_in_line = args.value_of("line").map(|pipe_name| pipe_name.to_owned());
     let opts = DescribeOptions::new(all, graph, pipe_name, object_name, pipe_name_in_line);
     do_exec(config, &opts)?;
     Ok(())

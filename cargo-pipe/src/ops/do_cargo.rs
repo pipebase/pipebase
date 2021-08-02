@@ -6,21 +6,18 @@ use std::path::Path;
 use std::process::Command;
 
 pub(crate) const CARGO_MANIFEST_FILE: &str = "Cargo.toml";
-pub(crate) const CARGO_SRC_DIRECTORY: &'static str = "src";
-pub(crate) const CARGO_TARGET_DIRECTORY: &'static str = "target";
-pub(crate) const CARGO_RELEASE_DIRECTORY: &'static str = "release";
-pub(crate) const CARGO_DEBUG_DIRECTORY: &'static str = "debug";
-pub(crate) const CARGO_APP_MAIN: &'static str = "main.rs";
+pub(crate) const CARGO_SRC_DIRECTORY: &str = "src";
+pub(crate) const CARGO_TARGET_DIRECTORY: &str = "target";
+pub(crate) const CARGO_RELEASE_DIRECTORY: &str = "release";
+pub(crate) const CARGO_DEBUG_DIRECTORY: &str = "debug";
+pub(crate) const CARGO_APP_MAIN: &str = "main.rs";
 
 fn capture_error_message(captures: Option<Captures>) -> Option<String> {
     let m = match captures {
         Some(captures) => captures.get(1),
         None => return None,
     };
-    match m {
-        Some(m) => Some(m.as_str().to_owned()),
-        None => None,
-    }
+    m.map(|m| m.as_str().to_owned())
 }
 
 fn capture_error(line: &str) -> Option<String> {
@@ -28,23 +25,20 @@ fn capture_error(line: &str) -> Option<String> {
         static ref ERROR_CODE: Regex = Regex::new(r"error\[E\d{4}\]:\s*(.*)").unwrap();
         static ref ERROR: Regex = Regex::new(r"error:\s*(.*)").unwrap();
     }
-    match capture_error_message(ERROR_CODE.captures(line)) {
-        Some(error_message) => return Some(error_message),
-        None => (),
-    };
-    match capture_error_message(ERROR.captures(line)) {
-        Some(error_message) => return Some(error_message),
-        None => (),
-    };
-    return None;
+    if let Some(error_message) = capture_error_message(ERROR_CODE.captures(line)) {
+        return Some(error_message);
+    }
+    if let Some(error_message) = capture_error_message(ERROR.captures(line)) {
+        return Some(error_message);
+    }
+    None
 }
 
 fn capture_errors(out: String, printer: &mut Printer) -> anyhow::Result<()> {
-    let lines: Vec<&str> = out.split("\n").collect();
+    let lines: Vec<&str> = out.split('\n').collect();
     for line in lines {
-        match capture_error(line) {
-            Some(error_message) => printer.error(format!("{}", error_message))?,
-            None => (),
+        if let Some(error_message) = capture_error(line) {
+            printer.error(error_message.to_string())?
         };
     }
     Ok(())
@@ -59,10 +53,7 @@ fn run_cmd(mut cmd: Command) -> anyhow::Result<(i32, String)> {
         }
         false => {
             let stderr = String::from_utf8(output.stderr)?;
-            let err_code = match output.status.code() {
-                Some(err_code) => err_code,
-                None => 1,
-            };
+            let err_code = output.status.code().unwrap_or(1);
             Ok((err_code, stderr))
         }
     }
@@ -122,7 +113,7 @@ pub fn do_cargo_check(
             printer.error("cargo check failed")?;
             if debug {
                 if verbose {
-                    printer.error(format!("{}", out))?
+                    printer.error(out)?
                 } else {
                     capture_errors(out, printer)?
                 }
@@ -152,7 +143,7 @@ pub fn do_cargo_build(
             printer.error("cargo build failed")?;
             if debug {
                 if verbose {
-                    printer.error(format!("{}", out))?
+                    printer.error(out)?
                 } else {
                     capture_errors(out, printer)?
                 }
