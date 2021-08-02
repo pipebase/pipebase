@@ -114,7 +114,7 @@ fn meta_value_int(name: &str, value: &i32) -> Meta {
 }
 
 fn new_path(name: String) -> Meta {
-    Meta::Path { name: name }
+    Meta::Path { name }
 }
 
 fn expand_derive(derive: &DeriveMeta) -> Meta {
@@ -142,67 +142,56 @@ fn expand_derive(derive: &DeriveMeta) -> Meta {
     new_path(name.to_owned())
 }
 
-fn expand_derives(derives: &Vec<DeriveMeta>) -> Meta {
-    let metas: Vec<Meta> = derives
-        .into_iter()
-        .map(|derive| expand_derive(derive))
-        .collect();
+fn expand_derives(derives: &[DeriveMeta]) -> Meta {
+    let metas: Vec<Meta> = derives.iter().map(|derive| expand_derive(derive)).collect();
     Meta::List {
         name: "derive".to_owned(),
-        metas: metas,
+        metas,
     }
 }
 
 fn expand_project_meta(meta: &ProjectMeta) -> Meta {
     let mut metas: Vec<Meta> = Vec::new();
-    match meta.input {
-        Some(ref input) => metas.push(meta_value_str("input", input, false)),
-        None => (),
-    };
-    match meta.from {
-        Some(ref from) => metas.push(meta_value_str("from", from, false)),
-        None => (),
-    };
-    match meta.expr {
-        Some(ref expr) => metas.push(meta_value_str("expr", expr, true)),
-        None => (),
-    };
-    match meta.alias {
-        Some(ref alias) => metas.push(meta_value_str("alias", alias, false)),
-        None => (),
+    if let Some(ref input) = meta.input {
+        metas.push(meta_value_str("input", input, false))
+    }
+    if let Some(ref from) = meta.from {
+        metas.push(meta_value_str("from", from, false))
+    }
+    if let Some(ref expr) = meta.expr {
+        metas.push(meta_value_str("expr", expr, true))
+    }
+    if let Some(ref alias) = meta.alias {
+        metas.push(meta_value_str("alias", alias, false))
     };
     Meta::List {
         name: "project".to_owned(),
-        metas: metas,
+        metas,
     }
 }
 
 fn expand_convert_meta(meta: &ConvertMeta) -> Meta {
     let mut metas: Vec<Meta> = Vec::new();
-    match meta.input {
-        Some(ref input) => metas.push(meta_value_str("input", input, false)),
-        None => (),
-    };
-    match meta.from {
-        Some(ref from) => metas.push(meta_value_str("from", from, false)),
-        None => (),
-    };
+    if let Some(ref input) = meta.input {
+        metas.push(meta_value_str("input", input, false))
+    }
+    if let Some(ref from) = meta.from {
+        metas.push(meta_value_str("from", from, false))
+    }
     Meta::List {
         name: "convert".to_owned(),
-        metas: metas,
+        metas,
     }
 }
 
 fn expand_filter_meta(meta: &FilterMeta) -> Meta {
-    let mut metas: Vec<Meta> = Vec::new();
-    metas.push(meta_value_str("predicate", &meta.predicate, true));
-    match meta.alias {
-        Some(ref alias) => metas.push(meta_value_str("alias", alias, false)),
-        None => (),
-    };
+    let mut metas: Vec<Meta> = vec![meta_value_str("predicate", &meta.predicate, true)];
+    if let Some(ref alias) = meta.alias {
+        metas.push(meta_value_str("alias", alias, false))
+    }
     Meta::List {
         name: "filter".to_owned(),
-        metas: metas,
+        metas,
     }
 }
 
@@ -255,17 +244,15 @@ fn expand_aggregate(agg: &AggregateMeta) -> Meta {
 
 fn expand_render(render: &RenderMeta) -> Meta {
     let mut metas: Vec<Meta> = Vec::new();
-    match render.template {
-        Some(ref template) => metas.push(meta_value_str("template", template, true)),
-        None => (),
+    if let Some(ref template) = render.template {
+        metas.push(meta_value_str("template", template, true))
     }
-    match render.pos {
-        Some(ref pos) => metas.push(meta_value_int("pos", pos)),
-        None => (),
+    if let Some(ref pos) = render.pos {
+        metas.push(meta_value_int("pos", pos))
     }
     Meta::List {
         name: "render".to_owned(),
-        metas: metas,
+        metas,
     }
 }
 
@@ -342,7 +329,7 @@ fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
         Meta::List { name, metas } => (name, metas),
     };
     let nested_metas_lits: Vec<String> = metas
-        .into_iter()
+        .iter()
         .map(|meta| expand_meta_lit(meta, indent + 1, compact))
         .collect();
     let nested_metas_lit = join_meta_lits(nested_metas_lits, compact);
@@ -361,9 +348,9 @@ pub(crate) fn meta_to_literal(meta: &Meta, indent: usize) -> String {
     format!("{}#[\n{}\n{}]", indent_lit, meta_lit, indent_lit)
 }
 
-pub(crate) fn metas_to_literal(metas: &Vec<Meta>, indent: usize) -> String {
+pub(crate) fn metas_to_literal(metas: &[Meta], indent: usize) -> String {
     let metas_literal: Vec<String> = metas
-        .into_iter()
+        .iter()
         .map(|meta| meta_to_literal(meta, indent))
         .collect();
     metas_literal.join("\n")
@@ -373,11 +360,8 @@ pub(crate) fn meta_to_display(meta: &Meta) -> String {
     expand_meta_lit(meta, 0, true)
 }
 
-pub(crate) fn metas_to_display(metas: &Vec<Meta>) -> String {
-    let metas_display: Vec<String> = metas
-        .into_iter()
-        .map(|meta| meta_to_display(meta))
-        .collect();
+pub(crate) fn metas_to_display(metas: &[Meta]) -> String {
+    let metas_display: Vec<String> = metas.iter().map(|meta| meta_to_display(meta)).collect();
     metas_display.join(" ")
 }
 

@@ -23,30 +23,6 @@ impl PartialEq for PackageDependency {
 impl Eq for PackageDependency {}
 
 impl PackageDependency {
-    pub(crate) fn new(
-        name: String,
-        version: Option<String>,
-        path: Option<String>,
-        git: Option<String>,
-        branch: Option<String>,
-        tag: Option<String>,
-        features: Option<Vec<String>>,
-        package: Option<String>,
-        modules: Vec<String>,
-    ) -> Self {
-        PackageDependency {
-            name,
-            version,
-            path,
-            git,
-            branch,
-            tag,
-            features,
-            package,
-            modules,
-        }
-    }
-
     pub fn get_name(&self) -> String {
         self.name.to_owned()
     }
@@ -85,57 +61,57 @@ impl PackageDependency {
 }
 
 pub(crate) fn default_tokio_package() -> PackageDependency {
-    PackageDependency::new(
-        "tokio".to_owned(),
-        Some("1.6.1".to_owned()),
-        None,
-        None,
-        None,
-        None,
-        Some(vec!["full".to_owned()]),
-        None,
-        vec![],
-    )
+    PackageDependency {
+        name: "tokio".to_owned(),
+        version: Some("1.6.1".to_owned()),
+        path: None,
+        git: None,
+        branch: None,
+        tag: None,
+        features: Some(vec!["full".to_owned()]),
+        package: None,
+        modules: vec![],
+    }
 }
 
 pub(crate) fn default_pipebase_package() -> PackageDependency {
-    PackageDependency::new(
-        "pipebase".to_owned(),
-        Some("0.1.0".to_owned()),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        vec!["pipebase::prelude::*".to_owned()],
-    )
+    PackageDependency {
+        name: "pipebase".to_owned(),
+        version: Some("0.1.0".to_owned()),
+        path: None,
+        git: None,
+        branch: None,
+        tag: None,
+        features: None,
+        package: None,
+        modules: vec!["pipebase::prelude::*".to_owned()],
+    }
 }
 
 pub(crate) fn default_log_package() -> PackageDependency {
-    PackageDependency::new(
-        "log".to_owned(),
-        Some("0.4.14".to_owned()),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        vec![],
-    )
+    PackageDependency {
+        name: "log".to_owned(),
+        version: Some("0.4.14".to_owned()),
+        path: None,
+        git: None,
+        branch: None,
+        tag: None,
+        features: None,
+        package: None,
+        modules: vec![],
+    }
 }
 
 pub(crate) fn default_env_log_package() -> PackageDependency {
-    PackageDependency::new(
-        "env_logger".to_owned(),
-        Some("0.8.4".to_owned()),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        vec![],
-    )
+    PackageDependency {
+        name: "env_logger".to_owned(),
+        version: Some("0.8.4".to_owned()),
+        path: None,
+        git: None,
+        branch: None,
+        tag: None,
+        features: None,
+        package: None,
+        modules: vec![],
+    }
 }

@@ -159,13 +159,13 @@ impl Validate for PipeGraphValidator {
             if !self.graph.has_upstream_pipe(pid) {
                 errors.insert(
                     location.to_owned(),
-                    format!("no upstream found for downstream pipe"),
+                    "no upstream found for downstream pipe".to_string(),
                 );
                 continue;
             }
             for upid in self.graph.get_upstream_pipes(pid) {
                 if !self.graph.has_pipe(upid) {
-                    errors.insert(location.to_owned(), format!("upstream does not exists"));
+                    errors.insert(location.to_owned(), "upstream does not exists".to_string());
                 }
             }
         }
@@ -228,7 +228,7 @@ pub struct ObjectDependencyValidator {
 
 impl VisitEntity<Object> for ObjectDependencyValidator {
     fn visit(&mut self, object: &Object) {
-        let ref id = object.get_id();
+        let id = &object.get_id();
         let dep = object.list_dependency();
         self.ids.push(id.to_owned());
         self.deps.insert(id.to_owned(), dep);
@@ -378,7 +378,7 @@ impl AppValidator {
     }
 
     fn validate_entities<T: EntityAccept<V>, V: Validate + VisitEntity<T>>(
-        items: &Vec<T>,
+        items: &[T],
         location: &str,
     ) -> Result<()> {
         let mut validator: V = V::new(location);
@@ -418,7 +418,7 @@ impl AppValidator {
 }
 
 fn validate_ids_with_predicate(
-    ids: &Vec<String>,
+    ids: &[String],
     location: &str,
     id_field: &str,
     error_msg: &str,
@@ -436,7 +436,7 @@ fn validate_ids_with_predicate(
 }
 
 fn validate_ids_uniqueness(
-    ids: &Vec<String>,
+    ids: &[String],
     location: &str,
     id_field: &str,
     error_msg: &str,

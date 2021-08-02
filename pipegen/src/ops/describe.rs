@@ -70,7 +70,7 @@ pub struct PipeGraphDescriber {
 impl VisitEntity<Pipe> for PipeGraphDescriber {
     fn visit(&mut self, pipe: &Pipe) {
         self.graph.add_pipe(pipe, pipe.to_owned());
-        self.pipe_ids.push(pipe.get_id().to_owned());
+        self.pipe_ids.push(pipe.get_id());
     }
 }
 
@@ -83,9 +83,10 @@ impl Describe for PipeGraphDescriber {
     }
 
     fn describe(&self) -> Vec<String> {
-        let mut results: Vec<String> = Vec::new();
-        results.push(self.describe_source_pipe_ids());
-        results.push(self.describe_sink_pipe_ids());
+        let mut results: Vec<String> = vec![
+            self.describe_source_pipe_ids(),
+            self.describe_sink_pipe_ids(),
+        ];
         results.extend(self.describe_pipe_components());
         results
     }
@@ -180,10 +181,8 @@ impl PipeGraphDescriber {
 
     fn get_pipe_output_type(&self, pid: &str) -> Option<String> {
         let pipe = self.graph.get_pipe_value(pid).unwrap();
-        match pipe.get_output_data_type() {
-            Some(output) => Some(output.to_literal(0)),
-            None => None,
-        }
+        pipe.get_output_data_type()
+            .map(|output| output.to_literal(0))
     }
 
     fn format_pipeline_with_output_type(&self, pipeline: Vec<String>) -> Vec<String> {
@@ -297,7 +296,7 @@ impl AppDescriber {
         self.app.as_ref().unwrap()
     }
 
-    fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(entities: &Vec<T>) -> A {
+    fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(entities: &[T]) -> A {
         let mut describer = A::new();
         for entity in entities {
             entity.accept(&mut describer);

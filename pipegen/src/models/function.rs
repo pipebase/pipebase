@@ -25,7 +25,7 @@ pub struct Statement {
 
 impl Statement {
     pub fn new(lhs: Option<String>, rhs: Rhs) -> Self {
-        Statement { lhs: lhs, rhs: rhs }
+        Statement { lhs, rhs }
     }
 
     pub fn to_literal(&self, indent: usize) -> String {
@@ -56,9 +56,7 @@ pub struct Block {
 
 impl Block {
     pub fn new(statements: Vec<Statement>) -> Self {
-        Block {
-            statements: statements,
-        }
+        Block { statements }
     }
 
     pub fn to_literal(&self, indent: usize) -> String {
@@ -66,7 +64,7 @@ impl Block {
         for statement in &self.statements {
             statement_lits.push(statement.to_literal(indent));
         }
-        return statement_lits.join(";\n");
+        statement_lits.join(";\n")
     }
 }
 
@@ -93,13 +91,13 @@ impl Function {
         rtype: Option<DataType>,
     ) -> Self {
         Function {
-            name: name,
-            meta: meta,
-            is_public: is_public,
-            is_async: is_async,
-            args: args,
-            block: block,
-            rtype: rtype,
+            name,
+            meta,
+            is_public,
+            is_async,
+            args,
+            block,
+            rtype,
         }
     }
 
@@ -125,10 +123,9 @@ impl Function {
         lits.push("fn".to_owned());
         let input_lit = self.get_input_literal();
         lits.push(format!("{}({})", self.name, input_lit));
-        match self.get_rtype_literal() {
-            Some(rtype_lit) => lits.push(rtype_lit),
-            None => (),
-        };
+        if let Some(rtype_lit) = self.get_rtype_literal() {
+            lits.push(rtype_lit)
+        }
         let indent_lit = indent_literal(indent);
         format!("{}{}", indent_lit, lits.join(" "))
     }

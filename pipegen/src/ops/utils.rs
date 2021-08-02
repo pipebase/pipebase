@@ -32,10 +32,7 @@ impl GraphPaths {
             Some(paths) => paths,
             None => return None,
         };
-        match paths.get(dst) {
-            Some(paths) => Some(paths.to_owned()),
-            None => return None,
-        }
+        paths.get(dst).map(|paths| paths.to_owned())
     }
 }
 
@@ -50,7 +47,7 @@ impl<T: Clone> Vertex<T> {
         Vertex {
             in_vertices: HashSet::new(),
             out_vertices: HashSet::new(),
-            value: value,
+            value,
         }
     }
 
@@ -121,18 +118,16 @@ impl<T: Clone> DirectedGraph<T> {
             return false;
         }
         let mut success = true;
-        success = success
-            & self
-                .vertices
-                .get_mut(src)
-                .unwrap()
-                .add_out_vertex(dst.to_owned());
-        success = success
-            & self
-                .vertices
-                .get_mut(dst)
-                .unwrap()
-                .add_in_vertex(src.to_owned());
+        success &= self
+            .vertices
+            .get_mut(src)
+            .unwrap()
+            .add_out_vertex(dst.to_owned());
+        success &= self
+            .vertices
+            .get_mut(dst)
+            .unwrap()
+            .add_in_vertex(src.to_owned());
         success
     }
 
@@ -282,11 +277,6 @@ impl<T: Clone> DirectedGraph<T> {
         self.vertices.get(vid).unwrap().get_out_vertex_count() > 0
     }
 
-    pub fn get_out_vertices(&self, vid: &str) -> &HashSet<String> {
-        assert!(self.has_vertex_id(vid), "vertex {} not exists", vid);
-        self.vertices.get(vid).unwrap().get_out_vertices()
-    }
-
     pub fn find_paths(
         &self,
         src: &str,
@@ -330,7 +320,7 @@ impl<T: Clone> PipeGraph<T> {
     }
 
     pub fn add_pipe(&mut self, pipe: &Pipe, value: T) {
-        let ref id = pipe.get_id();
+        let id = &pipe.get_id();
         self.graph.add_vertex_id_if_not_exists(id.to_owned());
         self.graph.set_vertex_value(id, value);
         let deps = pipe.list_dependency();
@@ -389,10 +379,6 @@ impl<T: Clone> PipeGraph<T> {
         self.graph.has_out_vertex(pid)
     }
 
-    pub fn get_downstream_pipes(&self, pid: &str) -> &HashSet<String> {
-        self.graph.get_out_vertices(pid)
-    }
-
     pub fn get_pipe_value(&self, pid: &str) -> Option<&T> {
         assert!(self.has_pipe(pid), "pipe {} not exists", pid);
         self.graph.get_vertex_value(pid)
@@ -428,7 +414,7 @@ impl<T: Clone> PipeGraph<T> {
 
     // search pipelines given pipe id
     pub fn search_pipelines(&self, pid: &str) -> Vec<GraphPath> {
-        let ref vertics = self.find_component(pid);
+        let vertics = &self.find_component(pid);
         let srcs: Vec<String> = vertics
             .to_owned()
             .into_iter()

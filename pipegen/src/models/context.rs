@@ -31,7 +31,7 @@ impl Entity for ContextStore {
     }
 
     fn to_literal(&self, indent: usize) -> String {
-        let ref meta = self.get_meta();
+        let meta = &self.get_meta();
         meta_to_literal(meta, indent)
     }
 }
@@ -66,15 +66,14 @@ impl ContextStore {
                 raw: false,
             },
         }];
-        match config_path {
-            Some(path) => metas.push(Meta::Value {
+        if let Some(config_path) = config_path {
+            metas.push(Meta::Value {
                 name: "path".to_owned(),
                 meta: MetaValue::Str {
-                    value: path.to_owned(),
+                    value: config_path.to_owned(),
                     raw: false,
                 },
-            }),
-            None => (),
+            })
         };
         Meta::List {
             name: "config".to_owned(),

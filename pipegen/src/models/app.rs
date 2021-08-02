@@ -124,7 +124,7 @@ impl App {
                 return true;
             }
         }
-        return false;
+        false
     }
 
     fn add_dependency(&mut self, dependency: PackageDependency) {
