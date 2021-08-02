@@ -26,9 +26,7 @@ where
     fn merge(&self, u: &mut U, i: &I);
 
     /// Post merge operation
-    fn operate(&self, _u: &mut U) {
-        return;
-    }
+    fn operate(&self, _u: &mut U) {}
 
     /// Aggregate items
     /// * Merge

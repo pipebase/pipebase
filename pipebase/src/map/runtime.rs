@@ -110,7 +110,7 @@ impl<'a> HasContext for Mapper<'a> {
 impl<'a> Mapper<'a> {
     pub fn new(name: &'a str) -> Self {
         Mapper {
-            name: name,
+            name,
             context: Default::default(),
             etx: None,
         }

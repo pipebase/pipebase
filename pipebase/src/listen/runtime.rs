@@ -121,7 +121,7 @@ impl<'a> HasContext for Listener<'a> {
 impl<'a> Listener<'a> {
     pub fn new(name: &'a str) -> Self {
         Listener {
-            name: name,
+            name,
             context: Default::default(),
             etx: None,
         }

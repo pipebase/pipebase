@@ -110,7 +110,7 @@ impl<'a> HasContext for Selector<'a> {
 impl<'a> Selector<'a> {
     pub fn new(name: &'a str) -> Self {
         Selector {
-            name: name,
+            name,
             context: Default::default(),
             etx: None,
         }

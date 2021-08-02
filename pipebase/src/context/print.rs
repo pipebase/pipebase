@@ -32,7 +32,7 @@ impl FromConfig<ContextPrinterConfig> for ContextPrinter {
         };
         Ok(ContextPrinter {
             interval: tokio::time::interval(config.interval.into()),
-            delay: delay,
+            delay,
             contexts: HashMap::new(),
         })
     }
@@ -54,7 +54,7 @@ impl StoreContext<ContextPrinterConfig> for ContextPrinter {
             self.interval.tick().await;
             let mut done: usize = 0;
             for (pipe_name, ctx) in &self.contexts {
-                let ref state = ctx.get_state();
+                let state = &ctx.get_state();
                 let total_run = ctx.get_total_run();
                 let failure_run = ctx.get_failure_run();
                 let display = PipeContext::new(

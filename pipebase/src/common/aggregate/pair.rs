@@ -11,7 +11,7 @@ pub trait LeftRight {
     type R;
     fn left(&self) -> &Self::L;
     fn right(&self) -> &Self::R;
-    fn as_tuple(self) -> (Self::L, Self::R);
+    fn into_tuple(self) -> (Self::L, Self::R);
 }
 
 impl<L, R> LeftRight for (L, R) {
@@ -26,7 +26,7 @@ impl<L, R> LeftRight for (L, R) {
         &self.1
     }
 
-    fn as_tuple(self) -> (L, R) {
+    fn into_tuple(self) -> (L, R) {
         self
     }
 }
@@ -51,7 +51,7 @@ impl<L, R> LeftRight for Pair<L, R> {
         &self.1
     }
 
-    fn as_tuple(self) -> (Self::L, Self::R) {
+    fn into_tuple(self) -> (Self::L, Self::R) {
         (self.0, self.1)
     }
 }
@@ -69,7 +69,7 @@ where
     R: Clone,
 {
     fn convert(rhs: P) -> Self {
-        let (l, r) = rhs.as_tuple();
+        let (l, r) = rhs.into_tuple();
         Pair::new(l, r)
     }
 }

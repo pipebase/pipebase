@@ -45,16 +45,10 @@ impl FileStreamReader for FileSplitReader {
         P: AsRef<Path> + Send,
     {
         let reader = Self::new_reader(path)?;
-        let mut iter = reader.split(self.delimiter);
+        let iter = reader.split(self.delimiter);
         let tx = self.tx.as_ref().unwrap();
-        loop {
-            let bin = match iter.next() {
-                Some(result) => result?,
-                None => {
-                    // EOF
-                    break;
-                }
-            };
+        for result in iter {
+            let bin = result?;
             tx.send(bin).await?;
         }
         Ok(())

@@ -41,7 +41,7 @@ impl RedisClient {
         V: ToRedisArgs + Clone,
     {
         self.reconnect()?;
-        let (k, v) = p.as_tuple();
+        let (k, v) = p.into_tuple();
         match self.connection.set::<K, V, ()>(k, v) {
             Ok(_) => Ok(()),
             Err(e) => {
@@ -59,7 +59,10 @@ impl RedisClient {
         U: IntoIterator<Item = T>,
     {
         self.reconnect()?;
-        let entries: Vec<(K, V)> = entries.into_iter().map(|entry| entry.as_tuple()).collect();
+        let entries: Vec<(K, V)> = entries
+            .into_iter()
+            .map(|entry| entry.into_tuple())
+            .collect();
         match self.connection.set_multiple::<K, V, ()>(entries.as_slice()) {
             Ok(_) => Ok(()),
             Err(err) => {
@@ -76,7 +79,7 @@ impl RedisClient {
         P: LeftRight<L = C, R = M>,
     {
         self.reconnect()?;
-        let (channel, message) = p.as_tuple();
+        let (channel, message) = p.into_tuple();
         match self.connection.publish::<C, M, ()>(channel, message) {
             Ok(_) => Ok(()),
             Err(err) => {

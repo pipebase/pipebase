@@ -130,7 +130,7 @@ impl<'a> SubscribeError for Streamer<'a> {
 impl<'a> Streamer<'a> {
     pub fn new(name: &'a str) -> Self {
         Streamer {
-            name: name,
+            name,
             context: Default::default(),
             etx: None,
         }

@@ -78,7 +78,7 @@ impl<'a> HasContext for Exporter<'a> {
 impl<'a> Exporter<'a> {
     pub fn new(name: &'a str) -> Self {
         Exporter {
-            name: name,
+            name,
             context: Default::default(),
             etx: None,
         }

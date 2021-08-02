@@ -13,7 +13,7 @@ impl Averagef32 {
     }
 
     pub fn average(&self) -> f32 {
-        assert_ne!(self.1, 0.0, "divide by zero");
+        assert!(self.1 > 0 as f32, "invalid count of Averagef32");
         self.0 / self.1
     }
 

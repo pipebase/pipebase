@@ -41,7 +41,7 @@ where
     /// `candidates`: index of downstreams
     async fn select(&mut self, _t: &T, candidates: &[&usize]) -> anyhow::Result<Vec<usize>> {
         let i = self.i % candidates.len();
-        let selected = vec![candidates[i].clone()];
+        let selected = vec![*candidates[i]];
         self.i = i + 1;
         Ok(selected)
     }

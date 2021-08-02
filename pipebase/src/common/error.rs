@@ -102,7 +102,7 @@ pub trait SubscribeError {
 pub(crate) async fn send_pipe_error(tx: Option<&Sender<PipeError>>, pipe_error: PipeError) {
     let tx = match tx {
         Some(tx) => tx,
-        None => return (),
+        None => return,
     };
     match tx.send(pipe_error).await {
         Ok(_) => (),
