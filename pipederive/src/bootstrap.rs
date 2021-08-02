@@ -14,18 +14,14 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{Attribute, Generics, ItemFn, NestedMeta};
 
-pub fn impl_bootstrap(
-    ident: &Ident,
-    attributes: &Vec<Attribute>,
-    generics: &Generics,
-) -> TokenStream {
+pub fn impl_bootstrap(ident: &Ident, attributes: &[Attribute], generics: &Generics) -> TokenStream {
     let ident_location = ident.to_string();
     let pipe_attributes = get_all_pipe_attributes(attributes);
     let cstore_attributes = get_all_context_store_attribute(attributes);
     let error_handler_attribute = get_any_error_handler_attribute(attributes);
     // parse metas
     let pipe_metas = PipeMetas::parse(&pipe_attributes, &ident_location);
-    let ref pipe_idents = pipe_metas.list_pipe_ident();
+    let pipe_idents = &pipe_metas.list_pipe_ident();
     let mut cstore_metas = ContextStoreMetas::parse(&cstore_attributes, &ident_location);
     cstore_metas.add_pipes(pipe_idents.to_owned());
     let error_handler_meta =
@@ -106,7 +102,7 @@ pub fn impl_bootstrap(
     }
 }
 
-fn merge_all_exprs(exprs: &Vec<String>, sep: &str) -> String {
+fn merge_all_exprs(exprs: &[String], sep: &str) -> String {
     exprs.join(sep)
 }
 
@@ -209,17 +205,16 @@ fn resolve_join_all_expr(
     let mut join_expr = JoinExpr::default();
     pipe_metas.accept(&mut join_expr);
     cstore_metas.accept(&mut join_expr);
-    match error_handler_meta {
-        Some(meta) => meta.accept(&mut join_expr),
-        None => (),
-    };
+    if let Some(meta) = error_handler_meta {
+        meta.accept(&mut join_expr)
+    }
     match join_expr.get_expr() {
         Some(expr) => vec![expr],
         None => vec![],
     }
 }
 
-fn parse_exprs(exprs: &Vec<String>) -> TokenStream {
+fn parse_exprs(exprs: &[String]) -> TokenStream {
     let expr_tokens = exprs.iter().map(|expr| parse_expr(expr));
     quote! {
         #(#expr_tokens);*
@@ -230,15 +225,15 @@ fn parse_expr(expr: &str) -> TokenStream {
     expr.parse().unwrap()
 }
 
-fn get_all_pipe_attributes(attributes: &Vec<Attribute>) -> Vec<Attribute> {
+fn get_all_pipe_attributes(attributes: &[Attribute]) -> Vec<Attribute> {
     get_all_attributes_by_meta_prefix(BOOTSTRAP_PIPE, attributes)
 }
 
-fn get_all_context_store_attribute(attributes: &Vec<Attribute>) -> Vec<Attribute> {
+fn get_all_context_store_attribute(attributes: &[Attribute]) -> Vec<Attribute> {
     get_all_attributes_by_meta_prefix(CONTEXT_STORE, attributes)
 }
 
-fn get_any_error_handler_attribute(attributes: &Vec<Attribute>) -> Option<Attribute> {
+fn get_any_error_handler_attribute(attributes: &[Attribute]) -> Option<Attribute> {
     get_any_attribute_by_meta_prefix(ERROR_HANDLER, attributes, false, "")
 }
 
@@ -293,7 +288,7 @@ pub fn impl_bootstrap_main_macro(args: Vec<NestedMeta>, mut function: ItemFn) ->
     }
 }
 
-fn find_bootstrap_module(args: &Vec<NestedMeta>) -> TokenStream {
+fn find_bootstrap_module(args: &[NestedMeta]) -> TokenStream {
     for arg in args {
         let meta = match arg {
             NestedMeta::Meta(meta) => meta,

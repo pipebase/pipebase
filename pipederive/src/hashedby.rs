@@ -30,7 +30,7 @@ fn is_hash_field(field: &Field) -> bool {
     get_any_attribute_by_meta_prefix(HASH, &field.attrs, false, "").is_some()
 }
 
-fn hash_fields_token(fields: &Vec<Field>) -> TokenStream {
+fn hash_fields_token(fields: &[Field]) -> TokenStream {
     let hashed_fields = fields.iter().map(|f| hash_field_token(f));
     quote! {
         #(#hashed_fields);*

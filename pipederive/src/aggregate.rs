@@ -13,7 +13,7 @@ use syn::{Attribute, Data, Field, Generics};
 
 pub fn impl_aggregate_as(
     ident: &Ident,
-    attributes: &Vec<Attribute>,
+    attributes: &[Attribute],
     data: &Data,
     generics: &Generics,
 ) -> TokenStream {
@@ -54,8 +54,8 @@ fn get_avgf32_ty(field: &Field, ident_location: &str) -> TokenStream {
         field.ident.as_ref().unwrap().to_string(),
         ident_location
     );
-    let ref attribute =
-        get_any_attribute_by_meta_prefix(AGGREGATE_AVG_F32, &field.attrs, true, &ident_location)
+    let attribute =
+        &get_any_attribute_by_meta_prefix(AGGREGATE_AVG_F32, &field.attrs, true, &ident_location)
             .unwrap();
     let ty = get_meta_string_value_by_meta_path(AGGREGATE_AVG_F32, &get_meta(attribute), false, "");
     match ty {
@@ -64,11 +64,11 @@ fn get_avgf32_ty(field: &Field, ident_location: &str) -> TokenStream {
     }
 }
 
-fn is_top(attributes: &Vec<Attribute>) -> bool {
+fn is_top(attributes: &[Attribute]) -> bool {
     get_any_attribute_by_meta_prefix(AGGREGATE_TOP, attributes, false, "").is_some()
 }
 
-fn get_count32_attribute(attributes: &Vec<Attribute>) -> Option<Attribute> {
+fn get_count32_attribute(attributes: &[Attribute]) -> Option<Attribute> {
     get_any_attribute_by_meta_prefix(AGGREGATE_COUNT32, attributes, false, "")
 }
 
@@ -81,10 +81,10 @@ fn get_count32_ty(attribute: &Attribute) -> TokenStream {
 }
 
 fn aggregate_for_sum(field: Option<Field>, ident: &Ident, generics: &Generics) -> TokenStream {
-    let ref field = match field {
+    let field = &(match field {
         Some(field) => field,
         None => return quote! {},
-    };
+    });
     let agg_field_ty = &field.ty;
     let agg_field_ident = field.ident.as_ref().unwrap();
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
@@ -122,10 +122,10 @@ fn aggregate_for_count32(ident: &Ident, generics: &Generics, attribute: &Attribu
 }
 
 fn aggregate_for_avgf32(field: Option<Field>, ident: &Ident, generics: &Generics) -> TokenStream {
-    let ref field = match field {
+    let field = &(match field {
         Some(field) => field,
         None => return quote! {},
-    };
+    });
     let agg_field_ident = field.ident.as_ref().unwrap();
     let ident_location = format!("{}.{}", ident.to_string(), agg_field_ident.to_string());
     let avgf32_ty = get_avgf32_ty(field, &ident_location);
