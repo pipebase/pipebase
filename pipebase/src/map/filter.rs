@@ -46,7 +46,7 @@ where
     async fn map(&mut self, data: U) -> anyhow::Result<V> {
         Ok(data
             .into_iter()
-            .filter(|item| T::filter(&item))
+            .filter(|item| T::filter(item))
             .collect::<V>())
     }
 }

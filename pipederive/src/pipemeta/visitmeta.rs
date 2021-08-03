@@ -47,8 +47,8 @@ impl VisitPipeMeta for ChannelExpr {
             None => return,
         };
         let pipe_name = meta.get_name();
-        let tx_name = Self::gen_sender_name(&pipe_name);
-        let rx_name = Self::gen_receiver_name(&pipe_name);
+        let tx_name = Self::gen_sender_name(pipe_name);
+        let rx_name = Self::gen_receiver_name(pipe_name);
         self.lhs = Some(format!("({}, {})", tx_name, rx_name));
         self.rhs = Some(format!(
             "{}({}, {})",
@@ -87,8 +87,8 @@ impl VisitPipeMeta for PipeExpr {
         let pipe_name = meta.get_name();
         let pipe_ident = meta.get_ident();
         let ty = meta.get_ty();
-        let rhs = format!(r#"{}("{}")"#, Self::pipe_type_macro(&ty), pipe_name,);
-        self.lhs = Some(Self::prepend_mut(&pipe_ident));
+        let rhs = format!(r#"{}("{}")"#, Self::pipe_type_macro(ty), pipe_name);
+        self.lhs = Some(Self::prepend_mut(pipe_ident));
         self.rhs = Some(rhs);
     }
 }
@@ -126,7 +126,7 @@ impl VisitPipeMeta for RunPipeExpr {
         let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
         // receiver is none for poller and listener
         let receiver_expr = match upstream_output_type_name {
-            Some(_) => Self::gen_recevier_expr(&pipe_name),
+            Some(_) => Self::gen_recevier_expr(pipe_name),
             None => String::from("{ None }"),
         };
         let rhs = format!(
@@ -215,7 +215,7 @@ impl VisitContextStoreMeta for ContextStoreExpr {
         let name = meta.get_name();
         let ident = meta.get_ident();
         let rhs = format!(r#"{}("{}")"#, CONTEXT_STORE_MACRO, name);
-        self.lhs = Some(Self::prepend_mut(&ident));
+        self.lhs = Some(Self::prepend_mut(ident));
         self.rhs = Some(rhs);
     }
 }
