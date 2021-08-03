@@ -1,3 +1,13 @@
+<div align="center">
+<img src=".github/assets/banner.png"></img>
+
+[![Build Status]][travis]
+
+[Build Status]: https://github.com/pipebase/pipebase/actions/workflows/ci.yml/badge.svg
+[travis]: https://github.com/pipebase/pipebase/actions?branch%3Amain
+</div>
+<br />
+
 `pipebase` is a data integration framework, provides:
 
 * *manifest*, specification of pipe / custom data object in YAML format
