@@ -2,5 +2,5 @@
 delay:
   Millis: 1000
 interval:
-  Millis: 1000
-ticks: 10
+  Millis: 500
+ticks: 20
