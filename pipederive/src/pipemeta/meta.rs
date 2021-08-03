@@ -202,7 +202,7 @@ impl PipeMetas {
         let mut downstream_pipe_names: HashMap<String, Vec<String>> = HashMap::new();
         let mut upstream_pipe_names: HashMap<String, HashSet<String>> = HashMap::new();
         for attribute in attributes {
-            let pipe_meta = &PipeMeta::parse(&attribute, ident_location);
+            let pipe_meta = &PipeMeta::parse(attribute, ident_location);
             let pipe_name = pipe_meta.get_name();
             assert!(
                 pipe_names.insert(pipe_name.to_owned()),

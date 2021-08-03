@@ -381,7 +381,7 @@ impl Object {
 
     pub fn get_metas_literal(&self, indent: usize) -> Option<String> {
         let metas = self.metas.as_ref().expect("object metas not inited");
-        Some(metas_to_literal(&metas, indent))
+        Some(metas_to_literal(metas, indent))
     }
 
     pub fn get_fields(&self) -> &Vec<DataField> {
