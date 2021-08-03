@@ -34,23 +34,32 @@ pub fn do_generate(
     opts: &GenerateOptions,
     printer: &mut Printer,
 ) -> anyhow::Result<()> {
-    let main_path = path_buf.as_path();
-    printer.status(&"Generate", main_path.to_str().unwrap())?;
+    let main_path = path_buf
+        .as_path()
+        .to_str()
+        .expect("invalid main path")
+        .to_owned();
+    printer.status(&"Generate", &main_path)?;
     let contents = match opts.get_pipe_name() {
         Some(pipe_name) => app.generate_pipes(pipe_name)?,
         None => app.generate(),
     };
-    fs::write(main_path, contents)?;
     // pop main.rs
     path_buf.pop();
     // pop src
     path_buf.pop();
     path_buf.push(CARGO_MANIFEST_FILE);
+    let toml_manifest_path = path_buf.as_path();
+    if let Err(err) = fs::write(&main_path, contents) {
+        if !toml_manifest_path.exists() {
+            printer.error("no app found, try 'cargo pipe new' first")?
+        }
+        return Err(err.into());
+    }
     // replace dependency in cargo.toml
-    do_apply_additional_dependency(app, path_buf.as_path(), printer)?;
-    let manifest_path = path_buf.as_path();
+    do_apply_additional_dependency(app, toml_manifest_path, printer)?;
     // cargo format
-    let status_code = do_cargo_fmt(manifest_path, printer)?;
+    let status_code = do_cargo_fmt(toml_manifest_path, printer)?;
     match status_code {
         0 => (),
         _ => process::exit(status_code),
