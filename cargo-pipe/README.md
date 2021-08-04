@@ -27,6 +27,7 @@ run app
 ```
 ./timer
 ```
+Note that, any change to `pipe.yml` requires re-run `validate`, `generate`, `build` steps
 
 [`cargo-pipe`]: https://github.com/pipebase/pipebase/tree/main/cargo-pipe
 [`clap`]: https://github.com/clap-rs/clap
