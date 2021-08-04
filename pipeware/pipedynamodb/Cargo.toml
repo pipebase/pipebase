@@ -2,13 +2,17 @@
 name = "pipedynamodb"
 version = "0.1.0"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "Apache-2.0"
+repository = "https://github.com/pipebase/pipebase"
+homepage = "https://github.com/pipebase/pipebase"
+readme = "README.md"
+description = "A pipebase plugin using aws dynamodb rust sdk"
+keywords = ["pipebase", "pipeware", "aws", "dynamodb"]
 
 [dependencies]
 async-trait = "0.1.50"
 anyhow = "1.0"
 log = "0.4.14"
-pipebase = { path = "../../pipebase" }
+pipebase = { version = "0.1.0", path = "../../pipebase" }
 serde = { version = "1.0", features = ["derive"] }
 dynamodb = { git = "https://github.com/awslabs/aws-sdk-rust", tag = "v0.0.12-alpha", package = "aws-sdk-dynamodb" }

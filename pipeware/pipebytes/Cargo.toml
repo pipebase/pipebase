@@ -2,10 +2,14 @@
 name = "pipebytes"
 version = "0.1.0"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "Apache-2.0"
+repository = "https://github.com/pipebase/pipebase"
+homepage = "https://github.com/pipebase/pipebase"
+readme = "README.md"
+description = "A pipebase plugin using byteorder"
+keywords = ["pipebase", "pipeware", "byteorder"]
 
 [dependencies]
 anyhow = "1.0"
 byteorder = "1.4.3"
-pipebase = { path = "../../pipebase" }
+pipebase = { version = "0.1.0", path = "../../pipebase" }
