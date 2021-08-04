@@ -3,6 +3,7 @@ name = "pipegen"
 version = "0.1.0"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
+license = "Apache-2.0"
 repository = "https://github.com/pipebase/pipebase"
 homepage = "https://github.com/pipebase/pipebase"
 readme = "README.md"
