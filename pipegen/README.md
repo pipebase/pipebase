@@ -9,6 +9,28 @@ A `manifest` is composed of following sections:
 * `cstores`, list of pipe runtime [`context store`] definition
 * `error`, pipe [`error handler`] definition
 
+## Dependency
+App dependency, similar as [`cargo dependencies`]
+example:
+```
+dependencies:
+  - name: pipebase
+    version: 0.1.0
+    modules: ["pipebase::prelude::*"]
+```
+Specification
+| Field | Description | Required |
+| ----- | ----------- | -------- |
+| `name` | crate name | true |
+| `version` | crate version | false |
+| `path` | local crate path | false |
+| `git` | git repository url | false |
+| `branch` | git repository branch | false |
+| `tag` | git repository tag | false |
+| `features` | [`cargo features`] | false |
+| `package` | package in [`cargo workspace`] | false |
+| `modules` | list of used modules | true |
+
 ## Pipe
 Pipes are the smallest runtime unit that you can create, example:
 ```
@@ -23,12 +45,12 @@ output:
 Specification
 | Field | Description | Required |
 | ----- | ----------- | -------- |
-| name | pipe name in snake_case | true |
-| ty | [`pipe type`] | true |
-| config.ty | pipe config type | true |
-| config.path | path to pipe config file | false |
-| upstreams | list of upstream pipe names | false if `ty` is `Poller` or `Listener` |
-| output | output data type (unnamed [`data field`]) | false if [`pipe type`] is `Exporter` |
+| `name` | pipe name in snake_case | true |
+| `ty` | [`pipe type`] | true |
+| `config.ty` | pipe config type | true |
+| `config.path` | path to pipe config file | false |
+| `upstreams` | list of upstream pipe names | false if `ty` is `Poller` or `Listener` |
+| `output` | output data type (unnamed [`data field`]) | false if [`pipe type`] is `Exporter` |
 
 Note that:
 * pipes are wired as **directed acyclic graph** with upstreams
@@ -61,9 +83,9 @@ fields:
 Specification
 | Field | Description | Required |
 | ----- | ----------- | -------- |
-| ty | object type in CamelCase | true |
-| metas | list of [`meta`]s per object | false |
-| fields | list of [`data field`]s | true |
+| `ty` | object type in CamelCase | true |
+| `metas` | list of [`meta`]s per object | false |
+| `fields` | list of [`data field`]s | true |
 
 ## Meta
 Meta defines additional attributes of an object so that it satisfy trait bounds of a pipe's input. See example [`fix_left_right`], [`fix_convert`] understand when and how to use metas
@@ -71,10 +93,10 @@ Meta defines additional attributes of an object so that it satisfy trait bounds 
 ## Data Field
 | Field | Description | Required |
 | ----- | ----------- | -------- |
-| name | field name | false  |
-| ty | [`data type`] | true |
-| metas | list of [`meta`]s per field | false |
-| is_public | field is public or not | false |
+| `name` | field name | false  |
+| `ty` | [`data type`] | true |
+| `metas` | list of [`meta`]s per field | false |
+| `is_public` | field is public or not | false |
 
 ## Data Type
 | Type | In Rust |
@@ -138,3 +160,6 @@ Listen errors from all pipes, example [`error_printer`]
 [`fix_left_right`]: https://github.com/pipebase/pipebase/tree/main/examples/fix_left_right
 [`fix_convert`]: https://github.com/pipebase/pipebase/tree/main/examples/fix_convert
 [`error_printer`]: https://github.com/pipebase/pipebase/tree/main/examples/error_printer
+[`cargo dependencies`]: https://doc.rust-lang.org/cargo/guide/dependencies.html#dependencies
+[`cargo features`]: https://doc.rust-lang.org/cargo/reference/features.html
+[`cargo workspace`]: https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html

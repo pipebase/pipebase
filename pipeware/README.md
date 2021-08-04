@@ -4,36 +4,36 @@
 Pipes
 | pipe type | implementation | example |
 | --------- | -------------- | ------- |
-| `Listener`  | WarpIngestionServer | `ingest_*` |
-| `Listener` | KafkaConsumer | [`consume_kafka`] |
-| `Listener` | KubeLogReader | [`kube_log`] |
-| `Listener` | KubeEventReader | [`kube_event`] |
-| `Listener` | RedisSubscriber | [`pubsub_redis`] |
-| `Poller` | SqsMessageReceiver | [`consume_sqs`] |
-| `Mapper` | JsonSer |  |
-| `Mapper` | JsonDeser | `ingest_*` |
-| `Mapper` | CsvSer | [`convert_csv`] |
-| `Mapper` | CsvDeser |  |
-| `Mapper` | RedisUnorderedGroupAddAggregator | [`group_sum_redis`], [`group_avg_redis`], [`group_count_redis`] |
-| `Mapper` | RocksDBUnorderedGroupAddAggregator | [`group_sum_rocksdb`], [`group_avg_rocksdb`], [`group_count_rocksdb`] |
-| `Mapper` | KafkaJsonRecordConverter | [`ingest_kafka`] |
-| `Mapper` | ReqwestGetter | [`stripe_get_charge`] |
-| `Mapper` | ReqwestQuery | [`stripe_query_charge`] |
-| `Exporter` | CqlWriter | [`ingest_cassandra`] |
-| `Exporter` | PsqlWriter | [`ingest_postgres`] |
-| `Exporter` | RedisStringWriter | [`ingest_redis`] |
-| `Exporter` | RedisPublisher | [`pubsub_redis`] |
-| `Exporter` | ReqwestPoster | [`relay`], [`ingest_elasticsearch`] |
-| `Exporter` | KafkaProducer | [`ingest_kafka`] |
+| `Listener`  | [`WarpIngestionServer`] | `ingest_*` |
+| `Listener` | [`KafkaConsumer`] | [`consume_kafka`] |
+| `Listener` | [`KubeLogReader`] | [`kube_log`] |
+| `Listener` | [`KubeEventReader`] | [`kube_event`] |
+| `Listener` | [`RedisSubscriber`] | [`pubsub_redis`] |
+| `Poller` | [`SqsMessageReceiver`] | [`consume_sqs`] |
+| `Mapper` | [`JsonSer`] |  |
+| `Mapper` | [`JsonDeser`] | `ingest_*` |
+| `Mapper` | [`CsvSer`] | [`convert_csv`] |
+| `Mapper` | [`CsvDeser`] |  |
+| `Mapper` | [`RedisUnorderedGroupAddAggregator`] | [`group_sum_redis`], [`group_avg_redis`], [`group_count_redis`] |
+| `Mapper` | [`RocksDBUnorderedGroupAddAggregator`] | [`group_sum_rocksdb`], [`group_avg_rocksdb`], [`group_count_rocksdb`] |
+| `Mapper` | [`KafkaJsonRecordConverter`] | [`ingest_kafka`] |
+| `Mapper` | [`ReqwestGetter`] | [`stripe_get_charge`] |
+| `Mapper` | [`ReqwestQuery`] | [`stripe_query_charge`] |
+| `Exporter` | [`CqlWriter`] | [`ingest_cassandra`] |
+| `Exporter` | [`PsqlWriter`] | [`ingest_postgres`] |
+| `Exporter` | [`RedisStringWriter`] | [`ingest_redis`] |
+| `Exporter` | [`RedisPublisher`] | [`pubsub_redis`] |
+| `Exporter` | [`ReqwestPoster`] | [`relay`], [`ingest_elasticsearch`] |
+| `Exporter` | [`KafkaProducer`] | [`ingest_kafka`] |
 | `Exporter` | S3Writer | [`upload_s3`] |
-| `Exporter` | MySQLWriter | [`ingest_mysql`] |
+| `Exporter` | [`MySQLWriter`] | [`ingest_mysql`] |
 | `Exporter` | DynamoDBWriter | [`ingest_dynamodb`] |
 | `Exporter` | SnsPublisher | [`pubsub_sns`] |
 
 Context Stores
 | implementation | example |
 | -------------- | ------- |
-| WarpContextServer | `ingest_*` |
+| [`WarpContextServer`] | `ingest_*` |
 
 Error Handlers
 | implementation | example |
@@ -66,3 +66,26 @@ Error Handlers
 [`ingest_dynamodb`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_dynamodb
 [`pubsub_sns`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_sns
 [`error_sns_publisher`]: https://github.com/pipebase/pipebase/tree/main/examples/error_sns_publisher
+
+[`WarpIngestionServer`]: https://docs.rs/pipewarp/
+[`KafkaConsumer`]: https://docs.rs/pipekafka/
+[`KubeLogReader`]: https://docs.rs/pipekube/
+[`KubeEventReader`]: https://docs.rs/pipekube/
+[`RedisSubscriber`]: https://docs.rs/piperedis/
+[`JsonSer`]: https://docs.rs/pipejson/
+[`JsonDeser`]: https://docs.rs/pipejson/
+[`CsvSer`]: https://docs.rs/pipecsv/
+[`CsvDeser`]: https://docs.rs/pipecsv/
+[`RedisUnorderedGroupAddAggregator`]: https://docs.rs/piperedis/
+[`RocksDBUnorderedGroupAddAggregator`]: https://docs.rs/piperocksdb/
+[`KafkaJsonRecordConverter`]: https://docs.rs/pipekafka/
+[`ReqwestGetter`]: https://docs.rs/pipereqwest/
+[`ReqwestQuery`]: https://docs.rs/pipereqwest/
+[`CqlWriter`]: https://docs.rs/pipecql/
+[`PsqlWriter`]: https://docs.rs/pipepsql/
+[`RedisStringWriter`]: https://docs.rs/piperedis/
+[`RedisPublisher`]: https://docs.rs/piperedis/
+[`ReqwestPoster`]: https://docs.rs/pipereqwest/
+[`KafkaProducer`]: https://docs.rs/pipekafka/
+[`MySQLWriter`]: https://docs.rs/pipemysql/
+[`WarpContextServer`]: https://docs.rs/pipewarp/

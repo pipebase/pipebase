@@ -5,6 +5,7 @@ authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
 repository = "https://github.com/pipebase/pipebase"
+documentation = "https://docs.rs/pipebase/"
 homepage = "https://github.com/pipebase/pipebase"
 readme = "README.md"
 description = "A tokio based runtime library for data integration app"

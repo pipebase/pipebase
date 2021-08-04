@@ -1,7 +1,7 @@
 [`pipebase`] is a [`tokio`] based runtime library for data integration app. It provides basic [`pipes`] implemented with rust standard library.
 
 ## Basic Pipes
-Here is a list of basic pipes built in `pipebase`
+list of basic pipes built in `pipebase`
 | pipe type | implementation | example |
 | --------- | -------------- | ------- |
 | `Exporter` | `Printer` | [`printer`] |

@@ -1,11 +1,11 @@
-[`cargo-pipe`] is a [`clap`] based command line tool to generate and build data integration app with manifest
+[`cargo-pipe`] is a [`clap`] based command-line tool to generate and build data integration app with manifest
 
 ## Installation
-Install Rust and Cargo
+install Rust and Cargo
 ```sh
 curl https://sh.rustup.rs -sSf | sh
 ```
-Install `cargo-pipe` CLI
+install `cargo-pipe` CLI
 ```
 cargo install cargo-pipe
 ```
@@ -27,6 +27,7 @@ run app
 ```
 ./timer
 ```
+Note that, any change to `pipe.yml` requires re-run `validate`, `generate`, `build` steps
 
 [`cargo-pipe`]: https://github.com/pipebase/pipebase/tree/main/cargo-pipe
 [`clap`]: https://github.com/clap-rs/clap
