@@ -3,6 +3,11 @@ name = "pipederive"
 version = "0.1.0"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
+repository = "https://github.com/pipebase/pipebase"
+homepage = "https://github.com/pipebase/pipebase"
+readme = "README.md"
+description = "Proc macros for data integration app using pipebase framework"
+keywords = ["data", "integration", "pipeline", "declarative"]
 
 [lib]
 proc-macro = true
