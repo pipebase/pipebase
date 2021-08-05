@@ -46,7 +46,7 @@ impl Printer {
     }
 
     pub fn warning<T: fmt::Display>(&mut self, message: T) -> anyhow::Result<()> {
-        self.print(&"Warning", Some(&message), Color::Red)
+        self.print(&"Warning", Some(&message), Color::Yellow)
     }
 
     pub fn result<T: fmt::Display>(&mut self, message: T) -> anyhow::Result<()> {
