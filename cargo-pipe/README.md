@@ -16,7 +16,7 @@ cargo pipe --help
 ```
 
 ## Quick Start
-go to resources folder
+go to [`resources`] folder
 ```
 cargo pipe new && \
 cargo pipe validate -o -p && \
@@ -30,4 +30,5 @@ run app
 Note that, any change to `pipe.yml` requires re-run `validate`, `generate`, `build` steps
 
 [`cargo-pipe`]: https://github.com/pipebase/pipebase/tree/main/cargo-pipe
+[`resources`]: https://github.com/pipebase/pipebase/tree/main/cargo-pipe/resources
 [`clap`]: https://github.com/clap-rs/clap
