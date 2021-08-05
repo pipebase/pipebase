@@ -35,8 +35,11 @@ query redis (terminal 1)
 redis-cli get "foo"
 ```
 open [browser](http://localhost:8000/v1/pipe) and list all pipes
-### Shutdown the pipe
+### Shutdown Pipes and App
 ```
-curl -i -X POST -H "Content-Type: application/json" -d @record.json  http://localhost:9000/v1/shutdown
+curl -i -X POST http://localhost:9000/v1/shutdown
 ```
-all pipes in `done` state
+refresh browser all pipes in `done` state, then further stop context server and app exit
+```
+curl -i -X POST http://localhost:8000/v1/shutdown
+```
