@@ -99,9 +99,9 @@ mod filters {
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         ingest_v1(sender, state.to_owned())
             .or(pause_v1(state.to_owned()))
-            .or(resume_v1(state))
+            .or(resume_v1(state.to_owned()))
             .or(shutdown_v1(shutdown_tx))
-            .or(health())
+            .or(health(state))
     }
 
     pub fn ingest_v1(
@@ -162,9 +162,12 @@ mod filters {
         warp::any().map(move || state.clone())
     }
 
-    pub fn health() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    pub fn health(
+        state: Arc<WarpIngestionServerState>,
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::path!("v1" / "health")
             .and(warp::get())
+            .and(with_state(state))
             .and_then(handlers::health)
     }
 }
@@ -230,8 +233,13 @@ mod handlers {
             .body(serde_json::to_string(&failure).unwrap()))
     }
 
-    pub async fn health() -> Result<impl warp::Reply, Infallible> {
-        Ok(StatusCode::OK)
+    pub async fn health(
+        state: Arc<WarpIngestionServerState>,
+    ) -> Result<impl warp::Reply, Infallible> {
+        let health = models::Health::new(!state.is_pause());
+        Ok(Response::builder()
+            .status(StatusCode::OK)
+            .body(serde_json::to_string(&health).unwrap()))
     }
 }
 
@@ -270,6 +278,17 @@ mod models {
     impl Maintenance {
         pub fn new(message: String) -> Self {
             Maintenance { message }
+        }
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Health {
+        running: bool,
+    }
+
+    impl Health {
+        pub fn new(running: bool) -> Self {
+            Health { running }
         }
     }
 }
