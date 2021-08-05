@@ -237,9 +237,7 @@ mod handlers {
         state: Arc<WarpIngestionServerState>,
     ) -> Result<impl warp::Reply, Infallible> {
         let health = models::Health::new(!state.is_pause());
-        Ok(Response::builder()
-            .status(StatusCode::OK)
-            .body(serde_json::to_string(&health).unwrap()))
+        Ok(warp::reply::json(&health))
     }
 }
 
