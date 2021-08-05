@@ -30,23 +30,6 @@ objects:
         ty: Integer
       - name: bar2
         ty: String
-  - ty: ProjectedBar
-    metas:
-      - derives: [Clone, Debug, Project]
-      - project: 
-          input: Bar
-    fields:
-      - name: bar1
-        ty: Integer
-        metas:
-          - project:
-              from: bar1
-      - name: bar2
-        ty: String
-        metas:
-          - project:
-              expr: "b.bar2.to_owned()"
-              alias: "b"
 cstores:
   - name: "context_printer"
     config:
