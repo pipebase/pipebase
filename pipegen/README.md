@@ -32,7 +32,7 @@ Specification
 | `modules` | list of used modules | true |
 
 ## Pipe
-Pipes are the smallest runtime unit that you can create, example:
+Pipes are the smallest runtime unit to create, example:
 ```
 name: timer1
 ty: Poller
@@ -131,7 +131,7 @@ Meta defines additional attributes of an object so that it satisfy trait bounds 
 | `Pair` | `pipebase::common::Pair<L, R>` |
 
 ## Context Store
-Store all pipe runtime contexts including: `pipe name`, [`pipe state`], `total run`, `failure run`
+Store pipe runtime contexts including: `pipe name`, [`pipe state`], `total run`, `failure run`
 
 ## Pipe State
 | State | Pipe Type |
@@ -145,7 +145,7 @@ Store all pipe runtime contexts including: `pipe name`, [`pipe state`], `total r
 | `Done` | all |
 
 ## Error Handler
-Listen errors from all pipes, example [`error_printer`]
+Listen errors from pipes, example [`error_printer`]
 
 [`data field`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-field
 [`data type`]: https://github.com/pipebase/pipebase/tree/main/pipegen#data-type
