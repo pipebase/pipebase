@@ -4,6 +4,7 @@ use std::{collections::HashMap, net::SocketAddr};
 use pipebase::common::{ConfigInto, Context, FromConfig, FromPath, PipeContext};
 use pipebase::context::StoreContext;
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc::channel;
 
 #[derive(Deserialize, Serialize)]
 pub struct PipeContextQuery {
@@ -57,9 +58,13 @@ impl StoreContext<WarpContextServerConfig> for WarpContextServer {
 impl WarpContextServer {
     async fn do_run(&self) {
         let repository = self.repository();
-        let api = filters::contexts(repository);
+        let (shutdown_tx, mut shutdown_rx) = channel::<()>(1);
+        let api = filters::contexts(repository, shutdown_tx);
         let socket = self.socket.to_owned();
-        warp::serve(api).run(socket).await
+        let (_, server) = warp::serve(api).bind_with_graceful_shutdown(socket, async move {
+            shutdown_rx.recv().await;
+        });
+        server.await;
     }
 
     fn repository(&self) -> PipeContextRepository {
@@ -129,14 +134,17 @@ mod filters {
 
     use super::handlers;
     use super::PipeContextRepository;
+    use tokio::sync::mpsc::Sender;
     use warp::Filter;
 
     pub fn contexts(
         repository: PipeContextRepository,
+        shutdown_tx: Sender<()>,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         context_query_v1(repository.to_owned())
             .or(context_get_v1(repository.to_owned()))
             .or(context_list_v1(repository))
+            .or(shutdown_v1(shutdown_tx))
             .or(health())
     }
 
@@ -168,11 +176,26 @@ mod filters {
             .and_then(handlers::query_context)
     }
 
+    pub fn shutdown_v1(
+        shutdown_tx: Sender<()>,
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::path!("v1" / "shutdown")
+            .and(warp::post())
+            .and(with_shutdown_tx(shutdown_tx))
+            .and_then(handlers::shutdown)
+    }
+
     fn with_repository(
         repository: PipeContextRepository,
     ) -> impl Filter<Extract = (PipeContextRepository,), Error = std::convert::Infallible> + Clone
     {
         warp::any().map(move || repository.clone())
+    }
+
+    fn with_shutdown_tx(
+        shutdown_tx: Sender<()>,
+    ) -> impl Filter<Extract = (Sender<()>,), Error = std::convert::Infallible> + Clone {
+        warp::any().map(move || shutdown_tx.clone())
     }
 
     pub fn health() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -183,8 +206,9 @@ mod filters {
 }
 
 mod handlers {
-    use super::{PipeContextQuery, PipeContextRepository};
+    use super::{models, PipeContextQuery, PipeContextRepository};
     use std::convert::Infallible;
+    use tokio::sync::mpsc::Sender;
     use warp::http::{Response, StatusCode};
 
     pub async fn list_contexts(
@@ -204,7 +228,7 @@ mod handlers {
                 .body(serde_json::to_string(&context).unwrap())),
             None => Ok(Response::builder()
                 .status(StatusCode::NOT_FOUND)
-                .body(format!(r#"pipe {} not found"#, &name))),
+                .body(format!("pipe '{}' not found", &name))),
         }
     }
 
@@ -216,7 +240,36 @@ mod handlers {
         Ok(warp::reply::json(&contexts))
     }
 
+    pub async fn shutdown(shutdown_tx: Sender<()>) -> Result<impl warp::Reply, Infallible> {
+        let sent = shutdown_tx.send(()).await.is_ok();
+        if sent {
+            return Ok(Response::builder()
+                .status(StatusCode::OK)
+                .body("shutdown ...".to_string()));
+        }
+        let failure = models::Failure::new("failed to shutdown".to_string());
+        Ok(Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(serde_json::to_string(&failure).unwrap()))
+    }
+
     pub async fn health() -> Result<impl warp::Reply, Infallible> {
         Ok(StatusCode::OK)
+    }
+}
+
+mod models {
+
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Failure {
+        pub error: String,
+    }
+
+    impl Failure {
+        pub fn new(error: String) -> Self {
+            Failure { error }
+        }
     }
 }
