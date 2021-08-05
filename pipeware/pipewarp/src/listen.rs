@@ -11,7 +11,7 @@ use std::{
         Arc,
     },
 };
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::{channel, Sender};
 
 #[derive(Deserialize)]
 pub struct WarpIngestionServerConfig {
@@ -76,9 +76,13 @@ impl WarpIngestionServer {
             .to_owned()
             .expect("sender not found for rest server as listener");
         let state = self.state.to_owned();
-        let api = filters::ingest(tx, state);
+        let (shutdown_tx, mut shutdown_rx) = channel::<()>(1);
+        let api = filters::ingest(tx, state, shutdown_tx);
         let socket = self.socket.to_owned();
-        warp::serve(api).run(socket).await
+        let (_, server) = warp::serve(api).bind_with_graceful_shutdown(socket, async move {
+            shutdown_rx.recv().await;
+        });
+        server.await
     }
 }
 
@@ -91,10 +95,12 @@ mod filters {
     pub fn ingest(
         sender: Sender<Vec<u8>>,
         state: Arc<WarpIngestionServerState>,
+        shutdown_tx: Sender<()>,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         ingest_v1(sender, state.to_owned())
             .or(pause_v1(state.to_owned()))
             .or(resume_v1(state))
+            .or(shutdown_v1(shutdown_tx))
             .or(health())
     }
 
@@ -128,10 +134,25 @@ mod filters {
             .and_then(handlers::resume)
     }
 
+    pub fn shutdown_v1(
+        shutdown_tx: Sender<()>,
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::path!("v1" / "shutdown")
+            .and(warp::post())
+            .and(with_shutdown_tx(shutdown_tx))
+            .and_then(handlers::shutdown)
+    }
+
     fn with_sender(
         sender: Sender<Vec<u8>>,
     ) -> impl Filter<Extract = (Sender<Vec<u8>>,), Error = std::convert::Infallible> + Clone {
         warp::any().map(move || sender.clone())
+    }
+
+    fn with_shutdown_tx(
+        shutdown_tx: Sender<()>,
+    ) -> impl Filter<Extract = (Sender<()>,), Error = std::convert::Infallible> + Clone {
+        warp::any().map(move || shutdown_tx.clone())
     }
 
     fn with_state(
@@ -194,6 +215,19 @@ mod handlers {
     ) -> Result<impl warp::Reply, Infallible> {
         state.set_pause(false);
         Ok(StatusCode::OK)
+    }
+
+    pub async fn shutdown(shutdown_tx: Sender<()>) -> Result<impl warp::Reply, Infallible> {
+        let sent = shutdown_tx.send(()).await.is_ok();
+        if sent {
+            return Ok(Response::builder()
+                .status(StatusCode::OK)
+                .body("shutdown ...".to_string()));
+        }
+        let failure = models::Failure::new("failed to shutdown".to_string());
+        Ok(Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(serde_json::to_string(&failure).unwrap()))
     }
 
     pub async fn health() -> Result<impl warp::Reply, Infallible> {
