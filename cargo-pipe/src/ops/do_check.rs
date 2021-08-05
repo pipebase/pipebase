@@ -16,10 +16,9 @@ pub fn do_check(config: &Config, opts: &CheckOptions, printer: &mut Printer) -> 
     let manifest_path_buf = config.get_app_manifest(opts.get_app_name());
     let manifest_path = manifest_path_buf.as_path();
     printer.status(&"Check", manifest_path.to_str().unwrap())?;
-    let warning = opts.warning();
     let verbose = opts.verbose();
     let debug = opts.debug();
-    let status_code = do_cargo_check(manifest_path, warning, verbose, debug, printer)?;
+    let status_code = do_cargo_check(manifest_path, verbose, debug, printer)?;
     match status_code {
         0 => (),
         _ => process::exit(status_code),

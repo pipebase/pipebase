@@ -104,7 +104,6 @@ pub fn do_cargo_fmt(manifest_path: &Path, printer: &mut Printer) -> anyhow::Resu
 
 pub fn do_cargo_check(
     manifest_path: &Path,
-    warning: bool,
     verbose: bool,
     debug: bool,
     printer: &mut Printer,
@@ -115,9 +114,6 @@ pub fn do_cargo_check(
     if verbose {
         cmd.arg("--verbose");
     }
-    if !warning {
-        std::env::set_var("RUSTFLAGS", "-Awarnings");
-    };
     let (status_code, out) = run_cmd(cmd)?;
     if debug {
         if verbose && status_code != 0 {
