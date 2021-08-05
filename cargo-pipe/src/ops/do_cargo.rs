@@ -12,7 +12,7 @@ pub(crate) const CARGO_RELEASE_DIRECTORY: &str = "release";
 pub(crate) const CARGO_DEBUG_DIRECTORY: &str = "debug";
 pub(crate) const CARGO_APP_MAIN: &str = "main.rs";
 
-fn capture_error_message(captures: Option<Captures>) -> Option<String> {
+fn capture(captures: Option<Captures>) -> Option<String> {
     let m = match captures {
         Some(captures) => captures.get(1),
         None => return None,
@@ -20,26 +20,38 @@ fn capture_error_message(captures: Option<Captures>) -> Option<String> {
     m.map(|m| m.as_str().to_owned())
 }
 
-fn capture_error(line: &str) -> Option<String> {
+fn capture_error_message(line: &str) -> Option<String> {
     lazy_static! {
         static ref ERROR_CODE: Regex = Regex::new(r"error\[E\d{4}\]:\s*(.*)").unwrap();
         static ref ERROR: Regex = Regex::new(r"error:\s*(.*)").unwrap();
     }
-    if let Some(error_message) = capture_error_message(ERROR_CODE.captures(line)) {
+    if let Some(error_message) = capture(ERROR_CODE.captures(line)) {
         return Some(error_message);
     }
-    if let Some(error_message) = capture_error_message(ERROR.captures(line)) {
+    if let Some(error_message) = capture(ERROR.captures(line)) {
         return Some(error_message);
     }
     None
 }
 
-fn capture_errors(out: String, printer: &mut Printer) -> anyhow::Result<()> {
+fn capture_warning_message(line: &str) -> Option<String> {
+    lazy_static! {
+        static ref WARNING: Regex = Regex::new(r"warning:\s*(.*)").unwrap();
+    }
+    capture(WARNING.captures(line))
+}
+
+// capture error or warning message
+fn capture_messages(out: String, printer: &mut Printer) -> anyhow::Result<()> {
     let lines: Vec<&str> = out.split('\n').collect();
     for line in lines {
-        if let Some(error_message) = capture_error(line) {
-            printer.error(error_message.to_string())?
-        };
+        if let Some(error_message) = capture_error_message(line) {
+            printer.error(error_message.to_string())?;
+            continue;
+        }
+        if let Some(warning_message) = capture_warning_message(line) {
+            printer.warning(warning_message)?;
+        }
     }
     Ok(())
 }
@@ -48,8 +60,8 @@ fn run_cmd(mut cmd: Command) -> anyhow::Result<(i32, String)> {
     let output = cmd.output()?;
     match output.status.success() {
         true => {
-            let stdout = String::from_utf8(output.stdout)?;
-            Ok((0, stdout))
+            let stderr = String::from_utf8(output.stderr)?;
+            Ok((0, stderr))
         }
         false => {
             let stderr = String::from_utf8(output.stderr)?;
@@ -107,18 +119,16 @@ pub fn do_cargo_check(
         std::env::set_var("RUSTFLAGS", "-Awarnings");
     };
     let (status_code, out) = run_cmd(cmd)?;
+    if debug {
+        if verbose && status_code != 0 {
+            printer.error(out)?
+        } else {
+            capture_messages(out, printer)?
+        }
+    }
     match status_code {
         0 => printer.status(&"Cargo", "check succeed")?,
-        _ => {
-            printer.error("cargo check failed")?;
-            if debug {
-                if verbose {
-                    printer.error(out)?
-                } else {
-                    capture_errors(out, printer)?
-                }
-            }
-        }
+        _ => printer.error("cargo check failed")?,
     };
     Ok(status_code)
 }
@@ -137,18 +147,16 @@ pub fn do_cargo_build(
         cmd.arg("--release");
     }
     let (status_code, out) = run_cmd(cmd)?;
+    if debug {
+        if verbose && status_code != 0 {
+            printer.error(out)?
+        } else {
+            capture_messages(out, printer)?
+        }
+    }
     match status_code {
         0 => printer.status(&"Cargo", "build succeed")?,
-        _ => {
-            printer.error("cargo build failed")?;
-            if debug {
-                if verbose {
-                    printer.error(out)?
-                } else {
-                    capture_errors(out, printer)?
-                }
-            }
-        }
+        _ => printer.error("cargo build failed")?,
     };
     Ok(status_code)
 }
