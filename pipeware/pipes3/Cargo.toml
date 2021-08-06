@@ -1,6 +1,6 @@
 [package]
 name = "pipes3"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -14,7 +14,7 @@ keywords = ["pipebase", "pipeware", "aws", "s3"]
 async-trait = "0.1.50"
 anyhow = "1.0"
 log = "0.4.14"
-pipebase = { version = "0.1.0", path = "../../pipebase" }
+pipebase = { version = "0.1.1", path = "../../pipebase" }
 rand = "0.8.4"
 serde = { version = "1.0", features = ["derive"] }
 s3 = { git = "https://github.com/awslabs/aws-sdk-rust", tag = "v0.0.12-alpha", package = "aws-sdk-s3" }

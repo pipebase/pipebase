@@ -1,6 +1,6 @@
 [package]
 name = "pipebytes"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2018"
 license = "Apache-2.0"
 repository = "https://github.com/pipebase/pipebase"
@@ -13,4 +13,4 @@ keywords = ["pipebase", "pipeware", "byteorder"]
 [dependencies]
 anyhow = "1.0"
 byteorder = "1.4.3"
-pipebase = { version = "0.1.0", path = "../../pipebase" }
+pipebase = { version = "0.1.1", path = "../../pipebase" }
