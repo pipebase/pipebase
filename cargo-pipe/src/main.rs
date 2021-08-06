@@ -31,19 +31,24 @@ fn run() -> CmdResult {
     cmd_and_args.extend(args);
     // setup args and subcommands (including subcommand args)
     let matches = clap::App::new("cargo-pipe")
-        .arg(
+        .args(vec![
             clap::Arg::new("directory")
                 .short('d')
                 .takes_value(true)
                 .about("Absolute path to working directory"),
-        )
+            clap::Arg::new("manifest")
+                .short('m')
+                .takes_value(true)
+                .about("Manifest file name in working directory"),
+        ])
         .subcommands(commands::cmds())
         .get_matches_from(cmd_and_args);
 
     let mut printer = Printer::new();
     // setup CLI configuration
     let directory = matches.value_of("directory");
-    let config = match Config::new(directory) {
+    let manifest = matches.value_of("manifest");
+    let config = match Config::new(directory, manifest) {
         Ok(config) => config,
         Err(err) => {
             printer.error(format!("new config error: {}", err))?;

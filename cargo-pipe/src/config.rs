@@ -9,24 +9,25 @@ const DEFAULT_APP_DIRECTORY: &str = "app";
 
 pub struct Config {
     working_drectory: PathBuf,
+    manifest: String,
 }
 
 impl Config {
-    pub fn new(directory: Option<&str>) -> anyhow::Result<Self> {
-        let config = match directory {
-            Some(directory) => Config {
-                working_drectory: PathBuf::from(directory),
-            },
-            None => Config {
-                working_drectory: current_dir()?,
-            },
+    pub fn new(directory: Option<&str>, manifest: Option<&str>) -> anyhow::Result<Self> {
+        let working_drectory = match directory {
+            Some(directory) => PathBuf::from(directory),
+            None => current_dir()?,
         };
-        Ok(config)
+        let manifest = String::from(manifest.unwrap_or(DEFAULT_PIPE_MANIFEST));
+        Ok(Config {
+            working_drectory,
+            manifest,
+        })
     }
 
     pub fn get_pipe_manifest_path(&self) -> PathBuf {
         let mut manifest_path = self.working_drectory.to_owned();
-        manifest_path.push(DEFAULT_PIPE_MANIFEST);
+        manifest_path.push(&self.manifest);
         manifest_path
     }
 
