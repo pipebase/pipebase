@@ -1,0 +1,34 @@
+name: print_timer_tick
+dependencies:
+  - name: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+pipes:
+  - name: timer1
+    ty: Poller
+    config:
+      ty: TimerConfig
+      path: catalogs/timer1.yml
+    output:
+      ty: UnsignedLongLong
+  - name: timer2
+    ty: Poller
+    config:
+      ty: TimerConfig
+      path: catalogs/timer2.yml
+    output:
+      ty: UnsignedLongLong
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [ "timer1", "timer2" ]
+cstores:
+  - name: "context_printer"
+    config:
+      ty: "ContextPrinterConfig"
+      path: "catalogs/context_printer.yml"
+error:
+  config:
+    ty: "PipeErrorPrinterConfig"
+
