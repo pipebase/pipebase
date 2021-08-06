@@ -1,0 +1,20 @@
+on: 
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 13 * * *"
+
+name: E2E
+
+jobs:
+  timer:
+    name: Timer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: copy project
+        run: cp -r ./ /tmp/pipebase && mv /tmp/pipebase e2e
+      - name: test
+        run: docker-compose -f e2e/timer/docker-compose.yml up --exit-code-from app
