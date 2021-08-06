@@ -84,7 +84,7 @@ impl Config {
     pub fn get_run_app_binary(&self, app_name: Option<&String>) -> PathBuf {
         let mut app_binary = self.working_drectory.to_owned();
         let app_name = &Self::get_app_name_or_default(app_name);
-        app_binary.push(format!("run-{}", app_name));
+        app_binary.push(format!("run_{}", app_name));
         app_binary
     }
 }
