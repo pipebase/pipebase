@@ -5,8 +5,12 @@ install Rust and Cargo
 ```sh
 curl https://sh.rustup.rs -sSf | sh
 ```
-install `cargo-pipe` CLI
+install [`rustfmt`]
+```sh
+rustup component add rustfmt
 ```
+install `cargo-pipe` CLI
+```sh
 cargo install cargo-pipe
 ```
 
@@ -107,3 +111,4 @@ cargo pipe describe -l printer
 [`cargo-pipe`]: https://github.com/pipebase/pipebase/tree/main/cargo-pipe
 [`resources`]: https://github.com/pipebase/pipebase/tree/main/cargo-pipe/resources
 [`clap`]: https://github.com/clap-rs/clap
+[`rustfmt`]: https://github.com/rust-lang/rustfmt
