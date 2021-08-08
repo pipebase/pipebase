@@ -4,13 +4,11 @@ pipes:
     ty: Poller
     config:
       ty: PollerConfig
-    output:
-      ty: Integer
+    output: Integer
   - name: source_has_upstream
     ty: Poller
     upstreams: [ "source_has_no_upstream" ]
     config:
       ty: PollerConfig
-    output:
-      ty: Integer
+    output: Integer
 

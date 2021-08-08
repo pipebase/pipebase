@@ -5,16 +5,14 @@ pipes:
     config:
       ty: ServerConfig
     output:
-      ty:
-        Object: Record
+      Object: Record
   - name: project_record
     ty: Mapper
     config:
       ty: ProjectionConfig
     upstreams: [ "record_source" ]
     output:
-      ty: 
-        Object: Record
+      Object: Record
 objects:
   - ty: Record
     metas:

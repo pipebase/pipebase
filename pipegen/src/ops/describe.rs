@@ -1,6 +1,6 @@
 use crate::{
     error::{api_error, Result},
-    models::{App, Entity, EntityAccept, Object, Pipe, VisitEntity},
+    models::{data_ty_to_literal, App, Entity, EntityAccept, Object, Pipe, VisitEntity},
     ops::utils::PipeGraph,
 };
 
@@ -182,7 +182,7 @@ impl PipeGraphDescriber {
     fn get_pipe_output_type(&self, pid: &str) -> Option<String> {
         let pipe = self.graph.get_pipe_value(pid).unwrap();
         pipe.get_output_data_type()
-            .map(|output| output.to_literal(0))
+            .map(|output| data_ty_to_literal(output))
     }
 
     fn format_pipeline_with_output_type(&self, pipeline: Vec<String>) -> Vec<String> {

@@ -6,10 +6,9 @@ pipes:
       ty: ReceiverConfig
       path: catalogs/receiver.yml
     output: 
-      ty:
-        Vec:
-          ty: 
-            Object: Record
+      Vec:
+        ty: 
+          Object: Record
 objects:
   - ty: Record
     fields:

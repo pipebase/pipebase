@@ -4,5 +4,4 @@ pipes:
     ty: Mapper
     config:
       ty: MapperConfig
-    output:
-      ty: Integer
+    output: Integer

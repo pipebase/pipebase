@@ -5,15 +5,13 @@ pipes:
     config:
       ty: TimerConfig
       path: resources/catalogs/timer.yml
-    output:
-      ty: UnsignedLongLong
+    output: UnsignedLongLong
   - name: timer2
     ty: Poller
     config:
       ty: TimerConfig
       path: resources/catalogs/timer.yml
-    output:
-      ty: UnsignedLongLong
+    output: UnsignedLongLong
   - name: printer
     ty: Exporter
     config:
