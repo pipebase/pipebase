@@ -5,7 +5,7 @@ dependencies:
     modules: ["pipebase::prelude::*"]
   - name: pipewarp
     path: ../../../pipeware/pipewarp
-    modules: ["pipwarp::*"]
+    modules: ["pipewarp::*"]
 pipes:
   - name: timer1
     ty: Poller
