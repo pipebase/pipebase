@@ -22,23 +22,20 @@ pipes:
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
-    output: 
-      ty: UnsignedBytes
+    output: UnsignedBytes
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      ty: 
-        Object: RecordV1
+      Object: RecordV1
     upstreams: [ingestion_server]
   - name: convert
     ty: Mapper
     config:
       ty: ConversionConfig
     output:
-      ty:
-        Object: RecordV2
+      Object: RecordV2
     upstreams: [json]
   - name: printer
     ty: Exporter

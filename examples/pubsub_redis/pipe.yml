@@ -22,15 +22,13 @@ pipes:
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
-    output: 
-      ty: UnsignedBytes
+    output: UnsignedBytes
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      ty: 
-        Object: Record
+      Object: Record
     upstreams: [ingestion_server]
   - name: pub_redis
     ty: Exporter
@@ -43,8 +41,7 @@ pipes:
     config:
       ty: RedisSubscriberConfig
       path: catalogs/redis_sub.yml
-    output:
-      ty: String
+    output: String
   - name: printer
     ty: Exporter
     config:

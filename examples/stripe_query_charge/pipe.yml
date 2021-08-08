@@ -22,50 +22,43 @@ pipes:
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
-    output: 
-      ty: UnsignedBytes
+    output: UnsignedBytes
   - name: json_query_request
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      ty: 
-        Object: QueryRequest
+      Object: QueryRequest
     upstreams: [ingestion_server]
   - name: visit_query_field
     ty: Mapper
     config:
       ty: FieldVisitConfig
     output:
-      ty:
-        Object:
-          Option:
-            ty:
-              Object: Query
+      Option:
+        ty:
+          Object: Query
     upstreams: [json_query_request]
   - name: query_stripe
     ty: Mapper
     config:
       ty: ReqwestQueryConfig
       path: catalogs/reqwest_query.yml
-    output:
-      ty: UnsignedBytes
+    output: UnsignedBytes
     upstreams: [visit_query_field]
   - name: json_query_response
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      ty: 
-        Object: QueryResponse
+      Object: QueryResponse
     upstreams: [query_stripe]
   - name: visit_data_field
     ty: Mapper
     config:
       ty: FieldVisitConfig
     output:
-      ty:
-        Objects: Charge
+      Objects: Charge
     upstreams: [json_query_response]
   - name: print_charge
     ty: Exporter
@@ -87,10 +80,9 @@ objects:
         metas:
           - tag: Visit
         ty: 
-          Object:
-            Option:
-              ty:
-                Object: Query
+          Option:
+            ty:
+              Object: Query
   - ty: Charge
     metas:
       - derives: [Clone, Deserialize, Debug]

@@ -16,19 +16,17 @@ pipes:
       ty: KubeLogReaderConfig
       path: catalogs/kube_log_reader.yml
     output: 
-      ty:
-        ExternalObject: KubeLog
+      ExternalObject: KubeLog
   - name: kafka_json_message
     ty: Mapper
     config:
       ty: KafkaJsonRecordConverterConfig
     output:
-      ty:
-        Pair:
-          lty: 
-            Option:
-              ty: String
-          rty: UnsignedBytes
+      Pair:
+        lty: 
+          Option:
+            ty: String
+        rty: UnsignedBytes
     upstreams: [kube_logger]
   - name: kafka_producer
     ty: Exporter

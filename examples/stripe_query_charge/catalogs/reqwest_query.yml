@@ -3,5 +3,5 @@ base_url: https://api.stripe.com/v1/charges
 headers:
   Content-Type: application/json
 basic_auth:
-  username: sk_test_*
-  password: *
+  username: sk_test_username
+  password: password

@@ -9,15 +9,13 @@ pipes:
     config:
       ty: TimerConfig
       path: catalogs/timer1.yml
-    output:
-      ty: UnsignedLongLong
+    output: UnsignedLongLong
   - name: timer2
     ty: Poller
     config:
       ty: TimerConfig
       path: catalogs/timer2.yml
-    output:
-      ty: UnsignedLongLong
+    output: UnsignedLongLong
   - name: printer
     ty: Exporter
     config:

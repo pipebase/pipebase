@@ -19,45 +19,39 @@ pipes:
     config:
       ty: LocalFilePathVisitorConfig
       path: catalogs/local_file_path_visitor.yml
-    output:
-      ty: PathBuf
+    output: PathBuf
   - name: file_reader
     ty: Mapper
     config:
       ty: FileReaderConfig
-    output:
-      ty: UnsignedBytes
+    output: UnsignedBytes
     upstreams: [file_path_visitor]
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      ty:
-        Objects: Transaction
+      Objects: Transaction
     upstreams: [file_reader]
   - name: conversion
     ty: Mapper
     config: 
       ty: ConversionConfig
     output:
-      ty: 
-        Objects: Record
+      Objects: Record
     upstreams: [json]
   - name: csv
     ty: Mapper
     config: 
       ty: CsvSerConfig
-    output:
-      ty: UnsignedBytes 
+    output: UnsignedBytes 
     upstreams: [conversion]
   - name: file_writer
     ty: Mapper
     config:
       ty: FileWriterConfig
       path: catalogs/file_writer.yml
-    output:
-      ty: PathBuf
+    output: PathBuf
     upstreams: [csv]
   - name: printer
     ty: Exporter
