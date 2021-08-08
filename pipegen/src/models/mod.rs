@@ -5,7 +5,7 @@ mod data;
 mod error;
 mod function;
 mod meta;
-mod package;
+mod dependency;
 mod pipe;
 mod utils;
 
@@ -15,7 +15,7 @@ pub(crate) use context::*;
 pub(crate) use data::*;
 pub(crate) use error::*;
 pub(crate) use function::*;
-pub use package::*;
+pub use dependency::*;
 pub(crate) use pipe::*;
 
 pub trait Entity {

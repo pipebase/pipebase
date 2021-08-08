@@ -5,7 +5,7 @@ use super::constants::{
 use super::context::ContextStore;
 use super::error::ErrorHandler;
 use super::meta::{metas_to_literal, Meta, MetaValue};
-use super::package::Dependency;
+use super::dependency::Dependency;
 use super::pipe::Pipe;
 use super::utils::indent_literal;
 use super::{Entity, EntityAccept, Object, VisitEntity};
