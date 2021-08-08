@@ -1,0 +1,63 @@
+name: ingest_redis
+dependencies:
+  - name: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - name: piperedis
+    path: ../../../pipeware/piperedis
+    modules: ["piperedis::*"]
+  - name: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - name: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - name: serde
+    version: "1.0"
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: 
+      ty: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      ty: 
+        Object: Record
+    upstreams: [ingestion_server]
+  - name: printer
+    ty: Exporter
+    config:
+      ty: PrinterConfig
+    upstreams: [json]
+  - name: redis_writer
+    ty: Exporter
+    config:
+      ty: RedisStringWriterConfig
+      path: catalogs/redis_writer.yml
+    upstreams: [json]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, LeftRight]
+    fields:
+      - name: key
+        ty: String
+        metas:
+          - tag: Left
+      - name: value
+        ty: UnsignedInteger
+        metas:
+          - tag: Right
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml

@@ -20,3 +20,14 @@ jobs:
         run: docker-compose -f e2e/timer/docker-compose.yml up -d
       - name: test
         run: ./e2e/run.sh -f e2e/timer/entry.json
+  ingest_redis:
+    name: Ingest Redis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: copy project
+        run: cp -r ./ /tmp/pipebase && mv /tmp/pipebase e2e
+      - name: run
+        run: docker-compose -f e2e/ingest_redis/docker-compose.yml up -d
+      - name: test
+        run: ./e2e/run.sh -f e2e/ingest_redis/entry.json

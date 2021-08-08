@@ -1,0 +1,28 @@
+{
+  "name": "pipebase",
+  "suites": [
+    {
+      "name": "ingestion",
+      "description": "validate record ingestion",
+      "file": "e2e/ingest_redis/tests/test_ingestion.json"
+    },      
+    {
+      "name": "context",
+      "description": "validate runtime context",
+      "file": "e2e/ingest_redis/tests/test_context.json" 
+    },
+    {
+      "name": "redis",
+      "description": "validate redis",
+      "file": "e2e/ingest_redis/tests/test_redis.json"
+    },
+    {
+      "name": "shutdown",
+      "description": "shutdown ingestion / context server",
+      "file": "e2e/ingest_redis/tests/test_shutdown.json"
+    }
+  ],
+  "diff_dir": "e2e/ingest_redis/out",
+  "stats_dir": "e2e/ingest_redis/out",
+  "log_dir": "e2e/ingest_redis/out"
+}
