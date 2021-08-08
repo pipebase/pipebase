@@ -429,9 +429,11 @@ function start_validator() {
 		info "Log dump: ${log_file}"
 	fi
 	# print diff if any
-	for f in ${diff_dir}/*.diff; do
-		info "Diff dump: ${f}"
-		cat $f
+	for diff_file in ${diff_dir}/*.diff; do
+		if [ -f $diff_file ]; then
+			info "Diff dump: ${diff_file}"
+			cat $diff_file
+		fi
 	done
 	clean_tmp_file
 	return ${pass}

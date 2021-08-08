@@ -1,0 +1,14 @@
+[
+  {
+    "cmd": "docker exec redis redis-cli ping",
+    "description": "make sure redis is alive",
+    "expected_output_file": "e2e/ingest_redis/tests/redis0.txt",
+    "retry": 3
+  },
+  {
+    "cmd": "docker exec redis redis-cli get foo",
+    "description": "validate ingested value",
+    "expected_output_file": "e2e/ingest_redis/tests/redis1.txt",
+    "retry": 1
+  }
+]
