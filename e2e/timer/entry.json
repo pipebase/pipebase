@@ -4,7 +4,7 @@
     {
       "name": "timer",
       "description": "test timer",
-      "file": "e2e/timer/tests/context.json" 
+      "file": "e2e/timer/tests/test_context.json" 
     }
   ],
   "diff_dir": "e2e/timer/out",
