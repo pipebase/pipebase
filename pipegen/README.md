@@ -1,13 +1,15 @@
 [`pipegen`] parse `manifest`, contains pipe / custom data object specification, and generate code for data integration app
 
 ## Manifest Layout
-A `manifest` is composed of following sections:
-* `name`, name of application
-* `dependencies`, list of crates the application dependes on
-* `pipes`, list of [`pipe`] definition
-* `objects`, list of custom data [`object`] definition
-* `cstores`, list of pipe runtime [`context store`] definition
-* `error`, pipe [`error handler`] definition
+A `manifest` is composed of:
+| Field | Description | Required |
+| ----- | ----------- | -------- |
+| `name` | name of application | true |
+| `dependencies` | list of crates the application dependes on | false |
+| `pipes` | list of [`pipe`] definition | true |
+| `objects` | list of custom data [`object`] definition | false |
+| `cstores` | list of pipe runtime [`context store`] definition | false |
+| `error` | pipe [`error handler`] definition | false |
 
 ## Dependency
 App dependency, similar as [`cargo dependencies`]
@@ -50,7 +52,7 @@ Specification
 | `config.ty` | pipe config type | true |
 | `config.path` | path to pipe config file | false |
 | `upstreams` | list of upstream pipe names | false if `ty` is `Poller` or `Listener` |
-| `output` | output data type (unnamed [`data field`]) | false if [`pipe type`] is `Exporter` |
+| `output` | output [`data type`] | false if [`pipe type`] is `Exporter` |
 
 Note that:
 * pipes are wired as **directed acyclic graph** with upstreams
