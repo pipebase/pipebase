@@ -3,6 +3,9 @@ dependencies:
   - name: pipebase
     path: ../../../pipebase
     modules: ["pipebase::prelude::*"]
+  - name: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipwarp::*"]
 pipes:
   - name: timer1
     ty: Poller
@@ -24,11 +27,9 @@ pipes:
       ty: PrinterConfig
     upstreams: [ "timer1", "timer2" ]
 cstores:
-  - name: "context_printer"
+  - name: "context_server"
     config:
-      ty: "ContextPrinterConfig"
-      path: "catalogs/context_printer.yml"
-error:
-  config:
-    ty: "PipeErrorPrinterConfig"
+      ty: "WarpContextServerConfig"
+      path: "catalogs/context_server.yml"
+
 

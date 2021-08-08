@@ -17,4 +17,4 @@ jobs:
       - name: copy project
         run: cp -r ./ /tmp/pipebase && mv /tmp/pipebase e2e
       - name: test
-        run: docker-compose -f e2e/timer/docker-compose.yml up --exit-code-from app
+        run: docker-compose -f e2e/timer/docker-compose.yml up -d
