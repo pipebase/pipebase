@@ -1,0 +1,32 @@
+[
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/health",
+    "description": "check context server is up"
+  },
+  {
+    "cmd": "sleep 10",
+    "description": "wait for timer done"
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/timer1 | jq .state",
+    "description": "expect timer1 done",
+    "expected_output_file": "e2e/timer/tests/context2.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/timer1 | jq .failure_run",
+    "description": "expect timer1 succeed all run",
+    "expected_output_file": "e2e/timer/tests/context3.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/timer1 | jq .total_run",
+    "description": "vaidate timer1 total run",
+    "expected_output_file": "e2e/timer/tests/context4.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl -X POST http://127.0.0.1:8000/v1/shutdown",
+    "description": "cleanup"
+  }
+]
