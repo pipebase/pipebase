@@ -1,1 +1,1 @@
-10
+{"name":"printer","state":"done","total_run":30,"failure_run":0}

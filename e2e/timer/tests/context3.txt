@@ -1,1 +1,1 @@
-0
+{"name":"timer2","state":"done","total_run":20,"failure_run":0}
