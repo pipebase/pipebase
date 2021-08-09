@@ -22,7 +22,7 @@ objects:
         ty:
           Array:
             ty: Integer
-            size: 3
+            len: 3
       - name: tuple_record
         ty:
           Tuple:
