@@ -1,19 +1,19 @@
 name: pubsub_sns
 dependencies:
   - name: pipebase
-    path: ../../../pipebase
+    version: 0.1.1
     modules: ["pipebase::prelude::*"]
   - name: pipesns
     path: ../../../pipeware/pipesns
     modules: ["pipesns::*"]
   - name: pipewarp
-    path: ../../../pipeware/pipewarp
+    version: 0.1.1
     modules: ["pipewarp::*"]
   - name: pipejson
-    path: ../../../pipeware/pipejson
+    version: 0.1.1
     modules: ["pipejson::*"]
   - name: serde
-    version: "1.0"
+    version: 1.0
     features: ["derive"]
     modules: ["serde::Deserialize"]
 pipes:

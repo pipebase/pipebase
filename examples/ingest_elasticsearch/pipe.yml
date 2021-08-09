@@ -1,19 +1,19 @@
 name: ingest_elasticsearch
 dependencies:
   - name: pipebase
-    path: ../../../pipebase
+    version: 0.1.1
     modules: ["pipebase::prelude::*"]
   - name: pipejson
-    path: ../../../pipeware/pipejson
+    version: 0.1.1
     modules: ["pipejson::*"]
   - name: pipewarp
-    path: ../../../pipeware/pipewarp
+    version: 0.1.1
     modules: ["pipewarp::*"]
   - name: pipereqwest
-    path: ../../../pipeware/pipereqwest
+    version: 0.1.1
     modules: ["pipereqwest::*"]
   - name: serde
-    version: "1.0"
+    version: 1.0
     features: ["derive"]
     modules: ["serde::Deserialize"]
 pipes:
