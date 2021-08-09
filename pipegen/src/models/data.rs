@@ -65,7 +65,7 @@ pub enum DataType {
     },
     Array {
         ty: Box<DataType>,
-        size: usize,
+        len: usize,
     },
     Tuple {
         tys: Vec<DataType>,
@@ -214,9 +214,9 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
             let ty_lit = data_ty_to_literal(ty);
             format!("std::vec::Vec<{}>", ty_lit)
         }
-        DataType::Array { ty, size } => {
+        DataType::Array { ty, len } => {
             let ty_lit = data_ty_to_literal(ty);
-            format!("[{}; {}]", ty_lit, size)
+            format!("[{}; {}]", ty_lit, len)
         }
         DataType::Tuple { tys } => {
             let tys: Vec<String> = tys.iter().map(|ty| data_ty_to_literal(ty)).collect();
