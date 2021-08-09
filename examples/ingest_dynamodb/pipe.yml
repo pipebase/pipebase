@@ -4,7 +4,8 @@ dependencies:
     version: 0.1.1
     modules: ["pipebase::prelude::*"]
   - name: pipedynamodb
-    path: ../../../pipeware/pipedynamodb
+    git: https://github.com/pipebase/pipebase.git
+    package: pipedynamodb
     modules: ["pipedynamodb::*"]
   - name: pipewarp
     version: 0.1.1

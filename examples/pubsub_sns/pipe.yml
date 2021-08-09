@@ -4,7 +4,8 @@ dependencies:
     version: 0.1.1
     modules: ["pipebase::prelude::*"]
   - name: pipesns
-    path: ../../../pipeware/pipesns
+    git: https://github.com/pipebase/pipebase.git
+    package: pipesns
     modules: ["pipesns::*"]
   - name: pipewarp
     version: 0.1.1

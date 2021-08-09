@@ -14,7 +14,8 @@ dependencies:
     features: ["derive"]
     modules: ["serde::Deserialize"]
   - name: pipesns
-    path: ../../../pipeware/pipesns
+    git: https://github.com/pipebase/pipebase.git
+    package: pipesns
     modules: ["pipesns::*"]
 pipes:
   - name: ingestion_server
