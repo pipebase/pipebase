@@ -1,13 +1,13 @@
 name: log_kube
 dependencies:
   - name: pipebase
-    path: ../../../pipebase
+    version: 0.1.1
     modules: ["pipebase::prelude::*"]
   - name: pipekafka
-    path: ../../../pipeware/pipekafka
+    version: 0.1.1
     modules: ["pipekafka::*"]
   - name: pipekube
-    path: ../../../pipeware/pipekube
+    version: 0.1.1
     modules: ["pipekube::*"]
 pipes:
   - name: kube_event

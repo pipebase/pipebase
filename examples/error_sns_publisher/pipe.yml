@@ -1,20 +1,21 @@
 name: printer
 dependencies:
   - name: pipebase
-    path: ../../../pipebase
+    version: 0.1.1
     modules: ["pipebase::prelude::*"]
   - name: pipejson
-    path: ../../../pipeware/pipejson
+    version: 0.1.1
     modules: ["pipejson::*"]
   - name: pipewarp
-    path: ../../../pipeware/pipewarp
+    version: 0.1.1
     modules: ["pipewarp::*"]
   - name: serde
-    version: "1.0"
+    version: 1.0
     features: ["derive"]
     modules: ["serde::Deserialize"]
   - name: pipesns
-    path: ../../../pipeware/pipesns
+    git: https://github.com/pipebase/pipebase.git
+    package: pipesns
     modules: ["pipesns::*"]
 pipes:
   - name: ingestion_server

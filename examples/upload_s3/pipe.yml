@@ -1,10 +1,11 @@
 name: project_file
 dependencies:
   - name: pipebase
-    path: ../../../pipebase
+    version: 0.1.1
     modules: ["pipebase::prelude::*"]
   - name: pipes3
-    path: ../../../pipeware/pipes3
+    git: https://github.com/pipebase/pipebase.git
+    package: pipes3
     modules: ["pipes3::*"]
 pipes:
   - name: file_path_visitor

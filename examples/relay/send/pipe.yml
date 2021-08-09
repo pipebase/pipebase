@@ -1,13 +1,13 @@
 name: sender
 dependencies:
   - name: pipebase
-    path: ../../../../pipebase
+    version: 0.1.1
     modules: ["pipebase::prelude::*"]
   - name: pipereqwest
-    path: ../../../../pipeware/pipereqwest
+    version: 0.1.1
     modules: ["pipereqwest::*"]
   - name: pipewarp
-    path: ../../../../pipeware/pipewarp
+    version: 0.1.1
     modules: ["pipewarp::*"]
 pipes:
   - name: relay_server

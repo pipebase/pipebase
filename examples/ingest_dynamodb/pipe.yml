@@ -1,19 +1,20 @@
 name: ingest_dynamodb
 dependencies:
   - name: pipebase
-    path: ../../../pipebase
+    version: 0.1.1
     modules: ["pipebase::prelude::*"]
   - name: pipedynamodb
-    path: ../../../pipeware/pipedynamodb
+    git: https://github.com/pipebase/pipebase.git
+    package: pipedynamodb
     modules: ["pipedynamodb::*"]
   - name: pipewarp
-    path: ../../../pipeware/pipewarp
+    version: 0.1.1
     modules: ["pipewarp::*"]
   - name: pipejson
-    path: ../../../pipeware/pipejson
+    version: 0.1.1
     modules: ["pipejson::*"]
   - name: serde
-    version: "1.0"
+    version: 1.0
     features: ["derive"]
     modules: ["serde::Deserialize"]
 pipes:
