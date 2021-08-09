@@ -16,30 +16,26 @@ pipes:
     config:
       ty: LocalFilePathVisitorConfig
       path: catalogs/local_file_path_visitor.yml
-    output:
-      ty: PathBuf
+    output: PathBuf
   - name: file_reader
     ty: Mapper
     config:
       ty: FileReaderConfig
-    output:
-      ty: UnsignedBytes
+    output: UnsignedBytes
     upstreams: [file_path_visitor]
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      ty:
-        Objects: Transaction
+      Objects: Transaction
     upstreams: [file_reader]
   - name: project
     ty: Mapper
     config:
       ty: ProjectionConfig
     output:
-      ty: 
-        Objects: Record
+      Objects: Record
     upstreams: [json]
   - name: printer
     ty: Exporter

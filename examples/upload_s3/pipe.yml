@@ -12,8 +12,7 @@ pipes:
     config:
       ty: LocalFilePathVisitorConfig
       path: catalogs/local_file_path_visitor.yml
-    output:
-      ty: PathBuf
+    output: PathBuf
   - name: s3_writer
     ty: Exporter
     config: 

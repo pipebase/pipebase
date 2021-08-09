@@ -9,42 +9,37 @@ pipes:
     config:
       ty: LocalFilePathVisitorConfig
       path: catalogs/local_file_path_visitor.yml
-    output:
-      ty: PathBuf
+    output: PathBuf
   - name: file_line_reader
     ty: Streamer
     config:
       ty: FileLineReaderConfig
-    output:
-      ty: String
+    output: String
     upstreams: [file_path_visitor]
   - name: string_space_splitter
     ty: Mapper
     config:
       ty: StringSplitterConfig
       path: catalogs/string_splitter.yml
-    output:
-      ty: Strings
+    output: Strings
     upstreams: [file_line_reader]
   - name: word_count
     ty: Mapper
     config: 
       ty: UnorderedGroupAddAggregatorConfig
     output:
-      ty:
-        Pairs:
-          lty: String
-          rty: Count32
+      Pairs:
+        lty: String
+        rty: Count32
     upstreams: [string_space_splitter]
   - name: streamer
     ty: Streamer
     config:
       ty: IteratorReaderConfig
     output:
-      ty:
-        Pair:
-          lty: String
-          rty: Count32
+      Pair:
+        lty: String
+        rty: Count32
     upstreams: [word_count]
   - name: printer
     ty: Exporter

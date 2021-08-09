@@ -4,12 +4,10 @@ pipes:
     ty: Poller
     config:
       ty: PollerConfig
-    output:
-      ty: Integer
+    output: Integer
   - name: mapper_a
     ty: Mapper
     upstreams: [ "non_exists" ]
     config:
       ty: MapperConfig
-    output:
-      ty: Integer
+    output: Integer

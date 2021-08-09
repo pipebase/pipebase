@@ -5,16 +5,14 @@ pipes:
     config:
       ty: ServerConfig
     output:
-      ty:
-        Object: Record
+      Object: Record
   - name: print_record
     ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [ "record_source" ]
     output:
-      ty: 
-        Object: Record
+      Object: Record
 objects:
   - ty: Record
     fields: []

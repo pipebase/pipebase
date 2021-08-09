@@ -4,27 +4,23 @@ pipes:
     ty: Poller
     config:
       ty: PollerConfig
-    output:
-      ty: Integer
+    output: Integer
   - name: mapper_a
     ty: Mapper
     upstreams: [ "mapper_c" ]
     config:
       ty: MapperConfig
-    output:
-      ty: Integer
+    output: Integer
   - name: mapper_b
     ty: Mapper
     upstreams: [ "mapper_a" ]
     config:
       ty: MapperConfig
-    output:
-      ty: Integer
+    output: Integer
   - name: mapper_c
     ty: Mapper
     upstreams: [ "mapper_b" ]
     config:
       ty: MapperConfig
-    output:
-      ty: Integer
+    output: Integer
 

@@ -5,7 +5,7 @@ use crate::models::{Entity, EntityAccept, VisitEntity};
 use serde::Deserialize;
 use strum::{Display, EnumString};
 
-use super::data::DataField;
+use super::data::{data_ty_to_literal, DataType};
 use super::meta::{meta_to_literal, Meta, MetaValue};
 
 #[derive(Clone, Display, EnumString, PartialEq, Debug, Deserialize)]
@@ -58,14 +58,11 @@ pub struct Pipe {
     // upstream pipe names
     upstreams: Option<Vec<String>>,
     // output data type
-    output: Option<DataField>,
+    output: Option<DataType>,
 }
 
 impl Pipe {
     pub fn init(&mut self) {
-        if self.output.is_some() {
-            self.output.as_mut().unwrap().init();
-        }
         if self.upstreams.is_none() {
             self.upstreams = Some(Vec::new())
         }
@@ -145,14 +142,14 @@ impl Pipe {
         let meta = Meta::Value {
             name: "output".to_owned(),
             meta: MetaValue::Str {
-                value: output.to_literal(0),
+                value: data_ty_to_literal(output),
                 raw: false,
             },
         };
         Some(meta)
     }
 
-    pub(crate) fn get_output_data_type(&self) -> Option<&DataField> {
+    pub(crate) fn get_output_data_type(&self) -> Option<&DataType> {
         self.output.as_ref()
     }
 

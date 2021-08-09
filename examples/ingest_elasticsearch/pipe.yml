@@ -22,23 +22,20 @@ pipes:
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
-    output: 
-      ty: UnsignedBytes
+    output: UnsignedBytes
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      ty: 
-        Object: Record
+      Object: Record
     upstreams: [ingestion_server]
   - name: text_collector
     ty: Collector
     config:
       ty: TextCollectorConfig
       path: catalogs/text_collector.yml
-    output:
-      ty: String
+    output: String
     upstreams: [json]
   - name: reqwest_poster
     ty: Exporter

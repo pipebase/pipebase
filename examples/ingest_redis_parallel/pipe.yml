@@ -22,15 +22,13 @@ pipes:
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
-    output: 
-      ty: UnsignedBytes
+    output: UnsignedBytes
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      ty: 
-        Objects: Record
+      Objects: Record
     upstreams: [ingestion_server]
   - name: iterator_reader
     ty: Streamer
@@ -38,15 +36,13 @@ pipes:
       ty: IteratorReaderConfig
     upstreams: [json]
     output:
-      ty:
-        Object: Record
+      Object: Record
   - name: random_select
     ty: Selector
     config:
       ty: RandomSelectorConfig
     output:
-      ty:
-        Object: Record
+      Object: Record
     upstreams: [iterator_reader]
   - name: redis_writer_1
     ty: Exporter

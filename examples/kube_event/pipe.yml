@@ -16,19 +16,17 @@ pipes:
       ty: KubeEventReaderConfig
       path: catalogs/kube_event_reader.yml
     output: 
-      ty:
-        ExternalObject: KubeEvent
+      ExternalObject: KubeEvent
   - name: kafka_json_message
     ty: Mapper
     config:
       ty: KafkaJsonRecordConverterConfig
     output:
-      ty:
-        Pair:
-          lty: 
-            Option:
-              ty: String
-          rty: UnsignedBytes
+      Pair:
+        lty: 
+          Option:
+            ty: String
+        rty: UnsignedBytes
     upstreams: [kube_event]
   - name: kafka_producer
     ty: Exporter

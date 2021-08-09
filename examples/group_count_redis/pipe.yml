@@ -22,15 +22,13 @@ pipes:
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
-    output: 
-      ty: UnsignedBytes
+    output: UnsignedBytes
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      ty: 
-        Objects: Record
+      Objects: Record
     upstreams: [ingestion_server]
   - name: redis_group_count
     ty: Mapper
@@ -38,11 +36,10 @@ pipes:
       ty: RedisUnorderedGroupAddAggregatorConfig
       path: catalogs/redis_group_count.yml
     output:
-      ty:
-        Pairs:
-          lty: String
-          rty: 
-            ExternalObject: RedisCount32
+      Pairs:
+        lty: String
+        rty: 
+          ExternalObject: RedisCount32
     upstreams: [json]
   - name: printer
     ty: Exporter

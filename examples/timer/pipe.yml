@@ -9,8 +9,7 @@ pipes:
     config:
       ty: TimerConfig
       path: catalogs/timer.yml
-    output:
-      ty: UnsignedLongLong
+    output: UnsignedLongLong
   - name: printer
     ty: Exporter
     config:

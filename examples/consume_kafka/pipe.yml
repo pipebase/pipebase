@@ -19,15 +19,13 @@ pipes:
     config:
       ty: KafkaConsumerConfig
       path: catalogs/kafka_consumer.yml
-    output: 
-      ty: UnsignedBytes
+    output: UnsignedBytes
   - name: json
     ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
-      ty: 
-        Object: Record
+      Object: Record
     upstreams: [kafka_consumer]
   - name: printer
     ty: Exporter
