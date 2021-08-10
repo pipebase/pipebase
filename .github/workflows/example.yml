@@ -1,0 +1,21 @@
+on: 
+  schedule:
+    - cron: "0 13 * * *"
+
+name: EXAMPLE
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: install cargo-pipe
+        run: cargo install --path cargo-pipe
+      - name: check examples
+        run: ./examples/check.sh -f examples/checklist.json

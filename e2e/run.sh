@@ -442,10 +442,10 @@ function start_validator() {
 # validate whether file in correct json format
 function validate_json_format() {
 	echo "$1"
-    if [ ! -f "$1" ]; then
-        error "File ${1} not exists."
-        return 1
-    fi
+	if [ ! -f "$1" ]; then
+		error "File ${1} not exists."
+		return 1
+	fi
 	jq "." "$1"
 	if [ $? -ne 0 ]; then
 		error "File ${1} with wrong format."
