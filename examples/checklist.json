@@ -1,0 +1,157 @@
+[
+    {
+        "name": "consume_kafka",
+        "directory": "examples/consume_kafka"
+    },
+    {
+        "name": "consume_sqs",
+        "directory": "examples/consume_sqs"
+    },
+    {
+        "name": "convert_csv",
+        "directory": "examples/convert_csv"
+    },
+    {
+        "name": "error_printer",
+        "directory": "examples/error_printer"
+    },
+    {
+        "name": "error_sns_publisher",
+        "directory": "examples/error_sns_publisher"
+    },
+    {
+        "name": "field_filter",
+        "directory": "examples/field_filter"
+    },
+    {
+        "name": "file_path",
+        "directory": "examples/file_path"
+    },
+    {
+        "name": "fix_convert",
+        "directory": "examples/fix_convert",
+        "action": "validate"
+    },
+    {
+        "name": "fix_left_right",
+        "directory": "examples/fix_left_right",
+        "action": "validate"
+    },
+    {
+        "name": "fix_missing_dependency",
+        "directory": "examples/fix_missing_dependency",
+        "action": "validate"
+    },
+    {
+        "name": "group_avg_redis",
+        "directory": "examples/group_avg_redis"
+    },
+    {
+        "name": "group_avg_rocksdb",
+        "directory": "examples/group_avg_rocksdb"
+    },
+    {
+        "name": "group_count_redis",
+        "directory": "examples/group_count_redis"
+    },
+    {
+        "name": "group_count_rocksdb",
+        "directory": "examples/group_count_rocksdb"
+    },
+    {
+        "name": "group_sum_redis",
+        "directory": "examples/group_sum_redis"
+    },
+    {
+        "name": "group_sum_rocksdb",
+        "directory": "examples/group_sum_rocksdb"
+    },
+    {
+        "name": "group_avg_redis",
+        "directory": "examples/group_avg_redis"
+    },
+    {
+        "name": "ingest_cassandra",
+        "directory": "examples/ingest_cassandra"
+    },
+    {
+        "name": "ingest_dynamodb",
+        "directory": "examples/ingest_dynamodb"
+    },
+    {
+        "name": "ingest_elasticsearch",
+        "directory": "examples/ingest_elasticsearch"
+    },
+    {
+        "name": "ingest_kafka",
+        "directory": "examples/ingest_kafka"
+    },
+    {
+        "name": "ingest_mysql",
+        "directory": "examples/ingest_mysql"
+    },
+    {
+        "name": "ingest_postgres",
+        "directory": "examples/ingest_postgres"
+    },
+    {
+        "name": "ingest_redis",
+        "directory": "examples/ingest_redis"
+    },
+    {
+        "name": "ingest_redis_parallel",
+        "directory": "examples/ingest_redis_parallel"
+    },
+    {
+        "name": "kube_event",
+        "directory": "examples/kube_event"
+    },
+    {
+        "name": "kube_log",
+        "directory": "examples/kube_log"
+    },
+    {
+        "name": "printer",
+        "directory": "examples/printer"
+    },
+    {
+        "name": "project_file",
+        "directory": "examples/project_file"
+    },
+    {
+        "name": "pubsub_redis",
+        "directory": "examples/pubsub_redis"
+    },
+    {
+        "name": "pubsub_sns",
+        "directory": "examples/pubsub_sns"
+    },
+    {
+        "name": "relay_send",
+        "directory": "examples/relay/send"
+    },
+    {
+        "name": "relay_receive",
+        "directory": "examples/relay/receive"
+    },
+    {
+        "name": "stateless_word_count",
+        "directory": "examples/stateless_word_count"
+    },
+    {
+        "name": "stripe_get_charge",
+        "directory": "examples/stripe_get_charge"
+    },
+    {
+        "name": "stripe_query_charge",
+        "directory": "examples/stripe_query_charge"
+    },
+    {
+        "name": "timer",
+        "directory": "examples/timer"
+    },
+    {
+        "name": "upload_s3",
+        "directory": "examples/upload_s3"
+    }
+]
