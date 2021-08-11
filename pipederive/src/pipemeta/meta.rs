@@ -4,15 +4,18 @@ use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
 use syn::Attribute;
 
-use crate::constants::BOOTSTRAP_PIPE_UPSTREAM_NAME_SEP;
 use crate::constants::{
-    BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH, BOOTSTRAP_PIPE_CONFIG_TYPE,
-    BOOTSTRAP_PIPE_IDENT_SUFFIX, BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE,
-    BOOTSTRAP_PIPE_UPSTREAM, CONTEXT_STORE_CONFIG_EMPTY_PATH, CONTEXT_STORE_CONFIG_PATH,
-    CONTEXT_STORE_CONFIG_TYPE, CONTEXT_STORE_IDENT_SUFFIX, CONTEXT_STORE_NAME,
-    ERROR_HANDLER_CONFIG_PATH, ERROR_HANDLER_CONFIG_TYPE,
+    BOOTSTRAP_PIPE_CHANNEL_BUFFER, BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH,
+    BOOTSTRAP_PIPE_CONFIG_TYPE, BOOTSTRAP_PIPE_IDENT_SUFFIX, BOOTSTRAP_PIPE_NAME,
+    BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE, BOOTSTRAP_PIPE_UPSTREAM,
+    CONTEXT_STORE_CONFIG_EMPTY_PATH, CONTEXT_STORE_CONFIG_PATH, CONTEXT_STORE_CONFIG_TYPE,
+    CONTEXT_STORE_IDENT_SUFFIX, CONTEXT_STORE_NAME, ERROR_HANDLER_CONFIG_PATH,
+    ERROR_HANDLER_CONFIG_TYPE,
 };
-use crate::utils::{get_meta, get_meta_string_value_by_meta_path};
+use crate::constants::{BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, BOOTSTRAP_PIPE_UPSTREAM_NAME_SEP};
+use crate::utils::{
+    get_meta, get_meta_number_value_by_meta_path, get_meta_string_value_by_meta_path,
+};
 
 /// Pipe configuration type name and path
 #[derive(Clone)]
@@ -42,6 +45,7 @@ pub struct PipeMeta {
     pub ty: String,
     pub config_meta: PipeConfigMeta,
     pub output_type_name: Option<String>,
+    pub buffer: usize,
     pub upstream_names: Vec<String>,
     pub upstream_output_type_name: Option<String>,
     pub downstream_names: Vec<String>,
@@ -74,6 +78,10 @@ impl PipeMeta {
 
     pub fn get_upstream_output_type_name(&self) -> Option<String> {
         self.upstream_output_type_name.to_owned()
+    }
+
+    pub fn get_channel_buffer(&self) -> usize {
+        self.buffer
     }
 
     pub fn get_upstream_names(&self) -> &Vec<String> {
@@ -113,6 +121,8 @@ impl PipeMeta {
             config_meta: Self::parse_config_meta(attribute, ident_location),
             output_type_name: Self::parse_output_meta(attribute),
             upstream_names: Self::parse_upstream_names(attribute),
+            buffer: Self::parse_channel_buffer(attribute)
+                .unwrap_or(BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER),
             upstream_output_type_name: None,
             downstream_names: vec![],
         }
@@ -180,6 +190,16 @@ impl PipeMeta {
 
     fn parse_output_meta(attribute: &Attribute) -> Option<String> {
         get_meta_string_value_by_meta_path(BOOTSTRAP_PIPE_OUTPUT, &get_meta(attribute), false, "")
+    }
+
+    fn parse_channel_buffer(attribute: &Attribute) -> Option<usize> {
+        let buffer = get_meta_number_value_by_meta_path(
+            BOOTSTRAP_PIPE_CHANNEL_BUFFER,
+            &get_meta(attribute),
+            false,
+            "",
+        );
+        buffer.map(|b| b.parse().unwrap())
     }
 
     pub fn generate_pipe_meta_expr<T: VisitPipeMeta + Expr>(&self) -> Option<String> {

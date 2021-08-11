@@ -1,10 +1,9 @@
 use super::meta::{ContextStoreMeta, ErrorHandlerMeta, PipeMeta};
 use crate::constants::{
-    BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, CHANNEL_MACRO, CONTEXT_STORE_MACRO,
-    ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER, ERROR_HANDLER_CHANNEL_DEFAULT_TYPE,
-    ERROR_HANDLER_DEFAULT_IDENT, ERROR_HANDLER_DEFAULT_RX, ERROR_HANDLER_DEFAULT_TX,
-    ERROR_HANDLER_MACRO, JOIN_PIPES_MACRO, RUN_CONTEXT_STORE_MACRO, RUN_ERROR_HANDLER_MACRO,
-    RUN_PIPE_MACRO, SUBSCRIBE_ERROR_HANDLER_MACRO,
+    CHANNEL_MACRO, CONTEXT_STORE_MACRO, ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER,
+    ERROR_HANDLER_CHANNEL_DEFAULT_TYPE, ERROR_HANDLER_DEFAULT_IDENT, ERROR_HANDLER_DEFAULT_RX,
+    ERROR_HANDLER_DEFAULT_TX, ERROR_HANDLER_MACRO, JOIN_PIPES_MACRO, RUN_CONTEXT_STORE_MACRO,
+    RUN_ERROR_HANDLER_MACRO, RUN_PIPE_MACRO, SUBSCRIBE_ERROR_HANDLER_MACRO,
 };
 
 pub trait VisitPipeMeta: Default {
@@ -49,11 +48,9 @@ impl VisitPipeMeta for ChannelExpr {
         let pipe_name = meta.get_name();
         let tx_name = Self::gen_sender_name(pipe_name);
         let rx_name = Self::gen_receiver_name(pipe_name);
+        let buffer = meta.get_channel_buffer();
         self.lhs = Some(format!("({}, {})", tx_name, rx_name));
-        self.rhs = Some(format!(
-            "{}({}, {})",
-            CHANNEL_MACRO, channel_ty, BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER
-        ));
+        self.rhs = Some(format!("{}({}, {})", CHANNEL_MACRO, channel_ty, buffer));
     }
 }
 

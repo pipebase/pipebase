@@ -46,6 +46,7 @@ pub const BOOTSTRAP_PIPE_CONFIG_TYPE: &str = "pipe.config.ty";
 pub const BOOTSTRAP_PIPE_CONFIG_PATH: &str = "pipe.config.path";
 pub const BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH: &str = "";
 pub const BOOTSTRAP_PIPE_OUTPUT: &str = "pipe.output";
+pub const BOOTSTRAP_PIPE_CHANNEL_BUFFER: &str = "pipe.buffer";
 pub const BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER: usize = 1024;
 pub const BOOTSTRAP_MODULE: &str = "bootstrap";
 pub const BOOTSTRAP_FUNCTION: &str = "bootstrap";

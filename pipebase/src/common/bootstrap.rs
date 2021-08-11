@@ -26,7 +26,8 @@ mod tests {
         name = "printer",
         ty = "exporter",
         upstream = "timer1, timer2",
-        config(ty = "PrinterConfig")
+        config(ty = "PrinterConfig"),
+        buffer = 10
     )]
     #[cstore(
         name = "context_printer",
