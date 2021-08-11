@@ -26,7 +26,8 @@ mod tests {
         name = "printer",
         ty = "exporter",
         upstream = "timer1, timer2",
-        config(ty = "PrinterConfig")
+        config(ty = "PrinterConfig"),
+        buffer = 10
     )]
     #[cstore(
         name = "context_printer",
@@ -35,7 +36,7 @@ mod tests {
             path = "resources/catalogs/context_printer.yml"
         )
     )]
-    #[error(config(ty = "PipeErrorPrinterConfig",))]
+    #[error(config(ty = "PipeErrorPrinterConfig",), buffer = 10)]
     struct App {}
 
     #[tokio::test]

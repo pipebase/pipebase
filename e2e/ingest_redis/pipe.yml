@@ -30,6 +30,7 @@ pipes:
     output:
       Object: Record
     upstreams: [ingestion_server]
+    buffer: 10
   - name: printer
     ty: Exporter
     config:
@@ -41,6 +42,7 @@ pipes:
       ty: RedisStringWriterConfig
       path: catalogs/redis_writer.yml
     upstreams: [json]
+    buffer: 10
 objects:
   - ty: Record
     metas:

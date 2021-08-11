@@ -34,6 +34,7 @@ pub const RUN_ERROR_HANDLER_MACRO: &str = "run_error_handler!";
 pub const ERROR_HANDLER_DEFAULT_IDENT: &str = "_error_handler";
 pub const ERROR_HANDLER_DEFAULT_RX: &str = "_erx";
 pub const ERROR_HANDLER_DEFAULT_TX: &str = "_etx";
+pub const ERROR_HANDLER_CHANNEL_BUFFER: &str = "error.buffer";
 pub const ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER: usize = 1024;
 pub const ERROR_HANDLER_CHANNEL_DEFAULT_TYPE: &str = "PipeError";
 
@@ -46,6 +47,7 @@ pub const BOOTSTRAP_PIPE_CONFIG_TYPE: &str = "pipe.config.ty";
 pub const BOOTSTRAP_PIPE_CONFIG_PATH: &str = "pipe.config.path";
 pub const BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH: &str = "";
 pub const BOOTSTRAP_PIPE_OUTPUT: &str = "pipe.output";
+pub const BOOTSTRAP_PIPE_CHANNEL_BUFFER: &str = "pipe.buffer";
 pub const BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER: usize = 1024;
 pub const BOOTSTRAP_MODULE: &str = "bootstrap";
 pub const BOOTSTRAP_FUNCTION: &str = "bootstrap";

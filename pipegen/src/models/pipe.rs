@@ -6,7 +6,7 @@ use serde::Deserialize;
 use strum::{Display, EnumString};
 
 use super::data::{data_ty_to_literal, DataType};
-use super::meta::{meta_to_literal, Meta, MetaValue};
+use super::meta::{meta_to_literal, meta_value_str, meta_value_usize, Meta};
 
 #[derive(Clone, Display, EnumString, PartialEq, Debug, Deserialize)]
 pub enum PipeType {
@@ -55,6 +55,8 @@ pub struct Pipe {
     name: String,
     ty: PipeType,
     config: PipeConfig,
+    // pipe channel buffer
+    buffer: Option<usize>,
     // upstream pipe names
     upstreams: Option<Vec<String>>,
     // output data type
@@ -77,41 +79,17 @@ impl Pipe {
     }
 
     fn get_name_meta(&self) -> Meta {
-        Meta::Value {
-            name: "name".to_owned(),
-            meta: MetaValue::Str {
-                value: self.name.to_owned(),
-                raw: false,
-            },
-        }
+        meta_value_str("name", &self.name, false)
     }
 
     fn get_type_meta(&self) -> Meta {
-        Meta::Value {
-            name: "ty".to_owned(),
-            meta: MetaValue::Str {
-                value: self.ty.to_string(),
-                raw: false,
-            },
-        }
+        meta_value_str("ty", &self.ty.to_string(), false)
     }
 
     fn get_config_meta(&self) -> Meta {
-        let mut config_metas = vec![Meta::Value {
-            name: "ty".to_owned(),
-            meta: MetaValue::Str {
-                value: self.config.get_config_type().to_owned(),
-                raw: false,
-            },
-        }];
+        let mut config_metas = vec![meta_value_str("ty", self.config.get_config_type(), false)];
         if let Some(path) = self.config.get_path() {
-            config_metas.push(Meta::Value {
-                name: "path".to_owned(),
-                meta: MetaValue::Str {
-                    value: path.to_owned(),
-                    raw: false,
-                },
-            });
+            config_metas.push(meta_value_str("path", path, false));
         };
         Meta::List {
             name: "config".to_owned(),
@@ -124,14 +102,7 @@ impl Pipe {
         if upstreams.is_empty() {
             return None;
         }
-        let meta = Meta::Value {
-            name: "upstream".to_owned(),
-            meta: MetaValue::Str {
-                value: upstreams.join(", "),
-                raw: false,
-            },
-        };
-        Some(meta)
+        Some(meta_value_str("upstream", &upstreams.join(", "), false))
     }
 
     fn get_output_data_type_meta(&self) -> Option<Meta> {
@@ -139,14 +110,7 @@ impl Pipe {
             Some(ref output) => output,
             None => return None,
         };
-        let meta = Meta::Value {
-            name: "output".to_owned(),
-            meta: MetaValue::Str {
-                value: data_ty_to_literal(output),
-                raw: false,
-            },
-        };
-        Some(meta)
+        Some(meta_value_str("output", &data_ty_to_literal(output), false))
     }
 
     pub(crate) fn get_output_data_type(&self) -> Option<&DataType> {
@@ -155,6 +119,14 @@ impl Pipe {
 
     pub(crate) fn has_output(&self) -> bool {
         self.output.is_some()
+    }
+
+    pub(crate) fn get_channel_buffer_meta(&self) -> Option<Meta> {
+        let buffer = match self.buffer {
+            Some(ref buffer) => buffer,
+            None => return None,
+        };
+        Some(meta_value_usize("buffer", buffer))
     }
 
     pub fn filter_upstreams(&mut self, pipe_id_filter: &HashSet<String>) {
@@ -195,6 +167,9 @@ impl Entity for Pipe {
             metas.push(meta)
         };
         if let Some(meta) = self.get_output_data_type_meta() {
+            metas.push(meta)
+        };
+        if let Some(meta) = self.get_channel_buffer_meta() {
             metas.push(meta)
         };
         let meta = Meta::List {

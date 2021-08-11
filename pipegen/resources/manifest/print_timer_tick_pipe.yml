@@ -17,6 +17,7 @@ pipes:
     config:
       ty: PrinterConfig
     upstreams: [ "timer1", "timer2" ]
+    buffer: 10
 cstores:
   - name: "context_printer"
     config:

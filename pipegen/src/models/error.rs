@@ -1,5 +1,5 @@
 use super::{
-    meta::{meta_to_literal, Meta, MetaValue},
+    meta::{meta_to_literal, meta_value_str, meta_value_usize, Meta},
     Entity, EntityAccept, VisitEntity,
 };
 use serde::Deserialize;
@@ -22,6 +22,7 @@ impl ErrorHandlerConfig {
 #[derive(Deserialize, Debug, Clone)]
 pub struct ErrorHandler {
     config: ErrorHandlerConfig,
+    buffer: Option<usize>,
 }
 
 impl Entity for ErrorHandler {
@@ -39,7 +40,10 @@ impl<V: VisitEntity<Self>> EntityAccept<V> for ErrorHandler {}
 
 impl ErrorHandler {
     fn get_meta(&self) -> Meta {
-        let metas = vec![self.get_config_meta()];
+        let mut metas = vec![self.get_config_meta()];
+        if let Some(meta) = self.get_channel_buffer_meta() {
+            metas.push(meta)
+        };
         Meta::List {
             name: "error".to_owned(),
             metas,
@@ -49,25 +53,21 @@ impl ErrorHandler {
     fn get_config_meta(&self) -> Meta {
         let config_ty = self.config.get_ty();
         let config_path = self.config.get_path();
-        let mut metas = vec![Meta::Value {
-            name: "ty".to_owned(),
-            meta: MetaValue::Str {
-                value: config_ty.to_owned(),
-                raw: false,
-            },
-        }];
+        let mut metas = vec![meta_value_str("ty", config_ty, false)];
         if let Some(path) = config_path {
-            metas.push(Meta::Value {
-                name: "path".to_owned(),
-                meta: MetaValue::Str {
-                    value: path.to_owned(),
-                    raw: false,
-                },
-            })
+            metas.push(meta_value_str("path", path, false))
         };
         Meta::List {
             name: "config".to_owned(),
             metas,
         }
+    }
+
+    pub(crate) fn get_channel_buffer_meta(&self) -> Option<Meta> {
+        let buffer = match self.buffer {
+            Some(ref buffer) => buffer,
+            None => return None,
+        };
+        Some(meta_value_usize("buffer", buffer))
     }
 }
