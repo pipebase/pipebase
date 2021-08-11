@@ -1,16 +1,16 @@
 name: ingest_redis
 dependencies:
   - name: pipebase
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipebase::prelude::*"]
   - name: piperedis
-    version: 0.1.1
+    version: 0.1.2
     modules: ["piperedis::*"]
   - name: pipewarp
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipewarp::*"]
   - name: pipejson
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipejson::*"]
   - name: serde
     version: 1.0

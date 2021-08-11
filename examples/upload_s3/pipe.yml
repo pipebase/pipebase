@@ -1,7 +1,7 @@
 name: project_file
 dependencies:
   - name: pipebase
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipebase::prelude::*"]
   - name: pipes3
     git: https://github.com/pipebase/pipebase.git
