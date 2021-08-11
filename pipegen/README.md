@@ -11,7 +11,7 @@ A `manifest` is composed of:
 | `cstores` | list of pipe runtime [`context store`] definition | false |
 | `error` | pipe [`error handler`] definition | false |
 
-Tips: compose manifest with YAML language support and [`schema`] setting
+**Tips**: compose manifest with **YAML language support** and [`schema`] setting
 
 ## Dependency
 App dependency, similar as [`cargo dependencies`]
