@@ -1,5 +1,5 @@
 use super::{
-    meta::{meta_to_literal, Meta, MetaValue},
+    meta::{meta_to_literal, meta_value_str, Meta},
     Entity, EntityAccept, VisitEntity,
 };
 use serde::Deserialize;
@@ -49,21 +49,9 @@ impl ErrorHandler {
     fn get_config_meta(&self) -> Meta {
         let config_ty = self.config.get_ty();
         let config_path = self.config.get_path();
-        let mut metas = vec![Meta::Value {
-            name: "ty".to_owned(),
-            meta: MetaValue::Str {
-                value: config_ty.to_owned(),
-                raw: false,
-            },
-        }];
+        let mut metas = vec![meta_value_str("ty", config_ty, false)];
         if let Some(path) = config_path {
-            metas.push(Meta::Value {
-                name: "path".to_owned(),
-                meta: MetaValue::Str {
-                    value: path.to_owned(),
-                    raw: false,
-                },
-            })
+            metas.push(meta_value_str("path", path, false))
         };
         Meta::List {
             name: "config".to_owned(),

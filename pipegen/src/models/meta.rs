@@ -95,7 +95,7 @@ pub enum Meta {
     Convert { convert: ConvertMeta },
 }
 
-fn meta_value_str(name: &str, value: &str, raw: bool) -> Meta {
+pub(crate) fn meta_value_str(name: &str, value: &str, raw: bool) -> Meta {
     Meta::Value {
         name: name.to_owned(),
         meta: MetaValue::Str {
