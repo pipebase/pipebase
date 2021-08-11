@@ -9,7 +9,7 @@ Pipes
 | `Listener` | [`KubeLogReader`] | [`kube_log`] |
 | `Listener` | [`KubeEventReader`] | [`kube_event`] |
 | `Listener` | [`RedisSubscriber`] | [`pubsub_redis`] |
-| `Poller` | [`SqsMessageReceiver`] | [`consume_sqs`] |
+| `Poller` | `SqsMessageReceiver` | [`consume_sqs`] |
 | `Mapper` | [`JsonSer`] |  |
 | `Mapper` | [`JsonDeser`] | `ingest_*` |
 | `Mapper` | [`CsvSer`] | [`convert_csv`] |
@@ -25,10 +25,10 @@ Pipes
 | `Exporter` | [`RedisPublisher`] | [`pubsub_redis`] |
 | `Exporter` | [`ReqwestPoster`] | [`relay`], [`ingest_elasticsearch`] |
 | `Exporter` | [`KafkaProducer`] | [`ingest_kafka`] |
-| `Exporter` | S3Writer | [`upload_s3`] |
+| `Exporter` | `S3Writer` | [`upload_s3`] |
 | `Exporter` | [`MySQLWriter`] | [`ingest_mysql`] |
-| `Exporter` | DynamoDBWriter | [`ingest_dynamodb`] |
-| `Exporter` | SnsPublisher | [`pubsub_sns`] |
+| `Exporter` | `DynamoDBWriter` | [`ingest_dynamodb`] |
+| `Exporter` | `SnsPublisher` | [`pubsub_sns`] |
 
 Context Stores
 | implementation | example |
