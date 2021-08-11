@@ -1,6 +1,6 @@
 [package]
 name = "cargo-pipe"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -8,11 +8,12 @@ repository = "https://github.com/pipebase/pipebase"
 homepage = "https://github.com/pipebase/pipebase"
 readme = "README.md"
 description = "A command-line tool to generate and build data integration app using pipebase framework"
+categories = ["command-line-utilities", "development-tools::cargo-plugins"]
 keywords = ["data", "integration", "pipeline", "declarative"]
 
 [dependencies]
 anyhow = "1.0"
-pipegen = { version = "0.1.2", path = "../pipegen" }
+pipegen = { version = "0.1.3", path = "../pipegen" }
 clap = "3.0.0-beta.2"
 lazy_static = "1.4.0"
 regex = "1.5.4"
