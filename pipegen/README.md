@@ -11,6 +11,8 @@ A `manifest` is composed of:
 | `cstores` | list of pipe runtime [`context store`] definition | false |
 | `error` | pipe [`error handler`] definition | false |
 
+Tips: compose manifest with YAML language support and [`schema`] setting
+
 ## Dependency
 App dependency, similar as [`cargo dependencies`]
 example:
@@ -165,3 +167,4 @@ Listen errors from pipes, example [`error_printer`]
 [`cargo dependencies`]: https://doc.rust-lang.org/cargo/guide/dependencies.html#dependencies
 [`cargo features`]: https://doc.rust-lang.org/cargo/reference/features.html
 [`cargo workspace`]: https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html
+[`schema`]: https://github.com/pipebase/schema
