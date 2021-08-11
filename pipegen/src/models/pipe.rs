@@ -6,7 +6,7 @@ use serde::Deserialize;
 use strum::{Display, EnumString};
 
 use super::data::{data_ty_to_literal, DataType};
-use super::meta::{meta_to_literal, Meta, MetaValue};
+use super::meta::{meta_to_literal, meta_value_usize, Meta, MetaValue};
 
 #[derive(Clone, Display, EnumString, PartialEq, Debug, Deserialize)]
 pub enum PipeType {
@@ -55,6 +55,8 @@ pub struct Pipe {
     name: String,
     ty: PipeType,
     config: PipeConfig,
+    // pipe channel buffer
+    buffer: Option<usize>,
     // upstream pipe names
     upstreams: Option<Vec<String>>,
     // output data type
@@ -157,6 +159,14 @@ impl Pipe {
         self.output.is_some()
     }
 
+    pub(crate) fn get_channel_buffer_meta(&self) -> Option<Meta> {
+        let buffer = match self.buffer {
+            Some(ref buffer) => buffer,
+            None => return None,
+        };
+        Some(meta_value_usize("buffer", buffer))
+    }
+
     pub fn filter_upstreams(&mut self, pipe_id_filter: &HashSet<String>) {
         let upstreams = match self.upstreams {
             Some(ref upstreams) => upstreams,
@@ -195,6 +205,9 @@ impl Entity for Pipe {
             metas.push(meta)
         };
         if let Some(meta) = self.get_output_data_type_meta() {
+            metas.push(meta)
+        };
+        if let Some(meta) = self.get_channel_buffer_meta() {
             metas.push(meta)
         };
         let meta = Meta::List {

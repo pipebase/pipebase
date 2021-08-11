@@ -75,6 +75,7 @@ pub enum MetaValue {
     // String Literal, Generate as raw or not
     Str { value: String, raw: bool },
     Int { value: i32 },
+    Usize { value: usize },
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -108,6 +109,15 @@ fn meta_value_int(name: &str, value: &i32) -> Meta {
     Meta::Value {
         name: name.to_owned(),
         meta: MetaValue::Int {
+            value: value.to_owned(),
+        },
+    }
+}
+
+pub(crate) fn meta_value_usize(name: &str, value: &usize) -> Meta {
+    Meta::Value {
+        name: name.to_owned(),
+        meta: MetaValue::Usize {
             value: value.to_owned(),
         },
     }
@@ -289,6 +299,14 @@ fn meta_int_value_to_lit(name: &str, value: &i32, indent: usize, compact: bool) 
     format!("{}{}", indent_literal(indent), lit)
 }
 
+fn meta_usize_value_to_lit(name: &str, value: &usize, indent: usize, compact: bool) -> String {
+    let lit = format!("{} = {}", name, value);
+    if compact {
+        return lit;
+    }
+    format!("{}{}", indent_literal(indent), lit)
+}
+
 fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
     let (name, metas) = match meta {
         Meta::Path { name } => return meta_path_to_lit(name, indent, compact),
@@ -297,6 +315,9 @@ fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
                 return meta_str_value_to_lit(name, value, raw, indent, compact)
             }
             MetaValue::Int { value } => return meta_int_value_to_lit(name, value, indent, compact),
+            MetaValue::Usize { value } => {
+                return meta_usize_value_to_lit(name, value, indent, compact)
+            }
         },
         Meta::Derive { derives } => {
             let meta = expand_derives(derives);
