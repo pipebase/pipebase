@@ -1,9 +1,9 @@
 use super::meta::{ContextStoreMeta, ErrorHandlerMeta, PipeMeta};
 use crate::constants::{
-    CHANNEL_MACRO, CONTEXT_STORE_MACRO, ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER,
-    ERROR_HANDLER_CHANNEL_DEFAULT_TYPE, ERROR_HANDLER_DEFAULT_IDENT, ERROR_HANDLER_DEFAULT_RX,
-    ERROR_HANDLER_DEFAULT_TX, ERROR_HANDLER_MACRO, JOIN_PIPES_MACRO, RUN_CONTEXT_STORE_MACRO,
-    RUN_ERROR_HANDLER_MACRO, RUN_PIPE_MACRO, SUBSCRIBE_ERROR_HANDLER_MACRO,
+    CHANNEL_MACRO, CONTEXT_STORE_MACRO, ERROR_HANDLER_CHANNEL_DEFAULT_TYPE,
+    ERROR_HANDLER_DEFAULT_IDENT, ERROR_HANDLER_DEFAULT_RX, ERROR_HANDLER_DEFAULT_TX,
+    ERROR_HANDLER_MACRO, JOIN_PIPES_MACRO, RUN_CONTEXT_STORE_MACRO, RUN_ERROR_HANDLER_MACRO,
+    RUN_PIPE_MACRO, SUBSCRIBE_ERROR_HANDLER_MACRO,
 };
 
 pub trait VisitPipeMeta: Default {
@@ -277,14 +277,15 @@ impl Expr for ErrorChannelExpr {
 }
 
 impl VisitErrorHandlerMeta for ErrorChannelExpr {
-    fn visit(&mut self, _meta: &ErrorHandlerMeta) {
+    fn visit(&mut self, meta: &ErrorHandlerMeta) {
+        let buffer = meta.get_channel_buffer();
         self.lhs = Some(format!(
             "({}, {})",
             ERROR_HANDLER_DEFAULT_TX, ERROR_HANDLER_DEFAULT_RX
         ));
         self.rhs = Some(format!(
             "{}({}, {})",
-            CHANNEL_MACRO, ERROR_HANDLER_CHANNEL_DEFAULT_TYPE, ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER
+            CHANNEL_MACRO, ERROR_HANDLER_CHANNEL_DEFAULT_TYPE, buffer
         ));
     }
 }

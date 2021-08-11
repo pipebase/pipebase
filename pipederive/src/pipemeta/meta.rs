@@ -5,14 +5,14 @@ use std::iter::FromIterator;
 use syn::Attribute;
 
 use crate::constants::{
-    BOOTSTRAP_PIPE_CHANNEL_BUFFER, BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH,
-    BOOTSTRAP_PIPE_CONFIG_TYPE, BOOTSTRAP_PIPE_IDENT_SUFFIX, BOOTSTRAP_PIPE_NAME,
-    BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE, BOOTSTRAP_PIPE_UPSTREAM,
-    CONTEXT_STORE_CONFIG_EMPTY_PATH, CONTEXT_STORE_CONFIG_PATH, CONTEXT_STORE_CONFIG_TYPE,
-    CONTEXT_STORE_IDENT_SUFFIX, CONTEXT_STORE_NAME, ERROR_HANDLER_CONFIG_PATH,
-    ERROR_HANDLER_CONFIG_TYPE,
+    BOOTSTRAP_PIPE_CHANNEL_BUFFER, BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER,
+    BOOTSTRAP_PIPE_CONFIG_EMPTY_PATH, BOOTSTRAP_PIPE_CONFIG_PATH, BOOTSTRAP_PIPE_CONFIG_TYPE,
+    BOOTSTRAP_PIPE_IDENT_SUFFIX, BOOTSTRAP_PIPE_NAME, BOOTSTRAP_PIPE_OUTPUT, BOOTSTRAP_PIPE_TYPE,
+    BOOTSTRAP_PIPE_UPSTREAM, BOOTSTRAP_PIPE_UPSTREAM_NAME_SEP, CONTEXT_STORE_CONFIG_EMPTY_PATH,
+    CONTEXT_STORE_CONFIG_PATH, CONTEXT_STORE_CONFIG_TYPE, CONTEXT_STORE_IDENT_SUFFIX,
+    CONTEXT_STORE_NAME, ERROR_HANDLER_CHANNEL_BUFFER, ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER,
+    ERROR_HANDLER_CONFIG_PATH, ERROR_HANDLER_CONFIG_TYPE,
 };
-use crate::constants::{BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER, BOOTSTRAP_PIPE_UPSTREAM_NAME_SEP};
 use crate::utils::{
     get_meta, get_meta_number_value_by_meta_path, get_meta_string_value_by_meta_path,
 };
@@ -449,6 +449,7 @@ impl ErrorHandlerConfigMeta {
 
 pub struct ErrorHandlerMeta {
     config_meta: ErrorHandlerConfigMeta,
+    buffer: usize,
     pipe_idents: Vec<String>,
 }
 
@@ -469,14 +470,21 @@ impl ErrorHandlerMeta {
         &self.config_meta
     }
 
+    pub fn get_channel_buffer(&self) -> usize {
+        self.buffer
+    }
+
     pub fn parse(attribute: Option<&Attribute>, ident_location: &str) -> Option<Self> {
         let attribute = match attribute {
             Some(attribute) => attribute,
             None => return None,
         };
         let config_meta = Self::parse_config_meta(attribute, ident_location);
+        let buffer =
+            Self::parse_channel_buffer(attribute).unwrap_or(ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER);
         Some(ErrorHandlerMeta {
             config_meta,
+            buffer,
             pipe_idents: Vec::new(),
         })
     }
@@ -496,6 +504,16 @@ impl ErrorHandlerMeta {
             "",
         );
         ErrorHandlerConfigMeta { ty, path }
+    }
+
+    fn parse_channel_buffer(attribute: &Attribute) -> Option<usize> {
+        let buffer = get_meta_number_value_by_meta_path(
+            ERROR_HANDLER_CHANNEL_BUFFER,
+            &get_meta(attribute),
+            false,
+            "",
+        );
+        buffer.map(|b| b.parse().unwrap())
     }
 
     pub fn generate_error_handler_meta_expr<V: VisitErrorHandlerMeta + Expr>(

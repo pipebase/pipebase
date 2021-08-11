@@ -34,6 +34,7 @@ pub const RUN_ERROR_HANDLER_MACRO: &str = "run_error_handler!";
 pub const ERROR_HANDLER_DEFAULT_IDENT: &str = "_error_handler";
 pub const ERROR_HANDLER_DEFAULT_RX: &str = "_erx";
 pub const ERROR_HANDLER_DEFAULT_TX: &str = "_etx";
+pub const ERROR_HANDLER_CHANNEL_BUFFER: &str = "error.buffer";
 pub const ERROR_HANDLER_CHANNEL_DEFAULT_BUFFER: usize = 1024;
 pub const ERROR_HANDLER_CHANNEL_DEFAULT_TYPE: &str = "PipeError";
 

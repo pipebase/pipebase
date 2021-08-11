@@ -36,7 +36,7 @@ mod tests {
             path = "resources/catalogs/context_printer.yml"
         )
     )]
-    #[error(config(ty = "PipeErrorPrinterConfig",))]
+    #[error(config(ty = "PipeErrorPrinterConfig",), buffer = 10)]
     struct App {}
 
     #[tokio::test]
