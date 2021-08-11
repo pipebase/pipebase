@@ -1,6 +1,7 @@
 A [`pipebase`] plugin using [`aws-sdk-s3`] 
 ```
-- name: pipes3
+dependencies:
+  - name: pipes3
     git: https://github.com/pipebase/pipebase.git
     package: pipe3
     modules: ["pipes3::*"]

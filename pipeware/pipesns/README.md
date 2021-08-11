@@ -1,6 +1,7 @@
 A [`pipebase`] plugin using [`aws-sdk-sns`] 
 ```
-- name: pipesns
+dependencies:
+  - name: pipesns
     git: https://github.com/pipebase/pipebase.git
     package: pipesns
     modules: ["pipesns::*"]

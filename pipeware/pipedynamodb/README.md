@@ -1,6 +1,7 @@
 A [`pipebase`] plugin using [`aws-sdk-dynamodb`] 
 ```
-- name: pipedynamodb
+dependencies:
+  - name: pipedynamodb
     git: https://github.com/pipebase/pipebase.git
     package: pipedynamodb
     modules: ["pipedynamodb::*"]

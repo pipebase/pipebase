@@ -1,6 +1,7 @@
 A [`pipebase`] plugin using [`aws-sdk-sqs`] 
 ```
-- name: pipesqs
+dependencies:
+  - name: pipesqs
     git: https://github.com/pipebase/pipebase.git
     package: pipesqs
     modules: ["pipesqs::*"]
