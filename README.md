@@ -18,7 +18,7 @@
 
 ## Overview
 `pipebase` is composed of three main components
-* **build**: [`pipegen`], [`cargo-pipe`]
+* **build**: [`pipegen`], [`cargo-pipe`], [`schema`]
 * **runtime**: [`pipebase`]
 * **plugins**: [`pipeware`]
 
@@ -28,3 +28,4 @@
 [`pipeware`]: https://github.com/pipebase/pipebase/tree/main/pipeware
 [`examples`]: https://github.com/pipebase/pipebase/tree/main/examples
 [Examples]: https://github.com/pipebase/pipebase/tree/main/examples
+[`schema`]: https://github.com/pipebase/schema
