@@ -1,16 +1,16 @@
 name: query_stripe_charge
 dependencies:
   - name: pipebase
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipebase::prelude::*"]
   - name: pipejson
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipejson::*"]
   - name: pipewarp
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipewarp::*"]
   - name: pipereqwest
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipereqwest::*"]
   - name: serde
     version: 1.0

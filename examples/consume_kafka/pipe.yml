@@ -1,13 +1,13 @@
 name: consume_kafka
 dependencies:
   - name: pipebase
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipebase::prelude::*"]
   - name: pipekafka
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipekafka::*"]
   - name: pipejson
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipejson::*"]
   - name: serde
     version: 1.0

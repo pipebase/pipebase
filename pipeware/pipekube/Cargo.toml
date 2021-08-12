@@ -1,6 +1,6 @@
 [package]
 name = "pipekube"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -18,7 +18,7 @@ bytes = "1.0.1"
 chrono = { version = "0.4", features = ["serde"] }
 futures = { version = "0.3.15", default-features = false }
 log = "0.4.14"
-pipebase = { version = "0.1.1", path = "../../pipebase" }
+pipebase = { version = "0.1.2", path = "../../pipebase" }
 serde = { version = "1.0", features = ["derive"] }
 kube = "0.58.1"
 kube-runtime = "0.58.1"

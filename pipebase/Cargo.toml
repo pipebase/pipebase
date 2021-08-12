@@ -1,6 +1,6 @@
 [package]
 name = "pipebase"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -20,4 +20,4 @@ rand = "0.8.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 strum = { version = "0.20", features = ["derive"] }
-pipederive = { version = "0.1.1", path = "../pipederive" }
+pipederive = { version = "0.1.2", path = "../pipederive" }

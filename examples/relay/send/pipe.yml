@@ -1,13 +1,13 @@
 name: sender
 dependencies:
   - name: pipebase
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipebase::prelude::*"]
   - name: pipereqwest
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipereqwest::*"]
   - name: pipewarp
-    version: 0.1.1
+    version: 0.1.2
     modules: ["pipewarp::*"]
 pipes:
   - name: relay_server
