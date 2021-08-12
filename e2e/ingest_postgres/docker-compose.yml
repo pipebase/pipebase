@@ -16,6 +16,7 @@ services:
       context: ../
       args:
         TEST: ingest_postgres
+        INIT_DELAY: 3
     depends_on: 
       - postgres
     ports:

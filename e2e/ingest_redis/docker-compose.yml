@@ -12,6 +12,7 @@ services:
       context: ../
       args:
         TEST: ingest_redis
+        INIT_DELAY: 3
     depends_on: 
       - redis
     ports:
