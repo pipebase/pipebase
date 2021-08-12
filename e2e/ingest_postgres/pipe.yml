@@ -1,0 +1,60 @@
+name: ingest_postgres
+dependencies:
+  - name: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - name: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - name: pipepsql
+    path: ../../../pipeware/pipepsql
+    modules: ["pipepsql::*"]
+  - name: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - name: serde
+    version: 1.0
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      Object: Record
+    upstreams: [ingestion_server]
+  - name: psql_writer
+    ty: Exporter
+    config:
+      ty: PsqlWriterConfig
+      path: catalogs/psql_writer.yml
+    upstreams: [json]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, Render]
+      - render:
+          template: "INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
+    fields:
+      - name: key
+        ty: String
+        metas:
+          - render:
+              pos: 0
+      - name: value
+        ty: Integer
+        metas:
+          - render:
+              pos: 1
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml

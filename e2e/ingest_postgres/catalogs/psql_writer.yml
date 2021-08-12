@@ -1,0 +1,3 @@
+---
+# reference: https://github.com/sfackler/rust-postgres/blob/master/postgres/src/config.rs
+params: "host=postgres port=5432 user=postgres password=postgres dbname=postgres"

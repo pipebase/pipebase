@@ -31,3 +31,17 @@ jobs:
         run: docker-compose -f e2e/ingest_redis/docker-compose.yml up -d
       - name: test
         run: ./e2e/run.sh -f e2e/ingest_redis/entry.json
+  ingest_postgres:
+    name: Ingest Postgres
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: copy project
+        run: cp -r ./ /tmp/pipebase && mv /tmp/pipebase e2e
+      - name: run
+        run: docker-compose -f e2e/ingest_postgres/docker-compose.yml up -d
+      - name: logs
+        run: docker logs -f app
+      # - name: test
+      #  run: ./e2e/run.sh -f e2e/ingest_postgres/entry.json
+
