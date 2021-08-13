@@ -17,7 +17,9 @@ cargo-pipe/resources/app
 examples/*/app
 examples/*/*/app
 examples/*/data
-e2e/pipebase
 pipebase/resources/data
-pipeext/resources/data
 pipeware/*/resources/data
+
+# e2e testing
+e2e/pipebase
+e2e/*/out

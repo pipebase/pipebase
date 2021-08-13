@@ -2,7 +2,7 @@ A collection of e2e test suites
 ### Setup
 ```bash
 # at project root directory
-cp -r ./ /tmp/pipebase && mv /tmp/pipebase e2e
+./e2e/setup.sh -d .
 ```
 ### Run test
 run apps
