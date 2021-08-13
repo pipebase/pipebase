@@ -1,10 +1,10 @@
 A collection of e2e test suites
-### Setup
+## Run test
+setup
 ```bash
 # at project root directory
 ./e2e/setup.sh -d .
 ```
-### Run test
 run apps
 ```bash
 # at project root directory
