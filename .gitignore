@@ -18,5 +18,8 @@ examples/*/app
 examples/*/*/app
 examples/*/data
 pipebase/resources/data
-pipeext/resources/data
 pipeware/*/resources/data
+
+# e2e testing
+e2e/pipebase
+e2e/*/out

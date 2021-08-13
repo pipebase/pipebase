@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: copy project
-        run: cp -r ./ /tmp/pipebase && mv /tmp/pipebase e2e
+        run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/timer/docker-compose.yml up -d
       - name: test
@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: copy project
-        run: cp -r ./ /tmp/pipebase && mv /tmp/pipebase e2e
+        run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/ingest_redis/docker-compose.yml up -d
       - name: wait for app setup
@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: copy project
-        run: cp -r ./ /tmp/pipebase && mv /tmp/pipebase e2e
+        run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/ingest_postgres/docker-compose.yml up -d
       - name: wait for app setup
