@@ -6,19 +6,19 @@
   {
     "cmd": "curl http://127.0.0.1:8000/v1/pipe/ingestion_server",
     "description": "expect ingestion_server succeed",
-    "expected_output_file": "e2e/ingest_redis/tests/context3.txt",
+    "expected_output_file": "e2e/ingest_redis/tests/context1.txt",
     "retry": 1
   },
   {
     "cmd": "curl http://127.0.0.1:8000/v1/pipe/json",
     "description": "expect json deserialize succeed",
-    "expected_output_file": "e2e/ingest_redis/tests/context4.txt",
+    "expected_output_file": "e2e/ingest_redis/tests/context2.txt",
     "retry": 1
   },
   {
     "cmd": "curl http://127.0.0.1:8000/v1/pipe/redis_writer",
     "description": "expect redis string writer succeed",
-    "expected_output_file": "e2e/ingest_redis/tests/context5.txt",
+    "expected_output_file": "e2e/ingest_redis/tests/context3.txt",
     "retry": 1
   }
 ]
