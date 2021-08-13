@@ -7,5 +7,6 @@ services:
       context: ../
       args:
         TEST: timer
+        INIT_DELAY: 0
     ports:
       - "8000:8000"
