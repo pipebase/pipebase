@@ -1,0 +1,84 @@
+name: pubsub_kafka
+dependencies:
+  - name: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - name: pipekafka
+    path: ../../../pipeware/pipekafka
+    modules: ["pipekafka::*"]
+  - name: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - name: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - name: piperedis
+    path: ../../../pipeware/piperedis
+    modules: ["piperedis::*"]
+  - name: serde
+    version: 1.0
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: UnsignedBytes
+  - name: kafka_record_converter
+    ty: Mapper
+    config:
+      ty: KafkaUnsignedBytesRecordConverterConfig
+    output:
+      Pair:
+        lty: 
+          Option: 
+            ty: String
+        rty: UnsignedBytes
+    upstreams: [ ingestion_server ]
+  - name: kafka_producer
+    ty: Exporter
+    config:
+      ty: KafkaProducerConfig
+      path: catalogs/kafka_producer.yml
+    upstreams: [ kafka_record_converter ]
+  - name: kafka_consumer
+    ty: Listener
+    config:
+      ty: KafkaConsumerConfig
+      path: catalogs/kafka_consumer.yml
+    output: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      Object: Record
+    upstreams: [kafka_consumer]
+  - name: redis_writer
+    ty: Exporter
+    config:
+      ty: RedisStringWriterConfig
+      path: catalogs/redis_writer.yml
+    upstreams: [json]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, LeftRight]
+    fields:
+      - name: key
+        ty: String
+        metas:
+          - tag: Left
+      - name: value
+        ty: UnsignedInteger
+        metas:
+          - tag: Right
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml
+
+      

@@ -1,0 +1,8 @@
+[
+    {
+      "cmd": "docker exec redis redis-cli get foo",
+      "description": "validate ingested value",
+      "expected_output_file": "e2e/pubsub_kafka/tests/redis0.txt",
+      "retry": 1
+    }
+]

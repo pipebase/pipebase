@@ -1,0 +1,14 @@
+[
+    {
+        "cmd": "docker exec redis redis-cli ping",
+        "description": "make sure redis is alive",
+        "expected_output_file": "e2e/pubsub_kafka/tests/setup0.txt",
+        "retry": 3
+    },
+    {
+        "cmd": "docker exec kafka kafka-topics --list --zookeeper zookeeper:2181",
+        "description": "make sure kafka 'records' topic created",
+        "expected_output_file": "e2e/pubsub_kafka/tests/setup1.txt",
+        "retry": 3
+    }
+]

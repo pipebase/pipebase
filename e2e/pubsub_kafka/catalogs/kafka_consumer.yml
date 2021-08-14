@@ -1,0 +1,8 @@
+base:
+  bootstrap_servers: kafka:9092
+consumer:
+  group_id: dev
+  enable_partition_eof: false
+  session_timeout_ms: 6000
+  enable_auto_commit: true
+  topics: [records]

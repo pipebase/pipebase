@@ -1,0 +1,42 @@
+[
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/health",
+    "description": "check context server is up"
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/ingestion_server",
+    "description": "expect ingestion_server succeed",
+    "expected_output_file": "e2e/pubsub_kafka/tests/context1.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/kafka_record_converter",
+    "description": "expect kafka_record_converter succeed",
+    "expected_output_file": "e2e/pubsub_kafka/tests/context2.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/kafka_producer",
+    "description": "expect kafka_producer succeed",
+    "expected_output_file": "e2e/pubsub_kafka/tests/context3.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/kafka_consumer",
+    "description": "expect kafka_consumer succeed",
+    "expected_output_file": "e2e/pubsub_kafka/tests/context4.txt",
+    "retry": 3
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/json",
+    "description": "expect json deserialize succeed",
+    "expected_output_file": "e2e/pubsub_kafka/tests/context5.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/redis_writer",
+    "description": "expect redis writer succeed",
+    "expected_output_file": "e2e/pubsub_kafka/tests/context6.txt",
+    "retry": 1
+  }
+]
