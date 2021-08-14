@@ -25,7 +25,7 @@
     "cmd": "curl http://127.0.0.1:8000/v1/pipe/kafka_consumer",
     "description": "expect kafka_consumer succeed",
     "expected_output_file": "e2e/pubsub_kafka/tests/context4.txt",
-    "retry": 3
+    "retry": 1
   },
   {
     "cmd": "curl http://127.0.0.1:8000/v1/pipe/json",
