@@ -1,0 +1,11 @@
+[
+    {
+      "cmd": "curl http://127.0.0.1:9000/v1/health",
+      "description": "ingestion server is up",
+      "retry": 1
+    },
+    {
+      "cmd": "curl -X POST -H \"Content-Type: application/json\" -d @e2e/pubsub_kafka/record.json http://127.0.0.1:9000/v1/ingest",
+      "description": "ingest record"
+    }
+]

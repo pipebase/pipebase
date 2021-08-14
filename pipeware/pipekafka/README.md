@@ -2,7 +2,7 @@ A [`pipebase`] plugin using [`rust-rdkafka`]
 ```
 dependencies:
   - name: pipekafka
-    version: 0.1.0
+    version: 0.1.3
     modules: ["pipekafka::*"]
 ```
 [`pipebase`]: https://github.com/pipebase/pipebase
