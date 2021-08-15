@@ -1,27 +1,9 @@
 Demo `RedisStringWriter` pipe
-### Setup Redis (terminal 1)
-launch redis
+### Setup (terminal 1)
+launch redis and app
 ```
 docker-compose up -d
-```
-login container
-```
-docker exec -it redis /bin/sh
-```
-### Build and Run (terminal 2)
-init
-```
-cargo pipe new
-```
-build
-```
-cargo pipe validate -o -p && \
-cargo pipe generate && \
-cargo pipe build -o ingest_redis -r
-```
-run app
-```
-./ingest_redis
+docker logs -f app
 ```
 ### Ingest Data (terminal 3)
 ```
@@ -32,7 +14,8 @@ http://localhost:9000/v1/ingest
 ```
 query redis (terminal 1)
 ```
-redis-cli get "foo"
+docker exec redis redis-cli get "foo"
+1
 ```
 open [browser](http://localhost:8000/v1/pipe) and list all pipes
 ### Shutdown Pipes and App

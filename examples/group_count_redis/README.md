@@ -1,29 +1,11 @@
 Demo count with `RedisUnorderedGroupAddAggregator` pipe
 ### Setup Redis (terminal 1)
-launch redis
-```
+launch redis and app
+```sh
 docker-compose up -d
+docker logs -f app
 ```
-login container
-```
-docker exec -it redis /bin/sh
-```
-### Build and Run (terminal 2)
-init
-```
-cargo pipe new
-```
-build
-```
-cargo pipe validate -o -p && \
-cargo pipe generate && \
-cargo pipe build -o cnt_redis -r
-```
-run app
-```
-./cnt_redis
-```
-### Ingest Data and Monitor Pipe (terminal 3)
+### Ingest Data and Monitor Pipe (terminal 2)
 ingest sample data
 ```
 curl -i -X POST \
@@ -31,14 +13,14 @@ curl -i -X POST \
 -d @records.json  \
 http://localhost:9000/v1/ingest
 ```
-checkout terminal 2
+checkout terminal 1
 ```
 [Pair("bar", RedisCount32(Count32(2))), Pair("foo", RedisCount32(Count32(3)))]
 ```
-query redis (terminal 1)
+query redis
 ```
-redis-cli get "foo" && \
-redis-cli get "bar"
+docker exec redis redis-cli get "foo" && \
+docker exec redis redis-cli get "bar"
 "3"
 "2"
 ```
