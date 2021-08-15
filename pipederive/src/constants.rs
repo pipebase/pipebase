@@ -77,3 +77,5 @@ pub const RENDER_EXPR: &str = "render.expr";
 
 pub const CONVERT_INPUT: &str = "convert.input";
 pub const CONVERT_FROM: &str = "convert.from";
+
+pub const ATTRIBUTE_ALIAS: &str = "attr.alias";
