@@ -22,3 +22,22 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: DEV
       KAFKA_ADVERTISED_LISTENERS: DEV://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  kafkacli:
+    container_name: kafkacli
+    image: confluentinc/cp-kafka
+    depends_on: 
+      - kafka
+    command: ["sh", "-c", "sleep 5 && kafka-topics --create --topic records --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1"]
+  app:
+    container_name: app
+    build:
+      context: ../
+      args:
+        EXAMPLE: consume_kafka
+        INIT_DELAY: 3
+    depends_on: 
+      - kafka
+      - kafkacli
+    ports:
+      - "8000:8000"
+      - "9000:9000"

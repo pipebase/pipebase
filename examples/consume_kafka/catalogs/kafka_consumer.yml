@@ -1,5 +1,5 @@
 base:
-  bootstrap_servers: localhost:9092
+  bootstrap_servers: kafka:9092
 consumer:
   group_id: dev
   enable_partition_eof: false

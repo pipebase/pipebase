@@ -1,37 +1,21 @@
 Demo `KafkaProducer` pipe
-### Setup Kafka (terminal 1)
-launch kafka and zookeeper
+### Setup (terminal 1)
+launch kafka, zookeeper and app
 ```
-docker-compose up -d && \
-docker exec -it kafka /bin/sh
+docker-compose up -d
 ```
-create topic
+consume topic
 ```
-kafka-topics --create --topic records --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1
+docker exec -it kafka kafka-console-consumer --topic records --bootstrap-server kafka:9092
 ```
-start consumer
-```
-kafka-console-consumer --topic records --bootstrap-server kafka:9092
-```
-### Build and Run (terminal 2)
-init
-```
-cargo pipe new
-```
-build
-```
-cargo pipe validate -o -p && \
-cargo pipe generate && \
-cargo pipe build -o ingest_kafka -r
-```
-run app
-```
-./ingest_kafka
-```
-### Ingest data (terminal 3)
+### Ingest data (terminal 2)
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
 -d @record.json  \
 http://localhost:9000/v1/ingest
+```
+### Consumer stdout (terminal 1)
+```
+{"key":"foo","value":1}
 ```
