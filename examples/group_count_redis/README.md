@@ -7,7 +7,7 @@ docker logs -f app
 ```
 ### Ingest Data and Monitor Pipe (terminal 2)
 ingest sample data
-```
+```sh
 curl -i -X POST \
 -H "Content-Type: application/json" \
 -d @records.json  \
@@ -18,9 +18,7 @@ checkout terminal 1
 [Pair("bar", RedisCount32(Count32(2))), Pair("foo", RedisCount32(Count32(3)))]
 ```
 query redis
-```
+```sh
 docker exec redis redis-cli get "foo" && \
 docker exec redis redis-cli get "bar"
-"3"
-"2"
 ```

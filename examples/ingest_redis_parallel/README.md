@@ -1,40 +1,21 @@
 Demo `IteratorReader` `RandomSelector` `RedisWriter` pipe
-### Setup Redis (terminal 1)
-launch redis
-```
+### Setup (terminal 1)
+launch redis and app
+```sh
 docker-compose up -d
 ```
-login container
-```
-docker exec -it redis /bin/sh
-```
-### Build and Run (terminal 2)
-init
-```
-cargo pipe new
-```
-build
-```
-cargo pipe validate -o -p && \
-cargo pipe generate && \
-cargo pipe build -o ingest_redis_parallel -r
-```
-run app
-```
-./ingest_redis_parallel
-```
-### Ingest Data (terminal 3)
-```
+### Ingest Data
+```sh
 curl -i -X POST \
 -H "Content-Type: application/json" \
 -d @records.json  \
 http://localhost:9000/v1/ingest
 ```
 query redis (terminal 1)
-```
-redis-cli get "one"
-redis-cli get "two"
-redis-cli get "three"
-redis-cli get "four"
+```sh
+docker exec redis redis-cli get "one" && \
+docker exec redis redis-cli get "two" && \
+docker exec redis redis-cli get "three" && \
+docker exec redis redis-cli get "four"
 ```
 open [browser](http://localhost:8000/v1/pipe) and list all pipes

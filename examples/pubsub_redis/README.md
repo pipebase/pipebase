@@ -1,26 +1,12 @@
 Demo `RedisPublisher` `RedisSubscriber` pipe
-### Setup Redis (terminal 1)
-launch redis
-```
+### Setup (terminal 1)
+launch redis and app
+```sh
 docker-compose up -d
-```
-### Build and Run
-init
-```
-cargo pipe new
-```
-build
-```
-cargo pipe validate -o -p && \
-cargo pipe generate && \
-cargo pipe build -o pubsub_redis -r
-```
-run app
-```
-./pubsub_redis
+docker logs -f app
 ```
 ### Ingest Data (terminal 2)
-```
+```sh
 curl -i -X POST \
 -H "Content-Type: application/json" \
 -d @record.json  \
