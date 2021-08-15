@@ -14,7 +14,7 @@ curl -i -X POST \
 http://localhost:9000/v1/ingest
 ```
 checkout terminal 1
-```sh
+```
 [Pair("bar", RedisCount32(Count32(2))), Pair("foo", RedisCount32(Count32(3)))]
 ```
 query redis
