@@ -1,7 +1,7 @@
 Demo `KafkaConsumer` pipe
 ### Setup
 Launch kafka, zookeeper and app
-```
+```sh
 docker-compose up -d
 ```
 Publish record message
