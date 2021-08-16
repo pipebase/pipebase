@@ -11,3 +11,15 @@ services:
       - MYSQL_USER=foo
       - MYSQL_PASSWORD=foo
       - MYSQL_DATABASE=foo
+  app:
+    container_name: app
+    build:
+      context: ../
+      args:
+        EXAMPLE: ingest_mysql
+        INIT_DELAY: 3
+    depends_on: 
+      - mysql
+    ports:
+      - "8000:8000"
+      - "9000:9000"

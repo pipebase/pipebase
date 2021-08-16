@@ -11,11 +11,6 @@ services:
       - MYSQL_USER=foo
       - MYSQL_PASSWORD=foo
       - MYSQL_DATABASE=foo
-    healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 3s
-      interval: 3s
-      retries: 3
   app:
     container_name: app
     build:
@@ -28,5 +23,3 @@ services:
     ports:
       - "8000:8000"
       - "9000:9000"
-    environment: 
-      - LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64
