@@ -22,6 +22,11 @@ pub struct FilterMeta {
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize)]
+pub struct IntoAttributesMeta {
+    alias: String,
+}
+
+#[derive(Clone, PartialEq, Debug, Deserialize)]
 pub enum DeriveMeta {
     Clone,
     Convert,
@@ -93,6 +98,7 @@ pub enum Meta {
     Tag { tag: Tag },
     Render { render: RenderMeta },
     Convert { convert: ConvertMeta },
+    IntoAttributes { attribute: IntoAttributesMeta },
 }
 
 pub(crate) fn meta_value_str(name: &str, value: &str, raw: bool) -> Meta {
@@ -201,6 +207,14 @@ fn expand_filter_meta(meta: &FilterMeta) -> Meta {
     }
     Meta::List {
         name: "filter".to_owned(),
+        metas,
+    }
+}
+
+fn expand_into_attributes_meta(meta: &IntoAttributesMeta) -> Meta {
+    let metas = vec![meta_value_str("alias", &meta.alias, false)];
+    Meta::List {
+        name: "attribute".to_owned(),
         metas,
     }
 }
@@ -345,6 +359,10 @@ fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
         }
         Meta::Convert { convert } => {
             let meta = expand_convert_meta(convert);
+            return expand_meta_lit(&meta, indent, compact);
+        }
+        Meta::IntoAttributes { attribute } => {
+            let meta = expand_into_attributes_meta(attribute);
             return expand_meta_lit(&meta, indent, compact);
         }
         Meta::List { name, metas } => (name, metas),
