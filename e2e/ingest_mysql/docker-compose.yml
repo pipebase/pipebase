@@ -16,7 +16,7 @@ services:
     build:
       context: ../
       args:
-        EXAMPLE: ingest_mysql
+        TEST: ingest_mysql
         INIT_DELAY: 3
     depends_on: 
       - mysql

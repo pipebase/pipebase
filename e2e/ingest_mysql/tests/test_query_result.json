@@ -1,0 +1,7 @@
+[
+    {
+        "cmd": "docker exec -e MYSQL_PWD=foo mysql mysql --user=foo --database=foo --execute=\"SELECT \\`key\\`, \\`value\\` FROM records WHERE \\`key\\` = 'foo'\"",
+        "description": "query result",
+        "expected_output_file": "e2e/ingest_mysql/tests/query_result0.txt"
+    }
+]

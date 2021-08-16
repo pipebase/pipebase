@@ -1,6 +1,7 @@
 ARG APP_HOME=/opt/app
 ARG BUILD_HOME=/opt/build
 ARG CARGO_PIPE_TAG=0.1.5
+ARG APP_BASE_TAG=debian
 ARG NAME=app
 ARG OUTPUT=run
 
@@ -15,9 +16,7 @@ COPY ${EXAMPLE}/pipe.yml pipe.yml
 RUN ./build.sh -n ${NAME} -o ${OUTPUT}
 
 # SETUP RUNTIME IMAGE
-FROM debian:buster-slim
-RUN groupadd pipebase --gid 10000 && \
-    useradd pipebase --uid 10000 --gid 10000
+FROM pipebase/app-base:${APP_BASE_TAG}
 
 ARG APP_HOME
 ARG BUILD_HOME

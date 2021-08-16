@@ -65,4 +65,18 @@ jobs:
           INITAL_DELAY: 5
       - name: test
         run: ./e2e/run.sh -f e2e/pubsub_kafka/entry.json
-
+  ingest_mysql:
+    name: Ingest Mysql
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: copy project
+        run: ./e2e/setup.sh -d .
+      - name: run
+        run: docker-compose -f e2e/ingest_mysql/docker-compose.yml up -d
+      - name: wait for app setup
+        run: sleep ${INITAL_DELAY}
+        env: 
+          INITAL_DELAY: 5
+      - name: test
+        run: ./e2e/run.sh -f e2e/ingest_mysql/entry.json
