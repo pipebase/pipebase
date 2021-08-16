@@ -153,5 +153,9 @@
     {
         "name": "upload_s3",
         "directory": "examples/upload_s3"
+    },
+    {
+        "name": "batch_ingest_postgres",
+        "directory": "examples/batch_ingest_postgres"
     }
 ]
