@@ -10,7 +10,7 @@ docker exec -it mysql /bin/sh
 ```
 mysql login
 ```
-mysql --user=foo --password foo
+mysql --user=foo --password=foo
 Enter password: foo
 ```
 create table
