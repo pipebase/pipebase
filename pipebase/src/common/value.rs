@@ -113,7 +113,7 @@ mod tests {
 
     #[derive(IntoAttributes)]
     struct RecordWithAlias {
-        #[attr(alias = "id")]
+        #[attribute(alias = "id")]
         key: String,
         value: u32,
     }

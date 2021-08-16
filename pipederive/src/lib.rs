@@ -163,7 +163,7 @@ pub fn derive_convert(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStre
     proc_macro::TokenStream::from(expanded)
 }
 
-#[proc_macro_derive(IntoAttributes, attributes(attr))]
+#[proc_macro_derive(IntoAttributes, attributes(attribute))]
 pub fn derive_into_attributes(_tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let tokens = &parse_macro_input!(_tokens as DeriveInput);
     let ident = &tokens.ident;
