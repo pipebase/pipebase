@@ -17,9 +17,24 @@
             "file": "e2e/ingest_postgres/tests/test_context.json" 
         },
         {
-            "name": "postgres",
+            "name": "query_result",
             "description": "validate postgres table",
-            "file": "e2e/ingest_postgres/tests/test_query_table.json"
+            "file": "e2e/ingest_postgres/tests/test_query_result.json"
+        },
+        {
+            "name": "batch_ingestion",
+            "description": "validate record batch ingestion",
+            "file": "e2e/ingest_postgres/tests/test_batch_ingestion.json"
+        },      
+        {
+            "name": "batch_context",
+            "description": "validate runtime context",
+            "file": "e2e/ingest_postgres/tests/test_batch_context.json" 
+        },
+        {
+            "name": "batch_query_result",
+            "description": "validate postgres table",
+            "file": "e2e/ingest_postgres/tests/test_batch_query_result.json"
         },
         {
             "name": "shutdown",

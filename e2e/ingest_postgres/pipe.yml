@@ -36,6 +36,25 @@ pipes:
       ty: PsqlWriterConfig
       path: catalogs/psql_writer.yml
     upstreams: [json]
+  - name: batch_ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/batch_ingestion_server.yml
+    output: UnsignedBytes
+  - name: batch_json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      Objects: AnotherRecord
+    upstreams: [ batch_ingestion_server ]
+  - name: batch_psql_writer
+    ty: Exporter
+    config:
+      ty: PsqlPreparedWriterConfig
+      path: catalogs/batch_psql_writer.yml
+    upstreams: [ batch_json ]
 objects:
   - ty: Record
     metas:
@@ -53,6 +72,14 @@ objects:
         metas:
           - render:
               pos: 1
+  - ty: AnotherRecord
+    metas:
+      - derives: [Clone, Debug, Deserialize, IntoAttributes]
+    fields:
+      - name: key
+        ty: String
+      - name: value
+        ty: Integer
 cstores:
   - name: context_server
     config:
