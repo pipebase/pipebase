@@ -21,6 +21,7 @@ Pipes
 | `Mapper` | [`ReqwestQuery`] | [`stripe_query_charge`] |
 | `Exporter` | [`CqlWriter`] | [`ingest_cassandra`] |
 | `Exporter` | [`PsqlWriter`] | [`ingest_postgres`] |
+| `Exporter` | [`PsqlPreparedWriter`] | [`batch_ingest_postgres`] |
 | `Exporter` | [`RedisStringWriter`] | [`ingest_redis`] |
 | `Exporter` | [`RedisPublisher`] | [`pubsub_redis`] |
 | `Exporter` | [`ReqwestPoster`] | [`relay`], [`ingest_elasticsearch`] |
@@ -66,6 +67,7 @@ Error Handlers
 [`ingest_dynamodb`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_dynamodb
 [`pubsub_sns`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_sns
 [`error_sns_publisher`]: https://github.com/pipebase/pipebase/tree/main/examples/error_sns_publisher
+[`batch_ingest_postgres`]: https://github.com/pipebase/pipebase/tree/main/examples/batch_ingest_postgres
 
 [`WarpIngestionServer`]: https://docs.rs/pipewarp/
 [`KafkaConsumer`]: https://docs.rs/pipekafka/
@@ -83,6 +85,7 @@ Error Handlers
 [`ReqwestQuery`]: https://docs.rs/pipereqwest/
 [`CqlWriter`]: https://docs.rs/pipecql/
 [`PsqlWriter`]: https://docs.rs/pipepsql/
+[`PsqlPreparedWriter`]: https://docs.rs/pipepsql/
 [`RedisStringWriter`]: https://docs.rs/piperedis/
 [`RedisPublisher`]: https://docs.rs/piperedis/
 [`ReqwestPoster`]: https://docs.rs/pipereqwest/
