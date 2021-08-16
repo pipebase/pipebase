@@ -10,3 +10,15 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
+  app:
+    container_name: app
+    build:
+      context: ../
+      args:
+        EXAMPLE: ingest_postgres
+        INIT_DELAY: 3
+    depends_on: 
+      - postgres
+    ports:
+      - "8000:8000"
+      - "9000:9000"
