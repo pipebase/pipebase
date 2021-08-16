@@ -81,6 +81,8 @@ where
 
 pub trait IntoAttributes {
     fn into_attributes(self) -> HashMap<String, Value>;
+
+    fn into_attribute_tuples(self) -> Vec<(String, Value)>;
 }
 
 #[cfg(test)]
@@ -105,6 +107,27 @@ mod tests {
         assert_eq!(
             &Value::from("foo".to_owned()),
             attributes.get("key").unwrap()
+        );
+        assert_eq!(&Value::from(1 as u32), attributes.get("value").unwrap());
+    }
+
+    #[derive(IntoAttributes)]
+    struct RecordWithAlias {
+        #[attribute(alias = "id")]
+        key: String,
+        value: u32,
+    }
+
+    #[test]
+    fn test_record_with_alias_into_attributes() {
+        let r = RecordWithAlias {
+            key: "foo".to_owned(),
+            value: 1,
+        };
+        let attributes: HashMap<String, Value> = r.into_attributes();
+        assert_eq!(
+            &Value::from("foo".to_owned()),
+            attributes.get("id").unwrap()
         );
         assert_eq!(&Value::from(1 as u32), attributes.get("value").unwrap());
     }

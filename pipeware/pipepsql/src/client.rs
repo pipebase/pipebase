@@ -1,5 +1,5 @@
-use pipebase::common::Render;
-use tokio_postgres::{Client, NoTls};
+use pipebase::common::{IntoAttributes, Render, Value};
+use tokio_postgres::{types::ToSql, Client, NoTls};
 pub struct PsqlClient {
     client: Client,
 }
@@ -26,4 +26,55 @@ impl PsqlClient {
         log::info!("{} rows updated", rows_updated);
         Ok(())
     }
+
+    pub async fn prepare_execute<A>(
+        &mut self,
+        statement: String,
+        items: Vec<A>,
+    ) -> anyhow::Result<()>
+    where
+        A: IntoAttributes,
+    {
+        let prepared_statement = self.client.prepare(&statement).await?;
+        for item in items {
+            let params = Self::from_attributes_to_params(item);
+            let params: Vec<&(dyn ToSql + Send + Sync)> =
+                params.iter().map(|p| p.as_ref()).collect();
+            self.client
+                .execute_raw(&prepared_statement, slice_iter(&params))
+                .await?;
+        }
+        Ok(())
+    }
+
+    fn from_attributes_to_params<A>(attributes: A) -> Vec<Box<dyn ToSql + Send + Sync>>
+    where
+        A: IntoAttributes,
+    {
+        attributes
+            .into_attribute_tuples()
+            .into_iter()
+            .map(|(_, value)| Self::psql_value(value))
+            .collect()
+    }
+
+    fn psql_value(value: Value) -> Box<dyn ToSql + Send + Sync> {
+        match value {
+            Value::Bool(value) => Box::new(value),
+            Value::UnsignedInteger(value) => Box::new(value),
+            Value::Integer(value) => Box::new(value),
+            Value::Long(value) => Box::new(value),
+            Value::Float(value) => Box::new(value),
+            Value::Double(value) => Box::new(value),
+            Value::String(value) => Box::new(value),
+            Value::UnsignedBytes(value) => Box::new(value),
+            _ => unimplemented!(),
+        }
+    }
+}
+
+fn slice_iter<'a>(
+    s: &'a [&'a (dyn ToSql + Send + Sync)],
+) -> impl ExactSizeIterator<Item = &'a dyn ToSql> + 'a {
+    s.iter().map(|s| *s as _)
 }

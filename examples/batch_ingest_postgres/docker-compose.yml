@@ -15,7 +15,7 @@ services:
     build:
       context: ../
       args:
-        EXAMPLE: ingest_postgres
+        EXAMPLE: batch_ingest_postgres
         INIT_DELAY: 3
     depends_on: 
       - postgres
