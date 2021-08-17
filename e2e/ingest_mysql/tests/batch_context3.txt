@@ -1,0 +1,1 @@
+{"name":"batch_mysql_writer","state":"receive","total_run":1,"failure_run":0}

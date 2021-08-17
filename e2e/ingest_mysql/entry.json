@@ -22,6 +22,21 @@
             "file": "e2e/ingest_mysql/tests/test_query_result.json"
         },
         {
+            "name": "batch_ingestion",
+            "description": "validate record batch ingestion",
+            "file": "e2e/ingest_mysql/tests/test_batch_ingestion.json"
+        },
+        {
+            "name": "batch_context",
+            "description": "validate runtime context",
+            "file": "e2e/ingest_mysql/tests/test_batch_context.json" 
+        },
+        {
+            "name": "batch_query_result",
+            "description": "validate mysql table",
+            "file": "e2e/ingest_mysql/tests/test_batch_query_result.json"
+        },
+        {
             "name": "shutdown",
             "description": "shutdown ingestion / context server",
             "file": "e2e/ingest_mysql/tests/test_shutdown.json"

@@ -1,16 +1,16 @@
 name: ingest_postgres
 dependencies:
   - name: pipebase
-    path: ../../../pipebase
+    version: 0.1.3
     modules: ["pipebase::prelude::*"]
   - name: pipejson
-    path: ../../../pipeware/pipejson
+    version: 0.1.2
     modules: ["pipejson::*"]
   - name: pipemysql
-    path: ../../../pipeware/pipemysql
+    version: 0.1.3
     modules: ["pipemysql::*"]
   - name: pipewarp
-    path: ../../../pipeware/pipewarp
+    version: 0.1.2
     modules: ["pipewarp::*"]
   - name: serde
     version: 1.0
@@ -28,51 +28,16 @@ pipes:
     config:
       ty: JsonDeserConfig
     output:
-      Object: Record
+      Objects: Record
     upstreams: [ingestion_server]
-  - name: mysql_writer
-    ty: Exporter
-    config:
-      ty: MySQLWriterConfig
-      path: catalogs/mysql_writer.yml
-    upstreams: [json]
-  - name: batch_ingestion_server
-    ty: Listener
-    config:
-      ty: WarpIngestionServerConfig
-      path: catalogs/batch_ingestion_server.yml
-    output: UnsignedBytes
-  - name: batch_json
-    ty: Mapper
-    config:
-      ty: JsonDeserConfig
-    output:
-      Objects: AnotherRecord
-    upstreams: [batch_ingestion_server]
   - name: batch_mysql_writer
     ty: Exporter
     config:
       ty: MySQLPreparedWriterConfig
       path: catalogs/batch_mysql_writer.yml
-    upstreams: [batch_json]
+    upstreams: [json]
 objects:
   - ty: Record
-    metas:
-      - derives: [Clone, Debug, Deserialize, Render]
-      - render:
-          template: "INSERT INTO records (`key`, `value`) VALUES ('{}', {}) AS new ON DUPLICATE KEY UPDATE `value` = new.`value`"
-    fields:
-      - name: key
-        ty: String
-        metas:
-          - render:
-              pos: 0
-      - name: value
-        ty: Integer
-        metas:
-          - render:
-              pos: 1
-  - ty: AnotherRecord
     metas:
       - derives: [Clone, Debug, Deserialize, IntoAttributes]
     fields:

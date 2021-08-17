@@ -16,11 +16,10 @@ services:
     build:
       context: ../
       args:
-        TEST: ingest_mysql
+        EXAMPLE: batch_ingest_mysql
         INIT_DELAY: 3
     depends_on: 
       - mysql
     ports:
       - "8000:8000"
       - "9000:9000"
-      - "9001:9001"

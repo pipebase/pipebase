@@ -115,6 +115,7 @@ function cleanup() {
 }
 
 function setup() {
+    rm -rf "${e2e}/pipebase"
     rm -rf ${tmp}
     mkdir -p ${tmp}
     cp -r "${cargo_pipe}" "${tmp}/cargo-pipe"
@@ -124,8 +125,7 @@ function setup() {
     cp -r "${pipegen}" "${tmp}/pipegen"
     cp -r "${pipeware}" "${tmp}/pipeware"
     cp "${cargo_toml}" "${tmp}/Cargo.toml"
-    rm -rf e2e/pipebase
-    mv ${tmp} e2e/pipebase
+    mv ${tmp} "${e2e}/pipebase"
 }
 
 function main() {

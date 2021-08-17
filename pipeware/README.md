@@ -28,6 +28,7 @@ Pipes
 | `Exporter` | [`KafkaProducer`] | [`ingest_kafka`] |
 | `Exporter` | `S3Writer` | [`upload_s3`] |
 | `Exporter` | [`MySQLWriter`] | [`ingest_mysql`] |
+| `Exporter` | [`MySQLPreparedWriter`] | [`batch_ingest_mysql`] |
 | `Exporter` | `DynamoDBWriter` | [`ingest_dynamodb`] |
 | `Exporter` | `SnsPublisher` | [`pubsub_sns`] |
 
@@ -68,6 +69,7 @@ Error Handlers
 [`pubsub_sns`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_sns
 [`error_sns_publisher`]: https://github.com/pipebase/pipebase/tree/main/examples/error_sns_publisher
 [`batch_ingest_postgres`]: https://github.com/pipebase/pipebase/tree/main/examples/batch_ingest_postgres
+[`batch_ingest_mysql`]: https://github.com/pipebase/pipebase/tree/main/examples/batch_ingest_mysql
 
 [`WarpIngestionServer`]: https://docs.rs/pipewarp/
 [`KafkaConsumer`]: https://docs.rs/pipekafka/
