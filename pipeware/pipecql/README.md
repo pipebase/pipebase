@@ -2,7 +2,7 @@ A [`pipebase`] plugin using [`scylla-rust-driver`]
 ```
 dependencies:
   - name: pipecql
-    version: 0.1.0
+    version: 0.1.3
     modules: ["pipecql::*"]
 ```
 
