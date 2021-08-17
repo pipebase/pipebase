@@ -93,4 +93,5 @@ Error Handlers
 [`ReqwestPoster`]: https://docs.rs/pipereqwest/
 [`KafkaProducer`]: https://docs.rs/pipekafka/
 [`MySQLWriter`]: https://docs.rs/pipemysql/
+[`MySQLPreparedWriter`]: https://docs.rs/pipemysql/
 [`WarpContextServer`]: https://docs.rs/pipewarp/

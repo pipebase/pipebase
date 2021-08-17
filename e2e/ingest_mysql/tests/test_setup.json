@@ -1,6 +1,6 @@
 [
     {
-        "cmd": "docker exec -e MYSQL_PWD=foo mysql mysql --user=foo --database=foo --execute=\"CREATE TABLE IF NOT EXISTS records ( \\`key\\` VARCHAR(64) NOT NULL PRIMARY KEY, \\`value\\` INTEGER);\"",
+        "cmd": "docker exec -e MYSQL_PWD=foo mysql mysql --host=localhost --port=3306 --user=foo --database=foo --execute=\"CREATE TABLE IF NOT EXISTS records ( \\`key\\` VARCHAR(64) NOT NULL PRIMARY KEY, \\`value\\` INTEGER);\"",
         "description": "create table 'records'",
         "retry": 1
     }
