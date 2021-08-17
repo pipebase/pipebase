@@ -157,5 +157,9 @@
     {
         "name": "batch_ingest_postgres",
         "directory": "examples/batch_ingest_postgres"
+    },
+    {
+        "name": "batch_ingest_mysql",
+        "directory": "examples/batch_ingest_mysql"
     }
 ]

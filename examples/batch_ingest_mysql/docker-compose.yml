@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  mysql:
+    container_name: mysql
+    image: mysql
+    ports:
+      - '3306:3306'
+    environment:
+      - MYSQL_ROOT_PASSWORD=foo
+      - MYSQL_USER=foo
+      - MYSQL_PASSWORD=foo
+      - MYSQL_DATABASE=foo
+  app:
+    container_name: app
+    build:
+      context: ../
+      args:
+        EXAMPLE: batch_ingest_mysql
+        INIT_DELAY: 3
+    depends_on: 
+      - mysql
+    ports:
+      - "8000:8000"
+      - "9000:9000"

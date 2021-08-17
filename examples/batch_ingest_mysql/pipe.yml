@@ -1,0 +1,55 @@
+name: ingest_postgres
+dependencies:
+  - name: pipebase
+    version: 0.1.3
+    modules: ["pipebase::prelude::*"]
+  - name: pipejson
+    version: 0.1.2
+    modules: ["pipejson::*"]
+  - name: pipemysql
+    version: 0.1.3
+    modules: ["pipemysql::*"]
+  - name: pipewarp
+    version: 0.1.2
+    modules: ["pipewarp::*"]
+  - name: serde
+    version: 1.0
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      Objects: Record
+    upstreams: [ingestion_server]
+  - name: batch_mysql_writer
+    ty: Exporter
+    config:
+      ty: MySQLPreparedWriterConfig
+      path: catalogs/batch_mysql_writer.yml
+    upstreams: [json]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, IntoAttributes]
+    fields:
+      - name: id
+        ty: String
+        metas:
+          - attribute:
+              alias: key
+      - name: value
+        ty: Integer
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml
