@@ -36,6 +36,32 @@ pipes:
       ty: CqlWriterConfig
       path: catalogs/cql_writer.yml
     upstreams: [json]
+  - name: batch_ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/batch_ingestion_server.yml
+    output: UnsignedBytes
+  - name: batch_json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      Objects: AnotherRecord
+    upstreams: [batch_ingestion_server]
+  - name: swap
+    ty: Mapper
+    config:
+      ty: ConversionConfig
+    upstreams: [batch_json]
+    output:
+      Objects: SwappedRecord
+  - name: batch_cql_writer
+    ty: Exporter
+    config:
+      ty: CqlPreparedWriterConfig
+      path: catalogs/batch_cql_writer.yml
+    upstreams: [swap]
 objects:
   - ty: Record
     metas:
@@ -53,6 +79,30 @@ objects:
         metas:
           - render:
               pos: 0
+  - ty: AnotherRecord
+    metas:
+      - derives: [Clone, Debug, Deserialize]
+    fields:
+      - name: key
+        ty: String
+      - name: value
+        ty: Integer
+  - ty: SwappedRecord
+    metas:
+      - derives: [Clone, Debug, Convert, IntoAttributes]
+      - convert:
+          input: AnotherRecord
+    fields:
+      - name: value
+        ty: Integer
+        metas:
+          - convert:
+              from: value
+      - name: key
+        ty: String
+        metas:
+          - convert:
+              from: key
 cstores:
   - name: context_server
     config:
