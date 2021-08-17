@@ -28,10 +28,7 @@ impl MySQLClient {
     where
         A: IntoAttributes,
     {
-        let params: Vec<Params> = items
-            .into_iter()
-            .map(Self::mysql_params)
-            .collect();
+        let params: Vec<Params> = items.into_iter().map(Self::mysql_params).collect();
         let mut conn = self.pool.get_conn().await?;
         conn.exec_batch(statement, params).await?;
         Ok(())
