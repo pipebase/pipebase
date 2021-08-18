@@ -1,31 +1,16 @@
 Demo `TextCollector` `ReqwestPoster` pipe
-### Setup Elasticsearch (terminal 1)
-launch elasticsearch
-```
+### Setup
+launch elasticsearch and app
+```sh
 docker-compose up -d
 ```
 create index
-```
+```sh
 curl -X PUT localhost:9200/records
 ```
-### Build and Run (terminal 2)
-init
-```
-cargo pipe new
-```
-build
-```
-cargo pipe validate -o -p && \
-cargo pipe generate && \
-cargo pipe build -o ingest_es -r
-```
-run app
-```
-./ingest_es
-```
-### Ingest Data (terminal 3)
+### Ingest Data
 ingest sample data
-```
+```sh
 for (( i=0; i < 10; i++ )) 
 do
     curl -i -X POST \
@@ -34,20 +19,7 @@ do
     http://localhost:9000/v1/ingest
 done
 ```
-### Query Elasticsearch (terminal 1)
-```
+query elasticsearch
+```sh
 curl http://localhost:9200/records/_search?q=key:* | jq -r .hits.hits[]._source
-{
-  "key": "zero",
-  "value": 0
-}
-{
-  "key": "one",
-  "value": 1
-}
-{
-  "key": "two",
-  "value": 2
-}
-...
 ```

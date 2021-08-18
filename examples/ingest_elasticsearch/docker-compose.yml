@@ -1,12 +1,23 @@
 version: '3.9'
 
 services:
-  elastic:
-    container_name: elastic
+  elasticsearch:
+    container_name: elasticsearch
     image: docker.elastic.co/elasticsearch/elasticsearch:7.13.4
     ports:
       - '9200:9200'
       - '9300:9300'
     environment: 
       discovery.type: single-node
-
+  app:
+    container_name: app
+    build:
+      context: ../
+      args:
+        EXAMPLE: ingest_elasticsearch
+        INIT_DELAY: 10
+    depends_on: 
+      - elasticsearch
+    ports:
+      - "8000:8000"
+      - "9000:9000"
