@@ -1,45 +1,19 @@
 Demo `CqlWriter` pipe
-### Prepare Cassandra (terminal 1)
-start cassandra
-```
+### Setup
+start cassandra and app
+```sh
+# app sleep 60 second for cassandra ready
 docker-compose up -d
 ```
-login container
-```
-docker exec -it cassandra /bin/sh
-```
-cql login
-```
-cqlsh
-```
 create keyspace
-```
-CREATE KEYSPACE IF NOT EXISTS test WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};
-USE test;
+```sh
+docker exec cassandra cqlsh -e "CREATE KEYSPACE IF NOT EXISTS test WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1}" localhost 9042
 ```
 create table
+```sh
+docker exec cassandra cqlsh -e "CREATE TABLE IF NOT EXISTS test.records (key text PRIMARY KEY, value int)" localhost 9042
 ```
-CREATE TABLE IF NOT EXISTS records (
-    key text PRIMARY KEY,
-    value   int
-);
-```
-### Build and Run (terminal 2)
-init
-```
-cargo pipe new
-```
-build 
-```
-cargo pipe validate -o -p && \
-cargo pipe generate && \
-cargo pipe build -o cql -r
-```
-run app
-```
-./cql
-```
-### Ingest Data and Monitor (terminal 3)
+### Ingest Data
 ingest sample data
 ```
 curl -i -X POST \
@@ -47,11 +21,8 @@ curl -i -X POST \
 -d @record.json  \
 http://localhost:9000/v1/ingest
 ```
-query cassandra (terminal 1)
+query cassandra
 ```
-SELECT * FROM records;
- key | value
------+-------
- foo |     1
+docker exec cassandra cqlsh -e "SELECT key, value FROM test.records WHERE key = 'foo'" localhost 9042
 ```
 open [browser](http://localhost:8000/v1/pipe) and list all pipes
