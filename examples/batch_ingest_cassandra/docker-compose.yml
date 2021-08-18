@@ -11,11 +11,10 @@ services:
     build:
       context: ../
       args:
-        TEST: ingest_cassandra
-        INIT_DELAY: 120
+        EXAMPLE: batch_ingest_cassandra
+        INIT_DELAY: 60
     depends_on: 
       - cassandra
     ports:
       - "8000:8000"
       - "9000:9000"
-      - "9001:9001"

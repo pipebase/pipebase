@@ -1,0 +1,3 @@
+---
+hostname: cassandra:9042
+statement: UPDATE test.records SET value = ? WHERE key = ?

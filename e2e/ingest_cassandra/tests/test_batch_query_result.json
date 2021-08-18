@@ -1,0 +1,12 @@
+[
+    {
+        "cmd": "docker exec cassandra cqlsh -e \"SELECT JSON key, value FROM test.records WHERE key = 'foo'\" localhost 9042",
+        "description": "query record for key is 'foo'",
+        "expected_output_file": "e2e/ingest_cassandra/tests/query_result1.txt"
+    },
+    {
+        "cmd": "docker exec cassandra cqlsh -e \"SELECT JSON key, value FROM test.records WHERE key = 'bar'\" localhost 9042",
+        "description": "query record for key is 'bar'",
+        "expected_output_file": "e2e/ingest_cassandra/tests/query_result2.txt"
+    }
+]

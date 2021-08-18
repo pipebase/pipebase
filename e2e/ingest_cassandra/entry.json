@@ -22,6 +22,21 @@
             "file": "e2e/ingest_cassandra/tests/test_query_result.json"
         },
         {
+            "name": "batch_ingestion",
+            "description": "validate record batch ingestion",
+            "file": "e2e/ingest_cassandra/tests/test_batch_ingestion.json"
+        },      
+        {
+            "name": "batch_context",
+            "description": "validate runtime batch_context",
+            "file": "e2e/ingest_cassandra/tests/test_batch_context.json" 
+        },
+        {
+            "name": "batch_query_result",
+            "description": "validate cassandra table",
+            "file": "e2e/ingest_cassandra/tests/test_batch_query_result.json"
+        },
+        {
             "name": "shutdown",
             "description": "shutdown ingestion / context server",
             "file": "e2e/ingest_cassandra/tests/test_shutdown.json"

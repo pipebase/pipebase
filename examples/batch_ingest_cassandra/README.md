@@ -18,11 +18,11 @@ ingest sample data
 ```
 curl -i -X POST \
 -H "Content-Type: application/json" \
--d @record.json  \
+-d @records.json  \
 http://localhost:9000/v1/ingest
 ```
 query cassandra
 ```
-docker exec cassandra cqlsh -e "SELECT key, value FROM test.records WHERE key = 'foo'" localhost 9042
+docker exec cassandra cqlsh -e "SELECT key, value FROM test.records" localhost 9042
 ```
 open [browser](http://localhost:8000/v1/pipe) and list all pipes

@@ -161,5 +161,9 @@
     {
         "name": "batch_ingest_mysql",
         "directory": "examples/batch_ingest_mysql"
+    },
+    {
+        "name": "batch_ingest_cassandra",
+        "directory": "examples/batch_ingest_cassandra"
     }
 ]
