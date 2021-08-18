@@ -17,7 +17,7 @@ services:
       context: ../
       args:
         TEST: ingest_mysql
-        INIT_DELAY: 3
+        INIT_DELAY: 15
     depends_on: 
       - mysql
     ports:

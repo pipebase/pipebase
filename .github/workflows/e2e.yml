@@ -77,7 +77,7 @@ jobs:
       - name: wait for app setup
         run: sleep ${INITAL_DELAY}
         env: 
-          INITAL_DELAY: 5
+          INITAL_DELAY: 15
       - name: test
         run: ./e2e/run.sh -f e2e/ingest_mysql/entry.json
   ingest_cassandra:
