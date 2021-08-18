@@ -49,7 +49,7 @@ pipes:
     output:
       Objects: AnotherRecord
     upstreams: [batch_ingestion_server]
-  - name: swap
+  - name: batch_swap
     ty: Mapper
     config:
       ty: ConversionConfig
@@ -61,7 +61,7 @@ pipes:
     config:
       ty: CqlPreparedWriterConfig
       path: catalogs/batch_cql_writer.yml
-    upstreams: [swap]
+    upstreams: [batch_swap]
 objects:
   - ty: Record
     metas:

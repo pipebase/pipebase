@@ -16,9 +16,15 @@
       "retry": 1
     },
     {
+      "cmd": "curl http://127.0.0.1:8000/v1/pipe/batch_swap",
+      "description": "expect batch_swap convert succeed",
+      "expected_output_file": "e2e/ingest_cassandra/tests/batch_context3.txt",
+      "retry": 1
+    },
+    {
       "cmd": "curl http://127.0.0.1:8000/v1/pipe/batch_cql_writer",
       "description": "expect batch_cql_writer succeed",
-      "expected_output_file": "e2e/ingest_cassandra/tests/batch_context3.txt",
+      "expected_output_file": "e2e/ingest_cassandra/tests/batch_context4.txt",
       "retry": 1
     }
 ]
