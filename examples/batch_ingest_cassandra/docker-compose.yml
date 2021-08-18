@@ -1,0 +1,20 @@
+version: '3.9'
+
+services:
+  cassandra:
+    container_name: cassandra
+    image: cassandra
+    ports:
+      - '9042:9042'
+  app:
+    container_name: app
+    build:
+      context: ../
+      args:
+        EXAMPLE: batch_ingest_cassandra
+        INIT_DELAY: 60
+    depends_on: 
+      - cassandra
+    ports:
+      - "8000:8000"
+      - "9000:9000"
