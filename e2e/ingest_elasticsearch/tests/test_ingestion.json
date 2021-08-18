@@ -1,0 +1,47 @@
+[
+    {
+        "cmd": "curl http://127.0.0.1:9000/v1/health",
+        "description": "ingestion server is up",
+        "retry": 1
+    },
+    {
+        "cmd": "curl -i -X POST -H \"Content-Type: application/json\" -d @e2e/ingest_elasticsearch/resources/record_0.json http://localhost:9000/v1/ingest",
+        "description": "ingest document 0"
+    },
+    {
+        "cmd": "curl -i -X POST -H \"Content-Type: application/json\" -d @e2e/ingest_elasticsearch/resources/record_1.json http://localhost:9000/v1/ingest",
+        "description": "ingest document 1"
+    },
+    {
+        "cmd": "curl -i -X POST -H \"Content-Type: application/json\" -d @e2e/ingest_elasticsearch/resources/record_2.json http://localhost:9000/v1/ingest",
+        "description": "ingest document 2"
+    },
+    {
+        "cmd": "curl -i -X POST -H \"Content-Type: application/json\" -d @e2e/ingest_elasticsearch/resources/record_3.json http://localhost:9000/v1/ingest",
+        "description": "ingest document 3"
+    },
+    {
+        "cmd": "curl -i -X POST -H \"Content-Type: application/json\" -d @e2e/ingest_elasticsearch/resources/record_4.json http://localhost:9000/v1/ingest",
+        "description": "ingest document 4"
+    },
+    {
+        "cmd": "curl -i -X POST -H \"Content-Type: application/json\" -d @e2e/ingest_elasticsearch/resources/record_5.json http://localhost:9000/v1/ingest",
+        "description": "ingest document 5"
+    },
+    {
+        "cmd": "curl -i -X POST -H \"Content-Type: application/json\" -d @e2e/ingest_elasticsearch/resources/record_6.json http://localhost:9000/v1/ingest",
+        "description": "ingest document 6"
+    },
+    {
+        "cmd": "curl -i -X POST -H \"Content-Type: application/json\" -d @e2e/ingest_elasticsearch/resources/record_7.json http://localhost:9000/v1/ingest",
+        "description": "ingest document 7"
+    },
+    {
+        "cmd": "curl -i -X POST -H \"Content-Type: application/json\" -d @e2e/ingest_elasticsearch/resources/record_8.json http://localhost:9000/v1/ingest",
+        "description": "ingest document 8"
+    },
+    {
+        "cmd": "curl -i -X POST -H \"Content-Type: application/json\" -d @e2e/ingest_elasticsearch/resources/record_9.json http://localhost:9000/v1/ingest",
+        "description": "ingest document 9"
+    }
+]

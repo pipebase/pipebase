@@ -14,8 +14,8 @@ services:
     build:
       context: ../
       args:
-        EXAMPLE: ingest_elasticsearch
-        INIT_DELAY: 10
+        TEST: ingest_elasticsearch
+        INIT_DELAY: 30
     depends_on: 
       - elasticsearch
     ports:

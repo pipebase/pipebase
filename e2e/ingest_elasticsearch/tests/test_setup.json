@@ -1,0 +1,11 @@
+[
+    {
+        "cmd": "curl http://localhost:9200/_cluster/health?wait_for_status=green&timeout=60s",
+        "description": "healthcheck elasticsearch"
+    },
+    {
+        "cmd": "curl -X PUT localhost:9200/records",
+        "description": "create index",
+        "retry": 1
+    }
+]

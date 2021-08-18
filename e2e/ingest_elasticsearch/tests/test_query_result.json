@@ -1,0 +1,7 @@
+[
+    {
+        "cmd": "curl http://localhost:9200/records/_search?q=key:* | jq -r .hits.hits[]._source",
+        "description": "query documents",
+        "expected_output_file": "e2e/ingest_elasticsearch/tests/query_result0.txt"
+    }
+]
