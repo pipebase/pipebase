@@ -1,0 +1,4 @@
+---
+url: http://elasticsearch:9200/_bulk
+headers:
+  Content-Type: application/json

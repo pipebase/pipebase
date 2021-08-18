@@ -1,0 +1,74 @@
+name: ingest_elasticsearch
+dependencies:
+  - name: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - name: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - name: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - name: pipereqwest
+    path: ../../../pipeware/pipereqwest
+    modules: ["pipereqwest::*"]
+  - name: serde
+    version: 1.0
+    features: ["derive"]
+    modules: ["serde::Deserialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      Object: Record
+    upstreams: [ingestion_server]
+  - name: text_collector
+    ty: Collector
+    config:
+      ty: TextCollectorConfig
+      path: catalogs/text_collector.yml
+    output: String
+    upstreams: [json]
+  - name: reqwest_poster
+    ty: Exporter
+    config:
+      ty: ReqwestPosterConfig
+      path: catalogs/reqwest_poster.yml
+    upstreams: [text_collector]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Deserialize, Render]
+      - render:
+          template: |-
+            {{"index": {{"_index": "records", "_type": "_doc", "_id": "{}"}}}}
+            {{"key": "{}", "value": {}}}
+    fields:
+      - name: id
+        ty: Integer
+        metas:
+          - render:
+              pos: 0
+      - name: key
+        ty: String
+        metas:
+          - render:
+              pos: 1
+      - name: value
+        ty: Integer
+        metas:
+          - render:
+              pos: 2
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml
