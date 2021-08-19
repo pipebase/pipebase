@@ -1,0 +1,14 @@
+[
+    {
+        "cmd": "docker exec redis redis-cli get foo",
+        "description": "query result",
+        "expected_output_file": "e2e/ingest_redis/tests/query_result1.txt",
+        "retry": 1
+    },
+    {
+        "cmd": "docker exec redis redis-cli get bar",
+        "description": "query result",
+        "expected_output_file": "e2e/ingest_redis/tests/query_result2.txt",
+        "retry": 1
+    }
+]

@@ -2,8 +2,13 @@
   "name": "pipebase",
   "suites": [
     {
+      "name": "setup",
+      "description": "setup",
+      "file": "e2e/ingest_redis/tests/test_setup.json"
+    },
+    {
       "name": "ingestion",
-      "description": "validate record ingestion",
+      "description": "record ingestion",
       "file": "e2e/ingest_redis/tests/test_ingestion.json"
     },      
     {
@@ -12,9 +17,24 @@
       "file": "e2e/ingest_redis/tests/test_context.json" 
     },
     {
-      "name": "redis",
-      "description": "validate redis",
-      "file": "e2e/ingest_redis/tests/test_redis.json"
+      "name": "query_result",
+      "description": "validate result",
+      "file": "e2e/ingest_redis/tests/test_query_result.json"
+    },
+    {
+      "name": "batch_ingestion",
+      "description": "record ingestions",
+      "file": "e2e/ingest_redis/tests/test_batch_ingestion.json"
+    },
+    {
+      "name": "batch_context",
+      "description": "validate runtime context",
+      "file": "e2e/ingest_redis/tests/test_batch_context.json" 
+    },
+    {
+      "name": "batch_query_result",
+      "description": "validate result",
+      "file": "e2e/ingest_redis/tests/test_batch_query_result.json"
     },
     {
       "name": "shutdown",

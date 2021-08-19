@@ -43,6 +43,25 @@ pipes:
       path: catalogs/redis_writer.yml
     upstreams: [json]
     buffer: 10
+  - name: batch_ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/batch_ingestion_server.yml
+    output: UnsignedBytes
+  - name: batch_json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output:
+      Objects: Record
+    upstreams: [ batch_ingestion_server ]
+  - name: batch_redis_writer
+    ty: Exporter
+    config:
+      ty: RedisStringBatchWriterConfig
+      path: catalogs/batch_redis_writer.yml
+    upstreams: [ batch_json ]
 objects:
   - ty: Record
     metas:
