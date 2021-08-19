@@ -78,3 +78,39 @@ where
         Ok(())
     }
 }
+
+#[derive(Deserialize)]
+pub struct RedisStringBatchWriterConfig {
+    // connection parameter: https://docs.rs/redis/0.20.2/redis/#connection-parameters
+    url: String,
+}
+
+impl FromPath for RedisStringBatchWriterConfig {}
+
+impl ConfigInto<RedisStringBatchWriter> for RedisStringBatchWriterConfig {}
+
+pub struct RedisStringBatchWriter {
+    client: RedisClient,
+}
+
+#[async_trait]
+impl FromConfig<RedisStringBatchWriterConfig> for RedisStringBatchWriter {
+    async fn from_config(config: RedisStringBatchWriterConfig) -> anyhow::Result<Self> {
+        Ok(RedisStringBatchWriter {
+            client: RedisClient::new(config.url)?,
+        })
+    }
+}
+
+#[async_trait]
+impl<K, V, P> Export<Vec<P>, RedisStringBatchWriterConfig> for RedisStringBatchWriter
+where
+    P: LeftRight<L = K, R = V> + Send + 'static,
+    K: ToRedisArgs + Clone + Send + 'static,
+    V: ToRedisArgs + Clone + Send + 'static,
+{
+    async fn export(&mut self, entries: Vec<P>) -> anyhow::Result<()> {
+        self.client.set_all(entries)?;
+        Ok(())
+    }
+}
