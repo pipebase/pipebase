@@ -11,11 +11,10 @@ services:
     build:
       context: ../
       args:
-        TEST: ingest_redis
+        EXAMPLE: batch_ingest_redis
         INIT_DELAY: 3
     depends_on: 
       - redis
     ports:
       - "8000:8000"
       - "9000:9000"
-      - "9001:9001"

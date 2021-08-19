@@ -1,0 +1,1 @@
+{"name":"batch_json","state":"receive","total_run":1,"failure_run":0}

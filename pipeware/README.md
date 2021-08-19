@@ -24,6 +24,7 @@ Pipes
 | `Exporter` | [`PsqlWriter`] | [`ingest_postgres`] |
 | `Exporter` | [`PsqlPreparedWriter`] | [`batch_ingest_postgres`] |
 | `Exporter` | [`RedisStringWriter`] | [`ingest_redis`] |
+| `Exporter` | [`RedisStringBatchWriter`] | [`batch_ingest_redis`] |
 | `Exporter` | [`RedisPublisher`] | [`pubsub_redis`] |
 | `Exporter` | [`ReqwestPoster`] | [`relay`], [`ingest_elasticsearch`] |
 | `Exporter` | [`KafkaProducer`] | [`ingest_kafka`] |
@@ -53,6 +54,7 @@ Error Handlers
 [`ingest_cassandra`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_cassandra
 [`ingest_postgres`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_postgres
 [`ingest_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_redis
+[`batch_ingest_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/batch_ingest_redis
 [`relay`]: https://github.com/pipebase/pipebase/tree/main/examples/relay
 [`consume_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/consume_kafka
 [`ingest_kafka`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_kafka
@@ -92,6 +94,7 @@ Error Handlers
 [`PsqlWriter`]: https://docs.rs/pipepsql/
 [`PsqlPreparedWriter`]: https://docs.rs/pipepsql/
 [`RedisStringWriter`]: https://docs.rs/piperedis/
+[`RedisStringBatchWriter`]: https://docs.rs/piperedis/
 [`RedisPublisher`]: https://docs.rs/piperedis/
 [`ReqwestPoster`]: https://docs.rs/pipereqwest/
 [`KafkaProducer`]: https://docs.rs/pipekafka/

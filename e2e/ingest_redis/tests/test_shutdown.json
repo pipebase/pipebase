@@ -8,5 +8,10 @@
     "cmd": "curl -X POST http://127.0.0.1:9000/v1/shutdown",
     "description": "shutdown ingestion server",
     "expected_output_file": "e2e/ingest_redis/tests/shutdown1.txt"
+  },
+  {
+    "cmd": "curl -X POST http://127.0.0.1:9001/v1/shutdown",
+    "description": "shutdown ingestion server",
+    "expected_output_file": "e2e/ingest_redis/tests/shutdown2.txt"
   }
 ]
