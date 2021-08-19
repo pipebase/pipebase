@@ -73,7 +73,7 @@ where
                     }
                 };
                 let mut c = collector_clone.lock().await;
-                match (*c).collect(t).await {
+                match c.collect(t).await {
                     Ok(()) => continue,
                     Err(err) => {
                         log::error!("collector {} collect error '{}'", name, err);
