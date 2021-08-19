@@ -2,10 +2,12 @@ mod bag;
 mod runtime;
 mod set;
 mod text;
+mod window;
 pub use bag::*;
 pub use runtime::*;
 pub use set::*;
 pub use text::*;
+pub use window::*;
 
 use crate::common::FromConfig;
 
