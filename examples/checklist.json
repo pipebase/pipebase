@@ -165,5 +165,9 @@
     {
         "name": "batch_ingest_cassandra",
         "directory": "examples/batch_ingest_cassandra"
+    },
+    {
+        "name": "batch_ingest_redis",
+        "directory": "examples/batch_ingest_redis"
     }
 ]

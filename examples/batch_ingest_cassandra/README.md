@@ -1,4 +1,4 @@
-Demo `CqlWriter` pipe
+Demo `CqlPreparedWriter` pipe
 ### Setup
 start cassandra and app
 ```sh

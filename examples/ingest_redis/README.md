@@ -1,11 +1,10 @@
 Demo `RedisStringWriter` pipe
-### Setup (terminal 1)
+### Setup
 launch redis and app
 ```sh
 docker-compose up -d
-docker logs -f app
 ```
-### Ingest Data (terminal 3)
+### Ingest Data
 ```sh
 curl -i -X POST \
 -H "Content-Type: application/json" \
