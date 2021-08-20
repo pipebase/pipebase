@@ -1,32 +1,34 @@
 use crate::models::utils::indent_literal;
 use serde::Deserialize;
 
-#[derive(Clone, PartialEq, Debug, Deserialize)]
+use super::{data_ty_to_literal, DataType};
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct ProjectMeta {
-    input: Option<String>,
+    input: Option<DataType>,
     from: Option<String>,
     expr: Option<String>,
     alias: Option<String>,
 }
 
-#[derive(Clone, PartialEq, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct ConvertMeta {
-    input: Option<String>,
+    input: Option<DataType>,
     from: Option<String>,
 }
 
-#[derive(Clone, PartialEq, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct FilterMeta {
     predicate: String,
     alias: Option<String>,
 }
 
-#[derive(Clone, PartialEq, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct IntoAttributesMeta {
     alias: String,
 }
 
-#[derive(Clone, PartialEq, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub enum DeriveMeta {
     Clone,
     Convert,
@@ -49,7 +51,7 @@ pub enum DeriveMeta {
     IntoAttributes,
 }
 
-#[derive(Clone, PartialEq, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub enum Tag {
     Hash,
     Group,
@@ -60,7 +62,7 @@ pub enum Tag {
     Right,
 }
 
-#[derive(Clone, PartialEq, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub enum AggregateMeta {
     Top,
     Sum,
@@ -68,13 +70,13 @@ pub enum AggregateMeta {
     Avgf32(Option<String>),
 }
 
-#[derive(Clone, PartialEq, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct RenderMeta {
     template: Option<String>,
     pos: Option<i32>,
 }
 
-#[derive(Clone, PartialEq, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(untagged)]
 pub enum MetaValue {
     // String Literal, Generate as raw or not
@@ -83,7 +85,7 @@ pub enum MetaValue {
     Usize { value: usize },
 }
 
-#[derive(Clone, PartialEq, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(untagged)]
 pub enum Meta {
     // Base Meta
@@ -169,7 +171,7 @@ fn expand_derives(derives: &[DeriveMeta]) -> Meta {
 fn expand_project_meta(meta: &ProjectMeta) -> Meta {
     let mut metas: Vec<Meta> = Vec::new();
     if let Some(ref input) = meta.input {
-        metas.push(meta_value_str("input", input, false))
+        metas.push(meta_value_str("input", &data_ty_to_literal(input), false))
     }
     if let Some(ref from) = meta.from {
         metas.push(meta_value_str("from", from, false))
@@ -189,7 +191,7 @@ fn expand_project_meta(meta: &ProjectMeta) -> Meta {
 fn expand_convert_meta(meta: &ConvertMeta) -> Meta {
     let mut metas: Vec<Meta> = Vec::new();
     if let Some(ref input) = meta.input {
-        metas.push(meta_value_str("input", input, false))
+        metas.push(meta_value_str("input", &data_ty_to_literal(input), false))
     }
     if let Some(ref from) = meta.from {
         metas.push(meta_value_str("from", from, false))
