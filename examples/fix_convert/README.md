@@ -38,7 +38,8 @@ need to specify input to convert from
      metas:
        - derives: [Clone, Debug, Convert]
 +      - convert:
-+          input: RecordV1
++          input: 
++            Object: RecordV1
      fields:
        - name: id
          ty: String
