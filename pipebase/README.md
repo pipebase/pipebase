@@ -18,6 +18,7 @@ list of basic pipes built in `pipebase`
 | `Mapper` | `Conversion` | [`convert_csv`] |
 | `Selector` | `RandomSelector` | [`ingest_redis_parallel`] |
 | `Collector` | `TextCollector` | [`ingest_elasticsearch`] |
+| `Collector` | `InMemoryWindowCollector` | [`moving_average`] |
 
 [`pipebase`]: https://github.com/pipebase/pipebase/tree/main/pipebase
 [`tokio`]: https://github.com/tokio-rs/tokio
@@ -32,3 +33,4 @@ list of basic pipes built in `pipebase`
 [`convert_csv`]: https://github.com/pipebase/pipebase/tree/main/examples/convert_csv
 [`ingest_redis_parallel`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_redis_parallel
 [`ingest_elasticsearch`]: https://github.com/pipebase/pipebase/tree/main/examples/ingest_elasticsearch
+[`moving_average`]: https://github.com/pipebase/pipebase/tree/main/examples/moving_average
