@@ -169,5 +169,9 @@
     {
         "name": "batch_ingest_redis",
         "directory": "examples/batch_ingest_redis"
+    },
+    {
+        "name": "moving_average",
+        "directory": "examples/moving_average"
     }
 ]

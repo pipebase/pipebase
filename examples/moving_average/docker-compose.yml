@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  app:
+    container_name: app
+    build:
+      context: ../
+      args:
+        EXAMPLE: moving_average
+        INIT_DELAY: 0
+    ports:
+      - "8000:8000"
+      - "9000:9000"
