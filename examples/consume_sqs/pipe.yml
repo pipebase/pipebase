@@ -56,7 +56,8 @@ objects:
           predicate: m.attributes.has_attribute("Topic", "String")
           alias: m
       - convert:
-          input: SqsMessage
+          input: 
+            Object: SqsMessage
     fields:
       - name: body
         metas:
@@ -73,7 +74,8 @@ objects:
     metas: 
       - derives: [Clone, Debug, Project]
       - project:
-          input: FilterableMessage
+          input: 
+            Object: FilterableMessage
     fields:
       - name: body
         metas: 

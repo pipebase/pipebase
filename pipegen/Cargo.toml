@@ -1,6 +1,6 @@
 [package]
 name = "pipegen"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -9,7 +9,7 @@ documentation = "https://docs.rs/pipegen/"
 homepage = "https://github.com/pipebase/pipebase"
 readme = "README.md"
 description = "A generator for data integration app using pipebase framework"
-keywords = ["data", "integration", "pipeline", "declarative"]
+keywords = ["data-engineering", "api-integration", "declarative-pipeline"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

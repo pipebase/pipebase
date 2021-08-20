@@ -75,7 +75,8 @@ objects:
     metas:
       - derives: [Clone, Debug, Convert, Serialize]
       - convert:
-          input: Transaction
+          input: 
+            Object: Transaction
     fields:
       - name: key
         ty: String

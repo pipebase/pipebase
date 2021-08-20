@@ -57,7 +57,8 @@ objects:
     metas:
       - derives: [Clone, Debug, Project]
       - project:
-          input: Transaction
+          input: 
+            Object: Transaction
     fields:
       - name: key
         ty: String

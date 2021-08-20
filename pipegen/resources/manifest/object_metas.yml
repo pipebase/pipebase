@@ -11,7 +11,8 @@ objects:
     metas:
       - derives: [Clone, Debug, Project]
       - project: 
-          input: Bar
+          input: 
+            Object: Bar
     fields:
       - name: bar1
         ty: Integer
