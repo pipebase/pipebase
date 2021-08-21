@@ -68,6 +68,10 @@ impl PsqlClient {
             Value::Double(value) => Box::new(value),
             Value::String(value) => Box::new(value),
             Value::UnsignedBytes(value) => Box::new(value),
+            Value::Date(value) => Box::new(value),
+            Value::DateTime(value) => Box::new(value),
+            Value::UtcTime(value) => Box::new(value),
+            Value::LocalTime(value) => Box::new(value),
             _ => unimplemented!(),
         }
     }
