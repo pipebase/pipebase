@@ -1,7 +1,10 @@
 use pipebase::common::{IntoAttributes, Render, Value};
 use scylla::{
-    frame::value::SerializedValues, prepared_statement::PreparedStatement, statement::Consistency,
-    transport::session::Session, SessionBuilder,
+    frame::value::{SerializedValues, Timestamp},
+    prepared_statement::PreparedStatement,
+    statement::Consistency,
+    transport::session::Session,
+    SessionBuilder,
 };
 
 pub struct CqlClient {
@@ -59,6 +62,8 @@ impl CqlClient {
             Value::Double(value) => values.add_value(value)?,
             Value::String(value) => values.add_value(value)?,
             Value::UnsignedBytes(value) => values.add_value(value)?,
+            Value::Date(value) => values.add_value(value)?,
+            Value::Duration(value) => values.add_value(&Timestamp(*value))?,
             _ => unimplemented!(),
         };
         Ok(())
