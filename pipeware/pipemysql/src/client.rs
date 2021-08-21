@@ -1,4 +1,8 @@
-use mysql_async::{prelude::*, Params};
+use mysql_async::{
+    chrono::{Datelike, Duration, Timelike},
+    prelude::*,
+    Params,
+};
 use pipebase::common::{IntoAttributes, Render, Value};
 use std::collections::HashMap;
 
@@ -57,7 +61,46 @@ impl MySQLClient {
             Value::Double(value) => mysql_async::Value::Double(value),
             Value::UnsignedBytes(value) => mysql_async::Value::Bytes(value),
             Value::String(value) => mysql_async::Value::Bytes(value.into()),
+            Value::DateTime(value) => {
+                let date = value.date();
+                let time = value.time();
+                mysql_async::Value::Date(
+                    date.year() as u16,
+                    date.month() as u8,
+                    date.day() as u8,
+                    time.hour() as u8,
+                    time.minute() as u8,
+                    time.second() as u8,
+                    0,
+                )
+            }
+            Value::Duration(value) => {
+                let negative = value < Duration::zero();
+                let days = absolute_i64(value.num_days());
+                let hours = absolute_i64(value.num_hours());
+                let minutes = absolute_i64(value.num_minutes());
+                let seconds = absolute_i64(value.num_seconds());
+                let milliseconds = absolute_i64(value.num_milliseconds());
+                let microseconds = absolute_i64(value.num_microseconds().unwrap_or_default());
+                let microseconds = milliseconds * 1000 + microseconds;
+                mysql_async::Value::Time(
+                    negative,
+                    days as u32,
+                    hours as u8,
+                    minutes as u8,
+                    seconds as u8,
+                    microseconds as u32,
+                )
+            }
             _ => unimplemented!(),
         }
     }
+}
+
+// return absolute value of i64
+fn absolute_i64(value: i64) -> u64 {
+    if value > 0 {
+        return value as u64;
+    }
+    (-value) as u64
 }
