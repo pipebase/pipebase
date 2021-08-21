@@ -1,7 +1,9 @@
-use serde::{Deserialize, Serialize};
+use chrono::{DateTime, Duration, Local, NaiveDate, NaiveDateTime, Utc};
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+use super::Period;
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Null,
     Bool(bool),
@@ -12,6 +14,11 @@ pub enum Value {
     Float(f32),
     Double(f64),
     String(String),
+    Date(NaiveDate),
+    DateTime(NaiveDateTime),
+    Duration(Duration),
+    LocalTime(DateTime<Local>),
+    UtcTime(DateTime<Utc>),
     UnsignedBytes(Vec<u8>),
     Array(Vec<Value>),
     Attributes(HashMap<String, Value>),
@@ -50,6 +57,49 @@ impl From<i64> for Value {
 impl From<String> for Value {
     fn from(v: String) -> Self {
         Value::String(v)
+    }
+}
+
+impl From<NaiveDate> for Value {
+    fn from(v: NaiveDate) -> Self {
+        Value::Date(v)
+    }
+}
+
+impl From<NaiveDateTime> for Value {
+    fn from(v: NaiveDateTime) -> Self {
+        Value::DateTime(v)
+    }
+}
+
+impl From<Duration> for Value {
+    fn from(v: Duration) -> Self {
+        Value::Duration(v)
+    }
+}
+
+impl From<Period> for Value {
+    fn from(v: Period) -> Self {
+        let v = match v {
+            Period::Days(v) => Duration::days(v as i64),
+            Period::Hours(v) => Duration::hours(v as i64),
+            Period::Minutes(v) => Duration::minutes(v as i64),
+            Period::Secs(v) => Duration::seconds(v as i64),
+            Period::Millis(v) => Duration::milliseconds(v as i64),
+        };
+        Value::Duration(v)
+    }
+}
+
+impl From<DateTime<Local>> for Value {
+    fn from(v: DateTime<Local>) -> Self {
+        Value::LocalTime(v)
+    }
+}
+
+impl From<DateTime<Utc>> for Value {
+    fn from(v: DateTime<Utc>) -> Self {
+        Value::UtcTime(v)
     }
 }
 
