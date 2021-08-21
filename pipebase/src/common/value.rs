@@ -81,11 +81,11 @@ impl From<Duration> for Value {
 impl From<Period> for Value {
     fn from(v: Period) -> Self {
         let v = match v {
-            Period::Days(v) => Duration::days(v as i64),
-            Period::Hours(v) => Duration::hours(v as i64),
-            Period::Minutes(v) => Duration::minutes(v as i64),
-            Period::Secs(v) => Duration::seconds(v as i64),
-            Period::Millis(v) => Duration::milliseconds(v as i64),
+            Period::Days(v) => Duration::days(v),
+            Period::Hours(v) => Duration::hours(v),
+            Period::Minutes(v) => Duration::minutes(v),
+            Period::Secs(v) => Duration::seconds(v),
+            Period::Millis(v) => Duration::milliseconds(v),
         };
         Value::Duration(v)
     }
