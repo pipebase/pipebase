@@ -77,6 +77,11 @@ pub struct RenderMeta {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct SerdeMeta {
+    with: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 #[serde(untagged)]
 pub enum MetaValue {
     // String Literal, Generate as raw or not
@@ -101,6 +106,7 @@ pub enum Meta {
     Render { render: RenderMeta },
     Convert { convert: ConvertMeta },
     IntoAttributes { attribute: IntoAttributesMeta },
+    Serde { serde: SerdeMeta },
 }
 
 pub(crate) fn meta_value_str(name: &str, value: &str, raw: bool) -> Meta {
@@ -282,6 +288,14 @@ fn expand_render(render: &RenderMeta) -> Meta {
     }
 }
 
+fn expand_serde(serde: &SerdeMeta) -> Meta {
+    let metas: Vec<Meta> = vec![meta_value_str("with", &serde.with, false)];
+    Meta::List {
+        name: "serde".to_owned(),
+        metas,
+    }
+}
+
 fn meta_path_to_lit(name: &str, indent: usize, compact: bool) -> String {
     let lit = name.to_owned();
     if compact {
@@ -365,6 +379,10 @@ fn expand_meta_lit(meta: &Meta, indent: usize, compact: bool) -> String {
         }
         Meta::IntoAttributes { attribute } => {
             let meta = expand_into_attributes_meta(attribute);
+            return expand_meta_lit(&meta, indent, compact);
+        }
+        Meta::Serde { serde } => {
+            let meta = expand_serde(serde);
             return expand_meta_lit(&meta, indent, compact);
         }
         Meta::List { name, metas } => (name, metas),

@@ -16,6 +16,10 @@ dependencies:
     version: 1.0
     features: ["derive"]
     modules: ["serde::Deserialize"]
+  - name: chrono
+    version: 0.4
+    features: ["serde"]
+    modules: ["chrono::prelude::*"]
 pipes:
   - name: ingestion_server
     ty: Listener
@@ -60,7 +64,7 @@ objects:
     metas:
       - derives: [Clone, Debug, Deserialize, Render]
       - render:
-          template: "INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
+          template: "INSERT INTO records (key, value, timestamp) VALUES ('{}', {}, '{}') ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, timestamp = EXCLUDED.timestamp"
     fields:
       - name: key
         ty: String
@@ -72,6 +76,11 @@ objects:
         metas:
           - render:
               pos: 1
+      - name: timestamp
+        ty: DateTime
+        metas:
+          - render:
+              pos: 2
   - ty: AnotherRecord
     metas:
       - derives: [Clone, Debug, Deserialize, IntoAttributes]
@@ -80,6 +89,8 @@ objects:
         ty: String
       - name: value
         ty: Integer
+      - name: timestamp
+        ty: DateTime
 cstores:
   - name: context_server
     config:

@@ -5,7 +5,7 @@
         "retry": 3
     },
     {
-        "cmd": "docker exec postgres psql -h localhost -p 5432 -U postgres -d postgres -w -c \"CREATE TABLE IF NOT EXISTS records ( key TEXT PRIMARY KEY, value INTEGER )\"",
+        "cmd": "docker exec postgres psql -h localhost -p 5432 -U postgres -d postgres -w -c \"CREATE TABLE IF NOT EXISTS records ( key TEXT PRIMARY KEY, value INTEGER, timestamp TIMESTAMP )\"",
         "description": "create table 'records'",
         "retry": 1
     }

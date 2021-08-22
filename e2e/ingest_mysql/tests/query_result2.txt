@@ -1,2 +1,2 @@
-key	value
-bar	1
+key	value	timestamp
+bar	1	2021-08-21 22:45:54

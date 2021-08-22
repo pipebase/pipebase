@@ -7,7 +7,7 @@ dependencies:
     version: 0.1.2
     modules: ["pipejson::*"]
   - name: pipepsql
-    version: 0.1.3
+    version: 0.1.4
     modules: ["pipepsql::*"]
   - name: pipewarp
     version: 0.1.2
@@ -16,6 +16,10 @@ dependencies:
     version: 1.0
     features: ["derive"]
     modules: ["serde::Deserialize"]
+  - name: chrono
+    version: 0.4
+    features: ["serde"]
+    modules: ["chrono::prelude::*"]
 pipes:
   - name: ingestion_server
     ty: Listener
@@ -46,7 +50,7 @@ objects:
     metas:
       - derives: [Clone, Debug, Deserialize, Render]
       - render:
-          template: "INSERT INTO records (key, value) VALUES ('{}', {}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
+          template: "INSERT INTO records (key, value, timestamp) VALUES ('{}', {}, '{}') ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, timestamp = EXCLUDED.timestamp"
     fields:
       - name: key
         ty: String
@@ -58,6 +62,11 @@ objects:
         metas:
           - render:
               pos: 1
+      - name: timestamp
+        ty: DateTime
+        metas:
+          - render:
+              pos: 2
 cstores:
   - name: context_server
     config:
