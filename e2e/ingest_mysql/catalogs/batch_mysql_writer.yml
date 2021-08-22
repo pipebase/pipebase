@@ -1,2 +1,2 @@
 url: mysql://foo:foo@mysql:3306/foo
-statement: INSERT INTO records (`key`, `value`) VALUES (:key, :value) AS new ON DUPLICATE KEY UPDATE `value` = new.`value`
+statement: INSERT INTO records (`key`, `value`, `timestamp`) VALUES (:key, :value, :timestamp) AS new ON DUPLICATE KEY UPDATE `value` = new.`value`, `timestamp` = new.`timestamp`

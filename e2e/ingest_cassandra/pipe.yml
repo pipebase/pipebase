@@ -67,18 +67,28 @@ objects:
     metas:
       - derives: [Clone, Debug, Deserialize, Render]
       - render:
-          template: "UPDATE test.records SET value = {} where key = '{}'"
+          template: "UPDATE test.records SET value = {}, date = '{}', timestamp = '{}' WHERE key = '{}'"
     fields:
       - name: key
         ty: String
         metas:
           - render:
-              pos: 1
+              pos: 3
       - name: value
         ty: Integer
         metas:
           - render:
               pos: 0
+      - name: date
+        ty: Date
+        metas:
+          - render:
+              pos: 1
+      - name: timestamp
+        ty: DateTime
+        metas:
+          - render:
+              pos: 2
   - ty: AnotherRecord
     metas:
       - derives: [Clone, Debug, Deserialize]
@@ -87,6 +97,10 @@ objects:
         ty: String
       - name: value
         ty: Integer
+      - name: date
+        ty: Date
+      - name: timestamp
+        ty: Timestamp
   - ty: SwappedRecord
     metas:
       - derives: [Clone, Debug, Convert, IntoAttributes]
@@ -99,6 +113,16 @@ objects:
         metas:
           - convert:
               from: value
+      - name: date
+        ty: Date
+        metas:
+          - convert:
+              from: date
+      - name: timestamp
+        ty: Timestamp
+        metas:
+          - convert:
+              from: timestamp
       - name: key
         ty: String
         metas:

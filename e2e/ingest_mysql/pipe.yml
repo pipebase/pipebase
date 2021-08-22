@@ -60,7 +60,7 @@ objects:
     metas:
       - derives: [Clone, Debug, Deserialize, Render]
       - render:
-          template: "INSERT INTO records (`key`, `value`) VALUES ('{}', {}) AS new ON DUPLICATE KEY UPDATE `value` = new.`value`"
+          template: "INSERT INTO records (`key`, `value`, `timestamp`) VALUES ('{}', {}, '{}') AS new ON DUPLICATE KEY UPDATE `value` = new.`value`"
     fields:
       - name: key
         ty: String
@@ -72,6 +72,11 @@ objects:
         metas:
           - render:
               pos: 1
+      - name: timestamp
+        ty: DateTime
+        metas:
+          - render:
+              pos: 2
   - ty: AnotherRecord
     metas:
       - derives: [Clone, Debug, Deserialize, IntoAttributes]
@@ -83,6 +88,8 @@ objects:
               alias: key
       - name: value
         ty: Integer
+      - name: timestamp
+        ty: DateTime
 cstores:
   - name: context_server
     config:

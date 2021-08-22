@@ -5,7 +5,7 @@
         "retry": 1
     },
     {
-        "cmd": "docker exec cassandra cqlsh -e \"CREATE TABLE IF NOT EXISTS test.records (key text PRIMARY KEY, value int)\" localhost 9042",
+        "cmd": "docker exec cassandra cqlsh -e \"CREATE TABLE IF NOT EXISTS test.records (key text PRIMARY KEY, value int, date date, timestamp timestamp )\" localhost 9042",
         "description": "create table",
         "retry": 1
     }
