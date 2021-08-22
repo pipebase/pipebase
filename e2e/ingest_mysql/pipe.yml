@@ -64,7 +64,7 @@ objects:
     metas:
       - derives: [Clone, Debug, Deserialize, Render]
       - render:
-          template: "INSERT INTO records (`key`, `value`, `timestamp`) VALUES ('{}', {}, '{}') AS new ON DUPLICATE KEY UPDATE `value` = new.`value`"
+          template: "INSERT INTO records (`key`, `value`, `timestamp`) VALUES ('{}', {}, '{}') AS new ON DUPLICATE KEY UPDATE `value` = new.`value`, `timestamp` = new.`timestamp`"
     fields:
       - name: key
         ty: String
