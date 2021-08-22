@@ -125,6 +125,13 @@ Meta defines additional attributes of an object so that it satisfy trait bounds 
 | `PathBuf` | `std::path::PathBuf` |
 | `Count32` | `pipebase::common::Count32` |
 | `Averagef32` | `pipebase::common::Averagef32` |
+| `Date` | `chrono::NaiveDate` |
+| `DateTime` | `chrono::NaiveDateTime` |
+| `Duration` | `chrono::Duration` |
+| `LocalTime` | `chrono::DateTime<chrono::Local>` |
+| `UtcTime` | `chrono::DateTime<chrono::Utc>` |
+| `Period` | `pipebase::common::Period` |
+| `Timestamp` | `pipebase::common::Timestamp` |
 | `Box` | `Box<T>` |
 | `Option` | `Option<T>` |
 | `Vec` | `Vec<T>` |
