@@ -11,9 +11,8 @@ use super::utils::indent_literal;
 use super::{Entity, EntityAccept, Object, VisitEntity};
 use crate::error::*;
 use crate::models::{
-    default_chrono_dependency, default_env_log_dependency, default_log_dependency,
-    default_pipebase_dependency, default_tokio_dependency, Block, DataType, FunctionBuilder, Rhs,
-    Statement,
+    default_env_log_dependency, default_log_dependency, default_pipebase_dependency,
+    default_tokio_dependency, Block, DataType, FunctionBuilder, Rhs, Statement,
 };
 use crate::ops::AppValidator;
 use crate::ops::{AppDescriber, AppGenerator};
@@ -143,7 +142,6 @@ impl App {
             default_tokio_dependency(),
             default_log_dependency(),
             default_env_log_dependency(),
-            default_chrono_dependency(),
         ]
     }
 

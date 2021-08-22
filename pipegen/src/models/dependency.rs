@@ -168,16 +168,3 @@ pub(crate) fn default_env_log_dependency() -> Dependency {
         .version("0.8.4".to_owned())
         .build()
 }
-
-pub(crate) fn default_chrono_dependency() -> Dependency {
-    DependencyBuilder::new()
-        .name("chrono".to_owned())
-        .version("0.4".to_owned())
-        .features(vec!["serde".to_owned()])
-        .modules(vec![
-            "chrono::prelude::*".to_owned(),
-            "chrono::serde::*".to_owned(),
-            "chrono::naive::serde::*".to_owned(),
-        ])
-        .build()
-}
