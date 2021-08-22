@@ -1,1 +1,1 @@
-[{"key": "foo", "value": 1}, {"key": "foo", "value": 2}, {"key": "foo", "value": 3}, {"key": "bar", "value": 1}]
+[{"key": "foo", "value": 1, "timestamp": { "Secs": 1629585952 }}, {"key": "foo", "value": 2, "timestamp": { "Secs": 1629585953 }}, {"key": "foo", "value": 3, "timestamp": { "Secs": 1629585954 }}, {"key": "bar", "value": 1, "timestamp": { "Secs": 1629585954 }}]

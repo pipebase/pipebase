@@ -1,13 +1,13 @@
 name: ingest_postgres
 dependencies:
   - name: pipebase
-    version: 0.1.2
+    version: 0.1.5
     modules: ["pipebase::prelude::*"]
   - name: pipejson
     version: 0.1.2
     modules: ["pipejson::*"]
   - name: pipemysql
-    version: 0.1.2
+    version: 0.1.4
     modules: ["pipemysql::*"]
   - name: pipewarp
     version: 0.1.2
@@ -16,6 +16,10 @@ dependencies:
     version: 1.0
     features: ["derive"]
     modules: ["serde::Deserialize"]
+  - name: chrono
+    version: 0.4
+    features: ["serde"]
+    modules: ["chrono::prelude::*"]
 pipes:
   - name: ingestion_server
     ty: Listener
@@ -41,7 +45,7 @@ objects:
     metas:
       - derives: [Clone, Debug, Deserialize, Render]
       - render:
-          template: "INSERT INTO records (`key`, `value`) VALUES ('{}', {}) AS new ON DUPLICATE KEY UPDATE `value` = new.`value`"
+          template: "INSERT INTO records (`key`, `value`, `timestamp`) VALUES ('{}', {}, '{}') AS new ON DUPLICATE KEY UPDATE `value` = new.`value`, `timestamp` = new.`timestamp`"
     fields:
       - name: key
         ty: String
@@ -53,6 +57,11 @@ objects:
         metas:
           - render:
               pos: 1
+      - name: timestamp
+        ty: DateTime
+        metas:
+          - render:
+              pos: 2
 cstores:
   - name: context_server
     config:

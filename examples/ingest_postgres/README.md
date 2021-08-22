@@ -6,7 +6,7 @@ docker-compose up -d
 ```
 create table
 ```sh
-docker exec postgres psql -h localhost -p 5432 -U postgres -d postgres -w -c "CREATE TABLE IF NOT EXISTS records ( key TEXT PRIMARY KEY, value INTEGER )"
+docker exec postgres psql -h localhost -p 5432 -U postgres -d postgres -w -c "CREATE TABLE IF NOT EXISTS records ( key TEXT PRIMARY KEY, value INTEGER, timestamp TIMESTAMP )"
 ```
 ### Ingest Data
 ```sh
@@ -17,6 +17,6 @@ http://localhost:9000/v1/ingest
 ```
 query postgres
 ```sh
-docker exec postgres psql -h localhost -p 5432 -U postgres -d postgres -w -c "SELECT key, value FROM records WHERE key = 'foo'"
+docker exec postgres psql -h localhost -p 5432 -U postgres -d postgres -w -c "SELECT key, value, timestamp FROM records WHERE key = 'foo'"
 ```
 open [browser](http://localhost:8000/v1/pipe) and list all pipes

@@ -1,13 +1,13 @@
 name: batch_ingest_cassandra
 dependencies:
   - name: pipebase
-    version: 0.1.2
+    version: 0.1.5
     modules: ["pipebase::prelude::*"]
   - name: pipejson
     version: 0.1.2
     modules: ["pipejson::*"]
   - name: pipecql
-    version: 0.1.3
+    version: 0.1.4
     modules: ["pipecql::*"]
   - name: pipewarp
     version: 0.1.2
@@ -16,6 +16,10 @@ dependencies:
     version: 1.0
     features: ["derive"]
     modules: ["serde::Deserialize"]
+  - name: chrono
+    version: 0.4
+    features: ["serde"]
+    modules: ["chrono::prelude::*"]
 pipes:
   - name: ingestion_server
     ty: Listener
@@ -52,17 +56,25 @@ objects:
         ty: String
       - name: value
         ty: Integer
+      - name: timestamp
+        ty: Timestamp
   - ty: SwappedRecord
     metas:
       - derives: [Clone, Debug, Convert, IntoAttributes]
       - convert:
-          input: Record
+          input: 
+            Object: Record
     fields:
       - name: value
         ty: Integer
         metas:
           - convert:
               from: value
+      - name: timestamp
+        ty: Timestamp
+        metas:
+          - convert:
+              from: timestamp
       - name: key
         ty: String
         metas:

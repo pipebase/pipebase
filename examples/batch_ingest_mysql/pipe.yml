@@ -1,13 +1,13 @@
-name: ingest_postgres
+name: batch_ingest_mysql
 dependencies:
   - name: pipebase
-    version: 0.1.3
+    version: 0.1.5
     modules: ["pipebase::prelude::*"]
   - name: pipejson
     version: 0.1.2
     modules: ["pipejson::*"]
   - name: pipemysql
-    version: 0.1.3
+    version: 0.1.4
     modules: ["pipemysql::*"]
   - name: pipewarp
     version: 0.1.2
@@ -16,6 +16,10 @@ dependencies:
     version: 1.0
     features: ["derive"]
     modules: ["serde::Deserialize"]
+  - name: chrono
+    version: 0.4
+    features: ["serde"]
+    modules: ["chrono::prelude::*"]
 pipes:
   - name: ingestion_server
     ty: Listener
@@ -48,6 +52,8 @@ objects:
               alias: key
       - name: value
         ty: Integer
+      - name: timestamp
+        ty: DateTime
 cstores:
   - name: context_server
     config:

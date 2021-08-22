@@ -1,4 +1,4 @@
 ---
 # reference: https://github.com/sfackler/rust-postgres/blob/master/postgres/src/config.rs
 params: "host=postgres port=5432 user=postgres password=postgres dbname=postgres"
-statement: INSERT INTO records (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+statement: INSERT INTO records (key, value, timestamp) VALUES ($1, $2, $3) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, timestamp = EXCLUDED.timestamp
