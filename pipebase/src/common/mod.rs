@@ -7,12 +7,12 @@ mod convert;
 mod error;
 mod field;
 mod filter;
-mod period;
 mod pipe;
 mod project;
 mod render;
 mod set;
 mod split;
+mod time;
 mod value;
 
 pub use aggregate::*;
@@ -23,12 +23,12 @@ pub use context::*;
 pub use convert::*;
 pub use field::*;
 pub use filter::*;
-pub use period::*;
 pub use pipe::*;
 pub use project::*;
 pub use render::*;
 pub use set::*;
 pub use split::*;
+pub use time::*;
 pub use value::*;
 
 pub use error::*;

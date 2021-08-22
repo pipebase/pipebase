@@ -1,7 +1,7 @@
 use chrono::{DateTime, Duration, Local, NaiveDate, NaiveDateTime, Utc};
 use std::collections::HashMap;
 
-use super::Period;
+use super::{Period, Timestamp};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
@@ -100,6 +100,15 @@ impl From<DateTime<Local>> for Value {
 impl From<DateTime<Utc>> for Value {
     fn from(v: DateTime<Utc>) -> Self {
         Value::UtcTime(v)
+    }
+}
+
+impl From<Timestamp> for Value {
+    fn from(v: Timestamp) -> Self {
+        match v {
+            Timestamp::Millis(v) => Value::Duration(Duration::milliseconds(v as i64)),
+            Timestamp::Secs(v) => Value::Duration(Duration::seconds(v as i64)),
+        }
     }
 }
 

@@ -21,3 +21,9 @@ impl From<Period> for Duration {
         }
     }
 }
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+pub enum Timestamp {
+    Millis(u64),
+    Secs(u64),
+}
