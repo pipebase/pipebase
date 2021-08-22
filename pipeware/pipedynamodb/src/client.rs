@@ -53,6 +53,7 @@ impl DynamocDBClient {
                     .map(|(k, v)| (k, Self::convert_attribute_value(v)))
                     .collect(),
             ),
+            _ => unimplemented!(),
         }
     }
 }
