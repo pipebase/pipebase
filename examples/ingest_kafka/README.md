@@ -1,6 +1,6 @@
 Demo `KafkaProducer` pipe
 ### Setup (terminal 1)
-launch kafka, zookeeper and app
+launch kafka, zookeeper, app and create *records* topic
 ```sh
 docker-compose up -d
 ```

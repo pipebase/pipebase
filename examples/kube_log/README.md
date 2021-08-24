@@ -1,39 +1,23 @@
 Demo `KubeLogReader` `KafkaProducer` pipe
-### Setup Kafka (terminal 1)
-launch kafka and zookeeper
-```
-docker-compose up -d && \
-docker exec -it kafka /bin/sh
-```
-create topic
-```
-kafka-topics --create --topic kube-log --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1
-```
-start consumer
-```
-kafka-console-consumer --topic kube-log --bootstrap-server kafka:9092
-```
 ### Kube client configuration
+config kube log reader
 ```
 # catalogs/kube_log_reader.yml
 namespace: YOUR_NAMESPACE
 pod: YOUR_POD
 container: YOUR_CONTAINER
 ```
-### Build and Run (terminal 2)
-init
+mount local `.kube` in `docker-compose.yml`
 ```
-cargo pipe new
+volumes:
+    - /PATH/TO/LOCAL/.KUBE:/opt/app/.kube
 ```
-build
+### Setup (terminal 1)
+launch kafka, zookeeper, app and create *kube-log* topic
 ```
-cargo pipe validate -o -p && \
-cargo pipe generate && \
-cargo pipe build -o kube_log -r
+docker-compose up -d
 ```
-run app
+start consumer
 ```
-./kube_log
+docker exec -it kafka kafka-console-consumer --topic kube-log --bootstrap-server kafka:9092
 ```
-### Monitor log (terminal 1)
-check container log ingest to kafka

@@ -1,37 +1,21 @@
 Demo `KubeEventReader` pipe
-### Setup Kafka (terminal 1)
-launch kafka and zookeeper
+### Kube client configuration
+config kube event reader
 ```
-docker-compose up -d && \
-docker exec -it kafka /bin/sh
+# catalogs/kube_event_reader.yml
+namespace: YOUR_NAMESPACE # optional
 ```
-create topic
+mount local `.kube` in `docker-compose.yml`
 ```
-kafka-topics --create --topic kube-event --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1
+volumes:
+    - /PATH/TO/LOCAL/.KUBE:/opt/app/.kube
+```
+### Setup (terminal 1)
+launch kafka, zookeeper, app and create *kube-event* topic
+```
+docker-compose up -d
 ```
 start consumer
 ```
-kafka-console-consumer --topic kube-event --bootstrap-server kafka:9092
+docker exec -it kafka kafka-console-consumer --topic kube-event --bootstrap-server kafka:9092
 ```
-### Kube client configuration
-```
-# catalogs/kube_log_reader.yml
-namespace: YOUR_NAMESPACE # optional
-```
-### Build and Run (terminal 2)
-init
-```
-cargo pipe new
-```
-build
-```
-cargo pipe validate -o -p && \
-cargo pipe generate && \
-cargo pipe build -o kube_event -r
-```
-run app
-```
-./kube_event
-```
-### Monitor log (terminal 1)
-check kube events ingest to kafka

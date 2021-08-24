@@ -4,10 +4,10 @@ dependencies:
     version: 0.1.2
     modules: ["pipebase::prelude::*"]
   - name: pipekafka
-    version: 0.1.3
+    version: 0.2.0
     modules: ["pipekafka::*"]
   - name: pipejson
-    version: 0.1.2
+    version: 0.1.3
     modules: ["pipejson::*"]
   - name: serde
     version: 1.0
@@ -30,23 +30,21 @@ pipes:
     output:
       Object: Record
     upstreams: [ingestion_server]
-  - name: record_converter
+  - name: json_record
     ty: Mapper
     config:
-      ty: KafkaJsonRecordConverterConfig
+      ty: JsonRecordSerConfig
     upstreams: [json]
     output:
       Pair:
-        lty: 
-          Option:
-            ty: String
+        lty: String
         rty: UnsignedBytes
   - name: kafka_producer
     ty: Exporter
     config:
       ty: KafkaProducerConfig
       path: catalogs/kafka_producer.yml
-    upstreams: [record_converter]
+    upstreams: [json_record]
 objects:
   - ty: Record
     metas:
@@ -58,3 +56,8 @@ objects:
           - tag: Group
       - name: value
         ty: UnsignedInteger
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml
