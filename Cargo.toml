@@ -5,6 +5,7 @@ members = [
 	"pipebase",
 	"pipederive",
 	"pipegen",
+	"pipeware/pipeavro",
 	"pipeware/pipebytes",
 	"pipeware/pipecql",
 	"pipeware/pipecsv",

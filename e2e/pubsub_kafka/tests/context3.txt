@@ -1,1 +1,1 @@
-{"name":"kafka_producer","state":"receive","total_run":1,"failure_run":0}
+{"name":"kafka_record_converter","state":"receive","total_run":1,"failure_run":0}

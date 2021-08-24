@@ -9,6 +9,9 @@ dependencies:
   - name: pipejson
     path: ../../../pipeware/pipejson
     modules: ["pipejson::*"]
+  - name: pipeavro
+    path: ../../../pipeware/pipeavro
+    modules: ["pipeavro::*"]
   - name: pipewarp
     path: ../../../pipeware/pipewarp
     modules: ["pipewarp::*"]
@@ -18,7 +21,7 @@ dependencies:
   - name: serde
     version: 1.0
     features: ["derive"]
-    modules: ["serde::Deserialize"]
+    modules: ["serde::Deserialize", "serde::Serialize"]
 pipes:
   - name: ingestion_server
     ty: Listener
@@ -26,6 +29,20 @@ pipes:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output: 
+      Objects: Record
+    upstreams: [ingestion_server]
+  - name: avro_ser
+    ty: Mapper
+    config:
+      ty: AvroSerConfig
+      path: catalogs/avro_ser.yml
+    output: UnsignedBytes
+    upstreams: [json]
   - name: kafka_record_converter
     ty: Mapper
     config:
@@ -36,7 +53,7 @@ pipes:
           Option: 
             ty: String
         rty: UnsignedBytes
-    upstreams: [ ingestion_server ]
+    upstreams: [avro_ser]
   - name: kafka_producer
     ty: Exporter
     config:
@@ -49,30 +66,30 @@ pipes:
       ty: KafkaConsumerConfig
       path: catalogs/kafka_consumer.yml
     output: UnsignedBytes
-  - name: json
+  - name: avro_deser
     ty: Mapper
     config:
-      ty: JsonDeserConfig
+      ty: AvroDeserConfig
     output:
-      Object: Record
+      Objects: Record
     upstreams: [kafka_consumer]
-  - name: redis_writer
+  - name: batch_redis_writer
     ty: Exporter
     config:
-      ty: RedisStringWriterConfig
-      path: catalogs/redis_writer.yml
-    upstreams: [json]
+      ty: RedisStringBatchWriterConfig
+      path: catalogs/batch_redis_writer.yml
+    upstreams: [avro_deser]
 objects:
   - ty: Record
     metas:
-      - derives: [Clone, Debug, Deserialize, LeftRight]
+      - derives: [Clone, Debug, Serialize, Deserialize, LeftRight]
     fields:
       - name: key
         ty: String
         metas:
           - tag: Left
       - name: value
-        ty: UnsignedInteger
+        ty: Integer
         metas:
           - tag: Right
 cstores:
