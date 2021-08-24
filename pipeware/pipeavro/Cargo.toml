@@ -1,0 +1,18 @@
+[package]
+name = "pipeavro"
+version = "0.1.0"
+edition = "2018"
+license = "Apache-2.0"
+repository = "https://github.com/pipebase/pipebase"
+documentation = "https://docs.rs/pipebytes/"
+homepage = "https://github.com/pipebase/pipebase"
+readme = "README.md"
+description = "A pipebase plugin using avro-rs"
+keywords = ["pipebase", "pipeware", "avro"]
+
+[dependencies]
+anyhow = "1.0"
+async-trait = "0.1.50"
+avro-rs = { version = "0.13.0", features = ["snappy"] }
+pipebase = { version = "0.1.5", path = "../../pipebase" }
+serde = { version = "1.0", features = ["derive"] }
