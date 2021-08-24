@@ -43,23 +43,12 @@ pipes:
       path: catalogs/avro_ser.yml
     output: UnsignedBytes
     upstreams: [json]
-  - name: kafka_record_converter
-    ty: Mapper
-    config:
-      ty: KafkaUnsignedBytesRecordConverterConfig
-    output:
-      Pair:
-        lty: 
-          Option: 
-            ty: String
-        rty: UnsignedBytes
-    upstreams: [avro_ser]
   - name: kafka_producer
     ty: Exporter
     config:
-      ty: KafkaProducerConfig
+      ty: KafkaPartitionedProducerConfig
       path: catalogs/kafka_producer.yml
-    upstreams: [ kafka_record_converter ]
+    upstreams: [ avro_ser ]
   - name: kafka_consumer
     ty: Listener
     config:

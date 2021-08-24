@@ -5,3 +5,4 @@ producer:
   queue_timeout:
     Secs: 0
   message_timeout_ms: 5000
+partition: 0
