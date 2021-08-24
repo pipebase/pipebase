@@ -16,7 +16,7 @@ Pipes
 | `Mapper` | [`CsvDeser`] |  |
 | `Mapper` | [`RedisUnorderedGroupAddAggregator`] | [`group_sum_redis`], [`group_avg_redis`], [`group_count_redis`] |
 | `Mapper` | [`RocksDBUnorderedGroupAddAggregator`] | [`group_sum_rocksdb`], [`group_avg_rocksdb`], [`group_count_rocksdb`] |
-| `Mapper` | [`KafkaJsonRecordConverter`] | [`ingest_kafka`] |
+| `Mapper` | [`JsonRecordSer`] | [`ingest_kafka`] |
 | `Mapper` | [`ReqwestGetter`] | [`stripe_get_charge`] |
 | `Mapper` | [`ReqwestQuery`] | [`stripe_query_charge`] |
 | `Exporter` | [`CqlWriter`] | [`ingest_cassandra`] |
@@ -82,11 +82,11 @@ Error Handlers
 [`RedisSubscriber`]: https://docs.rs/piperedis/
 [`JsonSer`]: https://docs.rs/pipejson/
 [`JsonDeser`]: https://docs.rs/pipejson/
+[`JsonRecordSer`]: https://docs.rs/pipejson/
 [`CsvSer`]: https://docs.rs/pipecsv/
 [`CsvDeser`]: https://docs.rs/pipecsv/
 [`RedisUnorderedGroupAddAggregator`]: https://docs.rs/piperedis/
 [`RocksDBUnorderedGroupAddAggregator`]: https://docs.rs/piperocksdb/
-[`KafkaJsonRecordConverter`]: https://docs.rs/pipekafka/
 [`ReqwestGetter`]: https://docs.rs/pipereqwest/
 [`ReqwestQuery`]: https://docs.rs/pipereqwest/
 [`CqlWriter`]: https://docs.rs/pipecql/
