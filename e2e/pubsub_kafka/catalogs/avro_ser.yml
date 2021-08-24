@@ -1,0 +1,10 @@
+compression: Snappy
+schema: |-
+  {
+    "name": "Record",
+    "type": "record",
+    "fields": [
+      {"name": "key", "type": "string"},
+      {"name": "value", "type": "int"}
+    ]
+  }
