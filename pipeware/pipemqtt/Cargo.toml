@@ -1,0 +1,20 @@
+[package]
+name = "pipemqtt"
+version = "0.1.1"
+edition = "2018"
+license = "Apache-2.0"
+repository = "https://github.com/pipebase/pipebase"
+documentation = "https://docs.rs/pipemqtt/"
+homepage = "https://github.com/pipebase/pipebase"
+readme = "README.md"
+description = "A pipebase plugin using rumqttc"
+keywords = ["pipebase", "pipeware", "mqtt"]
+
+[dependencies]
+anyhow = "1.0"
+async-trait = "0.1.50"
+log = "0.4.14"
+rumqttc = "0.8.0"
+pipebase = { version = "0.1.5", path = "../../pipebase" }
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.6.1", features = ["rt","sync"] }
