@@ -3,7 +3,7 @@ use super::constants::{
     DEFAULT_APP_OBJECT, PIPEBASE_MAIN,
 };
 use super::context::ContextStore;
-use super::dependency::Dependency;
+use super::dependency::{CrateVisitor, Dependency, UseCrate};
 use super::error::ErrorHandler;
 use super::meta::{metas_to_literal, Meta, MetaValue};
 use super::pipe::Pipe;
@@ -38,7 +38,7 @@ impl Entity for App {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        let dependencies = self.get_package_dependency();
+        let dependencies = self.get_dependencies();
         dependencies
             .iter()
             .map(|dep| dep.get_modules().to_owned())
@@ -76,9 +76,9 @@ impl App {
             Some(_) => (),
             None => self.dependencies = Some(Vec::new()),
         };
-        for default_dependency in Self::default_dependencies() {
-            if !self.has_dependency(&default_dependency) {
-                self.add_dependency(default_dependency)
+        for dependency in self.visit_dependencies() {
+            if !self.has_dependency(&dependency) {
+                self.add_dependency(dependency)
             }
         }
         // init metas
@@ -120,8 +120,27 @@ impl App {
         dependencies.push(dependency);
     }
 
-    pub fn get_package_dependency(&self) -> &Vec<Dependency> {
+    pub fn get_dependencies(&self) -> &Vec<Dependency> {
         self.dependencies.as_ref().unwrap()
+    }
+
+    // visit config crate dependency
+    fn visit_dependencies(&self) -> Vec<Dependency> {
+        let mut visitor = CrateVisitor::new();
+        for pipe in &self.pipes {
+            pipe.accept_crate_visitor(&mut visitor)
+        }
+        if let Some(cstores) = self.cstores.as_ref() {
+            for cstore in cstores {
+                cstore.accept_crate_visitor(&mut visitor)
+            }
+        }
+        if let Some(error_handler) = self.error.as_ref() {
+            error_handler.accept_crate_visitor(&mut visitor)
+        }
+        let mut all_dependencies: Vec<Dependency> = visitor.into_iter().collect();
+        all_dependencies.extend(Self::default_dependencies());
+        all_dependencies
     }
 
     fn default_dependencies() -> Vec<Dependency> {

@@ -1,4 +1,5 @@
 use super::{
+    dependency::{default_warp_dependency, UseCrate},
     meta::{meta_to_literal, meta_value_str, Meta},
     Entity, EntityAccept, VisitEntity,
 };
@@ -60,6 +61,16 @@ impl ContextStore {
         Meta::List {
             name: "config".to_owned(),
             metas,
+        }
+    }
+}
+
+impl UseCrate for ContextStore {
+    fn get_crate(&self) -> Option<super::Dependency> {
+        let config_ty = self.config.get_ty().as_str();
+        match config_ty {
+            "WarpContextServerConfig" => Some(default_warp_dependency()),
+            _ => None,
         }
     }
 }
