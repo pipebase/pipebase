@@ -1,20 +1,4 @@
 name: kube_log
-dependencies:
-  - name: pipebase
-    version: 0.1.2
-    modules: ["pipebase::prelude::*"]
-  - name: pipekafka
-    version: 0.2.0
-    modules: ["pipekafka::*"]
-  - name: pipekube
-    version: 0.1.2
-    modules: ["pipekube::*"]
-  - name: pipejson
-    version: 0.1.3
-    modules: ["pipejson::*"]
-  - name: pipewarp
-    version: 0.1.2
-    modules: ["pipewarp::*"]
 pipes:
   - name: kube_logger
     ty: Listener

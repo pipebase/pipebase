@@ -27,7 +27,7 @@ pub trait Entity {
 }
 
 pub trait EntityAccept<V: VisitEntity<Self>>: Sized + Entity + Clone {
-    fn accept(&self, v: &mut V) {
+    fn accept_entity_visitor(&self, v: &mut V) {
         v.visit(self)
     }
 }

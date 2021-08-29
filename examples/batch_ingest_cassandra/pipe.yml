@@ -1,17 +1,5 @@
 name: batch_ingest_cassandra
 dependencies:
-  - name: pipebase
-    version: 0.1.5
-    modules: ["pipebase::prelude::*"]
-  - name: pipejson
-    version: 0.1.2
-    modules: ["pipejson::*"]
-  - name: pipecql
-    version: 0.1.4
-    modules: ["pipecql::*"]
-  - name: pipewarp
-    version: 0.1.2
-    modules: ["pipewarp::*"]
   - name: serde
     version: 1.0
     features: ["derive"]
@@ -19,7 +7,7 @@ dependencies:
   - name: chrono
     version: 0.4
     features: ["serde"]
-    modules: ["chrono::prelude::*"]
+    modules: []
 pipes:
   - name: ingestion_server
     ty: Listener

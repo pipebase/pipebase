@@ -1,12 +1,4 @@
 name: consume_sqs
-dependencies:
-  - name: pipebase
-    version: 0.1.2
-    modules: ["pipebase::prelude::*"]
-  - name: pipesqs
-    git: https://github.com/pipebase/pipebase.git
-    package: pipesqs
-    modules: ["pipesqs::*"]
 pipes:
   - name: consume_sqs
     ty: Poller

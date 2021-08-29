@@ -3,7 +3,7 @@ use super::constants::{
     DEFAULT_APP_OBJECT, PIPEBASE_MAIN,
 };
 use super::context::ContextStore;
-use super::dependency::Dependency;
+use super::dependency::{CrateVisitor, Dependency, UseCrate};
 use super::error::ErrorHandler;
 use super::meta::{metas_to_literal, Meta, MetaValue};
 use super::pipe::Pipe;
@@ -38,7 +38,7 @@ impl Entity for App {
     }
 
     fn list_dependency(&self) -> Vec<String> {
-        let dependencies = self.get_package_dependency();
+        let dependencies = self.get_dependencies();
         dependencies
             .iter()
             .map(|dep| dep.get_modules().to_owned())
@@ -76,27 +76,15 @@ impl App {
             Some(_) => (),
             None => self.dependencies = Some(Vec::new()),
         };
-        for default_dependency in Self::default_dependencies() {
-            if !self.has_dependency(&default_dependency) {
-                self.add_dependency(default_dependency)
+        for dependency in self.visit_dependencies() {
+            if !self.has_dependency(&dependency) {
+                self.add_dependency(dependency)
             }
         }
         // init metas
         match self.metas {
             Some(_) => (),
-            None => {
-                self.metas = Some(vec![Meta::List {
-                    name: "derive".to_owned(),
-                    metas: vec![
-                        Meta::Path {
-                            name: "Bootstrap".to_owned(),
-                        },
-                        Meta::Path {
-                            name: "Default".to_owned(),
-                        },
-                    ],
-                }])
-            }
+            None => self.metas = Some(Self::default_metas()),
         };
         // init pipes
         for pipe in self.pipes.as_mut_slice() {
@@ -132,8 +120,27 @@ impl App {
         dependencies.push(dependency);
     }
 
-    pub fn get_package_dependency(&self) -> &Vec<Dependency> {
+    pub fn get_dependencies(&self) -> &Vec<Dependency> {
         self.dependencies.as_ref().unwrap()
+    }
+
+    // visit config crate dependency
+    fn visit_dependencies(&self) -> Vec<Dependency> {
+        let mut visitor = CrateVisitor::new();
+        for pipe in &self.pipes {
+            pipe.accept_crate_visitor(&mut visitor)
+        }
+        if let Some(cstores) = self.cstores.as_ref() {
+            for cstore in cstores {
+                cstore.accept_crate_visitor(&mut visitor)
+            }
+        }
+        if let Some(error_handler) = self.error.as_ref() {
+            error_handler.accept_crate_visitor(&mut visitor)
+        }
+        let mut all_dependencies: Vec<Dependency> = visitor.into_iter().collect();
+        all_dependencies.extend(Self::default_dependencies());
+        all_dependencies
     }
 
     fn default_dependencies() -> Vec<Dependency> {
@@ -143,6 +150,20 @@ impl App {
             default_log_dependency(),
             default_env_log_dependency(),
         ]
+    }
+
+    fn default_metas() -> Vec<Meta> {
+        vec![Meta::List {
+            name: "derive".to_owned(),
+            metas: vec![
+                Meta::Path {
+                    name: "Bootstrap".to_owned(),
+                },
+                Meta::Path {
+                    name: "Default".to_owned(),
+                },
+            ],
+        }]
     }
 
     pub(crate) fn get_use_modules_literal(&self, indent: usize) -> String {
@@ -232,86 +253,86 @@ impl App {
 
     pub fn generate(&self) -> String {
         let mut app_generator = AppGenerator::new(0);
-        self.accept(&mut app_generator);
+        self.accept_entity_visitor(&mut app_generator);
         app_generator.generate()
     }
 
     // generate pipelines contains pid
     pub fn generate_pipes(&self, pid: &str) -> Result<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         // filter pipes with selected component - partial generation
         let component = describer.get_pipe_component(pid)?;
         let selected_pipes: HashSet<String> = component.into_iter().collect();
         let mut app_generator = AppGenerator::new(0);
-        self.accept(&mut app_generator);
+        self.accept_entity_visitor(&mut app_generator);
         app_generator.set_pipe_filter(selected_pipes);
         Ok(app_generator.generate())
     }
 
     pub fn validate_pipes(&self) -> Result<()> {
         let mut validator = AppValidator::new("");
-        self.accept(&mut validator);
+        self.accept_entity_visitor(&mut validator);
         validator.validate_pipes()
     }
 
     pub fn validate_objects(&self) -> Result<()> {
         let mut validator = AppValidator::new("");
-        self.accept(&mut validator);
+        self.accept_entity_visitor(&mut validator);
         validator.validate_objects()
     }
 
     pub fn validate_cstores(&self) -> Result<()> {
         let mut validator = AppValidator::new("");
-        self.accept(&mut validator);
+        self.accept_entity_visitor(&mut validator);
         validator.validate_cstores()
     }
 
     pub fn validate(&self) -> Result<()> {
         let mut validator = AppValidator::new("");
-        self.accept(&mut validator);
+        self.accept_entity_visitor(&mut validator);
         validator.validate()
     }
 
     pub fn describe_pipes(&self) -> Vec<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_pipes()
     }
 
     pub fn describe_pipe(&self, pid: &str) -> Result<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_pipe(pid)
     }
 
     pub fn describe_pipe_graph(&self) -> Vec<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_pipe_graph()
     }
 
     pub fn describe_pipelines(&self, pid: &str) -> Result<Vec<String>> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_pipelines(pid)
     }
 
     pub fn describe_objects(&self) -> Vec<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_objects()
     }
 
     pub fn describe_object(&self, oid: &str) -> Result<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_object(oid)
     }
 
     pub fn describe(&self) -> Vec<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe()
     }
 }

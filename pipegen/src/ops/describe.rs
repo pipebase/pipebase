@@ -299,7 +299,7 @@ impl AppDescriber {
     fn init_describer<T: EntityAccept<A>, A: Describe + VisitEntity<T>>(entities: &[T]) -> A {
         let mut describer = A::new();
         for entity in entities {
-            entity.accept(&mut describer);
+            entity.accept_entity_visitor(&mut describer);
         }
         describer
     }

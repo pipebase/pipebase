@@ -6,6 +6,14 @@ use serde::Deserialize;
 use strum::{Display, EnumString};
 
 use super::data::{data_ty_to_literal, DataType};
+use super::dependency::{
+    default_avro_dependency, default_cql_dependency, default_csv_dependency,
+    default_dynamodb_dependency, default_json_dependency, default_kafka_dependency,
+    default_kube_dependency, default_mysql_dependency, default_psql_dependency,
+    default_redis_dependency, default_reqwest_dependency, default_rocksdb_dependency,
+    default_s3_dependency, default_sns_dependency, default_sqs_dependency, default_warp_dependency,
+    Dependency, UseCrate,
+};
 use super::meta::{meta_to_literal, meta_value_str, meta_value_usize, Meta};
 
 #[derive(Clone, Display, EnumString, PartialEq, Debug, Deserialize)]
@@ -194,3 +202,38 @@ impl Display for Pipe {
 }
 
 impl<V: VisitEntity<Pipe>> EntityAccept<V> for Pipe {}
+
+impl UseCrate for Pipe {
+    fn get_crate(&self) -> Option<Dependency> {
+        let config_ty = self.config.get_config_type().as_str();
+        match config_ty {
+            "AvroDeserConfig" | "AvroSerConfig" => Some(default_avro_dependency()),
+            "CqlPreparedWriterConfig" | "CqlWriterConfig" => Some(default_cql_dependency()),
+            "CsvDeserConfig" | "CsvSerConfig" => Some(default_csv_dependency()),
+            "JsonDeserConfig" | "JsonRecordSerConfig" | "JsonSerConfig" => {
+                Some(default_json_dependency())
+            }
+            "KafkaConsumerConfig" | "KafkaPartitionedProducerConfig" | "KafkaProducerConfig" => {
+                Some(default_kafka_dependency())
+            }
+            "KubeEventReaderConfig" | "KubeLogReaderConfig" => Some(default_kube_dependency()),
+            "MySQLPreparedWriterConfig" | "MySQLWriterConfig" => Some(default_mysql_dependency()),
+            "PsqlPreparedWriterConfig" | "PsqlWriterConfig" => Some(default_psql_dependency()),
+            "RedisPublisherConfig"
+            | "RedisStringBatchWriterConfig"
+            | "RedisStringWriterConfig"
+            | "RedisSubscriberConfig"
+            | "RedisUnorderedGroupAddAggregatorConfig" => Some(default_redis_dependency()),
+            "ReqwestGetterConfig" | "ReqwestPosterConfig" | "ReqwestQueryConfig" => {
+                Some(default_reqwest_dependency())
+            }
+            "RocksDBUnorderedGroupAddAggregatorConfig" => Some(default_rocksdb_dependency()),
+            "WarpIngestionServerConfig" => Some(default_warp_dependency()),
+            "DynamoDBWriterConfig" => Some(default_dynamodb_dependency()),
+            "S3WriterConfig" => Some(default_s3_dependency()),
+            "SnsPublisherConfig" => Some(default_sns_dependency()),
+            "SqsMessageReceiverConfig" => Some(default_sqs_dependency()),
+            _ => None,
+        }
+    }
+}

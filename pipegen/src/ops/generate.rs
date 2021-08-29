@@ -144,7 +144,7 @@ impl AppGenerator {
         indent: usize,
     ) -> String {
         let mut generator = G::new(indent);
-        entity.accept(&mut generator);
+        entity.accept_entity_visitor(&mut generator);
         generator.generate()
     }
 

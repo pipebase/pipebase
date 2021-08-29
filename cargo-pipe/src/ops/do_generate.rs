@@ -15,7 +15,7 @@ fn do_apply_additional_dependency(
 ) -> anyhow::Result<()> {
     printer.status("Generate", "add toml manifest dependencies")?;
     // fetch package dependency
-    let additionals = app.get_package_dependency();
+    let additionals = app.get_dependencies();
     let toml_content = fs::read_to_string(toml_path)?;
     let mut manifest = toml::from_str::<PipeTomlManifest>(&toml_content)?;
     manifest.init();

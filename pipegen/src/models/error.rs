@@ -1,4 +1,5 @@
 use super::{
+    dependency::{default_sns_dependency, UseCrate},
     meta::{meta_to_literal, meta_value_str, meta_value_usize, Meta},
     Entity, EntityAccept, VisitEntity,
 };
@@ -69,5 +70,15 @@ impl ErrorHandler {
             None => return None,
         };
         Some(meta_value_usize("buffer", buffer))
+    }
+}
+
+impl UseCrate for ErrorHandler {
+    fn get_crate(&self) -> Option<super::Dependency> {
+        let config_ty = self.config.get_ty().as_str();
+        match config_ty {
+            "SnsPipeErrorPublisherConfig" => Some(default_sns_dependency()),
+            _ => None,
+        }
     }
 }
