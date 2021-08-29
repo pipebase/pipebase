@@ -227,7 +227,7 @@ pub(crate) fn default_mysql_dependency() -> Dependency {
 
 pub(crate) fn default_psql_dependency() -> Dependency {
     DependencyBuilder::new()
-        .name("pipeosql".to_owned())
+        .name("pipepsql".to_owned())
         .version("0.1.4".to_owned())
         .modules(vec!["pipepsql::*".to_owned()])
         .build()
