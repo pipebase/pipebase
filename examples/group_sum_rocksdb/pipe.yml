@@ -1,17 +1,5 @@
 name: group_sum_rocksdb
 dependencies:
-  - name: pipebase
-    version: 0.1.2
-    modules: ["pipebase::prelude::*"]
-  - name: pipejson
-    version: 0.1.2
-    modules: ["pipejson::*"]
-  - name: piperocksdb
-    version: 0.1.2
-    modules: ["piperocksdb::*"]
-  - name: pipewarp
-    version: 0.1.2
-    modules: ["pipewarp::*"]
   - name: serde
     version: 1.0
     features: ["derive"]

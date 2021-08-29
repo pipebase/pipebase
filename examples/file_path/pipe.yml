@@ -1,8 +1,4 @@
 name: print_timer
-dependencies:
-  - name: pipebase
-    version: 0.1.2
-    modules: ["pipebase::prelude::*"]
 pipes:
   - name: file_path_visitor
     ty: Listener

@@ -1,14 +1,5 @@
 name: convert_csv
 dependencies:
-  - name: pipebase
-    version: 0.1.2
-    modules: ["pipebase::prelude::*"]
-  - name: pipejson
-    version: 0.1.2
-    modules: ["pipejson::*"]
-  - name: pipecsv
-    version: 0.1.2
-    modules: ["pipecsv::*"]
   - name: serde
     version: 1.0
     features: ["derive"]
