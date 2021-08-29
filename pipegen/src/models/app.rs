@@ -84,19 +84,7 @@ impl App {
         // init metas
         match self.metas {
             Some(_) => (),
-            None => {
-                self.metas = Some(vec![Meta::List {
-                    name: "derive".to_owned(),
-                    metas: vec![
-                        Meta::Path {
-                            name: "Bootstrap".to_owned(),
-                        },
-                        Meta::Path {
-                            name: "Default".to_owned(),
-                        },
-                    ],
-                }])
-            }
+            None => self.metas = Some(Self::default_metas()),
         };
         // init pipes
         for pipe in self.pipes.as_mut_slice() {
@@ -143,6 +131,20 @@ impl App {
             default_log_dependency(),
             default_env_log_dependency(),
         ]
+    }
+
+    fn default_metas() -> Vec<Meta> {
+        vec![Meta::List {
+            name: "derive".to_owned(),
+            metas: vec![
+                Meta::Path {
+                    name: "Bootstrap".to_owned(),
+                },
+                Meta::Path {
+                    name: "Default".to_owned(),
+                },
+            ],
+        }]
     }
 
     pub(crate) fn get_use_modules_literal(&self, indent: usize) -> String {
