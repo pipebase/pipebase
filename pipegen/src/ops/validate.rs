@@ -383,7 +383,7 @@ impl AppValidator {
     ) -> Result<()> {
         let mut validator: V = V::new(location);
         for item in items {
-            item.accept(&mut validator);
+            item.accept_entity_visitor(&mut validator);
         }
         validator.validate()
     }

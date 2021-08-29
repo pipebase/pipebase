@@ -253,86 +253,86 @@ impl App {
 
     pub fn generate(&self) -> String {
         let mut app_generator = AppGenerator::new(0);
-        self.accept(&mut app_generator);
+        self.accept_entity_visitor(&mut app_generator);
         app_generator.generate()
     }
 
     // generate pipelines contains pid
     pub fn generate_pipes(&self, pid: &str) -> Result<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         // filter pipes with selected component - partial generation
         let component = describer.get_pipe_component(pid)?;
         let selected_pipes: HashSet<String> = component.into_iter().collect();
         let mut app_generator = AppGenerator::new(0);
-        self.accept(&mut app_generator);
+        self.accept_entity_visitor(&mut app_generator);
         app_generator.set_pipe_filter(selected_pipes);
         Ok(app_generator.generate())
     }
 
     pub fn validate_pipes(&self) -> Result<()> {
         let mut validator = AppValidator::new("");
-        self.accept(&mut validator);
+        self.accept_entity_visitor(&mut validator);
         validator.validate_pipes()
     }
 
     pub fn validate_objects(&self) -> Result<()> {
         let mut validator = AppValidator::new("");
-        self.accept(&mut validator);
+        self.accept_entity_visitor(&mut validator);
         validator.validate_objects()
     }
 
     pub fn validate_cstores(&self) -> Result<()> {
         let mut validator = AppValidator::new("");
-        self.accept(&mut validator);
+        self.accept_entity_visitor(&mut validator);
         validator.validate_cstores()
     }
 
     pub fn validate(&self) -> Result<()> {
         let mut validator = AppValidator::new("");
-        self.accept(&mut validator);
+        self.accept_entity_visitor(&mut validator);
         validator.validate()
     }
 
     pub fn describe_pipes(&self) -> Vec<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_pipes()
     }
 
     pub fn describe_pipe(&self, pid: &str) -> Result<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_pipe(pid)
     }
 
     pub fn describe_pipe_graph(&self) -> Vec<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_pipe_graph()
     }
 
     pub fn describe_pipelines(&self, pid: &str) -> Result<Vec<String>> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_pipelines(pid)
     }
 
     pub fn describe_objects(&self) -> Vec<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_objects()
     }
 
     pub fn describe_object(&self, oid: &str) -> Result<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe_object(oid)
     }
 
     pub fn describe(&self) -> Vec<String> {
         let mut describer = AppDescriber::new();
-        self.accept(&mut describer);
+        self.accept_entity_visitor(&mut describer);
         describer.describe()
     }
 }
