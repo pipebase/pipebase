@@ -17,4 +17,4 @@ log = "0.4.14"
 rumqttc = "0.8.0"
 pipebase = { version = "0.1.5", path = "../../pipebase" }
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1.6.1", features = ["rt","sync"] }
+tokio = { version = "1.6.1", features = ["rt", "sync"] }
