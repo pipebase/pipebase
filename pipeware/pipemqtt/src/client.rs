@@ -3,9 +3,9 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub enum QoSType {
-    AtMostOnce,
-    AtLeastOnce,
-    ExactlyOnce,
+    AtMost,
+    AtLeast,
+    Exactly,
 }
 
 #[derive(Deserialize)]
@@ -26,8 +26,8 @@ pub(crate) fn new_client(options: &ClientOptions) -> (AsyncClient, EventLoop) {
 
 pub(crate) fn qos(qos: QoSType) -> QoS {
     match qos {
-        QoSType::AtLeastOnce => QoS::AtLeastOnce,
-        QoSType::AtMostOnce => QoS::AtMostOnce,
-        QoSType::ExactlyOnce => QoS::ExactlyOnce,
+        QoSType::AtLeast => QoS::AtLeastOnce,
+        QoSType::AtMost => QoS::AtMostOnce,
+        QoSType::Exactly => QoS::ExactlyOnce,
     }
 }

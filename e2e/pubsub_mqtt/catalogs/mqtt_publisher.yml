@@ -5,5 +5,5 @@ base:
   cap: 10
   keep_alive: 5
 topic: records
-qos: AtLeastOnce
+qos: AtLeast
 retain: false
