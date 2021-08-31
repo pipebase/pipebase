@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto
+    ports:
+      - '1883:1883'
+      - '9001:9001'
+    volumes: 
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+  app:
+    container_name: app
+    build:
+      context: ../
+      args:
+        EXAMPLE: pubsub_mqtt
+        INIT_DELAY: 3
+    depends_on: 
+      - mosquitto
+    ports:
+      - "8000:8000"
+      - "9000:9000"

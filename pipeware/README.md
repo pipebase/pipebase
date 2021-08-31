@@ -9,6 +9,7 @@ Pipes
 | `Listener` | [`KubeLogReader`] | [`kube_log`] |
 | `Listener` | [`KubeEventReader`] | [`kube_event`] |
 | `Listener` | [`RedisSubscriber`] | [`pubsub_redis`] |
+| `Listener` | [`MqttSubscriber`] | [`pubsub_mqtt`] |
 | `Poller` | `SqsMessageReceiver` | [`consume_sqs`] |
 | `Mapper` | [`JsonSer`] |  |
 | `Mapper` | [`JsonDeser`] | `ingest_*` |
@@ -33,6 +34,7 @@ Pipes
 | `Exporter` | [`MySQLPreparedWriter`] | [`batch_ingest_mysql`] |
 | `Exporter` | `DynamoDBWriter` | [`ingest_dynamodb`] |
 | `Exporter` | `SnsPublisher` | [`pubsub_sns`] |
+| `Exporter` | [`MqttPublisher`] | [`pubsub_mqtt`] |
 
 Context Stores
 | implementation | example |
@@ -74,6 +76,7 @@ Error Handlers
 [`batch_ingest_postgres`]: https://github.com/pipebase/pipebase/tree/main/examples/batch_ingest_postgres
 [`batch_ingest_mysql`]: https://github.com/pipebase/pipebase/tree/main/examples/batch_ingest_mysql
 [`batch_ingest_cassandra`]: https://github.com/pipebase/pipebase/tree/main/examples/batch_ingest_cassandra
+[`pubsub_mqtt`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_mqtt
 
 [`WarpIngestionServer`]: https://docs.rs/pipewarp/
 [`KafkaConsumer`]: https://docs.rs/pipekafka/
@@ -101,3 +104,5 @@ Error Handlers
 [`MySQLWriter`]: https://docs.rs/pipemysql/
 [`MySQLPreparedWriter`]: https://docs.rs/pipemysql/
 [`WarpContextServer`]: https://docs.rs/pipewarp/
+[`MqttPublisher`]: https://docs.rs/pipemqtt/
+[`MqttSubscriber`]: https://docs.rs/pipemqtt/

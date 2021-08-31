@@ -1,0 +1,8 @@
+[
+    {
+        "cmd": "docker exec redis redis-cli ping",
+        "description": "make sure redis is alive",
+        "expected_output_file": "e2e/pubsub_mqtt/tests/setup0.txt",
+        "retry": 3
+    }
+]

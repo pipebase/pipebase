@@ -301,6 +301,14 @@ pub(crate) fn default_sqs_dependency() -> Dependency {
         .build()
 }
 
+pub(crate) fn default_mqtt_dependency() -> Dependency {
+    DependencyBuilder::new()
+        .name("pipemqtt".to_owned())
+        .version("0.1.0".to_owned())
+        .modules(vec!["pipemqtt::*".to_owned()])
+        .build()
+}
+
 pub(crate) trait UseCrate: Sized {
     fn accept_crate_visitor(&self, visitor: &mut CrateVisitor) {
         visitor.visit(self)

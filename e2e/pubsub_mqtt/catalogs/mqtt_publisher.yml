@@ -1,0 +1,9 @@
+base:
+  id: rumqttc_pub
+  host: mosquitto
+  port: 1883
+  cap: 10
+  keep_alive: 5
+topic: records
+qos: AtLeast
+retain: false

@@ -173,5 +173,9 @@
     {
         "name": "moving_average",
         "directory": "examples/moving_average"
+    },
+    {
+        "name": "pubsub_mqtt",
+        "directory": "examples/pubsub_mqtt"
     }
 ]
