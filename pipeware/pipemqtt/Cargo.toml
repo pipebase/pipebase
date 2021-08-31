@@ -1,10 +1,9 @@
 [package]
 name = "pipemqtt"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2018"
 license = "Apache-2.0"
 repository = "https://github.com/pipebase/pipebase"
-documentation = "https://docs.rs/pipemqtt/"
 homepage = "https://github.com/pipebase/pipebase"
 readme = "README.md"
 description = "A pipebase plugin using rumqttc"
