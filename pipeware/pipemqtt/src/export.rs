@@ -1,4 +1,4 @@
-use crate::client::{new_client, qos, ClientOptions, QoSType};
+use crate::client::{new_client, to_qos, ClientOptions, QoSType};
 use async_trait::async_trait;
 use pipebase::{
     common::{ConfigInto, FromConfig, FromPath},
@@ -29,7 +29,7 @@ pub struct MqttPublisher {
 #[async_trait]
 impl FromConfig<MqttPublisherConfig> for MqttPublisher {
     async fn from_config(config: MqttPublisherConfig) -> anyhow::Result<Self> {
-        let qos = qos(config.qos);
+        let qos = to_qos(config.qos);
         let topic = config.topic;
         let retain = config.retain;
         let (client, mut event) = new_client(&config.base);

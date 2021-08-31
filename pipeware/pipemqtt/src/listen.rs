@@ -1,4 +1,4 @@
-use crate::client::{new_client, qos, ClientOptions, QoSType};
+use crate::client::{new_client, to_qos, ClientOptions, QoSType};
 use async_trait::async_trait;
 use pipebase::{
     common::{ConfigInto, FromConfig, FromPath},
@@ -31,7 +31,7 @@ impl FromConfig<MqttSubscriberConfig> for MqttSubscriber {
     async fn from_config(config: MqttSubscriberConfig) -> anyhow::Result<Self> {
         let client_opts = config.base;
         let topic = config.topic;
-        let qos = qos(config.qos);
+        let qos = to_qos(config.qos);
         Ok(MqttSubscriber {
             topic,
             qos,
