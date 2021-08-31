@@ -6,6 +6,7 @@ use serde::Deserialize;
 use strum::{Display, EnumString};
 
 use super::data::{data_ty_to_literal, DataType};
+use super::default_mqtt_dependency;
 use super::dependency::{
     default_avro_dependency, default_cql_dependency, default_csv_dependency,
     default_dynamodb_dependency, default_json_dependency, default_kafka_dependency,
@@ -233,6 +234,7 @@ impl UseCrate for Pipe {
             "S3WriterConfig" => Some(default_s3_dependency()),
             "SnsPublisherConfig" => Some(default_sns_dependency()),
             "SqsMessageReceiverConfig" => Some(default_sqs_dependency()),
+            "MqttPublisherConfig" | "MqttSubscriberConfig" => Some(default_mqtt_dependency()),
             _ => None,
         }
     }
