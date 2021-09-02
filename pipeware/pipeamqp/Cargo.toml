@@ -1,0 +1,21 @@
+[package]
+name = "pipeamqp"
+version = "0.1.0"
+edition = "2018"
+license = "Apache-2.0"
+repository = "https://github.com/pipebase/pipebase"
+documentation = "https://docs.rs/pipeamqp/"
+homepage = "https://github.com/pipebase/pipebase"
+readme = "README.md"
+description = "A pipebase plugin using lapin"
+keywords = ["pipebase", "pipeware", "amqp", "lapin"]
+
+[dependencies]
+anyhow = "1.0"
+async-trait = "0.1.50"
+futures-util = "0.3.17"
+lapin = "1.8.0"
+pipebase = { version = "0.1.5", path = "../../pipebase" }
+serde = { version = "1.0", features = ["derive"] }
+tokio-amqp = "1.0.0"
+tokio = { version = "1.6.1", features = ["sync"] }
