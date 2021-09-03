@@ -1,0 +1,33 @@
+{
+    "name": "pipebase",
+    "suites": [
+        {
+            "name": "setup",
+            "description": "validate redis and rabbitmq setup",
+            "file": "e2e/pubsub_rabbitmq/tests/test_setup.json"
+        },
+        {
+            "name": "ingestion",
+            "description": "validate record ingestion",
+            "file": "e2e/pubsub_rabbitmq/tests/test_ingestion.json"
+        },      
+        {
+            "name": "context",
+            "description": "validate runtime context",
+            "file": "e2e/pubsub_rabbitmq/tests/test_context.json" 
+        },
+        {
+            "name": "redis",
+            "description": "validate rabbitmq record in redis",
+            "file": "e2e/pubsub_rabbitmq/tests/test_redis.json"
+        },
+        {
+            "name": "shutdown",
+            "description": "shutdown ingestion / context server",
+            "file": "e2e/pubsub_rabbitmq/tests/test_shutdown.json"
+        }
+    ],
+    "diff_dir": "e2e/pubsub_rabbitmq/out",
+    "stats_dir": "e2e/pubsub_rabbitmq/out",
+    "log_dir": "e2e/pubsub_rabbitmq/out"
+}
