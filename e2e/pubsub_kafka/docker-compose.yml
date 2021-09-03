@@ -27,7 +27,7 @@ services:
     image: confluentinc/cp-kafka
     depends_on: 
       - kafka
-    command: ["sh", "-c", "sleep 5 && kafka-topics --create --topic records --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1"]
+    command: ["sh", "-c", "sleep 20 && kafka-topics --create --topic records --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1"]
   redis:
     container_name: redis
     image: redis
@@ -39,7 +39,7 @@ services:
       context: ../
       args:
         TEST: pubsub_kafka
-        INIT_DELAY: 3
+        INIT_DELAY: 25
     depends_on: 
       - kafka
       - kafkacli
