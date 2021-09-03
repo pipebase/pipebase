@@ -8,12 +8,12 @@ use strum::{Display, EnumString};
 use super::data::{data_ty_to_literal, DataType};
 use super::default_mqtt_dependency;
 use super::dependency::{
-    default_avro_dependency, default_cql_dependency, default_csv_dependency,
-    default_dynamodb_dependency, default_json_dependency, default_kafka_dependency,
-    default_kube_dependency, default_mysql_dependency, default_psql_dependency,
-    default_redis_dependency, default_reqwest_dependency, default_rocksdb_dependency,
-    default_s3_dependency, default_sns_dependency, default_sqs_dependency, default_warp_dependency,
-    Dependency, UseCrate,
+    default_amqp_dependency, default_avro_dependency, default_cql_dependency,
+    default_csv_dependency, default_dynamodb_dependency, default_json_dependency,
+    default_kafka_dependency, default_kube_dependency, default_mysql_dependency,
+    default_psql_dependency, default_redis_dependency, default_reqwest_dependency,
+    default_rocksdb_dependency, default_s3_dependency, default_sns_dependency,
+    default_sqs_dependency, default_warp_dependency, Dependency, UseCrate,
 };
 use super::meta::{meta_to_literal, meta_value_str, meta_value_usize, Meta};
 
@@ -235,6 +235,7 @@ impl UseCrate for Pipe {
             "SnsPublisherConfig" => Some(default_sns_dependency()),
             "SqsMessageReceiverConfig" => Some(default_sqs_dependency()),
             "MqttPublisherConfig" | "MqttSubscriberConfig" => Some(default_mqtt_dependency()),
+            "AmqpPublisherConfig" | "AmqpConsumerConfig" => Some(default_amqp_dependency()),
             _ => None,
         }
     }

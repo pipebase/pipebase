@@ -1,0 +1,48 @@
+[
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/health",
+    "description": "check context server is up"
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/ingestion_server",
+    "description": "expect ingestion_server succeed",
+    "expected_output_file": "e2e/pubsub_rabbitmq/tests/context0.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/json",
+    "description": "expect json deserialize succeed",
+    "expected_output_file": "e2e/pubsub_rabbitmq/tests/context1.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/avro_ser",
+    "description": "expect avro serialize succeed",
+    "expected_output_file": "e2e/pubsub_rabbitmq/tests/context2.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/amqp_publisher",
+    "description": "expect rabbitmq_producer succeed",
+    "expected_output_file": "e2e/pubsub_rabbitmq/tests/context3.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/amqp_consumer",
+    "description": "expect amqp_consumer succeed",
+    "expected_output_file": "e2e/pubsub_rabbitmq/tests/context4.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/avro_deser",
+    "description": "expect avro deserialize succeed",
+    "expected_output_file": "e2e/pubsub_rabbitmq/tests/context5.txt",
+    "retry": 1
+  },
+  {
+    "cmd": "curl http://127.0.0.1:8000/v1/pipe/batch_redis_writer",
+    "description": "expect batch redis writer succeed",
+    "expected_output_file": "e2e/pubsub_rabbitmq/tests/context6.txt",
+    "retry": 1
+  }
+]

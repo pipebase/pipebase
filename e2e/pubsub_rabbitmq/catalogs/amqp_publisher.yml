@@ -1,0 +1,4 @@
+connection:
+  uri: amqp://rabbitmq:5672/%2f
+exchange: ""
+routing_key: records

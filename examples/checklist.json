@@ -177,5 +177,9 @@
     {
         "name": "pubsub_mqtt",
         "directory": "examples/pubsub_mqtt"
+    },
+    {
+        "name": "pubsub_rabbitmq",
+        "directory": "examples/pubsub_rabbitmq"
     }
 ]

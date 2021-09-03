@@ -304,8 +304,16 @@ pub(crate) fn default_sqs_dependency() -> Dependency {
 pub(crate) fn default_mqtt_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipemqtt".to_owned())
-        .version("0.1.0".to_owned())
+        .version("0.1.2".to_owned())
         .modules(vec!["pipemqtt::*".to_owned()])
+        .build()
+}
+
+pub(crate) fn default_amqp_dependency() -> Dependency {
+    DependencyBuilder::new()
+        .name("pipeamqp".to_owned())
+        .version("0.1.0".to_owned())
+        .modules(vec!["pipeamqp::*".to_owned()])
         .build()
 }
 

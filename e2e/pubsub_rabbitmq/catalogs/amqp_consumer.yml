@@ -1,0 +1,4 @@
+connection:
+  uri: amqp://rabbitmq:5672/%2f
+queue: records
+consumer_tag: amqp_consumer

@@ -10,6 +10,7 @@ Pipes
 | `Listener` | [`KubeEventReader`] | [`kube_event`] |
 | `Listener` | [`RedisSubscriber`] | [`pubsub_redis`] |
 | `Listener` | [`MqttSubscriber`] | [`pubsub_mqtt`] |
+| `Listener` | [`AmqpConsumer`] | [`pubsub_rabbitmq`] |
 | `Poller` | `SqsMessageReceiver` | [`consume_sqs`] |
 | `Mapper` | [`JsonSer`] |  |
 | `Mapper` | [`JsonDeser`] | `ingest_*` |
@@ -35,6 +36,7 @@ Pipes
 | `Exporter` | `DynamoDBWriter` | [`ingest_dynamodb`] |
 | `Exporter` | `SnsPublisher` | [`pubsub_sns`] |
 | `Exporter` | [`MqttPublisher`] | [`pubsub_mqtt`] |
+| `Exporter` | [`AmqpPublisher`] | [`pubsub_rabbitmq`] |
 
 Context Stores
 | implementation | example |
@@ -77,6 +79,7 @@ Error Handlers
 [`batch_ingest_mysql`]: https://github.com/pipebase/pipebase/tree/main/examples/batch_ingest_mysql
 [`batch_ingest_cassandra`]: https://github.com/pipebase/pipebase/tree/main/examples/batch_ingest_cassandra
 [`pubsub_mqtt`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_mqtt
+[`pubsub_rabbitmq`]: https://github.com/pipebase/pipebase/tree/main/examples/pubsub_rabbitmq
 
 [`WarpIngestionServer`]: https://docs.rs/pipewarp/
 [`KafkaConsumer`]: https://docs.rs/pipekafka/
@@ -106,3 +109,5 @@ Error Handlers
 [`WarpContextServer`]: https://docs.rs/pipewarp/
 [`MqttPublisher`]: https://docs.rs/pipemqtt/
 [`MqttSubscriber`]: https://docs.rs/pipemqtt/
+[`AmqpConsumer`]: https://docs.rs/pipeamqp
+[`AmqpPublisher`]: https://docs.rs/pipeamqp

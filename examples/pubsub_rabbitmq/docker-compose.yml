@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+  rabbitmqcli:
+    container_name: rabbitmqcli
+    image: rabbitmq:3-management
+    depends_on: 
+      - rabbitmq
+    command: ["sh", "-c", "sleep 30 && rabbitmqadmin --host=rabbitmq declare queue name=records"]
+  app:
+    container_name: app
+    build:
+      context: ../
+      args:
+        EXAMPLE: pubsub_rabbitmq
+        INIT_DELAY: 35
+    depends_on: 
+      - rabbitmq
+      - rabbitmqcli
+    ports:
+      - "8000:8000"
+      - "9000:9000"

@@ -1,0 +1,89 @@
+name: pubsub_amqp
+dependencies:
+  - name: pipebase
+    path: ../../../pipebase
+    modules: ["pipebase::prelude::*"]
+  - name: pipeamqp
+    path: ../../../pipeware/pipeamqp
+    modules: ["pipeamqp::*"]
+  - name: pipejson
+    path: ../../../pipeware/pipejson
+    modules: ["pipejson::*"]
+  - name: pipeavro
+    path: ../../../pipeware/pipeavro
+    modules: ["pipeavro::*"]
+  - name: pipewarp
+    path: ../../../pipeware/pipewarp
+    modules: ["pipewarp::*"]
+  - name: piperedis
+    path: ../../../pipeware/piperedis
+    modules: ["piperedis::*"]
+  - name: serde
+    version: 1.0
+    features: ["derive"]
+    modules: ["serde::Deserialize", "serde::Serialize"]
+pipes:
+  - name: ingestion_server
+    ty: Listener
+    config:
+      ty: WarpIngestionServerConfig
+      path: catalogs/ingestion_server.yml
+    output: UnsignedBytes
+  - name: json
+    ty: Mapper
+    config:
+      ty: JsonDeserConfig
+    output: 
+      Objects: Record
+    upstreams: [ingestion_server]
+  - name: avro_ser
+    ty: Mapper
+    config:
+      ty: AvroSerConfig
+      path: catalogs/avro_ser.yml
+    output: UnsignedBytes
+    upstreams: [json]
+  - name: amqp_publisher
+    ty: Exporter
+    config:
+      ty: AmqpPublisherConfig
+      path: catalogs/amqp_publisher.yml
+    upstreams: [avro_ser]
+  - name: amqp_consumer
+    ty: Listener
+    config:
+      ty: AmqpConsumerConfig
+      path: catalogs/amqp_consumer.yml
+    output: UnsignedBytes
+  - name: avro_deser
+    ty: Mapper
+    config:
+      ty: AvroDeserConfig
+    output:
+      Objects: Record
+    upstreams: [amqp_consumer]
+  - name: batch_redis_writer
+    ty: Exporter
+    config:
+      ty: RedisStringBatchWriterConfig
+      path: catalogs/batch_redis_writer.yml
+    upstreams: [avro_deser]
+objects:
+  - ty: Record
+    metas:
+      - derives: [Clone, Debug, Serialize, Deserialize, LeftRight]
+    fields:
+      - name: key
+        ty: String
+        metas:
+          - tag: Left
+      - name: value
+        ty: Integer
+        metas:
+          - tag: Right
+cstores:
+  - name: context_server
+    config:
+      ty: WarpContextServerConfig
+      path: catalogs/context_server.yml
+
