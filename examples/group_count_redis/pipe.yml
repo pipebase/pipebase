@@ -6,20 +6,17 @@ dependencies:
     modules: ["serde::Deserialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Objects: Record
     upstreams: [ingestion_server]
   - name: redis_group_count
-    ty: Mapper
     config:
       ty: RedisUnorderedGroupAddAggregatorConfig
       path: catalogs/redis_group_count.yml
@@ -30,7 +27,6 @@ pipes:
           ExternalObject: RedisCount32
     upstreams: [json]
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [redis_group_count]

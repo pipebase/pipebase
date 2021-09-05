@@ -1,14 +1,12 @@
 name: kube_log
 pipes:
   - name: kube_logger
-    ty: Listener
     config:
       ty: KubeLogReaderConfig
       path: catalogs/kube_log_reader.yml
     output: 
       ExternalObject: KubeLog
   - name: json_record
-    ty: Mapper
     config:
       ty: JsonRecordSerConfig
     output:
@@ -17,7 +15,6 @@ pipes:
         rty: UnsignedBytes
     upstreams: [kube_logger]
   - name: kafka_producer
-    ty: Exporter
     config:
       ty: KafkaProducerConfig
       path: catalogs/kafka_producer.yml

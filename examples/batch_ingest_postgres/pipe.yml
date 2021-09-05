@@ -10,25 +10,21 @@ dependencies:
     modules: []
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Objects: Record
     upstreams: [ingestion_server]
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [json]
   - name: batch_psql_writer
-    ty: Exporter
     config:
       ty: PsqlPreparedWriterConfig
       path: catalogs/batch_psql_writer.yml

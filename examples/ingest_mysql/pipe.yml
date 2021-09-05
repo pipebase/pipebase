@@ -10,20 +10,17 @@ dependencies:
     modules: []
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Object: Record
     upstreams: [ingestion_server]
   - name: mysql_writer
-    ty: Exporter
     config:
       ty: MySQLWriterConfig
       path: catalogs/mysql_writer.yml

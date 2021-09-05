@@ -1,13 +1,11 @@
 name: print_timer
 pipes:
   - name: file_path_visitor
-    ty: Listener
     config:
       ty: LocalFilePathVisitorConfig
       path: catalogs/local_file_path_visitor.yml
     output: PathBuf
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: ["file_path_visitor"]

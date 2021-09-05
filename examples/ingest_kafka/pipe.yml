@@ -6,20 +6,17 @@ dependencies:
     modules: ["serde::Deserialize", "serde::Serialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Object: Record
     upstreams: [ingestion_server]
   - name: json_record
-    ty: Mapper
     config:
       ty: JsonRecordSerConfig
     upstreams: [json]
@@ -28,7 +25,6 @@ pipes:
         lty: String
         rty: UnsignedBytes
   - name: kafka_producer
-    ty: Exporter
     config:
       ty: KafkaProducerConfig
       path: catalogs/kafka_producer.yml

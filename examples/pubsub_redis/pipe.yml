@@ -6,32 +6,27 @@ dependencies:
     modules: ["serde::Deserialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Object: Record
     upstreams: [ingestion_server]
   - name: pub_redis
-    ty: Exporter
     config:
       ty: RedisPublisherConfig
       path: catalogs/redis_pub.yml
     upstreams: [json]
   - name: sub_redis
-    ty: Listener
     config:
       ty: RedisSubscriberConfig
       path: catalogs/redis_sub.yml
     output: String
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [sub_redis]

@@ -6,20 +6,17 @@ dependencies:
     modules: ["serde::Deserialize"]
 pipes:
   - name: kafka_consumer
-    ty: Listener
     config:
       ty: KafkaConsumerConfig
       path: catalogs/kafka_consumer.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Object: Record
     upstreams: [kafka_consumer]
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [json]

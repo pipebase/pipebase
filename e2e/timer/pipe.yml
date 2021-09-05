@@ -8,19 +8,16 @@ dependencies:
     modules: ["pipewarp::*"]
 pipes:
   - name: timer1
-    ty: Poller
     config:
       ty: TimerConfig
       path: catalogs/timer1.yml
     output: UnsignedLongLong
   - name: timer2
-    ty: Poller
     config:
       ty: TimerConfig
       path: catalogs/timer2.yml
     output: UnsignedLongLong
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [ "timer1", "timer2" ]

@@ -6,20 +6,17 @@ dependencies:
     modules: ["serde::Deserialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output: 
       Object: Record
     upstreams: [ingestion_server]
   - name: window
-    ty: Collector
     config:
       ty: InMemoryWindowCollectorConfig
       path: catalogs/window.yml
@@ -27,7 +24,6 @@ pipes:
       Objects: Record
     upstreams: [json]
   - name: group_avg
-    ty: Mapper
     config:
       ty: UnorderedGroupAddAggregatorConfig
     output: 
@@ -36,7 +32,6 @@ pipes:
         rty: Averagef32
     upstreams: [window]
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [group_avg]

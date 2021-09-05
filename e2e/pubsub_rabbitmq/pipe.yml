@@ -24,46 +24,39 @@ dependencies:
     modules: ["serde::Deserialize", "serde::Serialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output: 
       Objects: Record
     upstreams: [ingestion_server]
   - name: avro_ser
-    ty: Mapper
     config:
       ty: AvroSerConfig
       path: catalogs/avro_ser.yml
     output: UnsignedBytes
     upstreams: [json]
   - name: amqp_publisher
-    ty: Exporter
     config:
       ty: AmqpPublisherConfig
       path: catalogs/amqp_publisher.yml
     upstreams: [avro_ser]
   - name: amqp_consumer
-    ty: Listener
     config:
       ty: AmqpConsumerConfig
       path: catalogs/amqp_consumer.yml
     output: UnsignedBytes
   - name: avro_deser
-    ty: Mapper
     config:
       ty: AvroDeserConfig
     output:
       Objects: Record
     upstreams: [amqp_consumer]
   - name: batch_redis_writer
-    ty: Exporter
     config:
       ty: RedisStringBatchWriterConfig
       path: catalogs/batch_redis_writer.yml

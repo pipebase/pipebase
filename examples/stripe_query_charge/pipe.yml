@@ -6,20 +6,17 @@ dependencies:
     modules: ["serde::Deserialize", "serde::Serialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json_query_request
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Object: QueryRequest
     upstreams: [ingestion_server]
   - name: visit_query_field
-    ty: Mapper
     config:
       ty: FieldVisitConfig
     output:
@@ -28,28 +25,24 @@ pipes:
           Object: Query
     upstreams: [json_query_request]
   - name: query_stripe
-    ty: Mapper
     config:
       ty: ReqwestQueryConfig
       path: catalogs/reqwest_query.yml
     output: UnsignedBytes
     upstreams: [visit_query_field]
   - name: json_query_response
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Object: QueryResponse
     upstreams: [query_stripe]
   - name: visit_data_field
-    ty: Mapper
     config:
       ty: FieldVisitConfig
     output:
       Objects: Charge
     upstreams: [json_query_response]
   - name: print_charge
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [visit_data_field]

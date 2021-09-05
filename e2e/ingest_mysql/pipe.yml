@@ -22,39 +22,33 @@ dependencies:
     modules: ["chrono::prelude::*"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Object: Record
     upstreams: [ingestion_server]
   - name: mysql_writer
-    ty: Exporter
     config:
       ty: MySQLWriterConfig
       path: catalogs/mysql_writer.yml
     upstreams: [json]
   - name: batch_ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/batch_ingestion_server.yml
     output: UnsignedBytes
   - name: batch_json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Objects: AnotherRecord
     upstreams: [batch_ingestion_server]
   - name: batch_mysql_writer
-    ty: Exporter
     config:
       ty: MySQLPreparedWriterConfig
       path: catalogs/batch_mysql_writer.yml

@@ -1,14 +1,12 @@
 name: kube_event
 pipes:
   - name: kube_event
-    ty: Listener
     config:
       ty: KubeEventReaderConfig
       path: catalogs/kube_event_reader.yml
     output: 
       ExternalObject: KubeEvent
   - name: json_record
-    ty: Mapper
     config:
       ty: JsonRecordSerConfig
     output:
@@ -17,7 +15,6 @@ pipes:
         rty: UnsignedBytes
     upstreams: [kube_event]
   - name: kafka_producer
-    ty: Exporter
     config:
       ty: KafkaProducerConfig
       path: catalogs/kafka_producer.yml

@@ -6,46 +6,39 @@ dependencies:
     modules: ["serde::Deserialize", "serde::Serialize"]
 pipes:
   - name: file_path_visitor
-    ty: Listener
     config:
       ty: LocalFilePathVisitorConfig
       path: catalogs/local_file_path_visitor.yml
     output: PathBuf
   - name: file_reader
-    ty: Mapper
     config:
       ty: FileReaderConfig
     output: UnsignedBytes
     upstreams: [file_path_visitor]
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Objects: Transaction
     upstreams: [file_reader]
   - name: conversion
-    ty: Mapper
     config: 
       ty: ConversionConfig
     output:
       Objects: Record
     upstreams: [json]
   - name: csv
-    ty: Mapper
     config: 
       ty: CsvSerConfig
     output: UnsignedBytes 
     upstreams: [conversion]
   - name: file_writer
-    ty: Mapper
     config:
       ty: FileWriterConfig
       path: catalogs/file_writer.yml
     output: PathBuf
     upstreams: [csv]
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [file_writer]
