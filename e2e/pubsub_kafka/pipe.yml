@@ -24,46 +24,39 @@ dependencies:
     modules: ["serde::Deserialize", "serde::Serialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output: 
       Objects: Record
     upstreams: [ingestion_server]
   - name: avro_ser
-    ty: Mapper
     config:
       ty: AvroSerConfig
       path: catalogs/avro_ser.yml
     output: UnsignedBytes
     upstreams: [json]
   - name: kafka_producer
-    ty: Exporter
     config:
       ty: KafkaPartitionedProducerConfig
       path: catalogs/kafka_producer.yml
     upstreams: [ avro_ser ]
   - name: kafka_consumer
-    ty: Listener
     config:
       ty: KafkaConsumerConfig
       path: catalogs/kafka_consumer.yml
     output: UnsignedBytes
   - name: avro_deser
-    ty: Mapper
     config:
       ty: AvroDeserConfig
     output:
       Objects: Record
     upstreams: [kafka_consumer]
   - name: batch_redis_writer
-    ty: Exporter
     config:
       ty: RedisStringBatchWriterConfig
       path: catalogs/batch_redis_writer.yml

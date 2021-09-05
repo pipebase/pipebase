@@ -6,34 +6,29 @@ dependencies:
     modules: ["serde::Deserialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Object: Records
     upstreams: [ingestion_server]
   - name: field
-    ty: Mapper
     config:
       ty: FieldVisitConfig
     output:
       Objects: Record
     upstreams: [json]
   - name: filter
-    ty: Mapper
     config:
       ty: FilterMapConfig
     output:
       Objects: Record
     upstreams: [field]
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [filter]

@@ -1,13 +1,11 @@
 name: print_timer
 pipes:
   - name: timer1
-    ty: Poller
     config:
       ty: TimerConfig
       path: catalogs/timer.yml
     output: UnsignedLongLong
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: ["timer1"]

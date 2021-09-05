@@ -18,13 +18,11 @@ dependencies:
     modules: ["serde::Deserialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
@@ -32,32 +30,27 @@ pipes:
     upstreams: [ingestion_server]
     buffer: 10
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [json]
   - name: redis_writer
-    ty: Exporter
     config:
       ty: RedisStringWriterConfig
       path: catalogs/redis_writer.yml
     upstreams: [json]
     buffer: 10
   - name: batch_ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/batch_ingestion_server.yml
     output: UnsignedBytes
   - name: batch_json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Objects: Record
     upstreams: [ batch_ingestion_server ]
   - name: batch_redis_writer
-    ty: Exporter
     config:
       ty: RedisStringBatchWriterConfig
       path: catalogs/batch_redis_writer.yml

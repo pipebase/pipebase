@@ -1,42 +1,36 @@
 name: consume_sqs
 pipes:
   - name: consume_sqs
-    ty: Poller
     config:
       ty: SqsMessageReceiverConfig
       path: catalogs/sqs_msg_receiver.yml
     output:
       ExternalObjects: SqsMessage
   - name: message_conversion
-    ty: Mapper
     config:
       ty: ConversionConfig
     output:
       Objects: FilterableMessage
     upstreams: [consume_sqs]
   - name: filter_no_topic
-    ty: Mapper
     config:
       ty: FilterMapConfig
     output:
       Objects: FilterableMessage
     upstreams: [message_conversion]
   - name: project_custom_message
-    ty: Mapper
     config:
       ty: ProjectionConfig
     output:
       Objects: CustomMessage
     upstreams: [filter_no_topic]
   - name: read_iterator
-    ty: Streamer
     config:
       ty: IteratorReaderConfig
     output:
       Object: CustomMessage
     upstreams: [project_custom_message]
   - name: print_msg
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [read_iterator]

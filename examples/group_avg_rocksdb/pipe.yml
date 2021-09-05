@@ -6,20 +6,17 @@ dependencies:
     modules: ["serde::Deserialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Objects: Record
     upstreams: [ingestion_server]
   - name: rocksdb_group_avg
-    ty: Mapper
     config:
       ty: RocksDBUnorderedGroupAddAggregatorConfig
       path: catalogs/rocksdb_group_avg.yml
@@ -29,7 +26,6 @@ pipes:
         rty: Averagef32
     upstreams: [json]
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [rocksdb_group_avg]

@@ -6,33 +6,28 @@ dependencies:
     modules: ["serde::Deserialize"]
 pipes:
   - name: file_path_visitor
-    ty: Listener
     config:
       ty: LocalFilePathVisitorConfig
       path: catalogs/local_file_path_visitor.yml
     output: PathBuf
   - name: file_reader
-    ty: Mapper
     config:
       ty: FileReaderConfig
     output: UnsignedBytes
     upstreams: [file_path_visitor]
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Objects: Transaction
     upstreams: [file_reader]
   - name: project
-    ty: Mapper
     config:
       ty: ProjectionConfig
     output:
       Objects: Record
     upstreams: [json]
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [project]

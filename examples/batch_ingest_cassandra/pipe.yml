@@ -10,27 +10,23 @@ dependencies:
     modules: []
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Objects: Record
     upstreams: [ingestion_server]
   - name: batch_swap
-    ty: Mapper
     config:
       ty: ConversionConfig
     upstreams: [json]
     output:
       Objects: SwappedRecord
   - name: batch_cql_writer
-    ty: Exporter
     config:
       ty: CqlPreparedWriterConfig
       path: catalogs/batch_cql_writer.yml

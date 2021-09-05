@@ -3,35 +3,30 @@ dependencies:
   - name: serde
     version: 1.0
     features: ["derive"]
-    modules: ["serde::Deserialize", "serde::Serialize"]
+    modules: ["serde::Deserialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: mqtt_publisher
-    ty: Exporter
     config:
       ty: MqttPublisherConfig
       path: catalogs/mqtt_publisher.yml
     upstreams: [ ingestion_server ]
   - name: mqtt_subscriber
-    ty: Listener
     config:
       ty: MqttSubscriberConfig
       path: catalogs/mqtt_subscriber.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output: 
       Object: Record
     upstreams: [mqtt_subscriber]
   - name: printer
-    ty: Exporter
     config:
       ty: PrinterConfig
     upstreams: [json]

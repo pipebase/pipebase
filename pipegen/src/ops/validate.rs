@@ -1,7 +1,8 @@
 use crate::models::{
     App, ContextStore, DataField, Entity, EntityAccept, Object, Pipe, VisitEntity,
     CONTEXT_STORE_ENTITY_ID_FIELD, DATA_FIELD_ENTITY_ID_FIELD, OBJECT_ENTITY_ID_FIELD,
-    PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD, PIPE_OUTPUT_FIELD,
+    PIPE_ENTITY_DEPENDENCY_FIELD, PIPE_ENTITY_ID_FIELD, PIPE_ENTITY_OUTPUT_FIELD,
+    PIPE_ENTITY_TYPE_FIELD,
 };
 
 use crate::error::{api_error, Result};
@@ -83,6 +84,39 @@ impl Validate for PipeIdValidator {
     }
 }
 
+pub struct PipeTypeValidator {
+    pub location: String,
+    pub has_types: Vec<bool>,
+}
+
+impl VisitEntity<Pipe> for PipeTypeValidator {
+    fn visit(&mut self, pipe: &Pipe) {
+        self.has_types.push(pipe.has_type())
+    }
+}
+
+impl Validate for PipeTypeValidator {
+    fn new(location: &str) -> Self {
+        PipeTypeValidator {
+            location: location.to_owned(),
+            has_types: vec![],
+        }
+    }
+
+    fn validate(&mut self) -> Result<()> {
+        let mut errors: HashMap<String, String> = HashMap::new();
+        for i in 0..self.has_types.len() {
+            let has_type = self.has_types.get(i).unwrap();
+            if !has_type {
+                let location = format!("{}[{}].{}", self.location, i, PIPE_ENTITY_TYPE_FIELD);
+                errors.insert(location, String::from("pipe type undefined"));
+            }
+        }
+        Self::check(&errors)?;
+        Ok(())
+    }
+}
+
 pub struct PipeOutputValidator {
     location: String,
     pipes: Vec<Pipe>,
@@ -105,7 +139,7 @@ impl Validate for PipeOutputValidator {
     fn validate(&mut self) -> Result<()> {
         let mut errors: HashMap<String, String> = HashMap::new();
         for (i, pipe) in self.pipes.iter().enumerate() {
-            let location = format!("{}[{}].{}", self.location, i, PIPE_OUTPUT_FIELD);
+            let location = format!("{}[{}].{}", self.location, i, PIPE_ENTITY_OUTPUT_FIELD);
             if pipe.is_sink() && pipe.has_output() {
                 errors.insert(location, String::from("found invalid output for sink pipe"));
                 continue;
@@ -391,6 +425,7 @@ impl AppValidator {
     pub fn validate_pipes(&self) -> Result<()> {
         let pipes = self.get_app().get_pipes();
         Self::validate_entities::<Pipe, PipeIdValidator>(pipes, "pipes")?;
+        Self::validate_entities::<Pipe, PipeTypeValidator>(pipes, "pipes")?;
         Self::validate_entities::<Pipe, PipeOutputValidator>(pipes, "pipes")?;
         Self::validate_entities::<Pipe, PipeGraphValidator>(pipes, "pipes")
     }

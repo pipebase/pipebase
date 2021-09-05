@@ -50,7 +50,7 @@ Specification
 | Field | Description | Required |
 | ----- | ----------- | -------- |
 | `name` | pipe name in snake_case | true |
-| `ty` | [`pipe type`] | true |
+| `ty` | [`pipe type`] | false if `config.ty` is registered |
 | `config.ty` | pipe config type | true |
 | `config.path` | path to pipe config file | false |
 | `upstreams` | list of upstream pipe names | false if `ty` is `Poller` or `Listener` |

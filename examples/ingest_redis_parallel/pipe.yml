@@ -6,40 +6,34 @@ dependencies:
     modules: ["serde::Deserialize"]
 pipes:
   - name: ingestion_server
-    ty: Listener
     config:
       ty: WarpIngestionServerConfig
       path: catalogs/ingestion_server.yml
     output: UnsignedBytes
   - name: json
-    ty: Mapper
     config:
       ty: JsonDeserConfig
     output:
       Objects: Record
     upstreams: [ingestion_server]
   - name: iterator_reader
-    ty: Streamer
     config:
       ty: IteratorReaderConfig
     upstreams: [json]
     output:
       Object: Record
   - name: random_select
-    ty: Selector
     config:
       ty: RandomSelectorConfig
     output:
       Object: Record
     upstreams: [iterator_reader]
   - name: redis_writer_1
-    ty: Exporter
     config:
       ty: RedisStringWriterConfig
       path: catalogs/redis_writer.yml
     upstreams: [random_select]
   - name: redis_writer_2
-    ty: Exporter
     config:
       ty: RedisStringWriterConfig
       path: catalogs/redis_writer.yml
