@@ -48,6 +48,71 @@ impl PipeConfig {
     pub fn get_config_type(&self) -> &String {
         &self.ty
     }
+    pub fn resolve_pipe_ty(&self) -> Option<PipeType> {
+        match self.ty.as_str() {
+            "InMemoryBagCollectorConfig"
+            | "InMemorySetCollectorConfig"
+            | "InMemoryWindowCollectorConfig"
+            | "TextCollectorConfig" => Some(PipeType::Collector),
+            "TimerConfig" | "SqsMessageReceiverConfig" => Some(PipeType::Poller),
+            "LocalFilePathVisitorConfig"
+            | "WarpIngestionServerConfig"
+            | "KubeLogReaderConfig"
+            | "KubeEventReaderConfig"
+            | "RedisSubscriberConfig"
+            | "KafkaConsumerConfig"
+            | "MqttSubscriberConfig"
+            | "AmqpConsumerConfig" => Some(PipeType::Listener),
+            "PrinterConfig"
+            | "ReqwestPosterConfig"
+            | "CqlWriterConfig"
+            | "CqlPreparedWriterConfig"
+            | "PsqlWriterConfig"
+            | "PsqlPreparedWriterConfig"
+            | "RedisStringWriterConfig"
+            | "RedisStringBatchWriterConfig"
+            | "RedisPublisherConfig"
+            | "KafkaProducerConfig"
+            | "KafkaPartitionedProducerConfig"
+            | "S3WriterConfig"
+            | "MySQLWriterConfig"
+            | "MySQLPreparedWriterConfig"
+            | "DynamoDBWriterConfig"
+            | "SnsPublisherConfig"
+            | "MqttPublisherConfig"
+            | "AmqpPublisherConfig" => Some(PipeType::Exporter),
+            "AddAggregatorConfig"
+            | "ConversionConfig"
+            | "EchoConfig"
+            | "FieldVisitConfig"
+            | "FileReaderConfig"
+            | "FileWriterConfig"
+            | "FilterMapConfig"
+            | "OrderedGroupAddAggregatorConfig"
+            | "ProjectionConfig"
+            | "StringSplitterConfig"
+            | "TopAggregatorConfig"
+            | "UnorderedGroupAddAggregatorConfig"
+            | "AvroSerConfig"
+            | "AvroDeserConfig"
+            | "JsonSerConfig"
+            | "JsonDeserConfig"
+            | "JsonRecordSerConfig"
+            | "CsvSerConfig"
+            | "CsvDeserConfig"
+            | "RedisUnorderedGroupAddAggregatorConfig"
+            | "RocksDBUnorderedGroupAddAggregatorConfig"
+            | "ReqwestGetterConfig"
+            | "ReqwestQueryConfig" => Some(PipeType::Mapper),
+            "DefaultHashSelectorConfig" | "RandomSelectorConfig" | "RoundRobinSelectorConfig" => {
+                Some(PipeType::Selector)
+            }
+            "FileSplitReaderConfig" | "FileLineReaderConfig" | "IteratorReaderConfig" => {
+                Some(PipeType::Streamer)
+            }
+            _ => None,
+        }
+    }
 }
 
 impl Display for PipeConfig {
@@ -62,7 +127,7 @@ impl Display for PipeConfig {
 #[derive(Deserialize, Debug, Clone)]
 pub struct Pipe {
     name: String,
-    ty: PipeType,
+    ty: Option<PipeType>,
     config: PipeConfig,
     // pipe channel buffer
     buffer: Option<usize>,
@@ -77,14 +142,24 @@ impl Pipe {
         if self.upstreams.is_none() {
             self.upstreams = Some(Vec::new())
         }
+        if !self.has_type() {
+            // resolve type based on pipe config
+            self.ty = self.config.resolve_pipe_ty()
+        }
+    }
+
+    pub fn has_type(&self) -> bool {
+        self.ty.is_some()
     }
 
     pub fn is_source(&self) -> bool {
-        matches!(&self.ty, PipeType::Listener | PipeType::Poller)
+        let ty = self.ty.as_ref().unwrap();
+        matches!(ty, PipeType::Listener | PipeType::Poller)
     }
 
     pub fn is_sink(&self) -> bool {
-        matches!(&self.ty, PipeType::Exporter)
+        let ty = self.ty.as_ref().unwrap();
+        matches!(ty, PipeType::Exporter)
     }
 
     fn get_name_meta(&self) -> Meta {
@@ -92,7 +167,8 @@ impl Pipe {
     }
 
     fn get_type_meta(&self) -> Meta {
-        meta_value_str("ty", &self.ty.to_string(), false)
+        let ty = self.ty.as_ref().unwrap();
+        meta_value_str("ty", &ty.to_string(), false)
     }
 
     fn get_config_meta(&self) -> Meta {
@@ -191,8 +267,9 @@ impl Entity for Pipe {
 
 impl Display for Pipe {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let ty = self.ty.as_ref().unwrap();
         writeln!(f, "Name:   {}", self.name)?;
-        writeln!(f, "Type:   {}", self.ty)?;
+        writeln!(f, "Type:   {}", ty)?;
         writeln!(f, "Config: {}", self.config)?;
         let upstream = match self.upstreams {
             Some(ref upstreams) => upstreams.join(", "),
