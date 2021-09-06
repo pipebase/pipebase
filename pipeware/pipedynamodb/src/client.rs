@@ -35,15 +35,38 @@ impl DynamocDBClient {
 
     pub fn convert_attribute_value(v: Value) -> AttributeValue {
         match v {
-            Value::Null => AttributeValue::Null(true),
-            Value::Bool(v) => AttributeValue::Bool(v),
-            Value::UnsignedInteger(v) => AttributeValue::N(format!("{}", v)),
-            Value::Integer(v) => AttributeValue::N(format!("{}", v)),
-            Value::UnsignedLong(v) => AttributeValue::N(format!("{}", v)),
-            Value::Long(v) => AttributeValue::N(format!("{}", v)),
-            Value::Float(v) => AttributeValue::N(format!("{}", v)),
-            Value::Double(v) => AttributeValue::N(format!("{}", v)),
-            Value::String(v) => AttributeValue::S(v),
+            Value::Bool(v) => match v {
+                Some(v) => AttributeValue::Bool(v),
+                None => AttributeValue::Null(true),
+            },
+            Value::UnsignedInteger(v) => match v {
+                Some(v) => AttributeValue::N(format!("{}", v)),
+                None => AttributeValue::Null(true),
+            },
+            Value::Integer(v) => match v {
+                Some(v) => AttributeValue::N(format!("{}", v)),
+                None => AttributeValue::Null(true),
+            },
+            Value::UnsignedLong(v) => match v {
+                Some(v) => AttributeValue::N(format!("{}", v)),
+                None => AttributeValue::Null(true),
+            },
+            Value::Long(v) => match v {
+                Some(v) => AttributeValue::N(format!("{}", v)),
+                None => AttributeValue::Null(true),
+            },
+            Value::Float(v) => match v {
+                Some(v) => AttributeValue::N(format!("{}", v)),
+                None => AttributeValue::Null(true),
+            },
+            Value::Double(v) => match v {
+                Some(v) => AttributeValue::N(format!("{}", v)),
+                None => AttributeValue::Null(true),
+            },
+            Value::String(v) => match v {
+                Some(v) => AttributeValue::S(v),
+                None => AttributeValue::Null(true),
+            },
             Value::UnsignedBytes(bs) => AttributeValue::B(Blob::new(bs)),
             Value::Array(vs) => {
                 AttributeValue::L(vs.into_iter().map(Self::convert_attribute_value).collect())
