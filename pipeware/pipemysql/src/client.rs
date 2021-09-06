@@ -52,46 +52,72 @@ impl MySQLClient {
 
     fn mysql_value(value: Value) -> mysql_async::Value {
         match value {
-            Value::Null => mysql_async::Value::NULL,
-            Value::Integer(value) => mysql_async::Value::Int(value.into()),
-            Value::Long(value) => mysql_async::Value::Int(value),
-            Value::UnsignedInteger(value) => mysql_async::Value::UInt(value.into()),
-            Value::UnsignedLong(value) => mysql_async::Value::UInt(value),
-            Value::Float(value) => mysql_async::Value::Float(value),
-            Value::Double(value) => mysql_async::Value::Double(value),
+            Value::Integer(value) => match value {
+                Some(value) => mysql_async::Value::Int(value.into()),
+                None => mysql_async::Value::NULL,
+            },
+            Value::Long(value) => match value {
+                Some(value) => mysql_async::Value::Int(value),
+                None => mysql_async::Value::NULL,
+            },
+            Value::UnsignedInteger(value) => match value {
+                Some(value) => mysql_async::Value::UInt(value.into()),
+                None => mysql_async::Value::NULL,
+            },
+            Value::UnsignedLong(value) => match value {
+                Some(value) => mysql_async::Value::UInt(value),
+                None => mysql_async::Value::NULL,
+            },
+            Value::Float(value) => match value {
+                Some(value) => mysql_async::Value::Float(value),
+                None => mysql_async::Value::NULL,
+            },
+            Value::Double(value) => match value {
+                Some(value) => mysql_async::Value::Double(value),
+                None => mysql_async::Value::NULL,
+            },
             Value::UnsignedBytes(value) => mysql_async::Value::Bytes(value),
-            Value::String(value) => mysql_async::Value::Bytes(value.into()),
-            Value::DateTime(value) => {
-                let date = value.date();
-                let time = value.time();
-                mysql_async::Value::Date(
-                    date.year() as u16,
-                    date.month() as u8,
-                    date.day() as u8,
-                    time.hour() as u8,
-                    time.minute() as u8,
-                    time.second() as u8,
-                    0,
-                )
-            }
-            Value::Duration(value) => {
-                let negative = value < Duration::zero();
-                let days = absolute_i64(value.num_days());
-                let hours = absolute_i64(value.num_hours());
-                let minutes = absolute_i64(value.num_minutes());
-                let seconds = absolute_i64(value.num_seconds());
-                let milliseconds = absolute_i64(value.num_milliseconds());
-                let microseconds = absolute_i64(value.num_microseconds().unwrap_or_default());
-                let microseconds = milliseconds * 1000 + microseconds;
-                mysql_async::Value::Time(
-                    negative,
-                    days as u32,
-                    hours as u8,
-                    minutes as u8,
-                    seconds as u8,
-                    microseconds as u32,
-                )
-            }
+            Value::String(value) => match value {
+                Some(value) => mysql_async::Value::Bytes(value.into()),
+                None => mysql_async::Value::NULL,
+            },
+            Value::DateTime(value) => match value {
+                Some(value) => {
+                    let date = value.date();
+                    let time = value.time();
+                    mysql_async::Value::Date(
+                        date.year() as u16,
+                        date.month() as u8,
+                        date.day() as u8,
+                        time.hour() as u8,
+                        time.minute() as u8,
+                        time.second() as u8,
+                        0,
+                    )
+                }
+                None => mysql_async::Value::NULL,
+            },
+            Value::Duration(value) => match value {
+                Some(value) => {
+                    let negative = value < Duration::zero();
+                    let days = absolute_i64(value.num_days());
+                    let hours = absolute_i64(value.num_hours());
+                    let minutes = absolute_i64(value.num_minutes());
+                    let seconds = absolute_i64(value.num_seconds());
+                    let milliseconds = absolute_i64(value.num_milliseconds());
+                    let microseconds = absolute_i64(value.num_microseconds().unwrap_or_default());
+                    let microseconds = milliseconds * 1000 + microseconds;
+                    mysql_async::Value::Time(
+                        negative,
+                        days as u32,
+                        hours as u8,
+                        minutes as u8,
+                        seconds as u8,
+                        microseconds as u32,
+                    )
+                }
+                None => mysql_async::Value::NULL,
+            },
             _ => unimplemented!(),
         }
     }

@@ -63,7 +63,10 @@ impl CqlClient {
             Value::String(value) => values.add_value(value)?,
             Value::UnsignedBytes(value) => values.add_value(value)?,
             Value::Date(value) => values.add_value(value)?,
-            Value::Duration(value) => values.add_value(&Timestamp(*value))?,
+            Value::Duration(value) => {
+                let ts = value.as_ref().map(|value| Timestamp(*value));
+                values.add_value(&ts)?
+            }
             _ => unimplemented!(),
         };
         Ok(())

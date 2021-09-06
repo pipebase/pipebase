@@ -5,20 +5,19 @@ use super::{Period, Timestamp};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
-    Null,
-    Bool(bool),
-    UnsignedInteger(u32),
-    Integer(i32),
-    UnsignedLong(u64),
-    Long(i64),
-    Float(f32),
-    Double(f64),
-    String(String),
-    Date(NaiveDate),
-    DateTime(NaiveDateTime),
-    Duration(Duration),
-    LocalTime(DateTime<Local>),
-    UtcTime(DateTime<Utc>),
+    Bool(Option<bool>),
+    UnsignedInteger(Option<u32>),
+    Integer(Option<i32>),
+    UnsignedLong(Option<u64>),
+    Long(Option<i64>),
+    Float(Option<f32>),
+    Double(Option<f64>),
+    String(Option<String>),
+    Date(Option<NaiveDate>),
+    DateTime(Option<NaiveDateTime>),
+    Duration(Option<Duration>),
+    LocalTime(Option<DateTime<Local>>),
+    UtcTime(Option<DateTime<Utc>>),
     UnsignedBytes(Vec<u8>),
     Array(Vec<Value>),
     Attributes(HashMap<String, Value>),
@@ -26,54 +25,108 @@ pub enum Value {
 
 impl From<bool> for Value {
     fn from(v: bool) -> Self {
+        Value::Bool(v.into())
+    }
+}
+
+impl From<Option<bool>> for Value {
+    fn from(v: Option<bool>) -> Self {
         Value::Bool(v)
     }
 }
 
 impl From<u32> for Value {
     fn from(v: u32) -> Self {
+        Value::UnsignedInteger(v.into())
+    }
+}
+
+impl From<Option<u32>> for Value {
+    fn from(v: Option<u32>) -> Self {
         Value::UnsignedInteger(v)
     }
 }
 
 impl From<i32> for Value {
     fn from(v: i32) -> Self {
+        Value::Integer(v.into())
+    }
+}
+
+impl From<Option<i32>> for Value {
+    fn from(v: Option<i32>) -> Self {
         Value::Integer(v)
     }
 }
 
 impl From<u64> for Value {
     fn from(v: u64) -> Self {
+        Value::UnsignedLong(v.into())
+    }
+}
+
+impl From<Option<u64>> for Value {
+    fn from(v: Option<u64>) -> Self {
         Value::UnsignedLong(v)
     }
 }
 
 impl From<i64> for Value {
     fn from(v: i64) -> Self {
+        Value::Long(v.into())
+    }
+}
+
+impl From<Option<i64>> for Value {
+    fn from(v: Option<i64>) -> Self {
         Value::Long(v)
     }
 }
 
 impl From<String> for Value {
     fn from(v: String) -> Self {
+        Value::String(v.into())
+    }
+}
+
+impl From<Option<String>> for Value {
+    fn from(v: Option<String>) -> Self {
         Value::String(v)
     }
 }
 
 impl From<NaiveDate> for Value {
     fn from(v: NaiveDate) -> Self {
+        Value::Date(v.into())
+    }
+}
+
+impl From<Option<NaiveDate>> for Value {
+    fn from(v: Option<NaiveDate>) -> Self {
         Value::Date(v)
     }
 }
 
 impl From<NaiveDateTime> for Value {
     fn from(v: NaiveDateTime) -> Self {
+        Value::DateTime(v.into())
+    }
+}
+
+impl From<Option<NaiveDateTime>> for Value {
+    fn from(v: Option<NaiveDateTime>) -> Self {
         Value::DateTime(v)
     }
 }
 
 impl From<Duration> for Value {
     fn from(v: Duration) -> Self {
+        Value::Duration(v.into())
+    }
+}
+
+impl From<Option<Duration>> for Value {
+    fn from(v: Option<Duration>) -> Self {
         Value::Duration(v)
     }
 }
@@ -87,18 +140,39 @@ impl From<Period> for Value {
             Period::Secs(v) => Duration::seconds(v),
             Period::Millis(v) => Duration::milliseconds(v),
         };
-        Value::Duration(v)
+        Value::Duration(v.into())
+    }
+}
+
+impl From<Option<Period>> for Value {
+    fn from(v: Option<Period>) -> Self {
+        match v {
+            Some(v) => v.into(),
+            None => Value::Duration(None),
+        }
     }
 }
 
 impl From<DateTime<Local>> for Value {
     fn from(v: DateTime<Local>) -> Self {
+        Value::LocalTime(v.into())
+    }
+}
+
+impl From<Option<DateTime<Local>>> for Value {
+    fn from(v: Option<DateTime<Local>>) -> Self {
         Value::LocalTime(v)
     }
 }
 
 impl From<DateTime<Utc>> for Value {
     fn from(v: DateTime<Utc>) -> Self {
+        Value::UtcTime(v.into())
+    }
+}
+
+impl From<Option<DateTime<Utc>>> for Value {
+    fn from(v: Option<DateTime<Utc>>) -> Self {
         Value::UtcTime(v)
     }
 }
@@ -106,8 +180,17 @@ impl From<DateTime<Utc>> for Value {
 impl From<Timestamp> for Value {
     fn from(v: Timestamp) -> Self {
         match v {
-            Timestamp::Millis(v) => Value::Duration(Duration::milliseconds(v as i64)),
-            Timestamp::Secs(v) => Value::Duration(Duration::seconds(v as i64)),
+            Timestamp::Millis(v) => Value::Duration(Duration::milliseconds(v as i64).into()),
+            Timestamp::Secs(v) => Value::Duration(Duration::seconds(v as i64).into()),
+        }
+    }
+}
+
+impl From<Option<Timestamp>> for Value {
+    fn from(v: Option<Timestamp>) -> Self {
+        match v {
+            Some(v) => v.into(),
+            None => Value::Duration(None),
         }
     }
 }
