@@ -83,6 +83,30 @@ impl From<Option<i64>> for Value {
     }
 }
 
+impl From<f32> for Value {
+    fn from(v: f32) -> Self {
+        Value::Float(v.into())
+    }
+}
+
+impl From<Option<f32>> for Value {
+    fn from(v: Option<f32>) -> Self {
+        Value::Float(v)
+    }
+}
+
+impl From<f64> for Value {
+    fn from(v: f64) -> Self {
+        Value::Double(v.into())
+    }
+}
+
+impl From<Option<f64>> for Value {
+    fn from(v: Option<f64>) -> Self {
+        Value::Double(v)
+    }
+}
+
 impl From<String> for Value {
     fn from(v: String) -> Self {
         Value::String(v.into())
