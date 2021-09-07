@@ -1,4 +1,4 @@
-use crate::client::MySQLClient;
+use crate::client::{MySQLClient, MySQLClientConfig};
 use async_trait::async_trait;
 use pipebase::{
     common::{ConfigInto, FromConfig, FromPath, IntoAttributes, Render},
@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct MySQLWriterConfig {
-    url: String,
+    client: MySQLClientConfig,
 }
 
 impl FromPath for MySQLWriterConfig {}
@@ -23,7 +23,7 @@ pub struct MySQLWriter {
 impl FromConfig<MySQLWriterConfig> for MySQLWriter {
     async fn from_config(config: MySQLWriterConfig) -> anyhow::Result<Self> {
         Ok(MySQLWriter {
-            client: MySQLClient::new(&config.url),
+            client: MySQLClient::new(config.client),
         })
     }
 }
@@ -40,7 +40,7 @@ where
 
 #[derive(Deserialize)]
 pub struct MySQLPreparedWriterConfig {
-    url: String,
+    client: MySQLClientConfig,
     statement: String,
 }
 
@@ -57,7 +57,7 @@ pub struct MySQLPreparedWriter {
 impl FromConfig<MySQLPreparedWriterConfig> for MySQLPreparedWriter {
     async fn from_config(config: MySQLPreparedWriterConfig) -> anyhow::Result<Self> {
         Ok(MySQLPreparedWriter {
-            client: MySQLClient::new(&config.url),
+            client: MySQLClient::new(config.client),
             statement: config.statement,
         })
     }

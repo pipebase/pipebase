@@ -1,20 +1,43 @@
 use mysql_async::{
     chrono::{Datelike, Duration, Timelike},
     prelude::*,
-    Params,
+    OptsBuilder, Params, SslOpts,
 };
 use pipebase::common::{IntoAttributes, Render, Value};
+use serde::Deserialize;
 use std::collections::HashMap;
+
+#[derive(Deserialize)]
+pub struct SslConfig {
+    root_cert_path: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct MySQLClientConfig {
+    url: String,
+    ssl: Option<SslConfig>,
+}
 
 pub struct MySQLClient {
     pool: mysql_async::Pool,
 }
 
 impl MySQLClient {
-    pub fn new(url: &str) -> Self {
+    pub fn new(config: MySQLClientConfig) -> Self {
+        let url = config.url;
+        let ssl = config.ssl;
+        let opts = match ssl {
+            Some(ssl) => OptsBuilder::from_opts(url.as_str()).ssl_opts(Self::new_ssl_opts(ssl)),
+            None => OptsBuilder::from_opts(url.as_str()),
+        };
         MySQLClient {
-            pool: mysql_async::Pool::new(url),
+            pool: mysql_async::Pool::new(opts),
         }
+    }
+
+    fn new_ssl_opts(ssl: SslConfig) -> SslOpts {
+        let root_cert_path = ssl.root_cert_path;
+        SslOpts::default().with_root_cert_path(root_cert_path.map(std::path::PathBuf::from))
     }
 
     pub async fn execute<R>(&self, r: R) -> anyhow::Result<()>
