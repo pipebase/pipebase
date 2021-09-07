@@ -1,6 +1,6 @@
 [package]
 name = "pipemysql"
-version = "0.1.5"
+version = "0.2.0"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
