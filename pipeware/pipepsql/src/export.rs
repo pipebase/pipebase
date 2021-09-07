@@ -1,4 +1,4 @@
-use crate::client::PsqlClient;
+use crate::client::{PsqlClient, PsqlClientConfig};
 use async_trait::async_trait;
 use pipebase::{
     common::{ConfigInto, FromConfig, FromPath, IntoAttributes, Render},
@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct PsqlWriterConfig {
-    params: String,
+    client: PsqlClientConfig,
 }
 
 impl FromPath for PsqlWriterConfig {}
@@ -23,8 +23,7 @@ pub struct PsqlWriter {
 impl FromConfig<PsqlWriterConfig> for PsqlWriter {
     async fn from_config(config: PsqlWriterConfig) -> anyhow::Result<Self> {
         Ok(PsqlWriter {
-            // TODO: Support Tls
-            client: PsqlClient::new(config.params).await?,
+            client: PsqlClient::new(config.client).await?,
         })
     }
 }
@@ -41,7 +40,7 @@ where
 
 #[derive(Deserialize)]
 pub struct PsqlPreparedWriterConfig {
-    params: String,
+    client: PsqlClientConfig,
     statement: String,
 }
 
@@ -58,8 +57,7 @@ pub struct PsqlPreparedWriter {
 impl FromConfig<PsqlPreparedWriterConfig> for PsqlPreparedWriter {
     async fn from_config(config: PsqlPreparedWriterConfig) -> anyhow::Result<Self> {
         Ok(PsqlPreparedWriter {
-            // TODO: Support Tls
-            client: PsqlClient::new(config.params).await?,
+            client: PsqlClient::new(config.client).await?,
             statement: config.statement,
         })
     }
