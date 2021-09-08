@@ -1,2 +1,3 @@
 ---
-hostname: cassandra:9042
+client:
+  hostname: cassandra:9042

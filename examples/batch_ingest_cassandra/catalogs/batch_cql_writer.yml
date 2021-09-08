@@ -1,3 +1,4 @@
 ---
-hostname: cassandra:9042
+client:
+  hostname: cassandra:9042
 statement: UPDATE test.records SET value = ?, timestamp = ? WHERE key = ?

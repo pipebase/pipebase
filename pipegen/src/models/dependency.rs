@@ -150,7 +150,7 @@ pub(crate) fn default_tokio_dependency() -> Dependency {
 pub(crate) fn default_pipebase_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipebase".to_owned())
-        .version("0.1.5".to_owned())
+        .version("0.1.8".to_owned())
         .modules(vec!["pipebase::prelude::*".to_owned()])
         .build()
 }
@@ -180,7 +180,7 @@ pub(crate) fn default_avro_dependency() -> Dependency {
 pub(crate) fn default_cql_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipecql".to_owned())
-        .version("0.1.4".to_owned())
+        .version("0.2.0".to_owned())
         .modules(vec!["pipecql::*".to_owned()])
         .build()
 }
@@ -220,7 +220,7 @@ pub(crate) fn default_kube_dependency() -> Dependency {
 pub(crate) fn default_mysql_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipemysql".to_owned())
-        .version("0.1.4".to_owned())
+        .version("0.2.0".to_owned())
         .modules(vec!["pipemysql::*".to_owned()])
         .build()
 }
@@ -228,7 +228,7 @@ pub(crate) fn default_mysql_dependency() -> Dependency {
 pub(crate) fn default_psql_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipepsql".to_owned())
-        .version("0.1.4".to_owned())
+        .version("0.2.0".to_owned())
         .modules(vec!["pipepsql::*".to_owned()])
         .build()
 }

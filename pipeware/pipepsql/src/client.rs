@@ -1,5 +1,20 @@
+use openssl::ssl::{SslConnector, SslMethod};
 use pipebase::common::{IntoAttributes, Render, Value};
+use postgres_openssl::MakeTlsConnector;
+use serde::Deserialize;
 use tokio_postgres::{types::ToSql, Client, NoTls};
+
+#[derive(Deserialize)]
+pub struct SslConfig {
+    root_cert_path: String,
+}
+
+#[derive(Deserialize)]
+pub struct PsqlClientConfig {
+    params: String,
+    ssl: Option<SslConfig>,
+}
+
 pub struct PsqlClient {
     client: Client,
 }
@@ -7,14 +22,43 @@ pub struct PsqlClient {
 impl PsqlClient {
     // params schema: https://github.com/sfackler/rust-postgres/blob/master/postgres/src/config.rs
     // type supoort: https://docs.rs/postgres/0.19.1/postgres/types/trait.ToSql.html
-    pub async fn new(params: String) -> anyhow::Result<Self> {
+    pub async fn new(config: PsqlClientConfig) -> anyhow::Result<Self> {
+        let params = config.params;
+        let ssl = config.ssl;
+        let client = match ssl {
+            Some(ssl) => Self::connect_tls(params, ssl).await?,
+            None => Self::connect(params).await?,
+        };
+        Ok(PsqlClient { client })
+    }
+
+    fn make_tls(ssl: SslConfig) -> anyhow::Result<MakeTlsConnector> {
+        let root_cert_path = ssl.root_cert_path;
+        let mut builder = SslConnector::builder(SslMethod::tls())?;
+        builder.set_ca_file(&root_cert_path)?;
+        let connector = MakeTlsConnector::new(builder.build());
+        Ok(connector)
+    }
+
+    async fn connect(params: String) -> anyhow::Result<Client> {
         let (client, connection) = tokio_postgres::connect(&params, NoTls).await?;
         tokio::spawn(async move {
             if let Err(e) = connection.await {
                 eprintln!("connection error: {}", e);
             }
         });
-        Ok(PsqlClient { client })
+        Ok(client)
+    }
+
+    async fn connect_tls(params: String, ssl: SslConfig) -> anyhow::Result<Client> {
+        let connector = Self::make_tls(ssl)?;
+        let (client, connection) = tokio_postgres::connect(&params, connector).await?;
+        tokio::spawn(async move {
+            if let Err(e) = connection.await {
+                eprintln!("connection error: {}", e);
+            }
+        });
+        Ok(client)
     }
 
     pub async fn execute<R>(&mut self, r: R) -> anyhow::Result<()>

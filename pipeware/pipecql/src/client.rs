@@ -1,3 +1,4 @@
+use openssl::ssl::{SslContext, SslContextBuilder, SslMethod, SslVerifyMode};
 use pipebase::common::{IntoAttributes, Render, Value};
 use scylla::{
     frame::value::{SerializedValues, Timestamp},
@@ -6,16 +7,48 @@ use scylla::{
     transport::session::Session,
     SessionBuilder,
 };
+use serde::Deserialize;
+use std::{fs, path::PathBuf};
+
+#[derive(Deserialize)]
+pub struct SslConfig {
+    root_cert_path: String,
+}
+
+#[derive(Deserialize)]
+pub struct CqlClientConfig {
+    hostname: String,
+    ssl: Option<SslConfig>,
+}
 
 pub struct CqlClient {
     session: Session,
 }
 
 impl CqlClient {
-    pub async fn new<H: AsRef<str>>(hostname: H) -> anyhow::Result<Self> {
+    pub async fn new(config: CqlClientConfig) -> anyhow::Result<Self> {
+        let hostname = config.hostname;
+        let ssl = config.ssl;
+        let ssl_context = match ssl {
+            Some(ssl) => Some(Self::new_ssl_context(ssl)?),
+            None => None,
+        };
         Ok(CqlClient {
-            session: SessionBuilder::new().known_node(hostname).build().await?,
+            session: SessionBuilder::new()
+                .known_node(hostname)
+                .ssl_context(ssl_context)
+                .build()
+                .await?,
         })
+    }
+
+    fn new_ssl_context(ssl: SslConfig) -> anyhow::Result<SslContext> {
+        let root_cert_path = ssl.root_cert_path;
+        let mut context_builder = SslContextBuilder::new(SslMethod::tls())?;
+        let root_cert_path = fs::canonicalize(PathBuf::from(root_cert_path))?;
+        context_builder.set_ca_file(root_cert_path.as_path())?;
+        context_builder.set_verify(SslVerifyMode::PEER);
+        Ok(context_builder.build())
     }
 
     pub async fn execute<R: Render>(&self, r: R) -> anyhow::Result<()> {
