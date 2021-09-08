@@ -1,4 +1,4 @@
-use crate::client::CqlClient;
+use crate::client::{CqlClient, CqlClientConfig};
 use async_trait::async_trait;
 use pipebase::{
     common::{ConfigInto, FromConfig, FromPath, IntoAttributes, Render},
@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct CqlWriterConfig {
-    hostname: String,
+    client: CqlClientConfig,
 }
 
 impl FromPath for CqlWriterConfig {}
@@ -23,7 +23,7 @@ pub struct CqlWriter {
 impl FromConfig<CqlWriterConfig> for CqlWriter {
     async fn from_config(config: CqlWriterConfig) -> anyhow::Result<Self> {
         Ok(CqlWriter {
-            client: CqlClient::new(config.hostname).await?,
+            client: CqlClient::new(config.client).await?,
         })
     }
 }
@@ -40,7 +40,7 @@ where
 
 #[derive(Deserialize)]
 pub struct CqlPreparedWriterConfig {
-    hostname: String,
+    client: CqlClientConfig,
     statement: String,
 }
 
@@ -57,7 +57,7 @@ pub struct CqlPreparedWriter {
 impl FromConfig<CqlPreparedWriterConfig> for CqlPreparedWriter {
     async fn from_config(config: CqlPreparedWriterConfig) -> anyhow::Result<Self> {
         Ok(CqlPreparedWriter {
-            client: CqlClient::new(config.hostname).await?,
+            client: CqlClient::new(config.client).await?,
             statement: config.statement,
         })
     }
