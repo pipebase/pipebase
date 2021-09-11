@@ -1,6 +1,6 @@
 ARG APP_HOME=/opt/app
 ARG BUILD_HOME=/opt/build
-ARG CARGO_PIPE_TAG=0.1.13
+ARG CARGO_PIPE_TAG=0.1.13_1
 ARG APP_BASE_TAG=debian_1
 ARG NAME=app
 ARG OUTPUT=run
@@ -9,11 +9,11 @@ FROM pipebase/cargo-pipe:${CARGO_PIPE_TAG} as builder
 ARG NAME
 ARG OUTPUT
 ARG TEST
-ARG BUILD_HOME
 # COPY PROJECT
 COPY pipebase pipebase
 # BUILD APP
-RUN ./build.sh -d pipebase/e2e/${TEST} -m pipe.yml -n ${NAME} -o ${OUTPUT}
+RUN export RUSTC_WRAPPER=/usr/local/cargo/bin/sccache && \
+    ./build.sh -d pipebase/e2e/${TEST} -m pipe.yml -n ${NAME} -o ${OUTPUT}
 
 # SETUP RUNTIME IMAGE
 FROM pipebase/app-base:${APP_BASE_TAG}
