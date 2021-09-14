@@ -1,9 +1,15 @@
 A [`pipebase`] plugin using [`warp`]
-```
-dependencies:
-  - name: pipewarp
-    version: 0.1.0
-    modules: ["pipewarp::*"]
-```
+### Pipe Configs
+| type | example |
+| ---- | ------- |
+| `WarpIngestionServerConfig` | [`ingestion_server`] |
+
+### Context Store Configs
+| type | example |
+| ---- | ------- |
+| `WarpContextServerConfig` | [`context_server`] |
+
 [`pipebase`]: https://github.com/pipebase/pipebase
 [`warp`]: https://github.com/seanmonstar/warp
+[`ingestion_server`]: https://github.com/pipebase/pipebase/blob/main/examples/ingest_elasticsearch/catalogs/ingestion_server.yml
+[`context_server`]: https://github.com/pipebase/pipebase/blob/main/examples/ingest_elasticsearch/catalogs/context_server.yml
