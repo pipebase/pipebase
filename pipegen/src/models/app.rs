@@ -56,12 +56,21 @@ impl Entity for App {
 impl<V> EntityAccept<V> for App where V: VisitEntity<Self> {}
 
 impl App {
-    pub fn read(api_manifest_path: &Path) -> Result<App> {
-        let file = match std::fs::File::open(api_manifest_path) {
+    pub fn read_from_path(manifest_path: &Path) -> Result<App> {
+        let file = match std::fs::File::open(manifest_path) {
             Ok(file) => file,
             Err(err) => return Err(io_error(err)),
         };
         let mut app = match serde_yaml::from_reader::<std::fs::File, Self>(file) {
+            Ok(app) => app,
+            Err(err) => return Err(yaml_error(err)),
+        };
+        app.init();
+        Ok(app)
+    }
+
+    pub fn read_from_buffer(manifest_buffer: &[u8]) -> Result<App> {
+        let mut app = match serde_yaml::from_slice::<Self>(manifest_buffer) {
             Ok(app) => app,
             Err(err) => return Err(yaml_error(err)),
         };

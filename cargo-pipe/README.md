@@ -1,4 +1,4 @@
-[`cargo-pipe`] is a [`clap`] based command-line tool to generate and build data integration app with manifest
+[`cargo-pipe`] is a [`clap`] based command-line tool to generate and build [`pipebase`] app with manifest
 
 ## Installation
 install Rust and Cargo
@@ -112,3 +112,4 @@ cargo pipe describe -l printer
 [`resources`]: https://github.com/pipebase/pipebase/tree/main/cargo-pipe/resources
 [`clap`]: https://github.com/clap-rs/clap
 [`rustfmt`]: https://github.com/rust-lang/rustfmt
+[`pipebase`]: https://github.com/pipebase/pipebase
