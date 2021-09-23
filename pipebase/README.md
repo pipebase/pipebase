@@ -1,4 +1,4 @@
-[`pipebase`] is a [`tokio`] based runtime library for data integration app. It provides basic [`pipes`] implemented with rust standard library.
+[`pipebase`] is a [`tokio`] based runtime library for data integration app. It provides basic [`pipe`]s implemented with rust standard library.
 
 ## Basic Pipes
 list of basic pipes built in `pipebase`
@@ -22,7 +22,7 @@ list of basic pipes built in `pipebase`
 
 [`pipebase`]: https://github.com/pipebase/pipebase/tree/main/pipebase
 [`tokio`]: https://github.com/tokio-rs/tokio
-[`pipes`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipes
+[`pipe`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipe
 [`pipe type`]: https://github.com/pipebase/pipebase/tree/main/pipegen#pipe-type
 [`printer`]: https://github.com/pipebase/pipebase/tree/main/examples/printer
 [`timer`]: https://github.com/pipebase/pipebase/tree/main/examples/timer

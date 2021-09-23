@@ -10,7 +10,7 @@ pub(crate) fn read_pipe_manifest(
     printer: &mut Printer,
 ) -> anyhow::Result<App> {
     printer.status(&"Parse", manifest_path.to_str().unwrap())?;
-    let app = match App::read(manifest_path) {
+    let app = match App::read_from_path(manifest_path) {
         Ok(app) => app,
         Err(err) => {
             printer.error(err.to_string())?;
