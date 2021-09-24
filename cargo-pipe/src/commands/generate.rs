@@ -19,7 +19,7 @@ pub fn cmd() -> Cmd {
         ])
 }
 
-pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
+pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult<()> {
     let app_name = args.value_of("name").map(|app_name| app_name.to_owned());
     let pipe_name = args.value_of("line").map(|pipe_name| pipe_name.to_owned());
     let opts = GenerateOptions::new(app_name, pipe_name);

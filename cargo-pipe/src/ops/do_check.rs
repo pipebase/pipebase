@@ -1,13 +1,14 @@
 use super::do_cargo::*;
 use super::do_validate::do_validate;
 use super::utils::*;
-use crate::commands::check::CheckOptions;
-use crate::commands::validate::ValidateOptions;
-use crate::print::Printer;
-use crate::Config;
-use std::process;
+use crate::{
+    commands::{check::CheckOptions, validate::ValidateOptions},
+    config::Config,
+    errors::{cargo_error, CmdResult},
+    print::Printer,
+};
 
-pub fn do_check(config: &Config, opts: &CheckOptions, printer: &mut Printer) -> anyhow::Result<()> {
+pub fn do_check(config: &Config, opts: &CheckOptions, printer: &mut Printer) -> CmdResult<()> {
     // validate pipe manifest as prerequiste
     let pipe_manifest_path = config.get_pipe_manifest_path();
     let app = read_pipe_manifest(pipe_manifest_path.as_path(), printer)?;
@@ -21,12 +22,12 @@ pub fn do_check(config: &Config, opts: &CheckOptions, printer: &mut Printer) -> 
     let status_code = do_cargo_check(manifest_path, verbose, debug, printer)?;
     match status_code {
         0 => (),
-        _ => process::exit(status_code),
+        _ => return Err(cargo_error("check", status_code)),
     };
     Ok(())
 }
 
-pub fn do_exec(config: &Config, opts: &CheckOptions) -> anyhow::Result<()> {
+pub fn do_exec(config: &Config, opts: &CheckOptions) -> CmdResult<()> {
     let mut printer = Printer::new();
     do_check(config, opts, &mut printer)
 }

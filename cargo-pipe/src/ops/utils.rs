@@ -1,14 +1,11 @@
-use crate::print::Printer;
+use crate::{errors::CmdResult, print::Printer};
 use pipegen::models::App;
 use pipegen::models::Dependency;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 
-pub(crate) fn read_pipe_manifest(
-    manifest_path: &Path,
-    printer: &mut Printer,
-) -> anyhow::Result<App> {
+pub(crate) fn read_pipe_manifest(manifest_path: &Path, printer: &mut Printer) -> CmdResult<App> {
     printer.status(&"Parse", manifest_path.to_str().unwrap())?;
     let app = match App::read_from_path(manifest_path) {
         Ok(app) => app,

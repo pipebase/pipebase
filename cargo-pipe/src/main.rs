@@ -22,7 +22,7 @@ fn main() {
     })
 }
 
-fn run() -> CmdResult {
+fn run() -> CmdResult<()> {
     let mut args = std::env::args_os().peekable();
     let mut cmd_and_args = vec![args.next().unwrap()]; // cargo
     if args.peek().map_or(false, |arg| arg == "pipe") {
@@ -51,8 +51,8 @@ fn run() -> CmdResult {
     let config = match Config::new(directory, manifest) {
         Ok(config) => config,
         Err(err) => {
-            printer.error(format!("new config error: {}", err))?;
-            return Err(err.into());
+            printer.error(format!("new config error: {:#?}", err))?;
+            return Err(err);
         }
     };
     // find subcommand and args for subcommand

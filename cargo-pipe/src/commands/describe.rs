@@ -29,7 +29,7 @@ pub fn cmd() -> Cmd {
         ])
 }
 
-pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
+pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult<()> {
     let all = args.is_present("all");
     let graph = args.is_present("graph");
     let pipe_name = args.value_of("pipe").map(|pipe_name| pipe_name.to_owned());

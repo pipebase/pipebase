@@ -1,18 +1,20 @@
 use super::do_cargo::*;
 use super::utils::*;
-use crate::commands::generate::GenerateOptions;
-use crate::print::Printer;
-use crate::Config;
+use crate::{
+    commands::generate::GenerateOptions,
+    config::Config,
+    errors::{cargo_error, CmdResult},
+    print::Printer,
+};
 use pipegen::models::App;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process;
 
 fn do_apply_additional_dependency(
     app: &App,
     toml_path: &Path,
     printer: &mut Printer,
-) -> anyhow::Result<()> {
+) -> CmdResult<()> {
     printer.status("Generate", "add toml manifest dependencies")?;
     // fetch package dependency
     let additionals = app.get_dependencies();
@@ -33,7 +35,7 @@ pub fn do_generate(
     mut path_buf: PathBuf,
     opts: &GenerateOptions,
     printer: &mut Printer,
-) -> anyhow::Result<()> {
+) -> CmdResult<()> {
     let main_path = path_buf
         .as_path()
         .to_str()
@@ -62,12 +64,12 @@ pub fn do_generate(
     let status_code = do_cargo_fmt(toml_manifest_path, printer)?;
     match status_code {
         0 => (),
-        _ => process::exit(status_code),
+        _ => return Err(cargo_error("fmt", status_code)),
     };
     printer.status(&"Generate", "succeed")
 }
 
-pub fn do_exec(config: &Config, opts: &GenerateOptions) -> anyhow::Result<()> {
+pub fn do_exec(config: &Config, opts: &GenerateOptions) -> CmdResult<()> {
     let mut printer = Printer::new();
     let pipe_manifest_path = config.get_pipe_manifest_path();
     let app = read_pipe_manifest(pipe_manifest_path.as_path(), &mut printer)?;

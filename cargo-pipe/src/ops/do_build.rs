@@ -1,15 +1,13 @@
 use super::do_cargo::*;
-use crate::commands::build::BuildOptions;
-use crate::print::Printer;
-use crate::Config;
+use crate::{
+    commands::build::BuildOptions,
+    config::Config,
+    errors::{cargo_error, CmdResult},
+    print::Printer,
+};
 use std::path::PathBuf;
-use std::process;
 
-pub fn do_build(
-    path_buf: PathBuf,
-    opts: &BuildOptions,
-    printer: &mut Printer,
-) -> anyhow::Result<()> {
+pub fn do_build(path_buf: PathBuf, opts: &BuildOptions, printer: &mut Printer) -> CmdResult<()> {
     let manifest_path = path_buf.as_path();
     printer.status(&"Build", manifest_path.to_str().unwrap())?;
     let release = opts.release();
@@ -18,20 +16,20 @@ pub fn do_build(
     let status_code = do_cargo_build(manifest_path, release, debug, verbose, printer)?;
     match status_code {
         0 => (),
-        _ => process::exit(status_code),
+        _ => return Err(cargo_error("build", status_code)),
     };
     printer.status(&"Build", "succeed")?;
     Ok(())
 }
 
-pub fn do_copy_binary(from: PathBuf, to: PathBuf, printer: &mut Printer) -> anyhow::Result<()> {
+pub fn do_copy_binary(from: PathBuf, to: PathBuf, printer: &mut Printer) -> CmdResult<()> {
     printer.status(&"Copy", from.to_str().unwrap())?;
     let size = std::fs::copy(from, to)?;
     printer.status(&"Copied", format!("size: {} Mb", size / 1024 / 1024))?;
     Ok(())
 }
 
-pub fn do_exec(config: &Config, opts: &BuildOptions) -> anyhow::Result<()> {
+pub fn do_exec(config: &Config, opts: &BuildOptions) -> CmdResult<()> {
     let mut printer = Printer::new();
     do_build(
         config.get_app_manifest(opts.get_app_name()),

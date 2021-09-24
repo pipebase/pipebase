@@ -13,7 +13,7 @@ pub fn cmd() -> Cmd {
             .takes_value(true)])
 }
 
-pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
+pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult<()> {
     let opts = match args.value_of("name") {
         Some(name) => NewOptions::new(Some(name.to_owned())),
         None => NewOptions::new(None),

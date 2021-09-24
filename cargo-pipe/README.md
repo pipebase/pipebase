@@ -1,7 +1,7 @@
 [`cargo-pipe`] is a [`clap`] based command-line tool to generate and build [`pipebase`] app with manifest
 
 ## Installation
-install Rust and Cargo
+install Rust and Cargo (Minimum Supported Version of Rust 1.54.0)
 ```sh
 curl https://sh.rustup.rs -sSf | sh
 ```

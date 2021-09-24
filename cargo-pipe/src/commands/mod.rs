@@ -23,7 +23,7 @@ pub fn cmds() -> Vec<Cmd> {
     ]
 }
 
-pub fn exec(cmd: &str) -> Option<fn(&Config, &clap::ArgMatches) -> CmdResult> {
+pub fn exec(cmd: &str) -> Option<fn(&Config, &clap::ArgMatches) -> CmdResult<()>> {
     let f = match cmd {
         "validate" => validate::exec,
         "describe" => describe::exec,

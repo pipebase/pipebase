@@ -1,4 +1,4 @@
-use crate::print::Printer;
+use crate::{errors::CmdResult, print::Printer};
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 use std::ffi::OsString;
@@ -42,7 +42,7 @@ fn capture_warning_message(line: &str) -> Option<String> {
 }
 
 // capture error or warning message
-fn capture_messages(out: String, printer: &mut Printer) -> anyhow::Result<()> {
+fn capture_messages(out: String, printer: &mut Printer) -> CmdResult<()> {
     let lines: Vec<&str> = out.split('\n').collect();
     for line in lines {
         if let Some(error_message) = capture_error_message(line) {
@@ -56,7 +56,7 @@ fn capture_messages(out: String, printer: &mut Printer) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_cmd(mut cmd: Command) -> anyhow::Result<(i32, String)> {
+fn run_cmd(mut cmd: Command) -> CmdResult<(i32, String)> {
     let output = cmd.output()?;
     match output.status.success() {
         true => {
@@ -78,7 +78,7 @@ fn cargo_binary() -> OsString {
     }
 }
 
-pub fn do_cargo_init(path: &Path, printer: &mut Printer) -> anyhow::Result<i32> {
+pub fn do_cargo_init(path: &Path, printer: &mut Printer) -> CmdResult<i32> {
     printer.status(&"Cargo", "init ...")?;
     let mut cmd = Command::new(cargo_binary());
     cmd.arg("init").arg(path);
@@ -90,7 +90,7 @@ pub fn do_cargo_init(path: &Path, printer: &mut Printer) -> anyhow::Result<i32> 
     Ok(err_code)
 }
 
-pub fn do_cargo_fmt(manifest_path: &Path, printer: &mut Printer) -> anyhow::Result<i32> {
+pub fn do_cargo_fmt(manifest_path: &Path, printer: &mut Printer) -> CmdResult<i32> {
     printer.status(&"Cargo", "fmt")?;
     let mut cmd = Command::new(cargo_binary());
     cmd.arg("fmt").arg("--manifest-path").arg(manifest_path);
@@ -107,7 +107,7 @@ pub fn do_cargo_check(
     verbose: bool,
     debug: bool,
     printer: &mut Printer,
-) -> anyhow::Result<i32> {
+) -> CmdResult<i32> {
     printer.status(&"Cargo", "check ...")?;
     let mut cmd = Command::new(cargo_binary());
     cmd.arg("check").arg("--manifest-path").arg(manifest_path);
@@ -135,7 +135,7 @@ pub fn do_cargo_build(
     debug: bool,
     verbose: bool,
     printer: &mut Printer,
-) -> anyhow::Result<i32> {
+) -> CmdResult<i32> {
     printer.status(&"Cargo", "build ...")?;
     let mut cmd = Command::new(cargo_binary());
     cmd.arg("build").arg("--manifest-path").arg(manifest_path);

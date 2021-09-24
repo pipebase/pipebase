@@ -1,10 +1,10 @@
 use super::utils::read_pipe_manifest;
-use crate::commands::validate::ValidateOptions;
-use crate::print::Printer;
-use crate::Config;
+use crate::{
+    commands::validate::ValidateOptions, config::Config, errors::CmdResult, print::Printer,
+};
 use pipegen::models::App;
 
-pub fn do_validate(app: &App, printer: &mut Printer, opts: &ValidateOptions) -> anyhow::Result<()> {
+pub fn do_validate(app: &App, printer: &mut Printer, opts: &ValidateOptions) -> CmdResult<()> {
     if opts.pipe() {
         printer.status(&"Validate", "pipes")?;
         match app.validate_pipes() {
@@ -38,7 +38,7 @@ pub fn do_validate(app: &App, printer: &mut Printer, opts: &ValidateOptions) -> 
     printer.status(&"Validate", "pass")
 }
 
-pub fn do_exec(config: &Config, opts: &ValidateOptions) -> anyhow::Result<()> {
+pub fn do_exec(config: &Config, opts: &ValidateOptions) -> CmdResult<()> {
     let mut printer = Printer::new();
     let pipe_manifest_path = config.get_pipe_manifest_path();
     let app = read_pipe_manifest(pipe_manifest_path.as_path(), &mut printer)?;
