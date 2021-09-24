@@ -1,24 +1,22 @@
 use super::do_cargo::*;
 use super::do_remove::do_remove;
-use crate::commands::new::NewOptions;
-use crate::print::Printer;
-use crate::Config;
+use crate::{commands::new::NewOptions, config::Config, errors::CmdResult, print::Printer};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process;
 
-fn do_remove_app_if_exists(path: &Path, printer: &mut Printer) -> anyhow::Result<()> {
+fn do_remove_app_if_exists(path: &Path, printer: &mut Printer) -> CmdResult<()> {
     do_remove(path.to_path_buf(), printer)
 }
 
-fn do_new_directory(path: &Path, printer: &mut Printer) -> anyhow::Result<()> {
+fn do_new_directory(path: &Path, printer: &mut Printer) -> CmdResult<()> {
     printer.status(&"New", path.to_str().unwrap())?;
     fs::create_dir(path)?;
     printer.status(&"New", "succeed")?;
     Ok(())
 }
 
-pub fn do_new(printer: &mut Printer, path_buf: PathBuf) -> anyhow::Result<()> {
+pub fn do_new(printer: &mut Printer, path_buf: PathBuf) -> CmdResult<()> {
     let path = path_buf.as_path();
     do_remove_app_if_exists(path, printer)?;
     do_new_directory(path, printer)?;
@@ -31,7 +29,7 @@ pub fn do_new(printer: &mut Printer, path_buf: PathBuf) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn do_exec(config: &Config, opts: &NewOptions) -> anyhow::Result<()> {
+pub fn do_exec(config: &Config, opts: &NewOptions) -> CmdResult<()> {
     let mut printer = Printer::new();
     do_new(&mut printer, config.get_app_directory(opts.get_app_name()))
 }

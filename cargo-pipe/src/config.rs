@@ -1,6 +1,9 @@
-use crate::ops::do_cargo::{
-    CARGO_APP_MAIN, CARGO_DEBUG_DIRECTORY, CARGO_MANIFEST_FILE, CARGO_RELEASE_DIRECTORY,
-    CARGO_SRC_DIRECTORY, CARGO_TARGET_DIRECTORY,
+use crate::{
+    errors::CmdResult,
+    ops::do_cargo::{
+        CARGO_APP_MAIN, CARGO_DEBUG_DIRECTORY, CARGO_MANIFEST_FILE, CARGO_RELEASE_DIRECTORY,
+        CARGO_SRC_DIRECTORY, CARGO_TARGET_DIRECTORY,
+    },
 };
 use std::{env::current_dir, path::PathBuf};
 
@@ -13,7 +16,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(directory: Option<&str>, manifest: Option<&str>) -> anyhow::Result<Self> {
+    pub fn new(directory: Option<&str>, manifest: Option<&str>) -> CmdResult<Self> {
         let working_drectory = match directory {
             Some(directory) => PathBuf::from(directory),
             None => current_dir()?,

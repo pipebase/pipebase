@@ -1,12 +1,14 @@
 use super::do_validate::do_validate;
 use super::utils::read_pipe_manifest;
-use crate::commands::describe::DescribeOptions;
-use crate::commands::validate::ValidateOptions;
-use crate::config::Config;
 use crate::print::Printer;
+use crate::{
+    commands::{describe::DescribeOptions, validate::ValidateOptions},
+    config::Config,
+    errors::CmdResult,
+};
 use pipegen::models::App;
 
-fn do_describe_pipes(app: &App, printer: &mut Printer) -> anyhow::Result<()> {
+fn do_describe_pipes(app: &App, printer: &mut Printer) -> CmdResult<()> {
     printer.status(&"Describe", "pipes")?;
     for description in app.describe_pipes() {
         printer.result(description)?;
@@ -14,7 +16,7 @@ fn do_describe_pipes(app: &App, printer: &mut Printer) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn do_describe_pipe_graph(app: &App, printer: &mut Printer) -> anyhow::Result<()> {
+fn do_describe_pipe_graph(app: &App, printer: &mut Printer) -> CmdResult<()> {
     printer.status(&"Describe", "pipe graph")?;
     for description in app.describe_pipe_graph() {
         printer.result(description)?;
@@ -22,7 +24,7 @@ fn do_describe_pipe_graph(app: &App, printer: &mut Printer) -> anyhow::Result<()
     Ok(())
 }
 
-fn do_describe_pipe(app: &App, pipe_name: &str, printer: &mut Printer) -> anyhow::Result<()> {
+fn do_describe_pipe(app: &App, pipe_name: &str, printer: &mut Printer) -> CmdResult<()> {
     printer.status(&"Describe", format!("pipe {}", pipe_name))?;
     let pipe_display = match app.describe_pipe(pipe_name) {
         Ok(pipe_display) => pipe_display,
@@ -35,7 +37,7 @@ fn do_describe_pipe(app: &App, pipe_name: &str, printer: &mut Printer) -> anyhow
     Ok(())
 }
 
-fn do_describe_object(app: &App, object_name: &str, printer: &mut Printer) -> anyhow::Result<()> {
+fn do_describe_object(app: &App, object_name: &str, printer: &mut Printer) -> CmdResult<()> {
     printer.status(&"Describe", format!("object {}", object_name))?;
     let object_display = match app.describe_object(object_name) {
         Ok(object_display) => object_display,
@@ -48,7 +50,7 @@ fn do_describe_object(app: &App, object_name: &str, printer: &mut Printer) -> an
     Ok(())
 }
 
-fn do_describe_objects(app: &App, printer: &mut Printer) -> anyhow::Result<()> {
+fn do_describe_objects(app: &App, printer: &mut Printer) -> CmdResult<()> {
     printer.status(&"Describe", "objects")?;
     for description in app.describe_objects() {
         printer.result(description)?;
@@ -56,7 +58,7 @@ fn do_describe_objects(app: &App, printer: &mut Printer) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn do_describe_pipelines(app: &App, pipe_name: &str, printer: &mut Printer) -> anyhow::Result<()> {
+fn do_describe_pipelines(app: &App, pipe_name: &str, printer: &mut Printer) -> CmdResult<()> {
     printer.status(&"Describe", format!("pipelines for {}", pipe_name))?;
     let pipelines = match app.describe_pipelines(pipe_name) {
         Ok(pipelines) => pipelines,
@@ -74,7 +76,7 @@ fn do_describe_pipelines(app: &App, pipe_name: &str, printer: &mut Printer) -> a
     Ok(())
 }
 
-pub fn do_exec(config: &Config, opts: &DescribeOptions) -> anyhow::Result<()> {
+pub fn do_exec(config: &Config, opts: &DescribeOptions) -> CmdResult<()> {
     let mut printer = Printer::new();
     let pipe_manifest_path = config.get_pipe_manifest_path();
     let app = read_pipe_manifest(pipe_manifest_path.as_path(), &mut printer)?;

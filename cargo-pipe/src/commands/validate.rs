@@ -20,7 +20,7 @@ pub fn cmd() -> Cmd {
         ])
 }
 
-pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
+pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult<()> {
     let pipe = args.is_present("pipe");
     let object = args.is_present("object");
     let cstore = args.is_present("cstore");

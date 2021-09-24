@@ -1,3 +1,4 @@
+use crate::CmdResult;
 use std::fmt;
 use std::io::Write;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
@@ -18,7 +19,7 @@ impl Printer {
         status: &dyn fmt::Display,
         message: Option<&dyn fmt::Display>,
         color: Color,
-    ) -> anyhow::Result<()> {
+    ) -> CmdResult<()> {
         self.stderr.reset()?;
         self.stderr
             .set_color(ColorSpec::new().set_bold(true).set_fg(Some(color)))?;
@@ -37,19 +38,19 @@ impl Printer {
         &mut self,
         status: T,
         message: U,
-    ) -> anyhow::Result<()> {
+    ) -> CmdResult<()> {
         self.print(&status, Some(&message), Color::Green)
     }
 
-    pub fn error<T: fmt::Display>(&mut self, message: T) -> anyhow::Result<()> {
+    pub fn error<T: fmt::Display>(&mut self, message: T) -> CmdResult<()> {
         self.print(&"Error", Some(&message), Color::Red)
     }
 
-    pub fn warning<T: fmt::Display>(&mut self, message: T) -> anyhow::Result<()> {
+    pub fn warning<T: fmt::Display>(&mut self, message: T) -> CmdResult<()> {
         self.print(&"Warning", Some(&message), Color::Yellow)
     }
 
-    pub fn result<T: fmt::Display>(&mut self, message: T) -> anyhow::Result<()> {
+    pub fn result<T: fmt::Display>(&mut self, message: T) -> CmdResult<()> {
         self.print(&"Result", Some(&message), Color::White)
     }
 }

@@ -22,7 +22,7 @@ pub fn cmd() -> Cmd {
     ])
 }
 
-pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult {
+pub fn exec(config: &Config, args: &clap::ArgMatches) -> CmdResult<()> {
     let app_name = args.value_of("name").map(|app_name| app_name.to_owned());
     let out = args.value_of("out").map(|out| out.to_owned());
     let release = args.is_present("release");
