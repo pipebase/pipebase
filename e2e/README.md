@@ -1,5 +1,5 @@
 A collection of e2e test suites
-## Run test
+## Run Test
 setup
 ```bash
 # at project root directory

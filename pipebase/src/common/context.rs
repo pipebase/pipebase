@@ -27,19 +27,21 @@ pub enum State {
     Done,
 }
 
-fn code_to_state(state_code: u8) -> State {
-    let state = match state_code {
-        0 => State::Init,
-        1 => State::Receive,
-        2 => State::Poll,
-        3 => State::Map,
-        4 => State::Send,
-        5 => State::Export,
-        6 => State::Done,
-        _ => unreachable!(),
-    };
-    assert_eq!(state_code, state.to_owned() as u8);
-    state
+impl From<u8> for State {
+    fn from(state_code: u8) -> Self {
+        let state = match state_code {
+            0 => State::Init,
+            1 => State::Receive,
+            2 => State::Poll,
+            3 => State::Map,
+            4 => State::Send,
+            5 => State::Export,
+            6 => State::Done,
+            _ => unreachable!(),
+        };
+        assert_eq!(state_code, state.to_owned() as u8);
+        state
+    }
 }
 
 /// Pipe runtime context
@@ -53,7 +55,7 @@ pub struct Context {
 impl Context {
     pub fn get_state(&self) -> State {
         let code = self.state_code.load(Ordering::Acquire);
-        code_to_state(code)
+        code.into()
     }
 
     pub fn get_total_run(&self) -> u64 {
