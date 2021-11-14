@@ -6,7 +6,7 @@
         "retry": 3
     },
     {
-        "cmd": "docker exec kafka kafka-topics --list --zookeeper zookeeper:2181",
+        "cmd": "docker exec kafka kafka-topics --list --bootstrap-server localhost:9092",
         "description": "make sure kafka 'records' topic created",
         "expected_output_file": "e2e/pubsub_kafka/tests/setup1.txt",
         "retry": 3
