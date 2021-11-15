@@ -1,7 +1,7 @@
 ARG APP_HOME=/opt/app
 ARG BUILD_HOME=/opt/build
 ARG CARGO_PIPE_TAG=0.1.15
-ARG APP_BASE_TAG=debian_2
+ARG APP_BASE_TAG=debian_3
 ARG NAME=app
 ARG OUTPUT=run
 
