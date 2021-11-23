@@ -155,17 +155,17 @@ pub(crate) fn default_pipebase_dependency() -> Dependency {
         .build()
 }
 
-pub(crate) fn default_log_dependency() -> Dependency {
+pub(crate) fn default_tracing_dependency() -> Dependency {
     DependencyBuilder::new()
-        .name("log".to_owned())
-        .version("0.4.14".to_owned())
+        .name("tracing".to_owned())
+        .version("0.1".to_owned())
         .build()
 }
 
-pub(crate) fn default_env_log_dependency() -> Dependency {
+pub(crate) fn default_tracing_subscriber_dependency() -> Dependency {
     DependencyBuilder::new()
-        .name("env_logger".to_owned())
-        .version("0.8.4".to_owned())
+        .name("tracing-subscriber".to_owned())
+        .version("0.2".to_owned())
         .build()
 }
 
