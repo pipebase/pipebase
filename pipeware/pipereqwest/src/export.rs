@@ -7,6 +7,7 @@ use pipebase::{
 use reqwest::{Body, Response};
 use serde::Deserialize;
 use std::collections::HashMap;
+use tracing::info;
 
 #[derive(Deserialize)]
 pub struct ReqwestPosterConfig {
@@ -52,9 +53,9 @@ where
 
 impl ReqwestPoster {
     async fn log_response(resp: Response) {
-        log::info!("response status: {}", resp.status());
+        info!("response status: {}", resp.status());
         if let Ok(text) = resp.text().await {
-            log::info!("response text: {}", text)
+            info!("response text: {}", text)
         }
     }
 }

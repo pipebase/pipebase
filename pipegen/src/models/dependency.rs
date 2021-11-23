@@ -244,7 +244,7 @@ pub(crate) fn default_redis_dependency() -> Dependency {
 pub(crate) fn default_reqwest_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipereqwest".to_owned())
-        .version("0.1.2".to_owned())
+        .version("0.1.4".to_owned())
         .modules(vec!["pipereqwest::*".to_owned()])
         .build()
 }
