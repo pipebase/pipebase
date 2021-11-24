@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use tokio::sync::mpsc::error::SendError;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::task::JoinHandle;
+use tracing::error;
 
 #[async_trait]
 pub trait Pipe<T, U, R, C>: HasContext + SubscribeError
@@ -35,7 +36,7 @@ where
         match tx.send(t).await {
             Ok(()) => Ok(()),
             Err(err) => {
-                log::error!("selector send error {}", err.to_string());
+                error!("selector send error {}", err.to_string());
                 Err(err)
             }
         }
@@ -50,7 +51,7 @@ pub(crate) async fn wait_join_handles<U>(
         let result = match jh.await {
             Ok(res) => res,
             Err(err) => {
-                log::error!("join error in pipe err: {:#?}", err);
+                error!("join error in pipe err: {:#?}", err);
                 drop_sender_indices.push(idx);
                 continue;
             }
@@ -58,7 +59,7 @@ pub(crate) async fn wait_join_handles<U>(
         match result {
             Ok(()) => (),
             Err(err) => {
-                log::error!("send error {}", err);
+                error!("send error {}", err);
                 drop_sender_indices.push(idx);
             }
         }
@@ -135,7 +136,7 @@ macro_rules! run_pipe {
                 match $pipe.run(config, txs, $rx).await {
                     Ok(_) => Ok(()),
                     Err(err) => {
-                        log::error!("pipe exit with error {:#?}", err);
+                        tracing::error!("pipe exit with error {:#?}", err);
                         Err(err)
                     }
                 }

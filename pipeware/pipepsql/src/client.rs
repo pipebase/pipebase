@@ -3,6 +3,7 @@ use pipebase::common::{IntoAttributes, Render, Value};
 use postgres_openssl::MakeTlsConnector;
 use serde::Deserialize;
 use tokio_postgres::{types::ToSql, Client, NoTls};
+use tracing::info;
 
 #[derive(Deserialize)]
 pub struct SslConfig {
@@ -67,7 +68,7 @@ impl PsqlClient {
     {
         let statement = r.render();
         let rows_updated = self.client.execute(&statement[..], &[]).await?;
-        log::info!("{} rows updated", rows_updated);
+        info!("{} rows updated", rows_updated);
         Ok(())
     }
 

@@ -12,6 +12,7 @@ use std::collections::HashMap;
 
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tracing::{error, info};
 
 pub struct Selector<'a> {
     name: &'a str,
@@ -43,7 +44,7 @@ where
         let mut selector = config.config_into().await?;
         let rx = rx.as_mut().unwrap();
         let mut txs = senders_as_map(txs);
-        log::info!("selector {} run ...", self.name);
+        info!("selector {} run ...", self.name);
         loop {
             self.context.set_state(State::Receive);
             // if all receiver dropped, sender drop as well
@@ -65,7 +66,7 @@ where
             let selected = match selector.select(&t, &candidates).await {
                 Ok(selected) => selected,
                 Err(err) => {
-                    log::error!("selector {} error '{:#?}'", self.name, err);
+                    error!("selector {} error '{:#?}'", self.name, err);
                     self.context.inc_failure_run();
                     self.context.inc_total_run();
                     send_pipe_error(self.etx.as_ref(), PipeError::new(self.name.to_owned(), err))
@@ -91,7 +92,7 @@ where
             filter_senders_by_indices(&mut txs, drop_sender_indices);
             self.context.inc_total_run();
         }
-        log::info!("selector {} exit ...", self.name);
+        info!("selector {} exit ...", self.name);
         self.context.set_state(State::Done);
         Ok(())
     }

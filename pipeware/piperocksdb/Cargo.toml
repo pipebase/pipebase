@@ -1,6 +1,6 @@
 [package]
 name = "piperocksdb"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -14,9 +14,9 @@ keywords = ["pipebase", "pipeware", "rocksdb"]
 [dependencies]
 async-trait = "0.1.50"
 anyhow = "1.0"
-log = "0.4.14"
-pipebase = { version = "0.1.2", path = "../../pipebase" }
-pipebytes = { version = "0.1.3", path = "../pipebytes" }
+tracing = "0.1"
+pipebase = { version = "0.1.9", path = "../../pipebase" }
+pipebytes = { version = "0.1.4", path = "../pipebytes" }
 rocksdb = { version = "0.16.0" }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.6.1", features = ["rt", "sync", "macros"] }

@@ -7,6 +7,7 @@ use pipebase::{
 use rumqttc::{Event, EventLoop, Packet, QoS};
 use serde::Deserialize;
 use tokio::sync::mpsc::Sender;
+use tracing::info;
 
 #[derive(Deserialize)]
 pub struct MqttSubscriberConfig {
@@ -69,7 +70,7 @@ impl MqttSubscriber {
             let payload = match packet {
                 Packet::Publish(publish) => publish.payload,
                 _ => {
-                    log::info!("incoming packet {:?}", packet);
+                    info!("incoming packet {:?}", packet);
                     continue;
                 }
             };

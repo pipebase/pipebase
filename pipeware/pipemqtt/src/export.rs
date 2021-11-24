@@ -6,6 +6,7 @@ use pipebase::{
 };
 use rumqttc::{AsyncClient, QoS};
 use serde::Deserialize;
+use tracing::info;
 
 #[derive(Deserialize)]
 pub struct MqttPublisherConfig {
@@ -37,7 +38,7 @@ impl FromConfig<MqttPublisherConfig> for MqttPublisher {
         tokio::spawn(async move {
             loop {
                 let notification = event.poll().await.unwrap();
-                log::info!("MqttPublisher received = {:?}", notification);
+                info!("MqttPublisher received = {:?}", notification);
             }
         });
         Ok(MqttPublisher {

@@ -1,6 +1,6 @@
 [package]
 name = "cargo-pipe"
-version = "0.1.15"
+version = "0.1.16"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -12,7 +12,7 @@ categories = ["command-line-utilities", "development-tools::cargo-plugins"]
 keywords = ["data-engineering", "api-integration", "declarative-pipeline"]
 
 [dependencies]
-pipegen = { version = "0.1.15", path = "../pipegen" }
+pipegen = { version = "0.1.16", path = "../pipegen" }
 clap = "3.0.0-beta.2"
 lazy_static = "1.4.0"
 regex = "1.5.4"

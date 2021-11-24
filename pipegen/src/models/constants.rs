@@ -13,3 +13,5 @@ pub(crate) const BOOTSTRAP_FUNCTION_META: &str = "bootstrap";
 pub(crate) const BOOTSTRAP_FUNCTION_NAME: &str = "bootstrap";
 pub(crate) const BOOTSTRAP_MODULE_META_PATH: &str = "bootstrap";
 pub(crate) const PIPEBASE_MAIN: &str = "pipebase::main";
+pub(crate) const TRACING_INSTRUMENT: &str = "tracing::instrument";
+pub(crate) const TRACING_SUBSCRIBER_FMT_INIT: &str = "tracing_subscriber::fmt::init()";

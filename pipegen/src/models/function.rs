@@ -1,6 +1,6 @@
 use super::{
     data_ty_to_literal,
-    meta::{meta_to_literal, Meta},
+    meta::{metas_to_literal, Meta},
     utils::indent_literal,
     DataField, DataType, Entity,
 };
@@ -71,7 +71,7 @@ impl Block {
 pub struct Function {
     // TODO: Support generics
     name: String,
-    meta: Option<Meta>,
+    metas: Vec<Meta>,
     is_public: bool,
     is_async: bool,
     args: Vec<DataField>,
@@ -86,10 +86,8 @@ impl Function {
         let block_lit = self.block.to_literal(indent + 1);
         let indent_lit = indent_literal(indent);
         let function_lit = format!("{} {{\n{}\n{}}}", signature_lit, block_lit, indent_lit);
-        match self.get_metas_literal(indent) {
-            Some(meta_lits) => format!("{}\n{}", meta_lits, function_lit),
-            None => function_lit,
-        }
+        let metas_lit = self.get_metas_literal(indent);
+        format!("{}\n{}", metas_lit, function_lit)
     }
 
     fn get_signature_literal(&self, indent: usize) -> String {
@@ -126,12 +124,8 @@ impl Function {
         Some(format!("-> {}", data_ty_to_literal(rtype)))
     }
 
-    fn get_metas_literal(&self, indent: usize) -> Option<String> {
-        let meta = match self.meta {
-            Some(ref meta) => meta,
-            None => return None,
-        };
-        Some(meta_to_literal(meta, indent))
+    fn get_metas_literal(&self, indent: usize) -> String {
+        metas_to_literal(&self.metas, indent)
     }
 }
 
@@ -139,7 +133,7 @@ impl Function {
 pub struct FunctionBuilder {
     // TODO: Support generics
     name: Option<String>,
-    meta: Option<Meta>,
+    metas: Vec<Meta>,
     is_public: bool,
     is_async: bool,
     args: Vec<DataField>,
@@ -159,7 +153,12 @@ impl FunctionBuilder {
     }
 
     pub fn meta(mut self, meta: Meta) -> Self {
-        self.meta = Some(meta);
+        self.metas.push(meta);
+        self
+    }
+
+    pub fn metas(mut self, mut metas: Vec<Meta>) -> Self {
+        self.metas.append(&mut metas);
         self
     }
 
@@ -191,7 +190,7 @@ impl FunctionBuilder {
     pub fn build(self) -> Function {
         Function {
             name: self.name.expect("function name not inited"),
-            meta: self.meta,
+            metas: self.metas,
             is_public: self.is_public,
             is_async: self.is_async,
             args: self.args,

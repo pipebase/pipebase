@@ -1,10 +1,10 @@
 use async_trait::async_trait;
-use log::{error, info};
 use tokio::{
     sync::mpsc::{error::SendError, Receiver, Sender},
     task::JoinHandle,
     time::sleep,
 };
+use tracing::{error, info};
 
 use super::{Poll, PollResponse};
 use crate::common::{

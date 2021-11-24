@@ -1,7 +1,7 @@
 use async_trait::async_trait;
-use log::error;
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tracing::{error, info};
 
 use super::Export;
 use crate::common::{
@@ -38,7 +38,7 @@ where
         assert!(txs.is_empty(), "sink {} has invalid downstreams", self.name);
         let mut exporter = config.config_into().await?;
         let rx = rx.as_mut().unwrap();
-        log::info!("exporter {} run ...", self.name);
+        info!("exporter {} run ...", self.name);
         loop {
             self.context.set_state(State::Receive);
             let t = match rx.recv().await {
@@ -59,7 +59,7 @@ where
             };
             self.context.inc_total_run();
         }
-        log::info!("exporter {} exit ...", self.name);
+        info!("exporter {} exit ...", self.name);
         self.context.set_state(State::Done);
         Ok(())
     }

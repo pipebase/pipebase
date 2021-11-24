@@ -1,5 +1,6 @@
 use super::StoreContext;
 use crate::common::{ConfigInto, Context, Result};
+use tracing::info;
 pub struct ContextStore<'a> {
     name: &'a str,
 }
@@ -19,9 +20,9 @@ impl<'a> ContextStore<'a> {
         for (name, context) in contexts {
             store.store_context(name, context);
         }
-        log::info!("context store {} run ...", self.name);
+        info!("context store {} run ...", self.name);
         store.run().await?;
-        log::info!("context store {} exit ...", self.name);
+        info!("context store {} exit ...", self.name);
         Ok(())
     }
 }
@@ -60,7 +61,7 @@ macro_rules! run_cstore {
                 match $cstore.run(config, contexts).await {
                     Ok(_) => Ok(()),
                     Err(err) => {
-                        log::error!("context store exit with error '{:#?}'", err);
+                        tracing::error!("context store exit with error '{:#?}'", err);
                         Err(err)
                     }
                 }

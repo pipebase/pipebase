@@ -1,9 +1,9 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
-use log::error;
 use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
 use tokio::task::JoinHandle;
+use tracing::{error, info};
 
 use super::Map;
 use crate::common::{
@@ -46,7 +46,7 @@ where
         let mut mapper = config.config_into().await?;
         let mut txs = senders_as_map(txs);
         let rx = rx.as_mut().unwrap();
-        log::info!("mapper {} run ...", self.name);
+        info!("mapper {} run ...", self.name);
         loop {
             self.context.set_state(State::Receive);
             // if all receiver dropped, sender drop as well
@@ -91,7 +91,7 @@ where
             filter_senders_by_indices(&mut txs, drop_sender_indices);
             self.context.inc_total_run();
         }
-        log::info!("mapper {} exit ...", self.name);
+        info!("mapper {} exit ...", self.name);
         self.context.set_state(State::Done);
         Ok(())
     }

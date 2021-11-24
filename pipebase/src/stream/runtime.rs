@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc::{channel, error::SendError, Receiver, Sender};
 use tokio::task::JoinHandle;
+use tracing::{error, info};
 
 use super::Stream;
 use crate::common::{
@@ -48,7 +49,7 @@ where
         let etx = self.etx.clone();
         let streamer_loop = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
-            log::info!("streamer {} run ...", name);
+            info!("streamer {} run ...", name);
             loop {
                 context.set_state(State::Receive);
                 let t = match (*rx).recv().await {
@@ -59,14 +60,14 @@ where
                 match streamer.stream(t).await {
                     Ok(_) => (),
                     Err(err) => {
-                        log::error!("streamer {} error '{:#?}'", name, err);
+                        error!("streamer {} error '{:#?}'", name, err);
                         send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await;
                         context.inc_failure_run();
                     }
                 }
                 context.inc_total_run();
             }
-            log::info!("streamer {} exit ...", name);
+            info!("streamer {} exit ...", name);
             context.set_state(State::Done);
         });
         let mut txs = senders_as_map(txs);
@@ -104,7 +105,7 @@ where
         match tokio::spawn(async move { tokio::join!(streamer_loop, sender_loop) }).await {
             Ok(_) => (),
             Err(err) => {
-                log::error!("streamer join error {:#?}", err)
+                error!("streamer join error {:#?}", err)
             }
         }
         Ok(())

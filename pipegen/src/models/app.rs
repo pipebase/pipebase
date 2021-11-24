@@ -1,6 +1,6 @@
 use super::constants::{
     APP_OBJECT_NAME, BOOTSTRAP_FUNCTION_META, BOOTSTRAP_FUNCTION_NAME, BOOTSTRAP_MODULE_META_PATH,
-    DEFAULT_APP_OBJECT, PIPEBASE_MAIN,
+    DEFAULT_APP_OBJECT, PIPEBASE_MAIN, TRACING_INSTRUMENT, TRACING_SUBSCRIBER_FMT_INIT,
 };
 use super::context::ContextStore;
 use super::dependency::{CrateVisitor, Dependency, UseCrate};
@@ -11,8 +11,8 @@ use super::utils::indent_literal;
 use super::{Entity, EntityAccept, Object, VisitEntity};
 use crate::error::*;
 use crate::models::{
-    default_env_log_dependency, default_log_dependency, default_pipebase_dependency,
-    default_tokio_dependency, Block, DataType, FunctionBuilder, Rhs, Statement,
+    default_pipebase_dependency, default_tokio_dependency, default_tracing_dependency,
+    default_tracing_subscriber_dependency, Block, DataType, FunctionBuilder, Rhs, Statement,
 };
 use crate::ops::AppValidator;
 use crate::ops::{AppDescriber, AppGenerator};
@@ -156,8 +156,8 @@ impl App {
         vec![
             default_pipebase_dependency(),
             default_tokio_dependency(),
-            default_log_dependency(),
-            default_env_log_dependency(),
+            default_tracing_dependency(),
+            default_tracing_subscriber_dependency(),
         ]
     }
 
@@ -207,23 +207,28 @@ impl App {
     }
 
     pub(crate) fn get_main_function_literal(&self, indent: usize) -> String {
-        let meta = Meta::List {
-            name: PIPEBASE_MAIN.to_owned(),
-            metas: vec![Meta::Value {
-                name: BOOTSTRAP_MODULE_META_PATH.to_owned(),
-                meta: MetaValue::Str {
-                    value: self.get_app_module_name(),
-                    raw: false,
-                },
-            }],
-        };
+        let metas = vec![
+            Meta::List {
+                name: PIPEBASE_MAIN.to_owned(),
+                metas: vec![Meta::Value {
+                    name: BOOTSTRAP_MODULE_META_PATH.to_owned(),
+                    meta: MetaValue::Str {
+                        value: self.get_app_module_name(),
+                        raw: false,
+                    },
+                }],
+            },
+            Meta::Path {
+                name: TRACING_INSTRUMENT.to_owned(),
+            },
+        ];
         let block = Block::new(vec![Statement::new(
             None,
-            Rhs::Expr("env_logger::init();".to_owned()),
+            Rhs::Expr(TRACING_SUBSCRIBER_FMT_INIT.to_owned()),
         )]);
         let function = FunctionBuilder::new()
             .name("main".to_owned())
-            .meta(meta)
+            .metas(metas)
             .public(false)
             .asynchronous(true)
             .block(block)
