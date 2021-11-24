@@ -1,6 +1,7 @@
 use super::HandleError;
 use crate::common::{ConfigInto, PipeError, Result};
 use tokio::sync::mpsc::Receiver;
+use tracing::error;
 
 pub struct ErrorHandler {}
 
@@ -15,7 +16,7 @@ impl ErrorHandler {
             match handler.handle_error(pipe_error).await {
                 Ok(_) => continue,
                 Err(e) => {
-                    log::error!("error handler error '{:#?}'", e)
+                    error!("error handler error '{:#?}'", e)
                 }
             }
         }
@@ -43,7 +44,7 @@ macro_rules! run_error_handler {
             match $error_handler.run(config, $rx).await {
                 Ok(_) => Ok(()),
                 Err(err) => {
-                    log::error!("error handler exit with error {:#?}", err);
+                    tracing::error!("error handler exit with error {:#?}", err);
                     Err(err)
                 }
             }

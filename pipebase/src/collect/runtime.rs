@@ -17,6 +17,7 @@ use tokio::{
     },
     task::JoinHandle,
 };
+use tracing::{error, info};
 
 pub struct Collector<'a> {
     name: &'a str,
@@ -76,7 +77,7 @@ where
                 match c.collect(t).await {
                     Ok(()) => continue,
                     Err(err) => {
-                        log::error!("collector {} collect error '{}'", name, err);
+                        error!("collector {} collect error '{}'", name, err);
                         send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await;
                     }
                 }
@@ -91,7 +92,7 @@ where
                 let c = collector.lock().await;
                 c.get_flush_interval()
             };
-            log::info!("collector {} run ...", name);
+            info!("collector {} run ...", name);
             loop {
                 context.set_state(State::Receive);
                 // if all receiver dropped, sender drop as well
@@ -107,7 +108,7 @@ where
                     let u = match c.flush().await {
                         Ok(u) => u,
                         Err(err) => {
-                            log::error!("collector {} flush error '{:#?}'", name, err);
+                            error!("collector {} flush error '{:#?}'", name, err);
                             context.inc_failure_run();
                             context.inc_total_run();
                             send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err))
@@ -140,7 +141,7 @@ where
                     break;
                 }
             }
-            log::info!("collector {} exit ...", name);
+            info!("collector {} exit ...", name);
             exit_f.store(true, Ordering::Release);
             context.set_state(State::Done);
         });

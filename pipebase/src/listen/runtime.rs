@@ -1,8 +1,7 @@
 use async_trait::async_trait;
-use log::error;
-use log::info;
 use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
 use tokio::task::JoinHandle;
+use tracing::{error, info};
 
 use super::Listen;
 use crate::common::{
@@ -62,7 +61,7 @@ where
         let context = self.context.clone();
         let name = self.name.to_owned();
         let join_send_loop = tokio::spawn(async move {
-            log::info!("listener {} run ...", name);
+            info!("listener {} run ...", name);
             loop {
                 context.set_state(State::Receive);
                 // if all receiver dropped, sender drop as well
@@ -94,7 +93,7 @@ where
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
                 context.inc_total_run();
             }
-            log::info!("listener {} exit ...", name);
+            info!("listener {} exit ...", name);
             context.set_state(State::Done);
         });
         // join listener and loop

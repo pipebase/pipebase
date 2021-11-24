@@ -1,6 +1,7 @@
 use std::fmt::{self, Debug, Display};
 use std::{error, result};
 use tokio::sync::mpsc::Sender;
+use tracing::error;
 
 /// Runtime error
 pub struct Error(Box<ErrorImpl>);
@@ -107,7 +108,7 @@ pub(crate) async fn send_pipe_error(tx: Option<&Sender<PipeError>>, pipe_error: 
     match tx.send(pipe_error).await {
         Ok(_) => (),
         Err(e) => {
-            log::error!("send pipe error failed '{}'", e)
+            error!("send pipe error failed '{}'", e)
         }
     }
 }

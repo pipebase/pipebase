@@ -3,9 +3,9 @@ use std::fmt::Debug;
 use super::Map;
 use crate::common::{ConfigInto, FromConfig, FromPath};
 use async_trait::async_trait;
-use log::info;
 use serde::Deserialize;
 use std::path::Path;
+use tracing::info;
 
 #[derive(Deserialize)]
 pub struct EchoConfig {}

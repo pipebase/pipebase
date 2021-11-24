@@ -5,6 +5,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::time::Duration;
 use tokio::time::{sleep, Interval};
+use tracing::info;
 
 #[derive(Deserialize)]
 pub struct ContextPrinterConfig {
@@ -69,7 +70,7 @@ impl StoreContext<ContextPrinterConfig> for ContextPrinter {
                 }
             }
             if done == self.contexts.len() {
-                log::info!("all pipe in Done state, exit context printer");
+                info!("all pipe in Done state, exit context printer");
                 break;
             }
         }
