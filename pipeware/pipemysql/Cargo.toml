@@ -1,6 +1,6 @@
 [package]
 name = "pipemysql"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -14,7 +14,7 @@ keywords = ["pipebase", "pipeware", "mysql"]
 [dependencies]
 async-trait = "0.1.50"
 anyhow = "1.0"
-log = "0.4.14"
+tracing = "0.1"
 mysql_async = "0.28.0"
 pipebase = { version = "0.1.6", path = "../../pipebase" }
 serde = { version = "1.0", features = ["derive"] }
