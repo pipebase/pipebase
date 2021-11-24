@@ -5,6 +5,7 @@ use sqs::{
     output::{DeleteMessageOutput, ReceiveMessageOutput},
 };
 use std::collections::HashMap;
+use tracing::error;
 
 #[derive(Deserialize)]
 pub struct SqsClientConfig {
@@ -61,7 +62,7 @@ impl SqsClient {
         // consumer must delete the message from the queue after receiving and processing it
         if let Some(receipt_handle) = message.receipt_handle {
             if let Err(e) = self.delete_message(receipt_handle).await {
-                log::error!("delete message error '{}'", e)
+                error!("delete message error '{}'", e)
             }
         }
         SqsMessage {
