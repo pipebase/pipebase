@@ -2,6 +2,7 @@
 
 members = [
 	"cargo-pipe",
+	"e2e/clients",
 	"pipebase",
 	"pipederive",
 	"pipegen",

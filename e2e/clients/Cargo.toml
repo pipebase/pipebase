@@ -1,0 +1,16 @@
+[package]
+name = "e2ecli"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1.50"
+anyhow = "1.0"
+tracing = "0.1"
+pipebase = { version = "0.1.9", path = "../../pipebase" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.64"
+reqwest = "0.11.4"
+tokio = { version = "1.6.1", features = ["full"] }
