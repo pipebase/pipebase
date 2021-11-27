@@ -4,6 +4,7 @@ members = [
 	"cargo-pipe",
 	"e2e/clients",
 	"e2e/timer",
+	"e2e/ingest_redis",
 	"pipebase",
 	"pipederive",
 	"pipegen",
