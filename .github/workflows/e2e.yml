@@ -14,12 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/timer/docker-compose.yml up -d
-      - name: test
-        run: ./e2e/run.sh -f e2e/timer/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_timer --features itest
   ingest_redis:
     name: Ingest Redis
     runs-on: ubuntu-latest

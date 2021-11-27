@@ -1,5 +1,5 @@
 [package]
-name = "e2ecli"
+name = "e2e_clients"
 version = "0.1.0"
 edition = "2018"
 

@@ -65,7 +65,7 @@ impl HttpClient {
         })
     }
 
-    pub async fn post<U, B>(&self, url: U, body: B) -> anyhow::Result<Response>
+    pub async fn post<U, B>(&self, url: U, body: Option<B>) -> anyhow::Result<Response>
     where
         U: IntoUrl,
         B: Into<Body>,
@@ -79,7 +79,11 @@ impl HttpClient {
             Some(ref token) => req.bearer_auth(token),
             None => req,
         };
-        let resp = req.body(body).send().await?;
+        let req = match body {
+            Some(body) => req.body(body),
+            None => req,
+        };
+        let resp = req.send().await?;
         Ok(resp)
     }
 
