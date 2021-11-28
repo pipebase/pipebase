@@ -1,7 +1,0 @@
-[
-    {
-        "cmd": "docker exec cassandra cqlsh -e \"SELECT JSON key, value, date, timestamp FROM test.records WHERE key = 'foo'\" localhost 9042",
-        "description": "query result",
-        "expected_output_file": "e2e/ingest_cassandra/tests/query_result0.txt"
-    }
-]

@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use pipebase::common::{ConfigInto, FromConfig, FromPath};
 use reqwest::{
     header::{HeaderMap, HeaderName},
-    Body, Client, IntoUrl, Response,
+    Body, Client, IntoUrl, Response, StatusCode,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::collections::HashMap;
@@ -87,6 +87,17 @@ impl HttpClient {
         Ok(resp)
     }
 
+    pub async fn post_assert_ok<U, B>(&self, url: U, body: Option<B>) -> anyhow::Result<()>
+    where
+        U: IntoUrl,
+        B: Into<Body>,
+    {
+        let response = self.post(url, body).await?;
+        let status = response.status();
+        assert_eq!(StatusCode::OK, status);
+        Ok(())
+    }
+
     pub async fn query<U, Q>(&self, url: U, query: Option<Q>) -> anyhow::Result<Response>
     where
         U: IntoUrl,
@@ -137,6 +148,16 @@ impl HttpClient {
         };
         let resp = req.send().await?;
         Ok(resp)
+    }
+
+    pub async fn get_assert_ok<U>(&self, url: U) -> anyhow::Result<()>
+    where
+        U: IntoUrl,
+    {
+        let response = self.get(url).await?;
+        let status = response.status();
+        assert_eq!(StatusCode::OK, status);
+        Ok(())
     }
 
     pub async fn get_json<U, R>(&self, url: U) -> anyhow::Result<R>

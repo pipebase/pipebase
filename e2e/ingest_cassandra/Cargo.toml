@@ -1,18 +1,17 @@
 [package]
-name = "e2e_clients"
+name = "e2e_ingest_cassandra"
 version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-async-trait = "0.1.50"
 anyhow = "1.0"
-tracing = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+e2e_clients = { version = "0.1.0", path = "../clients" }
 pipebase = { version = "0.1.9", path = "../../pipebase" }
+reqwest = "0.11.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.64"
-scylla = { version = "0.2.1" }
-# https://github.com/mitsuhiko/redis-rs/issues/531#issuecomment-907745857
-futures = "0.3"
-redis = { version = "0.20.2", features = ["tokio-comp"] }
-reqwest = "0.11.4"
 tokio = { version = "1.6.1", features = ["full"] }
+
+[features]
+itest = []

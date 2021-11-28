@@ -95,16 +95,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/ingest_cassandra/docker-compose.yml up -d
-      - name: wait for app setup
-        run: sleep ${INITAL_DELAY}
-        env: 
-          INITAL_DELAY: 120
-      - name: test
-        run: ./e2e/run.sh -f e2e/ingest_cassandra/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_ingest_cassandra --features itest
   ingest_elasticsearch:
     name: Ingest Elasticsearch
     runs-on: ubuntu-latest
