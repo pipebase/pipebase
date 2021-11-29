@@ -6,6 +6,7 @@ members = [
 	"e2e/timer",
 	"e2e/ingest_redis",
 	"e2e/ingest_cassandra",
+	"e2e/ingest_mysql",
 	"pipebase",
 	"pipederive",
 	"pipegen",
