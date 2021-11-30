@@ -50,16 +50,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/ingest_postgres/docker-compose.yml up -d
-      - name: wait for app setup
-        run: sleep ${INITAL_DELAY}
-        env: 
-          INITAL_DELAY: 5
-      - name: test
-        run: ./e2e/run.sh -f e2e/ingest_postgres/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_ingest_postgres --features itest
   pubsub_kafka:
     name: Pubsub Kafka
     runs-on: ubuntu-latest

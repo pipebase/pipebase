@@ -1,8 +1,0 @@
-[
-    {
-        "cmd": "docker exec postgres psql -h localhost -p 5432 -U postgres -d postgres -w -c \"SELECT key, value, timestamp FROM records WHERE key = 'foo'\" -A -t",
-        "description": "query records",
-        "expected_output_file": "e2e/ingest_postgres/tests/query_result0.txt",
-        "retry": 1
-    }
-]
