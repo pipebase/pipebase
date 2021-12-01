@@ -9,6 +9,7 @@ members = [
 	"e2e/ingest_mysql",
 	"e2e/ingest_postgres",
 	"e2e/pubsub_rabbitmq",
+	"e2e/pubsub_mqtt",
 	"pipebase",
 	"pipederive",
 	"pipegen",
