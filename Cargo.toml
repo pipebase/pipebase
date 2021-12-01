@@ -8,6 +8,7 @@ members = [
 	"e2e/ingest_cassandra",
 	"e2e/ingest_mysql",
 	"e2e/ingest_postgres",
+	"e2e/pubsub_rabbitmq",
 	"pipebase",
 	"pipederive",
 	"pipegen",
