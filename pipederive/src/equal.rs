@@ -31,7 +31,7 @@ fn is_equal_field(field: &Field) -> bool {
 }
 
 fn equal_fields_token(fields: &[Field]) -> TokenStream {
-    let equal_fields = fields.iter().map(|f| equal_field_token(f));
+    let equal_fields = fields.iter().map(equal_field_token);
     quote! {
         #(#equal_fields)&&*
     }

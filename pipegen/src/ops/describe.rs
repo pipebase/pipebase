@@ -181,8 +181,7 @@ impl PipeGraphDescriber {
 
     fn get_pipe_output_type(&self, pid: &str) -> Option<String> {
         let pipe = self.graph.get_pipe_value(pid).unwrap();
-        pipe.get_output_data_type()
-            .map(|output| data_ty_to_literal(output))
+        pipe.get_output_data_type().map(data_ty_to_literal)
     }
 
     fn format_pipeline_with_output_type(&self, pipeline: Vec<String>) -> Vec<String> {
