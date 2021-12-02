@@ -98,6 +98,39 @@ impl HttpClient {
         Ok(())
     }
 
+    pub async fn put<U, B>(&self, url: U, body: Option<B>) -> anyhow::Result<Response>
+    where
+        U: IntoUrl,
+        B: Into<Body>,
+    {
+        let req = self.client.put(url).headers(self.headers.to_owned());
+        let req = match self.basic_auth {
+            Some(ref basic_auth) => req.basic_auth(basic_auth.username(), basic_auth.password()),
+            None => req,
+        };
+        let req = match self.bearer_auth_token {
+            Some(ref token) => req.bearer_auth(token),
+            None => req,
+        };
+        let req = match body {
+            Some(body) => req.body(body),
+            None => req,
+        };
+        let resp = req.send().await?;
+        Ok(resp)
+    }
+
+    pub async fn put_assert_ok<U, B>(&self, url: U, body: Option<B>) -> anyhow::Result<()>
+    where
+        U: IntoUrl,
+        B: Into<Body>,
+    {
+        let response = self.put(url, body).await?;
+        let status = response.status();
+        assert_eq!(StatusCode::OK, status);
+        Ok(())
+    }
+
     pub async fn query<U, Q>(&self, url: U, query: Option<Q>) -> anyhow::Result<Response>
     where
         U: IntoUrl,
@@ -120,17 +153,28 @@ impl HttpClient {
         Ok(resp)
     }
 
-    pub async fn query_json<U, R, Q>(&self, url: U, query: Option<Q>) -> anyhow::Result<R>
+    pub async fn query_json<U, Q, R>(&self, url: U, query: Option<Q>) -> anyhow::Result<R>
     where
         U: IntoUrl,
-        R: DeserializeOwned,
         Q: Serialize,
+        R: DeserializeOwned,
     {
         let response = self.query(url, query).await?;
         let bytes = response.bytes().await?;
         let bytes = bytes.to_vec();
         let body = serde_json::from_slice::<R>(&bytes)?;
         Ok(body)
+    }
+
+    pub async fn query_assert_ok<U, Q>(&self, url: U, query: Option<Q>) -> anyhow::Result<()>
+    where
+        U: IntoUrl,
+        Q: Serialize,
+    {
+        let response = self.query(url, query).await?;
+        let status = response.status();
+        assert_eq!(StatusCode::OK, status);
+        Ok(())
     }
 
     pub async fn get<U>(&self, url: U) -> anyhow::Result<Response>
