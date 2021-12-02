@@ -1,2 +1,0 @@
-key	value	timestamp
-foo	3	2021-08-21 22:45:54

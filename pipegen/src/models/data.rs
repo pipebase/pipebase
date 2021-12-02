@@ -233,7 +233,7 @@ pub fn data_ty_to_literal(ty: &DataType) -> String {
             format!("[{}; {}]", ty_lit, len)
         }
         DataType::Tuple { tys } => {
-            let tys: Vec<String> = tys.iter().map(|ty| data_ty_to_literal(ty)).collect();
+            let tys: Vec<String> = tys.iter().map(data_ty_to_literal).collect();
             format!("({})", tys.join(", "))
         }
         DataType::HashMap { kty, vty } => {

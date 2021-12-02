@@ -2,6 +2,16 @@
 
 members = [
 	"cargo-pipe",
+	"e2e/clients",
+	"e2e/timer",
+	"e2e/ingest_redis",
+	"e2e/ingest_cassandra",
+	"e2e/ingest_mysql",
+	"e2e/ingest_postgres",
+	"e2e/pubsub_rabbitmq",
+	"e2e/pubsub_mqtt",
+	"e2e/ingest_elasticsearch",
+	"e2e/pubsub_kafka",
 	"pipebase",
 	"pipederive",
 	"pipegen",

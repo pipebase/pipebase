@@ -31,7 +31,7 @@ fn is_hash_field(field: &Field) -> bool {
 }
 
 fn hash_fields_token(fields: &[Field]) -> TokenStream {
-    let hashed_fields = fields.iter().map(|f| hash_field_token(f));
+    let hashed_fields = fields.iter().map(hash_field_token);
     quote! {
         #(#hashed_fields);*
     }

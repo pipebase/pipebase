@@ -14,129 +14,160 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/timer/docker-compose.yml up -d
-      - name: test
-        run: ./e2e/run.sh -f e2e/timer/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_timer --features itest
   ingest_redis:
     name: Ingest Redis
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/ingest_redis/docker-compose.yml up -d
-      - name: wait for app setup
-        run: sleep ${INITAL_DELAY}
-        env: 
-          INITAL_DELAY: 5
-      - name: test
-        run: ./e2e/run.sh -f e2e/ingest_redis/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_ingest_redis --features itest
   ingest_postgres:
     name: Ingest Postgres
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/ingest_postgres/docker-compose.yml up -d
-      - name: wait for app setup
-        run: sleep ${INITAL_DELAY}
-        env: 
-          INITAL_DELAY: 5
-      - name: test
-        run: ./e2e/run.sh -f e2e/ingest_postgres/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_ingest_postgres --features itest
   pubsub_kafka:
     name: Pubsub Kafka
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/pubsub_kafka/docker-compose.yml up -d
-      - name: wait for app setup
-        run: sleep ${INITAL_DELAY}
-        env: 
-          INITAL_DELAY: 30
-      - name: test
-        run: ./e2e/run.sh -f e2e/pubsub_kafka/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_pubsub_kafka --features itest
   ingest_mysql:
     name: Ingest Mysql
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/ingest_mysql/docker-compose.yml up -d
-      - name: wait for app setup
-        run: sleep ${INITAL_DELAY}
-        env: 
-          INITAL_DELAY: 15
-      - name: test
-        run: ./e2e/run.sh -f e2e/ingest_mysql/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_ingest_mysql --features itest
   ingest_cassandra:
     name: Ingest Cassandra
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/ingest_cassandra/docker-compose.yml up -d
-      - name: wait for app setup
-        run: sleep ${INITAL_DELAY}
-        env: 
-          INITAL_DELAY: 120
-      - name: test
-        run: ./e2e/run.sh -f e2e/ingest_cassandra/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_ingest_cassandra --features itest
   ingest_elasticsearch:
     name: Ingest Elasticsearch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/ingest_elasticsearch/docker-compose.yml up -d
-      - name: wait for app setup
-        run: sleep ${INITAL_DELAY}
-        env: 
-          INITAL_DELAY: 30
-      - name: test
-        run: ./e2e/run.sh -f e2e/ingest_elasticsearch/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_ingest_elasticsearch --features itest
   pubsub_mqtt:
     name: Pubsub Mqtt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/pubsub_mqtt/docker-compose.yml up -d
-      - name: wait for app setup
-        run: sleep ${INITAL_DELAY}
-        env: 
-          INITAL_DELAY: 5
-      - name: test
-        run: ./e2e/run.sh -f e2e/pubsub_mqtt/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_pubsub_mqtt --features itest
   pubsub_rabbitmq:
     name: Pubsub Rabbitmq
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: copy project
         run: ./e2e/setup.sh -d .
       - name: run
         run: docker-compose -f e2e/pubsub_rabbitmq/docker-compose.yml up -d
-      - name: wait for app setup
-        run: sleep ${INITAL_DELAY}
-        env: 
-          INITAL_DELAY: 40
-      - name: test
-        run: ./e2e/run.sh -f e2e/pubsub_rabbitmq/entry.json
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: test
+          args: --package e2e_pubsub_rabbitmq --features itest

@@ -111,8 +111,12 @@ impl PipeContext {
         &self.state
     }
 
-    pub fn get_total_run(&self) -> &u64 {
-        &self.total_run
+    pub fn get_total_run(&self) -> u64 {
+        self.total_run
+    }
+
+    pub fn get_failure_run(&self) -> u64 {
+        self.failure_run
     }
 }
 

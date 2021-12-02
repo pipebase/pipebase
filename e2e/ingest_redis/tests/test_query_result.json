@@ -1,8 +1,0 @@
-[
-    {
-        "cmd": "docker exec redis redis-cli get foo",
-        "description": "query result",
-        "expected_output_file": "e2e/ingest_redis/tests/query_result0.txt",
-        "retry": 1
-    }
-]

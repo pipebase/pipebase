@@ -167,7 +167,7 @@ fn expand_derive(derive: &DeriveMeta) -> Meta {
 }
 
 fn expand_derives(derives: &[DeriveMeta]) -> Meta {
-    let metas: Vec<Meta> = derives.iter().map(|derive| expand_derive(derive)).collect();
+    let metas: Vec<Meta> = derives.iter().map(expand_derive).collect();
     Meta::List {
         name: "derive".to_owned(),
         metas,
@@ -420,7 +420,7 @@ pub(crate) fn meta_to_display(meta: &Meta) -> String {
 }
 
 pub(crate) fn metas_to_display(metas: &[Meta]) -> String {
-    let metas_display: Vec<String> = metas.iter().map(|meta| meta_to_display(meta)).collect();
+    let metas_display: Vec<String> = metas.iter().map(meta_to_display).collect();
     metas_display.join(" ")
 }
 

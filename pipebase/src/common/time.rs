@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 #[derive(Clone, Deserialize)]
@@ -22,7 +22,7 @@ impl From<Period> for Duration {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum Timestamp {
     Millis(u64),
     Secs(u64),

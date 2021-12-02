@@ -1,8 +1,0 @@
-[
-    {
-        "cmd": "docker exec redis redis-cli ping",
-        "description": "redis is up",
-        "expected_output_file": "e2e/ingest_redis/tests/setup0.txt",
-        "retry": 1
-    }
-]
