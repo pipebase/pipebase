@@ -11,6 +11,7 @@ members = [
 	"e2e/pubsub_rabbitmq",
 	"e2e/pubsub_mqtt",
 	"e2e/ingest_elasticsearch",
+	"e2e/pubsub_kafka",
 	"pipebase",
 	"pipederive",
 	"pipegen",
