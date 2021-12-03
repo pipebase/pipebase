@@ -20,9 +20,9 @@ impl<'a> ContextStore<'a> {
         for (name, context) in contexts {
             store.store_context(name, context);
         }
-        info!("context store {} run ...", self.name);
+        info!(name = self.name, ty = "cstore", "run ...");
         store.run().await?;
-        info!("context store {} exit ...", self.name);
+        info!(name = self.name, ty = "cstore", "exit ...");
         Ok(())
     }
 }

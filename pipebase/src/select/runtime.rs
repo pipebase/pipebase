@@ -39,12 +39,16 @@ where
         txs: Vec<Sender<T>>,
         mut rx: Option<Receiver<T>>,
     ) -> Result<()> {
-        assert!(rx.is_some(), "selector {} has no upstreams", self.name);
-        assert!(!txs.is_empty(), "selector {} has no downstreams", self.name);
+        assert!(rx.is_some(), "selector '{}' has no upstreams", self.name);
+        assert!(
+            !txs.is_empty(),
+            "selector '{}' has no downstreams",
+            self.name
+        );
         let mut selector = config.config_into().await?;
         let rx = rx.as_mut().unwrap();
         let mut txs = senders_as_map(txs);
-        info!("selector {} run ...", self.name);
+        info!(name = self.name, ty = "selector", "run ...");
         loop {
             self.context.set_state(State::Receive);
             // if all receiver dropped, sender drop as well
@@ -66,7 +70,7 @@ where
             let selected = match selector.select(&t, &candidates).await {
                 Ok(selected) => selected,
                 Err(err) => {
-                    error!("selector {} error '{:#?}'", self.name, err);
+                    error!(name = self.name, ty = "selector", "error '{:#?}'", err);
                     self.context.inc_failure_run();
                     self.context.inc_total_run();
                     send_pipe_error(self.etx.as_ref(), PipeError::new(self.name.to_owned(), err))
@@ -87,12 +91,12 @@ where
                     )
                 })
                 .collect();
-            assert!(t_replicas.is_empty(), "replica left over");
+            assert!(t_replicas.is_empty(), "replica leftover");
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
             self.context.inc_total_run();
         }
-        info!("selector {} exit ...", self.name);
+        info!(name = self.name, ty = "selector", "exit ...");
         self.context.set_state(State::Done);
         Ok(())
     }

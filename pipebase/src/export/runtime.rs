@@ -34,11 +34,15 @@ where
         txs: Vec<Sender<()>>,
         mut rx: Option<Receiver<T>>,
     ) -> Result<()> {
-        assert!(rx.is_some(), "sink {} has no upstreams", self.name);
-        assert!(txs.is_empty(), "sink {} has invalid downstreams", self.name);
+        assert!(rx.is_some(), "exporter '{}' has no upstreams", self.name);
+        assert!(
+            txs.is_empty(),
+            "exporter '{}' has invalid downstreams",
+            self.name
+        );
         let mut exporter = config.config_into().await?;
         let rx = rx.as_mut().unwrap();
-        info!("exporter {} run ...", self.name);
+        info!(name = self.name, ty = "exporter", "run ...");
         loop {
             self.context.set_state(State::Receive);
             let t = match rx.recv().await {
@@ -51,7 +55,7 @@ where
             match exporter.export(t).await {
                 Ok(_) => (),
                 Err(err) => {
-                    error!("exporter {} error '{:#?}'", self.name, err);
+                    error!(name = self.name, ty = "exporter", "error '{:#?}'", err);
                     self.context.inc_failure_run();
                     send_pipe_error(self.etx.as_ref(), PipeError::new(self.name.to_owned(), err))
                         .await
@@ -59,7 +63,7 @@ where
             };
             self.context.inc_total_run();
         }
-        info!("exporter {} exit ...", self.name);
+        info!(name = self.name, ty = "exporter", "exit ...");
         self.context.set_state(State::Done);
         Ok(())
     }

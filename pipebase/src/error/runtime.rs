@@ -1,7 +1,7 @@
 use super::HandleError;
 use crate::common::{ConfigInto, PipeError, Result};
 use tokio::sync::mpsc::Receiver;
-use tracing::error;
+use tracing::{error, info};
 
 pub struct ErrorHandler {}
 
@@ -12,6 +12,7 @@ impl ErrorHandler {
         H: HandleError<C>,
     {
         let mut handler = config.config_into().await?;
+        info!("error handler run ...");
         while let Some(pipe_error) = rx.recv().await {
             match handler.handle_error(pipe_error).await {
                 Ok(_) => continue,

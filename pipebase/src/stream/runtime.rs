@@ -39,17 +39,27 @@ where
         txs: Vec<Sender<U>>,
         mut rx: Option<Receiver<T>>,
     ) -> Result<()> {
-        assert!(rx.is_some(), "streamer {} has no upstreams", self.name);
-        assert!(!txs.is_empty(), "streamer {} has no downstreams", self.name);
+        assert!(rx.is_some(), "streamer '{}' has no upstreams", self.name);
+        assert!(
+            !txs.is_empty(),
+            "streamer '{}' has no downstreams",
+            self.name
+        );
         let (tx0, mut rx0) = channel::<U>(1024);
         let mut streamer = config.config_into().await?;
         streamer.set_sender(tx0);
         let name = self.name.to_owned();
         let context = self.context.clone();
         let etx = self.etx.clone();
-        let streamer_loop = tokio::spawn(async move {
+        // start stream
+        let join_stream = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
-            info!("streamer {} run ...", name);
+            info!(
+                name = name.as_str(),
+                ty = "streamer",
+                thread = "stream",
+                "run ..."
+            );
             loop {
                 context.set_state(State::Receive);
                 let t = match (*rx).recv().await {
@@ -60,18 +70,37 @@ where
                 match streamer.stream(t).await {
                     Ok(_) => (),
                     Err(err) => {
-                        error!("streamer {} error '{:#?}'", name, err);
+                        error!(
+                            name = name.as_str(),
+                            ty = "streamer",
+                            thread = "stream",
+                            "error '{:#?}'",
+                            err
+                        );
                         send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await;
                         context.inc_failure_run();
                     }
                 }
                 context.inc_total_run();
             }
-            info!("streamer {} exit ...", name);
+            info!(
+                name = name.as_str(),
+                ty = "streamer",
+                thread = "stream",
+                "exit ..."
+            );
             context.set_state(State::Done);
         });
         let mut txs = senders_as_map(txs);
-        let sender_loop = tokio::spawn(async move {
+        let name = self.name.to_owned();
+        // start send
+        let join_send = tokio::spawn(async move {
+            info!(
+                name = name.as_str(),
+                ty = "streamer",
+                thread = "send",
+                "run ..."
+            );
             loop {
                 // if all receiver dropped, sender drop as well
                 match txs.is_empty() {
@@ -96,16 +125,28 @@ where
                         )
                     })
                     .collect();
-                assert!(u_replicas.is_empty(), "replica left over");
+                assert!(u_replicas.is_empty(), "replica leftover");
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
             }
+            info!(
+                name = name.as_str(),
+                ty = "streamer",
+                thread = "send",
+                "exit ..."
+            );
         });
-        // join listener and loop
-        match tokio::spawn(async move { tokio::join!(streamer_loop, sender_loop) }).await {
+        // join stream and send
+        match tokio::spawn(async move { tokio::join!(join_stream, join_send) }).await {
             Ok(_) => (),
             Err(err) => {
-                error!("streamer join error {:#?}", err)
+                error!(
+                    name = self.name,
+                    ty = "streamer",
+                    thread = "join",
+                    "join error '{:#?}'",
+                    err
+                )
             }
         }
         Ok(())
