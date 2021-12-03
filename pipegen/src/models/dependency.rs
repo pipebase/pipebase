@@ -162,13 +162,6 @@ pub(crate) fn default_tracing_dependency() -> Dependency {
         .build()
 }
 
-pub(crate) fn default_tracing_subscriber_dependency() -> Dependency {
-    DependencyBuilder::new()
-        .name("tracing-subscriber".to_owned())
-        .version("0.2".to_owned())
-        .build()
-}
-
 pub(crate) fn default_avro_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipeavro".to_owned())

@@ -1,6 +1,6 @@
 use super::constants::{
     APP_OBJECT_NAME, BOOTSTRAP_FUNCTION_META, BOOTSTRAP_FUNCTION_NAME, BOOTSTRAP_MODULE_META_PATH,
-    DEFAULT_APP_OBJECT, PIPEBASE_MAIN, TRACING_INSTRUMENT, TRACING_SUBSCRIBER_FMT_INIT,
+    DEFAULT_APP_OBJECT, PIPEBASE_MAIN, TRACING_INSTRUMENT,
 };
 use super::context::ContextStore;
 use super::dependency::{CrateVisitor, Dependency, UseCrate};
@@ -11,8 +11,8 @@ use super::utils::indent_literal;
 use super::{Entity, EntityAccept, Object, VisitEntity};
 use crate::error::*;
 use crate::models::{
-    default_pipebase_dependency, default_tokio_dependency, default_tracing_dependency,
-    default_tracing_subscriber_dependency, Block, DataType, FunctionBuilder, Rhs, Statement,
+    default_pipebase_dependency, default_tokio_dependency, default_tracing_dependency, Block,
+    DataType, FunctionBuilder, Rhs, Statement,
 };
 use crate::ops::AppValidator;
 use crate::ops::{AppDescriber, AppGenerator};
@@ -157,7 +157,6 @@ impl App {
             default_pipebase_dependency(),
             default_tokio_dependency(),
             default_tracing_dependency(),
-            default_tracing_subscriber_dependency(),
         ]
     }
 
@@ -222,10 +221,7 @@ impl App {
                 name: TRACING_INSTRUMENT.to_owned(),
             },
         ];
-        let block = Block::new(vec![Statement::new(
-            None,
-            Rhs::Expr(TRACING_SUBSCRIBER_FMT_INIT.to_owned()),
-        )]);
+        let block = Block::new(vec![]);
         let function = FunctionBuilder::new()
             .name("main".to_owned())
             .metas(metas)

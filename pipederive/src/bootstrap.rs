@@ -248,6 +248,7 @@ pub fn impl_bootstrap_macro(_args: Vec<NestedMeta>, mut function: ItemFn) -> Tok
     let brace_token = function.block.brace_token;
     function.block = syn::parse2(quote_spanned! { end =>
         {
+            init_tracing_subscriber();
             let mut app = {
                 #body
             };
