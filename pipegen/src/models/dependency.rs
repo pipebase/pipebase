@@ -150,7 +150,7 @@ pub(crate) fn default_tokio_dependency() -> Dependency {
 pub(crate) fn default_pipebase_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipebase".to_owned())
-        .version("0.1.9".to_owned())
+        .version("0.1.10".to_owned())
         .modules(vec!["pipebase::prelude::*".to_owned()])
         .build()
 }
