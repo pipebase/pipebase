@@ -1,6 +1,6 @@
 [package]
 name = "pipegen"
-version = "0.1.16"
+version = "0.1.17"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"

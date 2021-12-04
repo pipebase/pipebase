@@ -132,7 +132,7 @@ mod tests {
         }
         for i in 0..9 {
             let count = counts.get(&(i as u128)).unwrap();
-            assert!(*count > 1 && *count <= 3)
+            assert!(*count > 1 && *count <= 4)
         }
     }
 }

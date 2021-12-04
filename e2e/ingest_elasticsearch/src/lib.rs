@@ -18,7 +18,7 @@ mod tests {
     const TEST_INDEX: &str = "/records";
     const TEST_INDEX_SEARCH: &str = "/records/_search";
     const PERIOD_FOR_BOOTSTRAP: u64 = 30000;
-    const PERIOD_FOR_COMPLETE: u64 = 3000;
+    const PERIOD_FOR_COMPLETE: u64 = 8000;
 
     #[derive(Serialize, Deserialize)]
     struct Record {
@@ -36,6 +36,7 @@ mod tests {
     #[derive(Serialize)]
     struct DocumentQuery {
         q: String,
+        size: usize,
     }
 
     #[derive(Deserialize)]
@@ -45,7 +46,13 @@ mod tests {
     }
 
     #[derive(Deserialize)]
+    struct DocumentHitsTotal {
+        value: usize,
+    }
+
+    #[derive(Deserialize)]
     struct DocumentHits<T> {
+        total: DocumentHitsTotal,
         hits: Vec<DocumentHit<T>>,
     }
 
@@ -85,11 +92,12 @@ mod tests {
             .put_assert_ok::<String, String>(index_url, None)
             .await;
         // ingest record
-        for i in 0..10 {
+        let count: usize = 10;
+        for i in 0..count {
             let record = RecordDocument {
-                id: i,
+                id: i as u32,
                 key: format!("{}", i),
-                value: i,
+                value: i as u32,
             };
             let ingest_url = build_url(INGESTION_SERVER_ADDRESS, INGESTION_SERVER_INGEST);
             let body = serde_json::to_vec(&record)?;
@@ -145,6 +153,7 @@ mod tests {
         let search_url = build_url(ELASTIC_SEARCH_ADDRESS, TEST_INDEX_SEARCH);
         let document_query = DocumentQuery {
             q: String::from("key:*"),
+            size: count + 1, // avoid partial result
         };
         let query_result = http_client
             .query_json::<String, DocumentQuery, DocumentQueryResult<Record>>(
@@ -152,6 +161,8 @@ mod tests {
                 Some(document_query),
             )
             .await?;
+        let total = query_result.hits.total.value;
+        assert_eq!(count, total);
         // expect document id is identical to record key
         let hits = query_result.hits.hits;
         for hit in hits {

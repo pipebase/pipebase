@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use super::Collect;
 use crate::common::{
-    filter_senders_by_indices, join_error, replicate, send_pipe_error, senders_as_map, spawn_send,
+    filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
     wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
     SubscribeError,
 };
@@ -46,10 +46,10 @@ where
         txs: Vec<Sender<U>>,
         mut rx: Option<Receiver<T>>,
     ) -> Result<()> {
-        assert!(rx.is_some(), "collector {} has no upstreams", self.name);
+        assert!(rx.is_some(), "collector '{}' has no upstreams", self.name);
         assert!(
             !txs.is_empty(),
-            "collector {} has no downstreams",
+            "collector '{}' has no downstreams",
             self.name
         );
         let collector: Arc<Mutex<V>> = Arc::new(Mutex::new(config.config_into().await?));
@@ -60,8 +60,14 @@ where
         let exit_f_clone = exit_f.to_owned();
         let name = self.name.to_owned();
         let etx = self.etx.clone();
-        let collect_loop = tokio::spawn(async move {
+        let join_collect = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
+            info!(
+                name = name.as_str(),
+                ty = "collector",
+                thread = "collect",
+                "run ..."
+            );
             loop {
                 if exit_f_clone.load(Ordering::Acquire) {
                     break;
@@ -77,22 +83,39 @@ where
                 match c.collect(t).await {
                     Ok(()) => continue,
                     Err(err) => {
-                        error!("collector {} collect error '{}'", name, err);
+                        error!(
+                            name = name.as_str(),
+                            ty = "collector",
+                            thread = "collect",
+                            "error '{}' ...",
+                            err
+                        );
                         send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await;
                     }
                 }
             }
+            info!(
+                name = name.as_str(),
+                ty = "collector",
+                thread = "collect",
+                "exit ..."
+            );
         });
         let mut txs = senders_as_map(txs);
         let context = self.get_context();
         let name = self.name.to_owned();
         let etx = self.etx.clone();
-        let flush_loop = tokio::spawn(async move {
+        let join_flush = tokio::spawn(async move {
+            info!(
+                name = name.as_str(),
+                ty = "collector",
+                thread = "flush",
+                "run ..."
+            );
             let mut interval = {
                 let c = collector.lock().await;
                 c.get_flush_interval()
             };
-            info!("collector {} run ...", name);
             loop {
                 context.set_state(State::Receive);
                 // if all receiver dropped, sender drop as well
@@ -108,7 +131,13 @@ where
                     let u = match c.flush().await {
                         Ok(u) => u,
                         Err(err) => {
-                            error!("collector {} flush error '{:#?}'", name, err);
+                            error!(
+                                name = name.as_str(),
+                                ty = "collector",
+                                thread = "flush",
+                                "error '{}' ...",
+                                err
+                            );
                             context.inc_failure_run();
                             context.inc_total_run();
                             send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err))
@@ -133,7 +162,7 @@ where
                         )
                     })
                     .collect();
-                assert!(u_replicas.is_empty(), "replica left over");
+                assert!(u_replicas.is_empty(), "replica leftover");
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
                 context.inc_total_run();
@@ -141,15 +170,28 @@ where
                     break;
                 }
             }
-            info!("collector {} exit ...", name);
+            info!(
+                name = name.as_str(),
+                ty = "collector",
+                thread = "flush",
+                "exit ..."
+            );
             exit_f.store(true, Ordering::Release);
             context.set_state(State::Done);
         });
-        let join_all = tokio::spawn(async move { tokio::join!(collect_loop, flush_loop) });
-        match join_all.await {
-            Ok(_) => Ok(()),
-            Err(err) => Err(join_error(err)),
+        match tokio::spawn(async move { tokio::join!(join_collect, join_flush) }).await {
+            Ok(_) => (),
+            Err(err) => {
+                error!(
+                    name = self.name,
+                    ty = "collector",
+                    thread = "join",
+                    "join error '{:#?}'",
+                    err
+                )
+            }
         }
+        Ok(())
     }
 }
 

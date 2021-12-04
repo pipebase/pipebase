@@ -40,11 +40,11 @@ where
         txs: Vec<Sender<U>>,
         rx: Option<Receiver<()>>,
     ) -> Result<()> {
-        assert!(rx.is_none(), "poller {} has invalid upstreams", self.name);
-        assert!(!txs.is_empty(), "poller {} has no downstreams", self.name);
+        assert!(rx.is_none(), "poller '{}' has invalid upstreams", self.name);
+        assert!(!txs.is_empty(), "poller '{}' has no downstreams", self.name);
         let mut poller = config.config_into().await?;
         let mut txs = senders_as_map(txs);
-        info!("source {} run ...", self.name);
+        info!(name = self.name, ty = "poller", "run ...");
         let delay = poller.get_initial_delay();
         let mut interval = poller.get_interval();
         // initial delay
@@ -64,7 +64,7 @@ where
             let resp = match resp {
                 Ok(resp) => resp,
                 Err(err) => {
-                    error!("poller {} error '{:#?}'", self.name, err);
+                    error!(name = self.name, ty = "poller", "error '{:#?}'", err);
                     self.context.inc_total_run();
                     self.context.inc_failure_run();
                     // wait for next poll period
@@ -97,7 +97,7 @@ where
                     )
                 })
                 .collect();
-            assert!(u_replicas.is_empty(), "replica left over");
+            assert!(u_replicas.is_empty(), "replica leftover");
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
             self.context.inc_total_run();
@@ -105,7 +105,7 @@ where
             self.context.set_state(State::Poll);
             interval.tick().await;
         }
-        info!("poller {} exit ...", self.name);
+        info!(name = self.name, ty = "poller", "exit ...");
         self.context.set_state(State::Done);
         Ok(())
     }

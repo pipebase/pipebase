@@ -150,7 +150,7 @@ pub(crate) fn default_tokio_dependency() -> Dependency {
 pub(crate) fn default_pipebase_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipebase".to_owned())
-        .version("0.1.9".to_owned())
+        .version("0.1.10".to_owned())
         .modules(vec!["pipebase::prelude::*".to_owned()])
         .build()
 }
@@ -159,13 +159,6 @@ pub(crate) fn default_tracing_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("tracing".to_owned())
         .version("0.1".to_owned())
-        .build()
-}
-
-pub(crate) fn default_tracing_subscriber_dependency() -> Dependency {
-    DependencyBuilder::new()
-        .name("tracing-subscriber".to_owned())
-        .version("0.2".to_owned())
         .build()
 }
 

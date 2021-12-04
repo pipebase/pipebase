@@ -38,30 +38,59 @@ where
         txs: Vec<Sender<U>>,
         rx: Option<Receiver<()>>,
     ) -> Result<()> {
-        assert!(rx.is_none(), "listener {} has invalid upstreams", self.name);
-        assert!(!txs.is_empty(), "listener {} has no downstreams", self.name);
-        // connect listener
+        assert!(
+            rx.is_none(),
+            "listener '{}' has invalid upstreams",
+            self.name
+        );
+        assert!(
+            !txs.is_empty(),
+            "listener '{}' has no downstreams",
+            self.name
+        );
         let (tx0, mut rx0) = channel::<U>(1024);
         let mut listener = config.config_into().await?;
         listener.set_sender(tx0);
         let name = self.name.to_owned();
         let etx = self.etx.clone();
-        // start listener
-        let join_listener = tokio::spawn(async move {
+        // start listen
+        let join_listen = tokio::spawn(async move {
+            info!(
+                name = name.as_str(),
+                ty = "listener",
+                thread = "listen",
+                "run ..."
+            );
             match listener.run().await {
-                Ok(_) => info!("listener exit ..."),
+                Ok(_) => info!(
+                    name = name.as_str(),
+                    ty = "listener",
+                    thread = "listen",
+                    "exit ..."
+                ),
                 Err(err) => {
-                    error!("listener {} exit with error '{:#?}'", name, err);
+                    error!(
+                        name = name.as_str(),
+                        ty = "listener",
+                        thread = "listen",
+                        "exit with error '{:#?}'",
+                        err
+                    );
                     send_pipe_error(etx.as_ref(), PipeError::new(name, err)).await
                 }
             };
         });
-        // start event loop
+        // start send
         let mut txs = senders_as_map(txs);
         let context = self.context.clone();
         let name = self.name.to_owned();
-        let join_send_loop = tokio::spawn(async move {
-            info!("listener {} run ...", name);
+        let join_send = tokio::spawn(async move {
+            info!(
+                name = name.as_str(),
+                ty = "listener",
+                thread = "send",
+                "run ..."
+            );
             loop {
                 context.set_state(State::Receive);
                 // if all receiver dropped, sender drop as well
@@ -88,19 +117,30 @@ where
                         )
                     })
                     .collect();
-                assert!(u_replicas.is_empty(), "replica left over");
+                assert!(u_replicas.is_empty(), "replica leftover");
                 let drop_sender_indices = wait_join_handles(jhs).await;
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
                 context.inc_total_run();
             }
-            info!("listener {} exit ...", name);
+            info!(
+                name = name.as_str(),
+                ty = "listener",
+                thread = "send",
+                "exit ..."
+            );
             context.set_state(State::Done);
         });
-        // join listener and loop
-        match tokio::spawn(async move { tokio::join!(join_listener, join_send_loop) }).await {
+        // join listen and send
+        match tokio::spawn(async move { tokio::join!(join_listen, join_send) }).await {
             Ok(_) => (),
             Err(err) => {
-                error!("listener join error {:#?}", err)
+                error!(
+                    name = self.name,
+                    ty = "listener",
+                    thread = "join",
+                    "join error {:#?}",
+                    err
+                )
             }
         }
         Ok(())
