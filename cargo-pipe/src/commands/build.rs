@@ -8,17 +8,17 @@ pub fn cmd() -> Cmd {
     Cmd::new("build").about("Cargo build pipe app").args(vec![
         Arg::new("name")
             .short('n')
-            .about("Specify the app name")
+            .help("Specify the app name")
             .takes_value(true),
         Arg::new("out")
             .short('o')
-            .about("Specify output binary path")
+            .help("Specify output binary path")
             .takes_value(true),
         Arg::new("release")
             .short('r')
-            .about("Specify build in release mode with optimizations"),
-        Arg::new("debug").short('d').about("Enable debug"),
-        Arg::new("verbose").short('v').about("Enable verbose"),
+            .help("Specify build in release mode with optimizations"),
+        Arg::new("debug").short('d').help("Enable debug"),
+        Arg::new("verbose").short('v').help("Enable verbose"),
     ])
 }
 

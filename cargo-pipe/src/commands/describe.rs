@@ -10,21 +10,21 @@ pub fn cmd() -> Cmd {
         .args(vec![
             Arg::new("all")
                 .short('a')
-                .about("List all pipes and objects in pipe manifest"),
+                .help("List all pipes and objects in pipe manifest"),
             Arg::new("graph")
                 .short('g')
-                .about("List basic pipe graph info: source / sink / disjoint components"),
+                .help("List basic pipe graph info: source / sink / disjoint components"),
             Arg::new("pipe")
                 .short('p')
-                .about("Describe pipe in pipe manifest")
+                .help("Describe pipe in pipe manifest")
                 .takes_value(true),
             Arg::new("object")
                 .short('o')
-                .about("Describe object in pipe manifest")
+                .help("Describe object in pipe manifest")
                 .takes_value(true),
             Arg::new("line")
                 .short('l')
-                .about("Describe pipelines in pipe manifest given pipe name")
+                .help("Describe pipelines in pipe manifest given pipe name")
                 .takes_value(true),
         ])
 }

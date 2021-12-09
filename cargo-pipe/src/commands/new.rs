@@ -9,7 +9,7 @@ pub fn cmd() -> Cmd {
         .about("Create a new pipe app")
         .args(vec![Arg::new("name")
             .short('n')
-            .about("Specify the app name")
+            .help("Specify the app name")
             .takes_value(true)])
 }
 
