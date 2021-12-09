@@ -10,10 +10,10 @@ pub fn cmd() -> Cmd {
         .args(vec![
             Arg::new("name")
                 .short('n')
-                .about("Specify the app name")
+                .help("Specify the app name")
                 .takes_value(true),
-            Arg::new("verbose").short('v').about("Enable verbose"),
-            Arg::new("debug").short('d').about("Enable debug"),
+            Arg::new("verbose").short('v').help("Enable verbose"),
+            Arg::new("debug").short('d').help("Enable debug"),
         ])
 }
 

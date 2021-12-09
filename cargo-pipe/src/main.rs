@@ -35,11 +35,11 @@ fn run() -> CmdResult<()> {
             clap::Arg::new("directory")
                 .short('d')
                 .takes_value(true)
-                .about("Absolute path to working directory"),
+                .help("Absolute path to working directory"),
             clap::Arg::new("manifest")
                 .short('m')
                 .takes_value(true)
-                .about("Manifest file name in working directory"),
+                .help("Manifest file name in working directory"),
         ])
         .subcommands(commands::cmds())
         .get_matches_from(cmd_and_args);

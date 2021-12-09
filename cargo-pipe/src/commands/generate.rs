@@ -10,11 +10,11 @@ pub fn cmd() -> Cmd {
         .args(vec![
             Arg::new("name")
                 .short('n')
-                .about("Specify the app name")
+                .help("Specify the app name")
                 .takes_value(true),
             Arg::new("line")
                 .short('l')
-                .about("Specify the pipe name, so that only pipelines contain pipe generated")
+                .help("Specify the pipe name, so that only pipelines contain pipe generated")
                 .takes_value(true),
         ])
 }

@@ -10,13 +10,13 @@ pub fn cmd() -> Cmd {
         .args(vec![
             Arg::new("pipe")
                 .short('p')
-                .about("Validate pipes in pipe manifest"),
+                .help("Validate pipes in pipe manifest"),
             Arg::new("object")
                 .short('o')
-                .about("Validate objects in pipe manifest"),
+                .help("Validate objects in pipe manifest"),
             Arg::new("cstore")
                 .short('c')
-                .about("Validate context stores in pipe manifest"),
+                .help("Validate context stores in pipe manifest"),
         ])
 }
 

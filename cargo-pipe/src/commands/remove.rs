@@ -9,7 +9,7 @@ pub fn cmd() -> Cmd {
         .about("Remove pipe app")
         .args(vec![Arg::new("name")
             .short('n')
-            .about("app name")
+            .help("app name")
             .takes_value(true)])
 }
 
