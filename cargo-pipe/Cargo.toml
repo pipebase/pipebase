@@ -1,6 +1,6 @@
 [package]
 name = "cargo-pipe"
-version = "0.1.17"
+version = "0.1.18"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
