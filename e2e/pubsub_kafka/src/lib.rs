@@ -15,7 +15,7 @@ mod tests {
     const INGESTION_SERVER_ADDRESS: &str = "http://127.0.0.1:9000";
     const REDIS_CLIENT_CONFIG_FILE: &str = "resources/rediscli.yml";
     const PERIOD_FOR_BOOTSTRAP: u64 = 40000;
-    const PERIOD_FOR_COMPLETE: u64 = 3000;
+    const PERIOD_FOR_COMPLETE: u64 = 6000;
 
     #[derive(Serialize)]
     struct Record {
@@ -24,7 +24,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pubsub_rabbitmq() -> anyhow::Result<()> {
+    async fn test_pubsub_kafka() -> anyhow::Result<()> {
         // setup clients
         let redis_client_config = RedisClientConfig::from_path(REDIS_CLIENT_CONFIG_FILE).await?;
         let http_client_config = HttpClientConfig::from_path(HTTP_CLIENT_CONFIG_FILE).await?;
