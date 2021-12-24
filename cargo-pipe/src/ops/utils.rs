@@ -7,7 +7,7 @@ use std::path::Path;
 
 pub(crate) fn read_pipe_manifest(manifest_path: &Path, printer: &mut Printer) -> CmdResult<App> {
     printer.status(&"Parse", manifest_path.to_str().unwrap())?;
-    let app = match App::read_from_path(manifest_path) {
+    let app = match App::from_path(manifest_path) {
         Ok(app) => app,
         Err(err) => {
             printer.error(err.to_string())?;

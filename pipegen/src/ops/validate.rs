@@ -562,7 +562,7 @@ mod tests {
     #[test]
     fn test_bad_name_case_pipe() {
         let manifest_path = Path::new("resources/manifest/bad_name_case_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -570,7 +570,7 @@ mod tests {
     #[test]
     fn test_duplicate_name_pipe() {
         let manifest_path = Path::new("resources/manifest/duplicate_name_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -578,7 +578,7 @@ mod tests {
     #[test]
     fn test_invalid_source_dependency_pipe() {
         let manifest_path = Path::new("resources/manifest/invalid_source_dependency_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -586,7 +586,7 @@ mod tests {
     #[test]
     fn test_non_exists_upstream_pipe() {
         let manifest_path = Path::new("resources/manifest/non_exists_upstream_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -594,7 +594,7 @@ mod tests {
     #[test]
     fn test_no_upstream_downstream_pipe() {
         let manifest_path = Path::new("resources/manifest/no_upstream_downstream_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -602,7 +602,7 @@ mod tests {
     #[test]
     fn test_cycle_dependency_pipe() {
         let manifest_path = Path::new("resources/manifest/cycle_dependency_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -610,7 +610,7 @@ mod tests {
     #[test]
     fn test_bad_object_ty_case_pipe() {
         let manifest_path = Path::new("resources/manifest/bad_object_ty_case_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -618,7 +618,7 @@ mod tests {
     #[test]
     fn test_duplicate_object_ty_pipe() {
         let manifest_path = Path::new("resources/manifest/duplicate_object_ty_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -626,7 +626,7 @@ mod tests {
     #[test]
     fn test_unnamed_data_field_pipe() {
         let manifest_path = Path::new("resources/manifest/unnamed_data_field_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -634,7 +634,7 @@ mod tests {
     #[test]
     fn test_duplicate_data_field_name_pipe() {
         let manifest_path = Path::new("resources/manifest/duplicate_data_field_name_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -642,7 +642,7 @@ mod tests {
     #[test]
     fn test_non_exists_object_pipe() {
         let manifest_path = Path::new("resources/manifest/non_exists_object_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -650,7 +650,7 @@ mod tests {
     #[test]
     fn test_invalid_exporter_output() {
         let manifest_path = Path::new("resources/manifest/invalid_exporter_output.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }
@@ -658,7 +658,7 @@ mod tests {
     #[test]
     fn test_pipe_output_not_found() {
         let manifest_path = Path::new("resources/manifest/pipe_output_not_found.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         let e = app.validate().expect_err("expect invalid");
         println!("{}", e)
     }

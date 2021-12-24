@@ -259,7 +259,7 @@ mod tests {
     #[test]
     fn test_complex_object_pipe() {
         let manifest_path = Path::new("resources/manifest/complex_object_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         app.validate().expect("expect valid");
         app.print()
     }
@@ -267,7 +267,7 @@ mod tests {
     #[test]
     fn test_print_timer_tick_pipe() {
         let manifest_path = Path::new("resources/manifest/print_timer_tick_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         app.validate().expect("expect valid");
         app.print()
     }
@@ -275,7 +275,7 @@ mod tests {
     #[test]
     fn test_projection_pipe() {
         let manifest_path = Path::new("resources/manifest/projection_pipe.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         app.validate().expect("expect valid");
         app.print()
     }
@@ -283,7 +283,7 @@ mod tests {
     #[test]
     fn test_object_metas() {
         let manifest_path = Path::new("resources/manifest/object_metas.yml");
-        let app = App::read_from_path(manifest_path).unwrap();
+        let app = App::from_path(manifest_path).unwrap();
         app.validate().expect("expect valid");
         app.print()
     }
