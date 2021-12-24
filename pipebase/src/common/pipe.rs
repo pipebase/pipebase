@@ -12,12 +12,7 @@ where
     R: FromConfig<C>,
     C: ConfigInto<R>,
 {
-    async fn run(
-        &mut self,
-        config: C,
-        txs: Vec<Sender<U>>,
-        mut rx: Option<Receiver<T>>,
-    ) -> Result<()>;
+    async fn run(self, config: C, txs: Vec<Sender<U>>, mut rx: Option<Receiver<T>>) -> Result<()>;
 }
 
 // Sender Operations

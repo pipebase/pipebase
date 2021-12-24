@@ -34,24 +34,22 @@ where
     P: Poll<U, C>,
     C: ConfigInto<P> + Send + Sync + 'static,
 {
-    async fn run(
-        &mut self,
-        config: C,
-        txs: Vec<Sender<U>>,
-        rx: Option<Receiver<()>>,
-    ) -> Result<()> {
-        assert!(rx.is_none(), "poller '{}' has invalid upstreams", self.name);
-        assert!(!txs.is_empty(), "poller '{}' has no downstreams", self.name);
+    async fn run(self, config: C, txs: Vec<Sender<U>>, rx: Option<Receiver<()>>) -> Result<()> {
+        let name = self.name;
+        let context = self.context;
+        let etx = self.etx;
+        assert!(rx.is_none(), "poller '{}' has invalid upstreams", name);
+        assert!(!txs.is_empty(), "poller '{}' has no downstreams", name);
         let mut poller = config.config_into().await?;
         let mut txs = senders_as_map(txs);
-        info!(name = self.name, ty = "poller", "run ...");
+        info!(name = name, ty = "poller", "run ...");
         let delay = poller.get_initial_delay();
         let mut interval = poller.get_interval();
         // initial delay
         sleep(delay).await;
         // first tick start immediately
         interval.tick().await;
-        self.context.set_state(State::Poll);
+        context.set_state(State::Poll);
         loop {
             // if all receiver dropped, sender drop as well
             match txs.is_empty() {
@@ -64,12 +62,11 @@ where
             let resp = match resp {
                 Ok(resp) => resp,
                 Err(err) => {
-                    error!(name = self.name, ty = "poller", "error '{:#?}'", err);
-                    self.context.inc_total_run();
-                    self.context.inc_failure_run();
+                    error!(name = name, ty = "poller", "error '{:#?}'", err);
+                    context.inc_total_run();
+                    context.inc_failure_run();
                     // wait for next poll period
-                    send_pipe_error(self.etx.as_ref(), PipeError::new(self.name.to_owned(), err))
-                        .await;
+                    send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await;
                     interval.tick().await;
                     continue;
                 }
@@ -86,7 +83,7 @@ where
                     continue;
                 }
             };
-            self.context.set_state(State::Send);
+            context.set_state(State::Send);
             let mut u_replicas = replicate(u, txs.len());
             let jhs: HashMap<usize, JoinHandle<core::result::Result<(), SendError<U>>>> = txs
                 .iter()
@@ -100,13 +97,13 @@ where
             assert!(u_replicas.is_empty(), "replica leftover");
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
-            self.context.inc_total_run();
+            context.inc_total_run();
             // wait for next poll period
-            self.context.set_state(State::Poll);
+            context.set_state(State::Poll);
             interval.tick().await;
         }
-        info!(name = self.name, ty = "poller", "exit ...");
-        self.context.set_state(State::Done);
+        info!(name = name, ty = "poller", "exit ...");
+        context.set_state(State::Done);
         Ok(())
     }
 }

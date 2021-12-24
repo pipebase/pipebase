@@ -33,24 +33,18 @@ where
     S: Select<T, C>,
     C: ConfigInto<S> + Send + Sync + 'static,
 {
-    async fn run(
-        &mut self,
-        config: C,
-        txs: Vec<Sender<T>>,
-        mut rx: Option<Receiver<T>>,
-    ) -> Result<()> {
-        assert!(rx.is_some(), "selector '{}' has no upstreams", self.name);
-        assert!(
-            !txs.is_empty(),
-            "selector '{}' has no downstreams",
-            self.name
-        );
+    async fn run(self, config: C, txs: Vec<Sender<T>>, mut rx: Option<Receiver<T>>) -> Result<()> {
+        let name = self.name;
+        let context = self.context;
+        let etx = self.etx;
+        assert!(rx.is_some(), "selector '{}' has no upstreams", name);
+        assert!(!txs.is_empty(), "selector '{}' has no downstreams", name);
         let mut selector = config.config_into().await?;
         let rx = rx.as_mut().unwrap();
         let mut txs = senders_as_map(txs);
-        info!(name = self.name, ty = "selector", "run ...");
+        info!(name = name, ty = "selector", "run ...");
         loop {
-            self.context.set_state(State::Receive);
+            context.set_state(State::Receive);
             // if all receiver dropped, sender drop as well
             match txs.is_empty() {
                 true => {
@@ -65,16 +59,15 @@ where
                     break;
                 }
             };
-            self.context.set_state(State::Send);
+            context.set_state(State::Send);
             let candidates = txs.keys().collect::<Vec<&usize>>();
             let selected = match selector.select(&t, &candidates).await {
                 Ok(selected) => selected,
                 Err(err) => {
-                    error!(name = self.name, ty = "selector", "error '{:#?}'", err);
-                    self.context.inc_failure_run();
-                    self.context.inc_total_run();
-                    send_pipe_error(self.etx.as_ref(), PipeError::new(self.name.to_owned(), err))
-                        .await;
+                    error!(name = name, ty = "selector", "error '{:#?}'", err);
+                    context.inc_failure_run();
+                    context.inc_total_run();
+                    send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await;
                     continue;
                 }
             };
@@ -94,10 +87,10 @@ where
             assert!(t_replicas.is_empty(), "replica leftover");
             let drop_sender_indices = wait_join_handles(jhs).await;
             filter_senders_by_indices(&mut txs, drop_sender_indices);
-            self.context.inc_total_run();
+            context.inc_total_run();
         }
-        info!(name = self.name, ty = "selector", "exit ...");
-        self.context.set_state(State::Done);
+        info!(name = name, ty = "selector", "exit ...");
+        context.set_state(State::Done);
         Ok(())
     }
 }
