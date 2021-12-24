@@ -136,8 +136,8 @@ mod file_rw_tests {
         let (tx0, rx0) = channel!(Vec<u8>, 1024);
         let (tx1, rx1) = channel!(PathBuf, 1024);
         let (tx2, mut rx2) = channel!(Vec<u8>, 1024);
-        let mut wrt = mapper!("writer");
-        let mut rdr = mapper!("reader");
+        let wrt = mapper!("writer");
+        let rdr = mapper!("reader");
         let wrt = run_pipe!(
             wrt,
             FileWriterConfig,

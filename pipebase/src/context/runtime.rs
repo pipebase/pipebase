@@ -7,7 +7,7 @@ pub struct ContextStore<'a> {
 
 impl<'a> ContextStore<'a> {
     pub async fn run<S, C>(
-        &mut self,
+        self,
         config: C,
         contexts: Vec<(String, std::sync::Arc<Context>)>,
     ) -> Result<()>
@@ -20,9 +20,10 @@ impl<'a> ContextStore<'a> {
         for (name, context) in contexts {
             store.store_context(name, context);
         }
-        info!(name = self.name, ty = "cstore", "run ...");
+        let name = self.name;
+        info!(name = name, ty = "cstore", "run ...");
         store.run().await?;
-        info!(name = self.name, ty = "cstore", "exit ...");
+        info!(name = name, ty = "cstore", "exit ...");
         Ok(())
     }
 }

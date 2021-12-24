@@ -110,7 +110,7 @@ mod tests {
     async fn test_set_collector() {
         let (tx0, rx0) = channel!(Record, 10);
         let (tx1, mut rx1) = channel!(Vec<Record>, 10);
-        let mut pipe = collector!("set_collector");
+        let pipe = collector!("set_collector");
         let context = pipe.get_context();
         let ph = populate_records(
             tx0,

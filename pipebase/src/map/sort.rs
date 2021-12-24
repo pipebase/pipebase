@@ -120,7 +120,7 @@ mod top_aggregator_tests {
     async fn test_top_aggregator() {
         let (tx0, rx0) = channel!(Vec<u32>, 1023);
         let (tx1, mut rx1) = channel!(Vec<u32>, 1024);
-        let mut pipe = mapper!("top");
+        let pipe = mapper!("top");
         let f0 = populate_records(
             tx0,
             vec![vec![1, 2, 2, 3], vec![1, 1, 2, 1], vec![2, 2, 2, 2]],
@@ -174,7 +174,7 @@ mod top_aggregator_tests {
             ]],
         );
         f0.await;
-        let mut pipe = mapper!("top_record");
+        let pipe = mapper!("top_record");
         let pipe = run_pipe!(
             pipe,
             TopAggregatorConfig,

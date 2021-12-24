@@ -67,7 +67,7 @@ mod tests {
     async fn test_filter_map() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<self::Record>, 1024);
-        let mut pipe = mapper!("filter_map");
+        let pipe = mapper!("filter_map");
         let f1 = populate_records(
             tx0,
             vec![vec![

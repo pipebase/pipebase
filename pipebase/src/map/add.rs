@@ -68,7 +68,7 @@ mod sum_aggregator_tests {
     async fn test_sum_aggregator() {
         let (tx0, rx0) = channel!(Vec<u32>, 1023);
         let (tx1, mut rx1) = channel!(u32, 1024);
-        let mut pipe = mapper!("summation");
+        let pipe = mapper!("summation");
         let f0 = populate_records(tx0, vec![vec![1, 3, 5, 7], vec![2, 4, 6, 8]]);
         f0.await;
         join_pipes!([run_pipe!(pipe, AddAggregatorConfig, [tx1], rx0)]);
@@ -94,7 +94,7 @@ mod sum_aggregator_tests {
     async fn test_record_sum() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(u32, 1024);
-        let mut pipe = mapper!("record_sum");
+        let pipe = mapper!("record_sum");
         let f0 = populate_records(
             tx0,
             vec![vec![Record::new(1), Record::new(2), Record::new(3)]],
@@ -120,7 +120,7 @@ mod count32_tests {
     async fn test_count32() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Count32, 1024);
-        let mut pipe = mapper!("counter");
+        let pipe = mapper!("counter");
         let pipe = run_pipe!(pipe, AddAggregatorConfig, [tx1], rx0);
         let f0 = populate_records(tx0, vec![vec![Record {}, Record {}, Record {}, Record {}]]);
         f0.await;
@@ -146,7 +146,7 @@ mod test_avg {
     async fn test_averagef32() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Averagef32, 1024);
-        let mut pipe = mapper!("average");
+        let pipe = mapper!("average");
         let pipe = run_pipe!(pipe, AddAggregatorConfig, [tx1], rx0);
         let f0 = populate_records(
             tx0,
@@ -240,7 +240,7 @@ mod test_group_sum_aggregator {
     async fn test_u32_group_sum_aggregator() {
         let (tx0, rx0) = channel!(Vec<u32>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<u32, u32>>, 1024);
-        let mut pipe = mapper!("group_summation");
+        let pipe = mapper!("group_summation");
         let f0 = populate_records(tx0, vec![vec![2, 3, 2, 3, 2, 3]]);
         f0.await;
         join_pipes!([run_pipe!(
@@ -280,7 +280,7 @@ mod test_group_sum_aggregator {
     async fn test_record_group_sum() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
-        let mut pipe = mapper!("record_sum");
+        let pipe = mapper!("record_sum");
         let f0 = populate_records(
             tx0,
             vec![vec![
@@ -321,7 +321,7 @@ mod unordered_group_avg_f32_tests {
     async fn test_unordered_group_avg_f32() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Averagef32>>, 1024);
-        let mut pipe = mapper!("group_avg_f32");
+        let pipe = mapper!("group_avg_f32");
         let pipe = run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, [tx1], rx0);
         let f0 = populate_records(
             tx0,
@@ -377,7 +377,7 @@ mod group_count32_tests {
     async fn test_word_group_count_aggregate() {
         let (tx0, rx0) = channel!(Vec<String>, 1024);
         let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
-        let mut pipe = mapper!("word_count");
+        let pipe = mapper!("word_count");
         let f0 = populate_records(
             tx0,
             vec![vec![
@@ -411,7 +411,7 @@ mod group_count32_tests {
     async fn test_record_group_count32() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Count32>>, 1024);
-        let mut pipe = mapper!("group_count32");
+        let pipe = mapper!("group_count32");
         let pipe = run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, [tx1], rx0);
         let f0 = populate_records(
             tx0,
@@ -515,7 +515,7 @@ mod test_ordered_group_aggregator {
     async fn test_word_group_count_aggregate() {
         let (tx0, rx0) = channel!(Vec<String>, 1024);
         let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
-        let mut pipe = mapper!("ordered_word_count");
+        let pipe = mapper!("ordered_word_count");
         let f0 = populate_records(
             tx0,
             vec![vec![

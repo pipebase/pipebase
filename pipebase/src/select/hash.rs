@@ -109,7 +109,7 @@ mod tests {
         let f0 = populate_records(tx0, records);
         let f1 = receive_records(rx1, 1);
         let f2 = receive_records(rx2, 2);
-        let mut pipe = selector!("hash_select");
+        let pipe = selector!("hash_select");
         f0.await;
         join_pipes!([run_pipe!(pipe, DefaultHashSelectorConfig, [tx1, tx2], rx0)]);
         let c1 = f1.await;

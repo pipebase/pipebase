@@ -93,7 +93,7 @@ mod file_split_streamer_tests {
     async fn test_file_split_streamer() {
         let (tx0, rx0) = channel!(PathBuf, 1024);
         let (tx1, mut rx1) = channel!(Vec<u8>, 1024);
-        let mut pipe = streamer!("file_space_split_streamer");
+        let pipe = streamer!("file_space_split_streamer");
         let f0 = populate_records(
             tx0,
             vec![PathBuf::from("resources/test_file_stream/test_file_0.txt")],
@@ -191,7 +191,7 @@ mod file_line_streamer_tests {
     async fn test_file_line_streamer() {
         let (tx0, rx0) = channel!(PathBuf, 1024);
         let (tx1, mut rx1) = channel!(String, 1024);
-        let mut pipe = streamer!("file_line_streamer");
+        let pipe = streamer!("file_line_streamer");
         let f0 = populate_records(
             tx0,
             vec![PathBuf::from("resources/test_file_stream/test_file_1.txt")],

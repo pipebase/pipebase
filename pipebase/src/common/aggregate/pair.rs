@@ -214,7 +214,7 @@ mod pair_tests {
     async fn test_right_ordered_pair_group_sum() {
         let (tx0, rx0) = channel!(Vec<Pair<String, u32>>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
-        let mut pipe = mapper!("pair_group_summation");
+        let pipe = mapper!("pair_group_summation");
         let f0 = populate_records(
             tx0,
             vec![vec![
@@ -244,7 +244,7 @@ mod pair_tests {
     async fn test_top_pair() {
         let (tx0, rx0) = channel!(Vec<Pair<String, Count32>>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Count32>>, 1024);
-        let mut pipe = Mapper::new("top_word");
+        let pipe = Mapper::new("top_word");
         let f0 = populate_records(
             tx0,
             vec![vec![

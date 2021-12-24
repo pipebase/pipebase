@@ -142,7 +142,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_folder() {
         let (tx, mut rx) = channel!(PathBuf, 1024);
-        let mut pipe = listener!("file_visitor");
+        let pipe = listener!("file_visitor");
         join_pipes!([run_pipe!(
             pipe,
             LocalFilePathVisitorConfig,

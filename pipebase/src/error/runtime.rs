@@ -6,7 +6,7 @@ use tracing::{error, info};
 pub struct ErrorHandler {}
 
 impl ErrorHandler {
-    pub async fn run<H, C>(&mut self, config: C, mut rx: Receiver<PipeError>) -> Result<()>
+    pub async fn run<H, C>(self, config: C, mut rx: Receiver<PipeError>) -> Result<()>
     where
         C: ConfigInto<H> + Send,
         H: HandleError<C>,

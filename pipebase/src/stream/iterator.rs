@@ -70,7 +70,7 @@ mod tests {
     async fn test_iterator_reader() {
         let (tx0, rx0) = channel!(HashMap<String, u32>, 1024);
         let (tx1, mut rx1) = channel!((String, u32), 1024);
-        let mut pipe = streamer!("tuple_streamer");
+        let pipe = streamer!("tuple_streamer");
         let mut record: HashMap<String, u32> = HashMap::new();
         record.insert("one".to_owned(), 1);
         record.insert("two".to_owned(), 2);

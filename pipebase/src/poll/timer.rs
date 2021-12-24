@@ -87,8 +87,8 @@ mod tests {
     #[tokio::test]
     async fn test_timer() {
         let (tx, mut rx) = channel!(u128, 1024);
-        let mut timer = Poller::new("timer");
-        let mut ctx_printer = cstore!("ctx_printer");
+        let timer = Poller::new("timer");
+        let ctx_printer = cstore!("ctx_printer");
         let run_ctx_printer = run_cstore!(
             ctx_printer,
             ContextPrinterConfig,
@@ -103,7 +103,7 @@ mod tests {
     #[tokio::test]
     async fn test_receiver_drop() {
         let (tx, rx) = channel!(u128, 1024);
-        let mut source = poller!("timer");
+        let source = poller!("timer");
         drop(rx);
         let start_millis = std::time::SystemTime::now();
         join_pipes!([run_pipe!(

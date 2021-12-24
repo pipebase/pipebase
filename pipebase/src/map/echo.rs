@@ -66,7 +66,7 @@ mod tests {
     async fn test_echo() {
         let (tx0, rx0) = channel!(Message, 1024);
         let (tx1, mut rx1) = channel!(Message, 1024);
-        let mut pipe = mapper!("echo");
+        let pipe = mapper!("echo");
         let f1 = populate_message(tx0, Message { m0: 'a', m1: 1 });
         f1.await;
         join_pipes!([run_pipe!(pipe, EchoConfig, [tx1], rx0)]);

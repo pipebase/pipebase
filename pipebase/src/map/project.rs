@@ -68,7 +68,7 @@ mod tests {
     async fn test_reverse_processor() {
         let (tx0, rx0) = channel!(Record, 1024);
         let (tx1, mut rx1) = channel!(self::SwappedRecord, 1024);
-        let mut pipe = mapper!("swapped");
+        let pipe = mapper!("swapped");
         let context = pipe.get_context();
         let f1 = populate_records(tx0, vec![Record { r0: 0, r1: 1 }]);
         f1.await;
