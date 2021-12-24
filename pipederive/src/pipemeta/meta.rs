@@ -205,7 +205,7 @@ impl PipeMeta {
     pub fn generate_pipe_meta_expr<T: VisitPipeMeta + Expr>(&self) -> Option<String> {
         let mut visitor = T::default();
         self.accept(&mut visitor);
-        visitor.get_expr()
+        visitor.to_expr()
     }
 }
 
@@ -392,7 +392,7 @@ impl ContextStoreMeta {
     pub fn generate_cstore_meta_expr<V: VisitContextStoreMeta + Expr>(&self) -> Option<String> {
         let mut visitor = V::default();
         self.accept(&mut visitor);
-        visitor.get_expr()
+        visitor.to_expr()
     }
 }
 
@@ -521,6 +521,6 @@ impl ErrorHandlerMeta {
     ) -> Option<String> {
         let mut visitor = V::default();
         self.accept(&mut visitor);
-        visitor.get_expr()
+        visitor.to_expr()
     }
 }

@@ -208,7 +208,7 @@ fn resolve_join_all_expr(
     if let Some(meta) = error_handler_meta {
         meta.accept(&mut join_expr)
     }
-    match join_expr.get_expr() {
+    match join_expr.to_expr() {
         Some(expr) => vec![expr],
         None => vec![],
     }

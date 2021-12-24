@@ -10,15 +10,12 @@ pub trait VisitPipeMeta: Default {
     fn visit(&mut self, meta: &PipeMeta);
 }
 
-pub trait Expr {
-    fn get_lhs(&self) -> Option<String> {
-        None
+pub trait Expr: Sized {
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (None, None)
     }
-    fn get_rhs(&self) -> Option<String> {
-        None
-    }
-    fn get_expr(&self) -> Option<String> {
-        match (self.get_lhs(), self.get_rhs()) {
+    fn to_expr(self) -> Option<String> {
+        match self.to_pair() {
             (Some(lhs), Some(rhs)) => Some(format!("let {} = {}", lhs, rhs)),
             (Some(lhs), _) => Some(lhs),
             (_, Some(rhs)) => Some(rhs),
@@ -55,11 +52,8 @@ impl VisitPipeMeta for ChannelExpr {
 }
 
 impl Expr for ChannelExpr {
-    fn get_lhs(&self) -> Option<String> {
-        self.lhs.to_owned()
-    }
-    fn get_rhs(&self) -> Option<String> {
-        self.rhs.to_owned()
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
     }
 }
 
@@ -91,11 +85,8 @@ impl VisitPipeMeta for PipeExpr {
 }
 
 impl Expr for PipeExpr {
-    fn get_lhs(&self) -> Option<String> {
-        self.lhs.to_owned()
-    }
-    fn get_rhs(&self) -> Option<String> {
-        self.rhs.to_owned()
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
     }
 }
 
@@ -136,11 +127,8 @@ impl VisitPipeMeta for RunPipeExpr {
 }
 
 impl Expr for RunPipeExpr {
-    fn get_lhs(&self) -> Option<String> {
-        self.lhs.to_owned()
-    }
-    fn get_rhs(&self) -> Option<String> {
-        self.rhs.to_owned()
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
     }
 }
 
@@ -185,12 +173,12 @@ impl VisitErrorHandlerMeta for JoinExpr {
 }
 
 impl Expr for JoinExpr {
-    fn get_expr(&self) -> Option<String> {
+    fn to_expr(self) -> Option<String> {
         let mut all_idents = vec![];
-        all_idents.extend(self.pipe_idents.to_owned());
-        all_idents.extend(self.cstore_idents.to_owned());
-        if let Some(ref ident) = self.error_handler_ident {
-            all_idents.push(ident.to_owned())
+        all_idents.extend(self.pipe_idents);
+        all_idents.extend(self.cstore_idents);
+        if let Some(ident) = self.error_handler_ident {
+            all_idents.push(ident)
         };
         let all_exprs = format!("{}([{}])", JOIN_PIPES_MACRO, all_idents.join(","));
         Some(all_exprs)
@@ -218,11 +206,8 @@ impl VisitContextStoreMeta for ContextStoreExpr {
 }
 
 impl Expr for ContextStoreExpr {
-    fn get_lhs(&self) -> Option<String> {
-        self.lhs.to_owned()
-    }
-    fn get_rhs(&self) -> Option<String> {
-        self.rhs.to_owned()
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
     }
 }
 
@@ -249,11 +234,8 @@ impl VisitContextStoreMeta for RunContextStoreExpr {
 }
 
 impl Expr for RunContextStoreExpr {
-    fn get_lhs(&self) -> Option<String> {
-        self.lhs.to_owned()
-    }
-    fn get_rhs(&self) -> Option<String> {
-        self.rhs.to_owned()
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
     }
 }
 
@@ -268,11 +250,8 @@ pub struct ErrorChannelExpr {
 }
 
 impl Expr for ErrorChannelExpr {
-    fn get_lhs(&self) -> Option<String> {
-        self.lhs.to_owned()
-    }
-    fn get_rhs(&self) -> Option<String> {
-        self.rhs.to_owned()
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
     }
 }
 
@@ -307,8 +286,8 @@ impl VisitErrorHandlerMeta for SubscribeErrorExpr {
 }
 
 impl Expr for SubscribeErrorExpr {
-    fn get_rhs(&self) -> Option<String> {
-        self.rhs.to_owned()
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (None, self.rhs)
     }
 }
 
@@ -319,11 +298,8 @@ pub struct ErrorHandlerExpr {
 }
 
 impl Expr for ErrorHandlerExpr {
-    fn get_lhs(&self) -> Option<String> {
-        self.lhs.to_owned()
-    }
-    fn get_rhs(&self) -> Option<String> {
-        self.rhs.to_owned()
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
     }
 }
 
@@ -341,11 +317,8 @@ pub struct RunErrorHandlerExpr {
 }
 
 impl Expr for RunErrorHandlerExpr {
-    fn get_lhs(&self) -> Option<String> {
-        self.lhs.to_owned()
-    }
-    fn get_rhs(&self) -> Option<String> {
-        self.rhs.to_owned()
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
     }
 }
 
