@@ -99,7 +99,12 @@ mod rockdb_group_sum_tests {
     async fn test_record_group_sum() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
-        let mut pipe = mapper!("record_sum");
+        let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(
+            RocksDBUnorderedGroupAddAggregatorConfig,
+            "resources/catalogs/rocksdb_sum.yml"
+        );
+        let pipe = mapper!("record_sum");
         let f0 = populate_records(
             tx0,
             vec![
@@ -116,13 +121,7 @@ mod rockdb_group_sum_tests {
             ],
         );
         f0.await;
-        let pipe_run = run_pipe!(
-            pipe,
-            RocksDBUnorderedGroupAddAggregatorConfig,
-            "resources/catalogs/rocksdb_sum.yml",
-            [tx1],
-            rx0
-        );
+        let pipe_run = run_pipe!(pipe, config, channels);
         let _ = pipe_run.await;
         let gs = rx1.recv().await.unwrap();
         assert_eq!(2, gs.len());
@@ -175,14 +174,13 @@ mod unordered_group_avg_f32_tests {
     async fn test_unordered_group_avg_f32() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Averagef32>>, 1024);
-        let mut pipe = mapper!("group_avg_f32");
-        let pipe = run_pipe!(
-            pipe,
+        let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(
             RocksDBUnorderedGroupAddAggregatorConfig,
-            "resources/catalogs/rocksdb_avg.yml",
-            [tx1],
-            rx0
+            "resources/catalogs/rocksdb_avg.yml"
         );
+        let pipe = mapper!("group_avg_f32");
+        let pipe = run_pipe!(pipe, config, channels);
         let f0 = populate_records(
             tx0,
             vec![
@@ -274,14 +272,13 @@ mod group_count32_tests {
     async fn test_group_count32() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Count32>>, 1024);
-        let mut pipe = mapper!("group_count32");
-        let pipe = run_pipe!(
-            pipe,
+        let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(
             RocksDBUnorderedGroupAddAggregatorConfig,
-            "resources/catalogs/rocksdb_count.yml",
-            [tx1],
-            rx0
+            "resources/catalogs/rocksdb_count.yml"
         );
+        let pipe = mapper!("group_count32");
+        let pipe = run_pipe!(pipe, config, channels);
         let f0 = populate_records(
             tx0,
             vec![

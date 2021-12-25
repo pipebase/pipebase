@@ -19,7 +19,6 @@ use crate::ops::{AppDescriber, AppGenerator};
 use crate::ops::{Describe, Generate, Validate};
 use serde::Deserialize;
 use std::collections::HashSet;
-use std::path::Path;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct App {
@@ -56,7 +55,10 @@ impl Entity for App {
 impl<V> EntityAccept<V> for App where V: VisitEntity<Self> {}
 
 impl App {
-    pub fn read_from_path(manifest_path: &Path) -> Result<App> {
+    pub fn from_path<P>(manifest_path: P) -> Result<App>
+    where
+        P: AsRef<std::path::Path>,
+    {
         let file = match std::fs::File::open(manifest_path) {
             Ok(file) => file,
             Err(err) => return Err(io_error(err)),
@@ -69,7 +71,7 @@ impl App {
         Ok(app)
     }
 
-    pub fn read_from_buffer(manifest_buffer: &[u8]) -> Result<App> {
+    pub fn from_buffer(manifest_buffer: &[u8]) -> Result<App> {
         let mut app = match serde_yaml::from_slice::<Self>(manifest_buffer) {
             Ok(app) => app,
             Err(err) => return Err(yaml_error(err)),

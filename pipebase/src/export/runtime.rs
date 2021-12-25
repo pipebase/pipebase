@@ -1,11 +1,11 @@
 use async_trait::async_trait;
 use std::sync::Arc;
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::mpsc::Sender;
 use tracing::{error, info};
 
 use super::Export;
 use crate::common::{
-    send_pipe_error, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
+    send_pipe_error, ConfigInto, Context, HasContext, Pipe, PipeChannels, PipeError, Result, State,
     SubscribeError,
 };
 
@@ -28,43 +28,41 @@ where
     E: Export<T, C> + 'static,
     C: ConfigInto<E> + Send + Sync + 'static,
 {
-    async fn run(
-        &mut self,
-        config: C,
-        txs: Vec<Sender<()>>,
-        mut rx: Option<Receiver<T>>,
-    ) -> Result<()> {
-        assert!(rx.is_some(), "exporter '{}' has no upstreams", self.name);
+    async fn run(self, config: C, channels: PipeChannels<T, ()>) -> Result<()> {
+        let name = self.name;
+        let context = self.context;
+        let etx = self.etx;
+        let (mut rx, txs) = channels.into_channels();
+        assert!(rx.is_some(), "exporter '{}' has no upstreams", name);
         assert!(
             txs.is_empty(),
             "exporter '{}' has invalid downstreams",
-            self.name
+            name
         );
         let mut exporter = config.config_into().await?;
         let rx = rx.as_mut().unwrap();
-        info!(name = self.name, ty = "exporter", "run ...");
+        info!(name = name, ty = "exporter", "run ...");
         loop {
-            self.context.set_state(State::Receive);
+            context.set_state(State::Receive);
             let t = match rx.recv().await {
                 Some(t) => t,
                 None => {
                     break;
                 }
             };
-            self.context.set_state(State::Export);
+            context.set_state(State::Export);
             match exporter.export(t).await {
                 Ok(_) => (),
                 Err(err) => {
-                    error!(name = self.name, ty = "exporter", "error '{:#?}'", err);
-                    self.context.inc_failure_run();
-                    send_pipe_error(self.etx.as_ref(), PipeError::new(self.name.to_owned(), err))
-                        .await
+                    error!(name = name, ty = "exporter", "error '{:#?}'", err);
+                    context.inc_failure_run();
+                    send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await
                 }
             };
-            self.context.inc_total_run();
+            context.inc_total_run();
         }
-        info!(name = self.name, ty = "exporter", "exit ...");
-        self.context.set_state(State::Done);
+        info!(name = name, ty = "exporter", "exit ...");
+        context.set_state(State::Done);
         Ok(())
     }
 }

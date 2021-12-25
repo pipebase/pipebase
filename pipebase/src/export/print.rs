@@ -51,11 +51,15 @@ mod tests {
     #[tokio::test]
     async fn test_printer() {
         let (tx, rx) = channel!(u128, 10);
-        let mut timer = poller!("timer");
-        let mut printer = exporter!("printer");
+        let channels0 = pipe_channels!([tx]);
+        let channels1 = pipe_channels!(rx);
+        let config0 = config!(TimerConfig, "resources/catalogs/timer.yml");
+        let config1 = config!(PrinterConfig);
+        let timer = poller!("timer");
+        let printer = exporter!("printer");
         join_pipes!([
-            run_pipe!(timer, TimerConfig, "resources/catalogs/timer.yml", [tx]),
-            run_pipe!(printer, PrinterConfig, [], rx)
+            run_pipe!(timer, config0, channels0),
+            run_pipe!(printer, config1, channels1)
         ]);
     }
 }

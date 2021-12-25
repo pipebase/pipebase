@@ -1,8 +1,6 @@
 pub trait Bootstrap {
     fn print();
-    fn bootstrap(
-        &mut self,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + Sync>>;
+    fn bootstrap(&mut self) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>>;
 }
 
 #[cfg(test)]

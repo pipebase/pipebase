@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 use super::{
     data_ty_to_literal,
     meta::{metas_to_literal, Meta},

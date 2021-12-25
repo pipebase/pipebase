@@ -67,7 +67,9 @@ mod tests {
     async fn test_filter_map() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<self::Record>, 1024);
-        let mut pipe = mapper!("filter_map");
+        let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(FilterMapConfig);
+        let pipe = mapper!("filter_map");
         let f1 = populate_records(
             tx0,
             vec![vec![
@@ -77,7 +79,7 @@ mod tests {
             ]],
         );
         f1.await;
-        join_pipes!([run_pipe!(pipe, FilterMapConfig, [tx1], rx0)]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let filtered_records = rx1.recv().await.unwrap();
         assert_eq!(1, filtered_records.len());
         assert_eq!(0, filtered_records[0].r0);

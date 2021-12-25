@@ -3,8 +3,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use super::Collect;
 use crate::common::{
     filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
-    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
-    SubscribeError,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeChannels, PipeError, Result,
+    State, SubscribeError,
 };
 
 use async_trait::async_trait;
@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::{
     sync::{
-        mpsc::{error::SendError, Receiver, Sender},
+        mpsc::{error::SendError, Sender},
         Mutex,
     },
     task::JoinHandle,
@@ -40,30 +40,25 @@ where
     V: Collect<T, U, C> + 'static,
     C: ConfigInto<V> + Send + Sync + 'static,
 {
-    async fn run(
-        &mut self,
-        config: C,
-        txs: Vec<Sender<U>>,
-        mut rx: Option<Receiver<T>>,
-    ) -> Result<()> {
-        assert!(rx.is_some(), "collector '{}' has no upstreams", self.name);
-        assert!(
-            !txs.is_empty(),
-            "collector '{}' has no downstreams",
-            self.name
-        );
+    async fn run(self, config: C, channels: PipeChannels<T, U>) -> Result<()> {
+        let name = self.name;
+        let context = self.context;
+        let etx = self.etx;
+        let (mut rx, txs) = channels.into_channels();
+        assert!(rx.is_some(), "collector '{}' has no upstreams", name);
+        assert!(!txs.is_empty(), "collector '{}' has no downstreams", name);
         let collector: Arc<Mutex<V>> = Arc::new(Mutex::new(config.config_into().await?));
         let collector_clone = collector.to_owned();
         let exit_c = Arc::new(AtomicBool::new(false));
         let exit_c_clone = exit_c.to_owned();
         let exit_f = Arc::new(AtomicBool::new(false));
         let exit_f_clone = exit_f.to_owned();
-        let name = self.name.to_owned();
-        let etx = self.etx.clone();
+        let pipe_name = name.to_owned();
+        let pipe_etx = etx.clone();
         let join_collect = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "collector",
                 thread = "collect",
                 "run ..."
@@ -84,30 +79,29 @@ where
                     Ok(()) => continue,
                     Err(err) => {
                         error!(
-                            name = name.as_str(),
+                            name = pipe_name.as_str(),
                             ty = "collector",
                             thread = "collect",
                             "error '{}' ...",
                             err
                         );
-                        send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await;
+                        send_pipe_error(pipe_etx.as_ref(), PipeError::new(pipe_name.clone(), err))
+                            .await;
                     }
                 }
             }
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "collector",
                 thread = "collect",
                 "exit ..."
             );
         });
         let mut txs = senders_as_map(txs);
-        let context = self.get_context();
-        let name = self.name.to_owned();
-        let etx = self.etx.clone();
+        let pipe_name = name.to_owned();
         let join_flush = tokio::spawn(async move {
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "collector",
                 thread = "flush",
                 "run ..."
@@ -132,7 +126,7 @@ where
                         Ok(u) => u,
                         Err(err) => {
                             error!(
-                                name = name.as_str(),
+                                name = pipe_name.as_str(),
                                 ty = "collector",
                                 thread = "flush",
                                 "error '{}' ...",
@@ -140,7 +134,7 @@ where
                             );
                             context.inc_failure_run();
                             context.inc_total_run();
-                            send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err))
+                            send_pipe_error(etx.as_ref(), PipeError::new(pipe_name.clone(), err))
                                 .await;
                             continue;
                         }
@@ -171,7 +165,7 @@ where
                 }
             }
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "collector",
                 thread = "flush",
                 "exit ..."
@@ -179,11 +173,12 @@ where
             exit_f.store(true, Ordering::Release);
             context.set_state(State::Done);
         });
+        let pipe_name = name.to_owned();
         match tokio::spawn(async move { tokio::join!(join_collect, join_flush) }).await {
             Ok(_) => (),
             Err(err) => {
                 error!(
-                    name = self.name,
+                    name = pipe_name.as_str(),
                     ty = "collector",
                     thread = "join",
                     "join error '{:#?}'",

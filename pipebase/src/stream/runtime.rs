@@ -1,15 +1,15 @@
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::mpsc::{channel, error::SendError, Receiver, Sender};
+use tokio::sync::mpsc::{channel, error::SendError, Sender};
 use tokio::task::JoinHandle;
 use tracing::{error, info};
 
 use super::Stream;
 use crate::common::{
     filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
-    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
-    SubscribeError,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeChannels, PipeError, Result,
+    State, SubscribeError,
 };
 
 pub struct Streamer<'a> {
@@ -33,29 +33,21 @@ where
     S: Stream<T, U, C> + 'static,
     C: ConfigInto<S> + Send + Sync + 'static,
 {
-    async fn run(
-        &mut self,
-        config: C,
-        txs: Vec<Sender<U>>,
-        mut rx: Option<Receiver<T>>,
-    ) -> Result<()> {
-        assert!(rx.is_some(), "streamer '{}' has no upstreams", self.name);
-        assert!(
-            !txs.is_empty(),
-            "streamer '{}' has no downstreams",
-            self.name
-        );
+    async fn run(self, config: C, channels: PipeChannels<T, U>) -> Result<()> {
+        let name = self.name;
+        let context = self.context;
+        let etx = self.etx;
+        let (mut rx, txs) = channels.into_channels();
+        assert!(rx.is_some(), "streamer '{}' has no upstreams", name);
+        assert!(!txs.is_empty(), "streamer '{}' has no downstreams", name);
         let (tx0, mut rx0) = channel::<U>(1024);
         let mut streamer = config.config_into().await?;
         streamer.set_sender(tx0);
-        let name = self.name.to_owned();
-        let context = self.context.clone();
-        let etx = self.etx.clone();
-        // start stream
+        let pipe_name = name.to_owned();
         let join_stream = tokio::spawn(async move {
             let rx = rx.as_mut().unwrap();
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "streamer",
                 thread = "stream",
                 "run ..."
@@ -71,20 +63,20 @@ where
                     Ok(_) => (),
                     Err(err) => {
                         error!(
-                            name = name.as_str(),
+                            name = pipe_name.as_str(),
                             ty = "streamer",
                             thread = "stream",
                             "error '{:#?}'",
                             err
                         );
-                        send_pipe_error(etx.as_ref(), PipeError::new(name.to_owned(), err)).await;
+                        send_pipe_error(etx.as_ref(), PipeError::new(pipe_name.clone(), err)).await;
                         context.inc_failure_run();
                     }
                 }
                 context.inc_total_run();
             }
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "streamer",
                 thread = "stream",
                 "exit ..."
@@ -92,11 +84,11 @@ where
             context.set_state(State::Done);
         });
         let mut txs = senders_as_map(txs);
-        let name = self.name.to_owned();
+        let pipe_name = name.to_owned();
         // start send
         let join_send = tokio::spawn(async move {
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "streamer",
                 thread = "send",
                 "run ..."
@@ -130,18 +122,19 @@ where
                 filter_senders_by_indices(&mut txs, drop_sender_indices);
             }
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "streamer",
                 thread = "send",
                 "exit ..."
             );
         });
         // join stream and send
+        let pipe_name = name.to_owned();
         match tokio::spawn(async move { tokio::join!(join_stream, join_send) }).await {
             Ok(_) => (),
             Err(err) => {
                 error!(
-                    name = self.name,
+                    name = pipe_name.as_str(),
                     ty = "streamer",
                     thread = "join",
                     "join error '{:#?}'",

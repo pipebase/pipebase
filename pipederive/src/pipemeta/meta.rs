@@ -113,7 +113,7 @@ impl PipeMeta {
 
     pub fn parse(attribute: &Attribute, ident_location: &str) -> Self {
         let name = Self::parse_name(attribute, ident_location);
-        let ident = format!("{}{}", name, BOOTSTRAP_PIPE_IDENT_SUFFIX);
+        let ident = Self::ident(&name);
         PipeMeta {
             name,
             ident,
@@ -202,10 +202,14 @@ impl PipeMeta {
         buffer.map(|b| b.parse().unwrap())
     }
 
+    pub fn ident(name: &str) -> String {
+        format!("{}{}", name, BOOTSTRAP_PIPE_IDENT_SUFFIX)
+    }
+
     pub fn generate_pipe_meta_expr<T: VisitPipeMeta + Expr>(&self) -> Option<String> {
         let mut visitor = T::default();
         self.accept(&mut visitor);
-        visitor.get_expr()
+        visitor.to_expr()
     }
 }
 
@@ -392,7 +396,7 @@ impl ContextStoreMeta {
     pub fn generate_cstore_meta_expr<V: VisitContextStoreMeta + Expr>(&self) -> Option<String> {
         let mut visitor = V::default();
         self.accept(&mut visitor);
-        visitor.get_expr()
+        visitor.to_expr()
     }
 }
 
@@ -521,6 +525,6 @@ impl ErrorHandlerMeta {
     ) -> Option<String> {
         let mut visitor = V::default();
         self.accept(&mut visitor);
-        visitor.get_expr()
+        visitor.to_expr()
     }
 }

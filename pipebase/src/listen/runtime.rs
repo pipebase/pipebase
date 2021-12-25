@@ -1,13 +1,13 @@
 use async_trait::async_trait;
-use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
+use tokio::sync::mpsc::{error::SendError, Sender};
 use tokio::task::JoinHandle;
 use tracing::{error, info};
 
 use super::Listen;
 use crate::common::{
     filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
-    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
-    SubscribeError,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeChannels, PipeError, Result,
+    State, SubscribeError,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -32,61 +32,50 @@ where
     L: Listen<U, C> + 'static,
     C: ConfigInto<L> + Send + Sync + 'static,
 {
-    async fn run(
-        &mut self,
-        config: C,
-        txs: Vec<Sender<U>>,
-        rx: Option<Receiver<()>>,
-    ) -> Result<()> {
-        assert!(
-            rx.is_none(),
-            "listener '{}' has invalid upstreams",
-            self.name
-        );
-        assert!(
-            !txs.is_empty(),
-            "listener '{}' has no downstreams",
-            self.name
-        );
+    async fn run(self, config: C, channels: PipeChannels<(), U>) -> Result<()> {
+        let name = self.name;
+        let context = self.context;
+        let etx = self.etx;
+        let (rx, txs) = channels.into_channels();
+        assert!(rx.is_none(), "listener '{}' has invalid upstreams", name);
+        assert!(!txs.is_empty(), "listener '{}' has no downstreams", name);
         let (tx0, mut rx0) = channel::<U>(1024);
         let mut listener = config.config_into().await?;
         listener.set_sender(tx0);
-        let name = self.name.to_owned();
-        let etx = self.etx.clone();
+        let pipe_name = name.to_owned();
         // start listen
         let join_listen = tokio::spawn(async move {
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "listener",
                 thread = "listen",
                 "run ..."
             );
             match listener.run().await {
                 Ok(_) => info!(
-                    name = name.as_str(),
+                    name = pipe_name.as_str(),
                     ty = "listener",
                     thread = "listen",
                     "exit ..."
                 ),
                 Err(err) => {
                     error!(
-                        name = name.as_str(),
+                        name = pipe_name.as_str(),
                         ty = "listener",
                         thread = "listen",
                         "exit with error '{:#?}'",
                         err
                     );
-                    send_pipe_error(etx.as_ref(), PipeError::new(name, err)).await
+                    send_pipe_error(etx.as_ref(), PipeError::new(pipe_name, err)).await
                 }
             };
         });
         // start send
         let mut txs = senders_as_map(txs);
-        let context = self.context.clone();
-        let name = self.name.to_owned();
+        let pipe_name = name.to_owned();
         let join_send = tokio::spawn(async move {
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "listener",
                 thread = "send",
                 "run ..."
@@ -123,7 +112,7 @@ where
                 context.inc_total_run();
             }
             info!(
-                name = name.as_str(),
+                name = pipe_name.as_str(),
                 ty = "listener",
                 thread = "send",
                 "exit ..."
@@ -131,11 +120,12 @@ where
             context.set_state(State::Done);
         });
         // join listen and send
+        let pipe_name = name.to_owned();
         match tokio::spawn(async move { tokio::join!(join_listen, join_send) }).await {
             Ok(_) => (),
             Err(err) => {
                 error!(
-                    name = self.name,
+                    name = pipe_name.as_str(),
                     ty = "listener",
                     thread = "join",
                     "join error {:#?}",

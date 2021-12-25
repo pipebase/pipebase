@@ -64,16 +64,12 @@ mod tests {
     async fn test_string_spliter() {
         let (tx0, rx0) = channel!(String, 1024);
         let (tx1, mut rx1) = channel!(Vec<String>, 1024);
-        let mut pipe = mapper!("text_splitter");
+        let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(StringSplitterConfig, "resources/catalogs/text_splitter.yml");
+        let pipe = mapper!("text_splitter");
         let f0 = populate_records(tx0, vec!["foo bar".to_owned()]);
         f0.await;
-        join_pipes!([run_pipe!(
-            pipe,
-            StringSplitterConfig,
-            "resources/catalogs/text_splitter.yml",
-            [tx1],
-            rx0
-        )]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let splitted: &[String] = &rx1.recv().await.unwrap();
         assert_eq!(2, splitted.len());
         assert_eq!("foo", splitted[0]);

@@ -6,18 +6,43 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::task::JoinHandle;
 use tracing::error;
 
+pub struct PipeChannels<T, U> {
+    rx: Option<Receiver<T>>,
+    txs: Vec<Sender<U>>,
+}
+
+impl<T, U> PipeChannels<T, U> {
+    pub fn rx(mut self, rx: Receiver<T>) -> Self {
+        self.rx = Some(rx);
+        self
+    }
+
+    pub fn tx(mut self, tx: Sender<U>) -> Self {
+        self.txs.push(tx);
+        self
+    }
+
+    pub fn into_channels(self) -> (Option<Receiver<T>>, Vec<Sender<U>>) {
+        (self.rx, self.txs)
+    }
+}
+
+impl<T, U> Default for PipeChannels<T, U> {
+    fn default() -> Self {
+        PipeChannels {
+            rx: None,
+            txs: vec![],
+        }
+    }
+}
+
 #[async_trait]
 pub trait Pipe<T, U, R, C>: HasContext + SubscribeError
 where
     R: FromConfig<C>,
     C: ConfigInto<R>,
 {
-    async fn run(
-        &mut self,
-        config: C,
-        txs: Vec<Sender<U>>,
-        mut rx: Option<Receiver<T>>,
-    ) -> Result<()>;
+    async fn run(self, config: C, channels: PipeChannels<T, U>) -> Result<()>;
 }
 
 // Sender Operations
@@ -99,41 +124,42 @@ where
 }
 
 #[macro_export]
-macro_rules! run_pipe {
+macro_rules! pipe_channels {
     {
-        $pipe:ident, $config:ty, [$( $tx:expr ), *]
-    } => {
-        run_pipe!($pipe, $config, "", [$( $tx ), *], { None })
-    };
-    {
-        $pipe:ident, $config:ty, [$( $tx:expr ), *], $rx:ident
-    } => {
-        run_pipe!($pipe, $config, "", [$( $tx ), *], { Some($rx) })
-    };
-    {
-        $pipe:ident, $config:ty, $path:expr, [$( $tx:expr ), *]
-    } => {
-        run_pipe!($pipe, $config, $path, [$( $tx ), *], { None })
-    };
-    {
-        $pipe:ident, $config:ty, $path:expr, [$( $tx:expr ), *], $rx:ident
-    } => {
-        run_pipe!($pipe, $config, $path, [$( $tx ), *], { Some($rx) })
-    };
-    {
-        $pipe:ident, $config:ty, $path:expr, [$( $tx:expr ), *], $rx:expr
+        $rx:ident
     } => {
         {
-            let mut txs = vec![];
-            $(
-                txs.push($tx);
+            PipeChannels::default().rx($rx)
+        }
+    };
+    {
+        [$( $tx:expr ), *]
+    } => {
+        {
+            PipeChannels::default()$(
+                .tx($tx)
             )*
+        }
+    };
+    {
+        $rx:ident, [$( $tx:expr ), *]
+    } => {
+        {
+            PipeChannels::default().rx($rx)$(
+                .tx($tx)
+            )*
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! run_pipe {
+    {
+        $pipe:ident, $config:ident, $channels:ident
+    } => {
+        {
             tokio::spawn(async move {
-                let config = <$config>
-                            ::from_path($path)
-                            .await
-                            .expect(&format!("invalid pipe config file '{}' for '{}'", $path, $pipe.get_name()));
-                match $pipe.run(config, txs, $rx).await {
+                match $pipe.run($config, $channels).await {
                     Ok(_) => Ok(()),
                     Err(err) => {
                         tracing::error!("pipe exit with error {:#?}", err);

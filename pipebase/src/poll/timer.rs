@@ -87,15 +87,17 @@ mod tests {
     #[tokio::test]
     async fn test_timer() {
         let (tx, mut rx) = channel!(u128, 1024);
-        let mut timer = Poller::new("timer");
-        let mut ctx_printer = cstore!("ctx_printer");
-        let run_ctx_printer = run_cstore!(
-            ctx_printer,
+        let channels = pipe_channels!([tx]);
+        let config0 = config!(TimerConfig, "resources/catalogs/timer.yml");
+        let config1 = config!(
             ContextPrinterConfig,
-            "resources/catalogs/context_printer.yml",
-            [timer]
+            "resources/catalogs/context_printer.yml"
         );
-        let run_timer = run_pipe!(timer, TimerConfig, "resources/catalogs/timer.yml", [tx]);
+        let timer = poller!("timer");
+        let ctx_printer = cstore!("ctx_printer");
+        let ctx_collector = collect_context!([timer]);
+        let run_ctx_printer = run_cstore!(ctx_printer, config1, ctx_collector);
+        let run_timer = run_pipe!(timer, config0, channels);
         join_pipes!([run_timer, run_ctx_printer]);
         on_receive(&mut rx, 10).await;
     }
@@ -103,15 +105,12 @@ mod tests {
     #[tokio::test]
     async fn test_receiver_drop() {
         let (tx, rx) = channel!(u128, 1024);
-        let mut source = poller!("timer");
+        let channels = pipe_channels!([tx]);
+        let config0 = config!(TimerConfig, "resources/catalogs/timer.yml");
+        let source = poller!("timer");
         drop(rx);
         let start_millis = std::time::SystemTime::now();
-        join_pipes!([run_pipe!(
-            source,
-            TimerConfig,
-            "resources/catalogs/timer.yml",
-            [tx]
-        )]);
+        join_pipes!([run_pipe!(source, config0, channels)]);
         // poller should exit since receiver gone
         let now_millis = std::time::SystemTime::now();
         // poller should exit asap
