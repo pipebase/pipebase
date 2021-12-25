@@ -1,6 +1,6 @@
 [package]
 name = "piperedis"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -16,8 +16,8 @@ async-trait = "0.1.50"
 anyhow = "1.0"
 futures = "0.3"
 tracing = "0.1"
-pipebase = { version = "0.1.9", path = "../../pipebase" }
-pipebytes = { version = "0.1.4", path = "../pipebytes" }
+pipebase = { version = "0.2.0", path = "../../pipebase" }
+pipebytes = { version = "0.1.5", path = "../pipebytes" }
 redis = { version = "0.20.2", features = ["tokio-comp", "aio"] }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.6.1", features = ["sync"] }

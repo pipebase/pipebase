@@ -150,7 +150,7 @@ pub(crate) fn default_tokio_dependency() -> Dependency {
 pub(crate) fn default_pipebase_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipebase".to_owned())
-        .version("0.1.10".to_owned())
+        .version("0.2.0".to_owned())
         .modules(vec!["pipebase::prelude::*".to_owned()])
         .build()
 }
@@ -165,7 +165,7 @@ pub(crate) fn default_tracing_dependency() -> Dependency {
 pub(crate) fn default_avro_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipeavro".to_owned())
-        .version("0.1.3".to_owned())
+        .version("0.1.4".to_owned())
         .modules(vec!["pipeavro::*".to_owned()])
         .build()
 }
@@ -173,7 +173,7 @@ pub(crate) fn default_avro_dependency() -> Dependency {
 pub(crate) fn default_cql_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipecql".to_owned())
-        .version("0.2.1".to_owned())
+        .version("0.2.2".to_owned())
         .modules(vec!["pipecql::*".to_owned()])
         .build()
 }
@@ -181,7 +181,7 @@ pub(crate) fn default_cql_dependency() -> Dependency {
 pub(crate) fn default_csv_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipecsv".to_owned())
-        .version("0.1.4".to_owned())
+        .version("0.1.5".to_owned())
         .modules(vec!["pipecsv::*".to_owned()])
         .build()
 }
@@ -189,7 +189,7 @@ pub(crate) fn default_csv_dependency() -> Dependency {
 pub(crate) fn default_json_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipejson".to_owned())
-        .version("0.1.5".to_owned())
+        .version("0.1.6".to_owned())
         .modules(vec!["pipejson::*".to_owned()])
         .build()
 }
@@ -197,7 +197,7 @@ pub(crate) fn default_json_dependency() -> Dependency {
 pub(crate) fn default_kafka_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipekafka".to_owned())
-        .version("0.2.2".to_owned())
+        .version("0.2.3".to_owned())
         .modules(vec!["pipekafka::*".to_owned()])
         .build()
 }
@@ -205,7 +205,7 @@ pub(crate) fn default_kafka_dependency() -> Dependency {
 pub(crate) fn default_kube_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipekube".to_owned())
-        .version("0.1.4".to_owned())
+        .version("0.1.5".to_owned())
         .modules(vec!["pipekube::*".to_owned()])
         .build()
 }
@@ -213,7 +213,7 @@ pub(crate) fn default_kube_dependency() -> Dependency {
 pub(crate) fn default_mysql_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipemysql".to_owned())
-        .version("0.2.1".to_owned())
+        .version("0.2.2".to_owned())
         .modules(vec!["pipemysql::*".to_owned()])
         .build()
 }
@@ -221,7 +221,7 @@ pub(crate) fn default_mysql_dependency() -> Dependency {
 pub(crate) fn default_psql_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipepsql".to_owned())
-        .version("0.2.1".to_owned())
+        .version("0.2.2".to_owned())
         .modules(vec!["pipepsql::*".to_owned()])
         .build()
 }
@@ -229,7 +229,7 @@ pub(crate) fn default_psql_dependency() -> Dependency {
 pub(crate) fn default_redis_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("piperedis".to_owned())
-        .version("0.1.5".to_owned())
+        .version("0.1.6".to_owned())
         .modules(vec!["piperedis::*".to_owned()])
         .build()
 }
@@ -237,7 +237,7 @@ pub(crate) fn default_redis_dependency() -> Dependency {
 pub(crate) fn default_reqwest_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipereqwest".to_owned())
-        .version("0.1.4".to_owned())
+        .version("0.1.5".to_owned())
         .modules(vec!["pipereqwest::*".to_owned()])
         .build()
 }
@@ -245,7 +245,7 @@ pub(crate) fn default_reqwest_dependency() -> Dependency {
 pub(crate) fn default_rocksdb_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("piperocksdb".to_owned())
-        .version("0.1.4".to_owned())
+        .version("0.1.5".to_owned())
         .modules(vec!["piperocksdb::*".to_owned()])
         .build()
 }
@@ -253,7 +253,7 @@ pub(crate) fn default_rocksdb_dependency() -> Dependency {
 pub(crate) fn default_warp_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipewarp".to_owned())
-        .version("0.1.4".to_owned())
+        .version("0.1.5".to_owned())
         .modules(vec!["pipewarp::*".to_owned()])
         .build()
 }
@@ -297,7 +297,7 @@ pub(crate) fn default_sqs_dependency() -> Dependency {
 pub(crate) fn default_mqtt_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipemqtt".to_owned())
-        .version("0.1.4".to_owned())
+        .version("0.1.5".to_owned())
         .modules(vec!["pipemqtt::*".to_owned()])
         .build()
 }
@@ -305,7 +305,7 @@ pub(crate) fn default_mqtt_dependency() -> Dependency {
 pub(crate) fn default_amqp_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipeamqp".to_owned())
-        .version("0.1.2".to_owned())
+        .version("0.1.3".to_owned())
         .modules(vec!["pipeamqp::*".to_owned()])
         .build()
 }
