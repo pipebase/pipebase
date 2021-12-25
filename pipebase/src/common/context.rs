@@ -134,3 +134,33 @@ pub trait HasContext {
     fn get_name(&self) -> String;
     fn get_context(&self) -> Arc<Context>;
 }
+
+#[derive(Default)]
+pub struct ContextCollector {
+    contexts: Vec<(String, std::sync::Arc<Context>)>,
+}
+
+impl ContextCollector {
+    pub fn collect(mut self, name: String, context: std::sync::Arc<Context>) -> Self {
+        self.contexts.push((name, context));
+        self
+    }
+
+    pub fn into_contexts(self) -> Vec<(String, std::sync::Arc<Context>)> {
+        self.contexts
+    }
+}
+
+#[macro_export]
+macro_rules! collect_context {
+    (
+        [$( $pipe:expr ), *]
+    ) => {
+        {
+            ContextCollector::default()
+            $(
+                .collect($pipe.get_name(), $pipe.get_context())
+            )*
+        }
+    };
+}

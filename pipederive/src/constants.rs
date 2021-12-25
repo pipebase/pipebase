@@ -27,6 +27,7 @@ pub const CONTEXT_STORE_CONFIG_TYPE: &str = "cstore.config.ty";
 pub const CONTEXT_STORE_CONFIG_PATH: &str = "cstore.config.path";
 pub const CONTEXT_STORE_CONFIG_EMPTY_PATH: &str = "";
 pub const CONTEXT_STORE_IDENT_SUFFIX: &str = "_c";
+pub const CONTEXT_COLLECTOR_IDENT_SUFFIX: &str = "_ctxs";
 
 pub const ERROR_HANDLER: &str = "error";
 pub const ERROR_HANDLER_CONFIG_TYPE: &str = "error.config.ty";
@@ -64,6 +65,7 @@ pub const MACRO_RUN_ERROR_HANDLER: &str = "run_error_handler!";
 pub const MACRO_CONTEXT_STORE: &str = "cstore!";
 pub const MACRO_RUN_CONTEXT_STORE: &str = "run_cstore!";
 pub const MACRO_CONFIG: &str = "config!";
+pub const MACRO_COLLECT_CONTEXT: &str = "collect_context!";
 
 pub const AGGREGATE_SUM: &str = "agg.sum";
 pub const AGGREGATE_TOP: &str = "agg.top";

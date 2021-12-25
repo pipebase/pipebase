@@ -2,10 +2,10 @@ use crate::constants::{
     BOOTSTRAP_FUNCTION, BOOTSTRAP_MODULE, BOOTSTRAP_PIPE, CONTEXT_STORE, ERROR_HANDLER,
 };
 use crate::pipemeta::{
-    ChannelExpr, ContextStoreConfigExpr, ContextStoreExpr, ContextStoreMetas, ErrorChannelExpr,
-    ErrorHandlerConfigExpr, ErrorHandlerExpr, ErrorHandlerMeta, Expr, JoinExpr, PipeChannelsExpr,
-    PipeConfigExpr, PipeExpr, PipeMetas, RunContextStoreExpr, RunErrorHandlerExpr, RunPipeExpr,
-    SubscribeErrorExpr,
+    ChannelExpr, ContextCollectorExpr, ContextStoreConfigExpr, ContextStoreExpr, ContextStoreMetas,
+    ErrorChannelExpr, ErrorHandlerConfigExpr, ErrorHandlerExpr, ErrorHandlerMeta, Expr, JoinExpr,
+    PipeChannelsExpr, PipeConfigExpr, PipeExpr, PipeMetas, RunContextStoreExpr,
+    RunErrorHandlerExpr, RunPipeExpr, SubscribeErrorExpr,
 };
 use crate::utils::{
     get_all_attributes_by_meta_prefix, get_any_attribute_by_meta_prefix, get_last_stmt_span,
@@ -46,7 +46,8 @@ pub fn impl_bootstrap(ident: &Ident, attributes: &[Attribute], generics: &Generi
     let pipe_config_exprs = resolve_pipe_config_exprs(&pipe_metas);
     let run_pipe_exprs = resolve_run_pipe_exprs(&pipe_metas);
     // generate cstore exprs
-    let cstore_expr = resolve_cstore_exprs(&cstore_metas);
+    let cstore_exprs = resolve_cstore_exprs(&cstore_metas);
+    let context_collector_exprs = resolve_context_collector_exprs(&cstore_metas);
     let cstore_config_exprs = resolve_cstore_config_exprs(&cstore_metas);
     let run_cstore_expr = resolve_run_cstore_exprs(&cstore_metas);
     // generate error handler exprs
@@ -65,7 +66,8 @@ pub fn impl_bootstrap(ident: &Ident, attributes: &[Attribute], generics: &Generi
     let pipe_config_expr_tokens = parse_exprs(&pipe_config_exprs);
     let run_pipe_expr_tokens = parse_exprs(&run_pipe_exprs);
     // generate tokens for cstore exprs
-    let cstore_expr_tokens = parse_exprs(&cstore_expr);
+    let cstore_expr_tokens = parse_exprs(&cstore_exprs);
+    let context_collector_expr_tokens = parse_exprs(&context_collector_exprs);
     let cstore_config_expr_tokens = parse_exprs(&cstore_config_exprs);
     let run_cstore_expr_tokens = parse_exprs(&run_cstore_expr);
     // generate tokens for error handling exprs
@@ -92,6 +94,8 @@ pub fn impl_bootstrap(ident: &Ident, attributes: &[Attribute], generics: &Generi
                 #pipe_expr_tokens
                 ;
                 #cstore_expr_tokens
+                ;
+                #context_collector_expr_tokens
                 ;
                 #error_channel_expr_tokens
                 ;
@@ -135,6 +139,7 @@ fn resolve_all_exprs(
     all_exprs.extend(resolve_pipe_channels_exprs(pipe_metas));
     all_exprs.extend(resolve_pipe_exprs(pipe_metas));
     all_exprs.extend(resolve_cstore_exprs(cstore_metas));
+    all_exprs.extend(resolve_context_collector_exprs(cstore_metas));
     all_exprs.extend(resolve_error_channel_exprs(error_handler_meta));
     all_exprs.extend(resolve_subscribe_error_exprs(error_handler_meta));
     all_exprs.extend(resolve_error_handler_exprs(error_handler_meta));
@@ -178,6 +183,10 @@ fn resolve_cstore_exprs(metas: &ContextStoreMetas) -> Vec<String> {
 
 fn resolve_cstore_config_exprs(metas: &ContextStoreMetas) -> Vec<String> {
     metas.generate_cstore_meta_exprs::<ContextStoreConfigExpr>()
+}
+
+fn resolve_context_collector_exprs(metas: &ContextStoreMetas) -> Vec<String> {
+    metas.generate_cstore_meta_exprs::<ContextCollectorExpr>()
 }
 
 fn resolve_run_cstore_exprs(metas: &ContextStoreMetas) -> Vec<String> {

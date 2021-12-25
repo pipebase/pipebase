@@ -95,7 +95,8 @@ mod tests {
         );
         let timer = poller!("timer");
         let ctx_printer = cstore!("ctx_printer");
-        let run_ctx_printer = run_cstore!(ctx_printer, config1, [timer]);
+        let ctx_collector = collect_context!([timer]);
+        let run_ctx_printer = run_cstore!(ctx_printer, config1, ctx_collector);
         let run_timer = run_pipe!(timer, config0, channels);
         join_pipes!([run_timer, run_ctx_printer]);
         on_receive(&mut rx, 10).await;
