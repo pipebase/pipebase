@@ -1,15 +1,15 @@
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::mpsc::{channel, error::SendError, Receiver, Sender};
+use tokio::sync::mpsc::{channel, error::SendError, Sender};
 use tokio::task::JoinHandle;
 use tracing::{error, info};
 
 use super::Stream;
 use crate::common::{
     filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
-    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
-    SubscribeError,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeChannels, PipeError, Result,
+    State, SubscribeError,
 };
 
 pub struct Streamer<'a> {
@@ -33,10 +33,11 @@ where
     S: Stream<T, U, C> + 'static,
     C: ConfigInto<S> + Send + Sync + 'static,
 {
-    async fn run(self, config: C, txs: Vec<Sender<U>>, mut rx: Option<Receiver<T>>) -> Result<()> {
+    async fn run(self, config: C, channels: PipeChannels<T, U>) -> Result<()> {
         let name = self.name;
         let context = self.context;
         let etx = self.etx;
+        let (mut rx, txs) = channels.into_channels();
         assert!(rx.is_some(), "streamer '{}' has no upstreams", name);
         assert!(!txs.is_empty(), "streamer '{}' has no downstreams", name);
         let (tx0, mut rx0) = channel::<U>(1024);

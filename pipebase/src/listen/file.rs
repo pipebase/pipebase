@@ -142,12 +142,13 @@ mod tests {
     #[tokio::test]
     async fn test_list_folder() {
         let (tx, mut rx) = channel!(PathBuf, 1024);
+        let channels = pipe_channels!([tx]);
         let pipe = listener!("file_visitor");
         join_pipes!([run_pipe!(
             pipe,
             LocalFilePathVisitorConfig,
             "resources/catalogs/local_file_visitor.yml",
-            [tx]
+            channels
         )]);
         let mut all_expected_files: HashSet<PathBuf> = HashSet::new();
         all_expected_files.insert(PathBuf::from(

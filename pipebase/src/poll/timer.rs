@@ -87,6 +87,7 @@ mod tests {
     #[tokio::test]
     async fn test_timer() {
         let (tx, mut rx) = channel!(u128, 1024);
+        let channels = pipe_channels!([tx]);
         let timer = Poller::new("timer");
         let ctx_printer = cstore!("ctx_printer");
         let run_ctx_printer = run_cstore!(
@@ -95,7 +96,7 @@ mod tests {
             "resources/catalogs/context_printer.yml",
             [timer]
         );
-        let run_timer = run_pipe!(timer, TimerConfig, "resources/catalogs/timer.yml", [tx]);
+        let run_timer = run_pipe!(timer, TimerConfig, "resources/catalogs/timer.yml", channels);
         join_pipes!([run_timer, run_ctx_printer]);
         on_receive(&mut rx, 10).await;
     }
@@ -103,6 +104,7 @@ mod tests {
     #[tokio::test]
     async fn test_receiver_drop() {
         let (tx, rx) = channel!(u128, 1024);
+        let channels = pipe_channels!([tx]);
         let source = poller!("timer");
         drop(rx);
         let start_millis = std::time::SystemTime::now();
@@ -110,7 +112,7 @@ mod tests {
             source,
             TimerConfig,
             "resources/catalogs/timer.yml",
-            [tx]
+            channels
         )]);
         // poller should exit since receiver gone
         let now_millis = std::time::SystemTime::now();

@@ -1,9 +1,10 @@
 use super::meta::{ContextStoreMeta, ErrorHandlerMeta, PipeMeta};
 use crate::constants::{
-    CHANNEL_MACRO, CONTEXT_STORE_MACRO, ERROR_HANDLER_CHANNEL_DEFAULT_TYPE,
-    ERROR_HANDLER_DEFAULT_IDENT, ERROR_HANDLER_DEFAULT_RX, ERROR_HANDLER_DEFAULT_TX,
-    ERROR_HANDLER_MACRO, JOIN_PIPES_MACRO, RUN_CONTEXT_STORE_MACRO, RUN_ERROR_HANDLER_MACRO,
-    RUN_PIPE_MACRO, SUBSCRIBE_ERROR_HANDLER_MACRO,
+    BOOTSTRAP_PIPE_CHANNELS_SUFFIX, CHANNEL_RECEIVER_SUFFIX, CHANNEL_SENDER_SUFFIX,
+    ERROR_HANDLER_CHANNEL_DEFAULT_TYPE, ERROR_HANDLER_DEFAULT_IDENT, ERROR_HANDLER_DEFAULT_RX,
+    ERROR_HANDLER_DEFAULT_TX, MACRO_CHANNEL, MACRO_CONTEXT_STORE, MACRO_ERROR_HANDLER,
+    MACRO_JOIN_PIPES, MACRO_PIPE_CHANNELS, MACRO_RUN_CONTEXT_STORE, MACRO_RUN_ERROR_HANDLER,
+    MACRO_RUN_PIPE, MACRO_SUBSCRIBE_ERROR_HANDLER,
 };
 
 pub trait VisitPipeMeta: Default {
@@ -43,11 +44,11 @@ impl VisitPipeMeta for ChannelExpr {
             None => return,
         };
         let pipe_name = meta.get_name();
-        let tx_name = Self::gen_sender_name(pipe_name);
-        let rx_name = Self::gen_receiver_name(pipe_name);
+        let tx_ident = Self::gen_sender_ident(pipe_name);
+        let rx_ident = Self::gen_receiver_ident(pipe_name);
         let buffer = meta.get_channel_buffer();
-        self.lhs = Some(format!("({}, {})", tx_name, rx_name));
-        self.rhs = Some(format!("{}({}, {})", CHANNEL_MACRO, channel_ty, buffer));
+        self.lhs = Some(format!("({}, {})", tx_ident, rx_ident));
+        self.rhs = Some(format!("{}({}, {})", MACRO_CHANNEL, channel_ty, buffer));
     }
 }
 
@@ -58,12 +59,62 @@ impl Expr for ChannelExpr {
 }
 
 impl ChannelExpr {
-    pub fn gen_sender_name(pipe_name: &str) -> String {
-        format!("tx_{}", pipe_name)
+    pub fn gen_sender_ident(pipe_name: &str) -> String {
+        format!("{}{}", pipe_name, CHANNEL_SENDER_SUFFIX)
     }
 
-    pub fn gen_receiver_name(pipe_name: &str) -> String {
-        format!("rx_{}", pipe_name)
+    pub fn gen_receiver_ident(pipe_name: &str) -> String {
+        format!("{}{}", pipe_name, CHANNEL_RECEIVER_SUFFIX)
+    }
+}
+
+#[derive(Default)]
+pub struct PipeChannelsExpr {
+    pub lhs: Option<String>,
+    pub rhs: Option<String>,
+}
+
+impl VisitPipeMeta for PipeChannelsExpr {
+    fn visit(&mut self, meta: &PipeMeta) {
+        let pipe_name = meta.get_name();
+        let upstream_output_type_name = meta.get_upstream_output_type_name();
+        let downstream_pipe_names = meta.get_downstream_names();
+        let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
+        // note that, receiver is none for poller and listener
+        let receiver_expr = upstream_output_type_name.map(|_| Self::gen_recevier_ident(pipe_name));
+        let rhs = match receiver_expr {
+            Some(receiver_expr) => format!(
+                "{}({}, {})",
+                MACRO_PIPE_CHANNELS, receiver_expr, senders_expr
+            ),
+            None => format!("{}({})", MACRO_PIPE_CHANNELS, senders_expr),
+        };
+        self.lhs = Some(Self::gen_channels_ident(pipe_name));
+        self.rhs = Some(rhs);
+    }
+}
+
+impl PipeChannelsExpr {
+    fn gen_recevier_ident(pipe_name: &str) -> String {
+        ChannelExpr::gen_receiver_ident(pipe_name)
+    }
+
+    fn gen_senders_expr(pipe_names: &[String]) -> String {
+        let mut sender_exprs: Vec<String> = vec![];
+        for pipe_name in pipe_names {
+            let sender_exp = ChannelExpr::gen_sender_ident(pipe_name);
+            sender_exprs.push(Self::append_to_owned(&sender_exp))
+        }
+        format!("[{}]", sender_exprs.join(", "))
+    }
+    fn gen_channels_ident(pipe_name: &str) -> String {
+        format!("{}{}", pipe_name, BOOTSTRAP_PIPE_CHANNELS_SUFFIX)
+    }
+}
+
+impl Expr for PipeChannelsExpr {
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
     }
 }
 
@@ -109,17 +160,10 @@ impl VisitPipeMeta for RunPipeExpr {
         let config_meta = meta.get_config_meta();
         let config_ty = config_meta.get_ty();
         let config_path = config_meta.get_path();
-        let upstream_output_type_name = meta.get_upstream_output_type_name();
-        let downstream_pipe_names = meta.get_downstream_names();
-        let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
-        // receiver is none for poller and listener
-        let receiver_expr = match upstream_output_type_name {
-            Some(_) => Self::gen_recevier_expr(pipe_name),
-            None => String::from("{ None }"),
-        };
+        let pipe_channels_ident = Self::gen_channels_ident(pipe_name);
         let rhs = format!(
-            r#"{}({}, {}, "{}", {}, {})"#,
-            RUN_PIPE_MACRO, pipe_ident, config_ty, config_path, senders_expr, receiver_expr
+            r#"{}({}, {}, "{}", {})"#,
+            MACRO_RUN_PIPE, pipe_ident, config_ty, config_path, pipe_channels_ident
         );
         self.lhs = Some(pipe_ident.to_owned());
         self.rhs = Some(rhs);
@@ -133,17 +177,8 @@ impl Expr for RunPipeExpr {
 }
 
 impl RunPipeExpr {
-    fn gen_recevier_expr(pipe_name: &str) -> String {
-        ChannelExpr::gen_receiver_name(pipe_name)
-    }
-
-    fn gen_senders_expr(pipe_names: &[String]) -> String {
-        let mut sender_exprs: Vec<String> = vec![];
-        for pipe_name in pipe_names {
-            let sender_exp = ChannelExpr::gen_sender_name(pipe_name);
-            sender_exprs.push(Self::append_to_owned(&sender_exp))
-        }
-        format!("[{}]", sender_exprs.join(", "))
+    fn gen_channels_ident(pipe_name: &str) -> String {
+        PipeChannelsExpr::gen_channels_ident(pipe_name)
     }
 }
 
@@ -180,7 +215,7 @@ impl Expr for JoinExpr {
         if let Some(ident) = self.error_handler_ident {
             all_idents.push(ident)
         };
-        let all_exprs = format!("{}([{}])", JOIN_PIPES_MACRO, all_idents.join(","));
+        let all_exprs = format!("{}([{}])", MACRO_JOIN_PIPES, all_idents.join(","));
         Some(all_exprs)
     }
 }
@@ -199,7 +234,7 @@ impl VisitContextStoreMeta for ContextStoreExpr {
     fn visit(&mut self, meta: &ContextStoreMeta) {
         let name = meta.get_name();
         let ident = meta.get_ident();
-        let rhs = format!(r#"{}("{}")"#, CONTEXT_STORE_MACRO, name);
+        let rhs = format!(r#"{}("{}")"#, MACRO_CONTEXT_STORE, name);
         self.lhs = Some(Self::prepend_mut(ident));
         self.rhs = Some(rhs);
     }
@@ -226,7 +261,7 @@ impl VisitContextStoreMeta for RunContextStoreExpr {
         let config_path = config_meta.get_path();
         let rhs = format!(
             r#"{}({}, {}, "{}", [{}])"#,
-            RUN_CONTEXT_STORE_MACRO, ident, config_ty, config_path, pipe_exprs
+            MACRO_RUN_CONTEXT_STORE, ident, config_ty, config_path, pipe_exprs
         );
         self.lhs = Some(ident.to_owned());
         self.rhs = Some(rhs);
@@ -264,7 +299,7 @@ impl VisitErrorHandlerMeta for ErrorChannelExpr {
         ));
         self.rhs = Some(format!(
             "{}({}, {})",
-            CHANNEL_MACRO, ERROR_HANDLER_CHANNEL_DEFAULT_TYPE, buffer
+            MACRO_CHANNEL, ERROR_HANDLER_CHANNEL_DEFAULT_TYPE, buffer
         ));
     }
 }
@@ -279,7 +314,7 @@ impl VisitErrorHandlerMeta for SubscribeErrorExpr {
         let pipe_exprs = meta.get_pipes().join(",");
         let rhs = format!(
             "{}([{}], {})",
-            SUBSCRIBE_ERROR_HANDLER_MACRO, pipe_exprs, ERROR_HANDLER_DEFAULT_TX
+            MACRO_SUBSCRIBE_ERROR_HANDLER, pipe_exprs, ERROR_HANDLER_DEFAULT_TX
         );
         self.rhs = Some(rhs);
     }
@@ -306,7 +341,7 @@ impl Expr for ErrorHandlerExpr {
 impl VisitErrorHandlerMeta for ErrorHandlerExpr {
     fn visit(&mut self, _meta: &ErrorHandlerMeta) {
         self.lhs = Some(Self::prepend_mut(ERROR_HANDLER_DEFAULT_IDENT));
-        self.rhs = Some(format!("{}()", ERROR_HANDLER_MACRO));
+        self.rhs = Some(format!("{}()", MACRO_ERROR_HANDLER));
     }
 }
 
@@ -329,7 +364,7 @@ impl VisitErrorHandlerMeta for RunErrorHandlerExpr {
         let config_path = config_meta.get_path();
         let rhs = format!(
             r#"{}({}, {}, "{}", {})"#,
-            RUN_ERROR_HANDLER_MACRO,
+            MACRO_RUN_ERROR_HANDLER,
             ERROR_HANDLER_DEFAULT_IDENT,
             config_ty,
             config_path,

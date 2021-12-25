@@ -3,7 +3,7 @@ use crate::constants::{
 };
 use crate::pipemeta::{
     ChannelExpr, ContextStoreExpr, ContextStoreMetas, ErrorChannelExpr, ErrorHandlerExpr,
-    ErrorHandlerMeta, Expr, JoinExpr, PipeExpr, PipeMetas, RunContextStoreExpr,
+    ErrorHandlerMeta, Expr, JoinExpr, PipeChannelsExpr, PipeExpr, PipeMetas, RunContextStoreExpr,
     RunErrorHandlerExpr, RunPipeExpr, SubscribeErrorExpr,
 };
 use crate::utils::{
@@ -38,6 +38,7 @@ pub fn impl_bootstrap(ident: &Ident, attributes: &[Attribute], generics: &Generi
     let all_exprs = merge_all_exprs(&all_exprs, ";\n");
     // generate pipe exprs
     let channel_exprs = resolve_channel_exprs(&pipe_metas);
+    let pipe_channels_exprs = resolve_pipe_channels_exprs(&pipe_metas);
     let pipe_exprs = resolve_pipe_exprs(&pipe_metas);
     let run_pipe_exprs = resolve_run_pipe_exprs(&pipe_metas);
     // generate cstore exprs
@@ -53,6 +54,7 @@ pub fn impl_bootstrap(ident: &Ident, attributes: &[Attribute], generics: &Generi
         resolve_join_all_expr(&pipe_metas, &cstore_metas, error_handler_meta.as_ref());
     // generate tokens for pipe exprs
     let channel_expr_tokens = parse_exprs(&channel_exprs);
+    let pipe_channels_expr_tokens = parse_exprs(&pipe_channels_exprs);
     let pipe_expr_tokens = parse_exprs(&pipe_exprs);
     let run_pipe_expr_tokens = parse_exprs(&run_pipe_exprs);
     // generate tokens for cstore exprs
@@ -75,6 +77,8 @@ pub fn impl_bootstrap(ident: &Ident, attributes: &[Attribute], generics: &Generi
 
             fn bootstrap(&mut self) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + Sync>> {
                 #channel_expr_tokens
+                ;
+                #pipe_channels_expr_tokens
                 ;
                 #pipe_expr_tokens
                 ;
@@ -113,6 +117,7 @@ fn resolve_all_exprs(
 ) -> Vec<String> {
     let mut all_exprs: Vec<String> = vec![];
     all_exprs.extend(resolve_channel_exprs(pipe_metas));
+    all_exprs.extend(resolve_pipe_channels_exprs(pipe_metas));
     all_exprs.extend(resolve_pipe_exprs(pipe_metas));
     all_exprs.extend(resolve_cstore_exprs(cstore_metas));
     all_exprs.extend(resolve_error_channel_exprs(error_handler_meta));
@@ -131,6 +136,10 @@ fn resolve_all_exprs(
 
 fn resolve_channel_exprs(metas: &PipeMetas) -> Vec<String> {
     metas.generate_pipe_meta_exprs::<ChannelExpr>()
+}
+
+fn resolve_pipe_channels_exprs(metas: &PipeMetas) -> Vec<String> {
+    metas.generate_pipe_meta_exprs::<PipeChannelsExpr>()
 }
 
 fn resolve_pipe_exprs(metas: &PipeMetas) -> Vec<String> {

@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use tokio::{
-    sync::mpsc::{error::SendError, Receiver, Sender},
+    sync::mpsc::{error::SendError, Sender},
     task::JoinHandle,
     time::sleep,
 };
@@ -9,8 +9,8 @@ use tracing::{error, info};
 use super::{Poll, PollResponse};
 use crate::common::{
     filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
-    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
-    SubscribeError,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeChannels, PipeError, Result,
+    State, SubscribeError,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -34,10 +34,11 @@ where
     P: Poll<U, C>,
     C: ConfigInto<P> + Send + Sync + 'static,
 {
-    async fn run(self, config: C, txs: Vec<Sender<U>>, rx: Option<Receiver<()>>) -> Result<()> {
+    async fn run(self, config: C, channels: PipeChannels<(), U>) -> Result<()> {
         let name = self.name;
         let context = self.context;
         let etx = self.etx;
+        let (rx, txs) = channels.into_channels();
         assert!(rx.is_none(), "poller '{}' has invalid upstreams", name);
         assert!(!txs.is_empty(), "poller '{}' has no downstreams", name);
         let mut poller = config.config_into().await?;

@@ -117,6 +117,7 @@ mod tests {
     async fn test_in_mem_bag_collector() {
         let (tx0, rx0) = channel!(Record, 10);
         let (tx1, mut rx1) = channel!(Vec<Record>, 10);
+        let channels = pipe_channels!(rx0, [tx1]);
         let pipe = collector!("bag_collector");
         let context = pipe.get_context();
         let ph = populate_records(
@@ -141,8 +142,7 @@ mod tests {
             pipe,
             InMemoryBagCollectorConfig,
             "resources/catalogs/bag_collector.yml",
-            [tx1],
-            rx0
+            channels
         )]);
         let records = receive_records(&mut rx1).await;
         assert_eq!(3, records.len());
@@ -156,15 +156,21 @@ mod tests {
     async fn test_collector_exit() {
         let (tx0, rx0) = channel!(u128, 1024);
         let (tx1, rx1) = channel!(Vec<u128>, 1024);
+        let channels0 = pipe_channels!([tx0]);
+        let channels1 = pipe_channels!(rx0, [tx1]);
         let timer = poller!("timer");
         let collector = collector!("tick_collector");
-        let run_timer = run_pipe!(timer, TimerConfig, "resources/catalogs/timer.yml", [tx0]);
+        let run_timer = run_pipe!(
+            timer,
+            TimerConfig,
+            "resources/catalogs/timer.yml",
+            channels0
+        );
         let run_collector = run_pipe!(
             collector,
             InMemoryBagCollectorConfig,
             "resources/catalogs/bag_collector.yml",
-            [tx1],
-            rx0
+            channels1
         );
         let start_millis = std::time::SystemTime::now();
         drop(rx1);

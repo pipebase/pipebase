@@ -110,6 +110,7 @@ mod tests {
     async fn test_set_collector() {
         let (tx0, rx0) = channel!(Record, 10);
         let (tx1, mut rx1) = channel!(Vec<Record>, 10);
+        let channels = pipe_channels!(rx0, [tx1]);
         let pipe = collector!("set_collector");
         let context = pipe.get_context();
         let ph = populate_records(
@@ -134,8 +135,7 @@ mod tests {
             pipe,
             InMemorySetCollectorConfig,
             "resources/catalogs/set_collector.yml",
-            [tx1],
-            rx0
+            channels
         )]);
         let records = rx1.recv().await.unwrap();
         assert_eq!(1, records.len());

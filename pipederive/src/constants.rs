@@ -16,21 +16,19 @@ pub const HASH: &str = "hash";
 
 pub const ORDER: &str = "order";
 
+pub const CHANNEL_SENDER_SUFFIX: &str = "_tx";
+pub const CHANNEL_RECEIVER_SUFFIX: &str = "_rx";
+
 pub const CONTEXT_STORE: &str = "cstore";
 pub const CONTEXT_STORE_NAME: &str = "cstore.name";
 pub const CONTEXT_STORE_CONFIG_TYPE: &str = "cstore.config.ty";
 pub const CONTEXT_STORE_CONFIG_PATH: &str = "cstore.config.path";
 pub const CONTEXT_STORE_CONFIG_EMPTY_PATH: &str = "";
-pub const CONTEXT_STORE_MACRO: &str = "cstore!";
-pub const RUN_CONTEXT_STORE_MACRO: &str = "run_cstore!";
 pub const CONTEXT_STORE_IDENT_SUFFIX: &str = "_c";
 
 pub const ERROR_HANDLER: &str = "error";
 pub const ERROR_HANDLER_CONFIG_TYPE: &str = "error.config.ty";
 pub const ERROR_HANDLER_CONFIG_PATH: &str = "error.config.path";
-pub const ERROR_HANDLER_MACRO: &str = "error_handler!";
-pub const SUBSCRIBE_ERROR_HANDLER_MACRO: &str = "subscribe_error_handler!";
-pub const RUN_ERROR_HANDLER_MACRO: &str = "run_error_handler!";
 pub const ERROR_HANDLER_DEFAULT_IDENT: &str = "_error_handler";
 pub const ERROR_HANDLER_DEFAULT_RX: &str = "_erx";
 pub const ERROR_HANDLER_DEFAULT_TX: &str = "_etx";
@@ -52,10 +50,17 @@ pub const BOOTSTRAP_PIPE_CHANNEL_DEFAULT_BUFFER: usize = 1024;
 pub const BOOTSTRAP_MODULE: &str = "bootstrap";
 pub const BOOTSTRAP_FUNCTION: &str = "bootstrap";
 pub const BOOTSTRAP_PIPE_IDENT_SUFFIX: &str = "_p";
+pub const BOOTSTRAP_PIPE_CHANNELS_SUFFIX: &str = "_chs";
 
-pub const CHANNEL_MACRO: &str = "channel!";
-pub const RUN_PIPE_MACRO: &str = "run_pipe!";
-pub const JOIN_PIPES_MACRO: &str = "join_pipes!";
+pub const MACRO_CHANNEL: &str = "channel!";
+pub const MACRO_RUN_PIPE: &str = "run_pipe!";
+pub const MACRO_JOIN_PIPES: &str = "join_pipes!";
+pub const MACRO_PIPE_CHANNELS: &str = "pipe_channels!";
+pub const MACRO_ERROR_HANDLER: &str = "error_handler!";
+pub const MACRO_SUBSCRIBE_ERROR_HANDLER: &str = "subscribe_error_handler!";
+pub const MACRO_RUN_ERROR_HANDLER: &str = "run_error_handler!";
+pub const MACRO_CONTEXT_STORE: &str = "cstore!";
+pub const MACRO_RUN_CONTEXT_STORE: &str = "run_cstore!";
 
 pub const AGGREGATE_SUM: &str = "agg.sum";
 pub const AGGREGATE_TOP: &str = "agg.top";

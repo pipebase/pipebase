@@ -64,6 +64,7 @@ mod tests {
     async fn test_string_spliter() {
         let (tx0, rx0) = channel!(String, 1024);
         let (tx1, mut rx1) = channel!(Vec<String>, 1024);
+        let channels = pipe_channels!(rx0, [tx1]);
         let pipe = mapper!("text_splitter");
         let f0 = populate_records(tx0, vec!["foo bar".to_owned()]);
         f0.await;
@@ -71,8 +72,7 @@ mod tests {
             pipe,
             StringSplitterConfig,
             "resources/catalogs/text_splitter.yml",
-            [tx1],
-            rx0
+            channels
         )]);
         let splitted: &[String] = &rx1.recv().await.unwrap();
         assert_eq!(2, splitted.len());

@@ -86,6 +86,7 @@ mod tests {
         let (tx0, rx0) = channel!(Record, 1024);
         let (tx1, rx1) = channel!(Record, 1024);
         let (tx2, rx2) = channel!(Record, 1024);
+        let channels = pipe_channels!(rx0, [tx1, tx2]);
         // 123 -> id1, abc -> id2 if hashkey is "key" only
         // abc, 1 -> id1, others -> id2 if hashkey is (key, value) combined
         let records = vec![
@@ -111,7 +112,7 @@ mod tests {
         let f2 = receive_records(rx2, 2);
         let pipe = selector!("hash_select");
         f0.await;
-        join_pipes!([run_pipe!(pipe, DefaultHashSelectorConfig, [tx1, tx2], rx0)]);
+        join_pipes!([run_pipe!(pipe, DefaultHashSelectorConfig, channels)]);
         let c1 = f1.await;
         let c2 = f2.await;
         assert_eq!(4, c1 + c2)

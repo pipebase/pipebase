@@ -99,6 +99,7 @@ mod rockdb_group_sum_tests {
     async fn test_record_group_sum() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
+        let channels = pipe_channels!(rx0, [tx1]);
         let pipe = mapper!("record_sum");
         let f0 = populate_records(
             tx0,
@@ -120,8 +121,7 @@ mod rockdb_group_sum_tests {
             pipe,
             RocksDBUnorderedGroupAddAggregatorConfig,
             "resources/catalogs/rocksdb_sum.yml",
-            [tx1],
-            rx0
+            channels
         );
         let _ = pipe_run.await;
         let gs = rx1.recv().await.unwrap();
@@ -175,13 +175,13 @@ mod unordered_group_avg_f32_tests {
     async fn test_unordered_group_avg_f32() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Averagef32>>, 1024);
+        let channels = pipe_channels!(rx0, [tx1]);
         let pipe = mapper!("group_avg_f32");
         let pipe = run_pipe!(
             pipe,
             RocksDBUnorderedGroupAddAggregatorConfig,
             "resources/catalogs/rocksdb_avg.yml",
-            [tx1],
-            rx0
+            channels
         );
         let f0 = populate_records(
             tx0,
@@ -274,13 +274,13 @@ mod group_count32_tests {
     async fn test_group_count32() {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Count32>>, 1024);
+        let channels = pipe_channels!(rx0, [tx1]);
         let pipe = mapper!("group_count32");
         let pipe = run_pipe!(
             pipe,
             RocksDBUnorderedGroupAddAggregatorConfig,
             "resources/catalogs/rocksdb_count.yml",
-            [tx1],
-            rx0
+            channels
         );
         let f0 = populate_records(
             tx0,

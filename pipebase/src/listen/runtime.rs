@@ -1,13 +1,13 @@
 use async_trait::async_trait;
-use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
+use tokio::sync::mpsc::{error::SendError, Sender};
 use tokio::task::JoinHandle;
 use tracing::{error, info};
 
 use super::Listen;
 use crate::common::{
     filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
-    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
-    SubscribeError,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeChannels, PipeError, Result,
+    State, SubscribeError,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -32,10 +32,11 @@ where
     L: Listen<U, C> + 'static,
     C: ConfigInto<L> + Send + Sync + 'static,
 {
-    async fn run(self, config: C, txs: Vec<Sender<U>>, rx: Option<Receiver<()>>) -> Result<()> {
+    async fn run(self, config: C, channels: PipeChannels<(), U>) -> Result<()> {
         let name = self.name;
         let context = self.context;
         let etx = self.etx;
+        let (rx, txs) = channels.into_channels();
         assert!(rx.is_none(), "listener '{}' has invalid upstreams", name);
         assert!(!txs.is_empty(), "listener '{}' has no downstreams", name);
         let (tx0, mut rx0) = channel::<U>(1024);

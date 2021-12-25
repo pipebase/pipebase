@@ -1,11 +1,11 @@
 use async_trait::async_trait;
 use std::sync::Arc;
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::mpsc::Sender;
 use tracing::{error, info};
 
 use super::Export;
 use crate::common::{
-    send_pipe_error, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
+    send_pipe_error, ConfigInto, Context, HasContext, Pipe, PipeChannels, PipeError, Result, State,
     SubscribeError,
 };
 
@@ -28,10 +28,11 @@ where
     E: Export<T, C> + 'static,
     C: ConfigInto<E> + Send + Sync + 'static,
 {
-    async fn run(self, config: C, txs: Vec<Sender<()>>, mut rx: Option<Receiver<T>>) -> Result<()> {
+    async fn run(self, config: C, channels: PipeChannels<T, ()>) -> Result<()> {
         let name = self.name;
         let context = self.context;
         let etx = self.etx;
+        let (mut rx, txs) = channels.into_channels();
         assert!(rx.is_some(), "exporter '{}' has no upstreams", name);
         assert!(
             txs.is_empty(),

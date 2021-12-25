@@ -1,15 +1,15 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
-use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
+use tokio::sync::mpsc::{error::SendError, Sender};
 use tokio::task::JoinHandle;
 use tracing::{error, info};
 
 use super::Map;
 use crate::common::{
     filter_senders_by_indices, replicate, send_pipe_error, senders_as_map, spawn_send,
-    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeError, Result, State,
-    SubscribeError,
+    wait_join_handles, ConfigInto, Context, HasContext, Pipe, PipeChannels, PipeError, Result,
+    State, SubscribeError,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -35,10 +35,11 @@ where
     M: Map<T, U, C>,
     C: ConfigInto<M> + Send + Sync + 'static,
 {
-    async fn run(self, config: C, txs: Vec<Sender<U>>, mut rx: Option<Receiver<T>>) -> Result<()> {
+    async fn run(self, config: C, channels: PipeChannels<T, U>) -> Result<()> {
         let name = self.name;
         let context = self.context;
         let etx = self.etx;
+        let (mut rx, txs) = channels.into_channels();
         assert!(rx.is_some(), "mapper '{}' has no upstreams", name);
         assert!(!txs.is_empty(), "mapper '{}' has no downstreams", name);
         let mut mapper = config.config_into().await?;
