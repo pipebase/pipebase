@@ -24,3 +24,21 @@ pub trait ConfigInto<T: FromConfig<Self>>: Sized {
         T::from_config(self).await
     }
 }
+
+#[macro_export]
+macro_rules! config {
+    {
+        $config:ty
+    } => {
+        config!($config, "")
+    };
+    {
+        $config:ty, $path:expr
+    } => {
+        {
+            <$config>::from_path($path)
+                .await
+                .expect(&format!("invalid config file '{}'", $path))
+        }
+    };
+}

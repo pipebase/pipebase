@@ -143,13 +143,12 @@ mod tests {
     async fn test_list_folder() {
         let (tx, mut rx) = channel!(PathBuf, 1024);
         let channels = pipe_channels!([tx]);
-        let pipe = listener!("file_visitor");
-        join_pipes!([run_pipe!(
-            pipe,
+        let config = config!(
             LocalFilePathVisitorConfig,
-            "resources/catalogs/local_file_visitor.yml",
-            channels
-        )]);
+            "resources/catalogs/local_file_visitor.yml"
+        );
+        let pipe = listener!("file_visitor");
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let mut all_expected_files: HashSet<PathBuf> = HashSet::new();
         all_expected_files.insert(PathBuf::from(
             "resources/test_file_folder/sub_folder/test_file_0.txt",

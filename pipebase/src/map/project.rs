@@ -69,11 +69,12 @@ mod tests {
         let (tx0, rx0) = channel!(Record, 1024);
         let (tx1, mut rx1) = channel!(self::SwappedRecord, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(ProjectionConfig);
         let pipe = mapper!("swapped");
         let context = pipe.get_context();
         let f1 = populate_records(tx0, vec![Record { r0: 0, r1: 1 }]);
         f1.await;
-        join_pipes!([run_pipe!(pipe, ProjectionConfig, channels)]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let swapped_record = rx1.recv().await.unwrap();
         assert_eq!(1, swapped_record.r0);
         assert_eq!(0, swapped_record.r1);

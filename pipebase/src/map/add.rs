@@ -69,10 +69,11 @@ mod sum_aggregator_tests {
         let (tx0, rx0) = channel!(Vec<u32>, 1023);
         let (tx1, mut rx1) = channel!(u32, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(AddAggregatorConfig);
         let pipe = mapper!("summation");
         let f0 = populate_records(tx0, vec![vec![1, 3, 5, 7], vec![2, 4, 6, 8]]);
         f0.await;
-        join_pipes!([run_pipe!(pipe, AddAggregatorConfig, channels)]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let odd = rx1.recv().await.unwrap();
         assert_eq!(16, odd);
         let even = rx1.recv().await.unwrap();
@@ -96,13 +97,14 @@ mod sum_aggregator_tests {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(u32, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(AddAggregatorConfig);
         let pipe = mapper!("record_sum");
         let f0 = populate_records(
             tx0,
             vec![vec![Record::new(1), Record::new(2), Record::new(3)]],
         );
         f0.await;
-        let run_pipe = run_pipe!(pipe, AddAggregatorConfig, channels);
+        let run_pipe = run_pipe!(pipe, config, channels);
         let _ = run_pipe.await;
         let sum = rx1.recv().await.unwrap();
         assert_eq!(6, sum)
@@ -123,8 +125,9 @@ mod count32_tests {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Count32, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(AddAggregatorConfig);
         let pipe = mapper!("counter");
-        let pipe = run_pipe!(pipe, AddAggregatorConfig, channels);
+        let pipe = run_pipe!(pipe, config, channels);
         let f0 = populate_records(tx0, vec![vec![Record {}, Record {}, Record {}, Record {}]]);
         f0.await;
         join_pipes!([pipe]);
@@ -150,8 +153,9 @@ mod test_avg {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Averagef32, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(AddAggregatorConfig);
         let pipe = mapper!("average");
-        let pipe = run_pipe!(pipe, AddAggregatorConfig, channels);
+        let pipe = run_pipe!(pipe, config, channels);
         let f0 = populate_records(
             tx0,
             vec![vec![
@@ -245,10 +249,11 @@ mod test_group_sum_aggregator {
         let (tx0, rx0) = channel!(Vec<u32>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<u32, u32>>, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(UnorderedGroupAddAggregatorConfig);
         let pipe = mapper!("group_summation");
         let f0 = populate_records(tx0, vec![vec![2, 3, 2, 3, 2, 3]]);
         f0.await;
-        join_pipes!([run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, channels)]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let gs = rx1.recv().await.unwrap();
         for p in gs {
             match p.left() {
@@ -281,6 +286,7 @@ mod test_group_sum_aggregator {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(UnorderedGroupAddAggregatorConfig);
         let pipe = mapper!("record_sum");
         let f0 = populate_records(
             tx0,
@@ -291,7 +297,7 @@ mod test_group_sum_aggregator {
             ]],
         );
         f0.await;
-        let pipe_run = run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, channels);
+        let pipe_run = run_pipe!(pipe, config, channels);
         let _ = pipe_run.await;
         let gs = rx1.recv().await.unwrap();
         assert_eq!(2, gs.len());
@@ -323,8 +329,9 @@ mod unordered_group_avg_f32_tests {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Averagef32>>, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(UnorderedGroupAddAggregatorConfig);
         let pipe = mapper!("group_avg_f32");
-        let pipe = run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, channels);
+        let pipe = run_pipe!(pipe, config, channels);
         let f0 = populate_records(
             tx0,
             vec![vec![
@@ -380,6 +387,7 @@ mod group_count32_tests {
         let (tx0, rx0) = channel!(Vec<String>, 1024);
         let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(UnorderedGroupAddAggregatorConfig);
         let pipe = mapper!("word_count");
         let f0 = populate_records(
             tx0,
@@ -393,7 +401,7 @@ mod group_count32_tests {
             ]],
         );
         f0.await;
-        join_pipes!([run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, channels)]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let wcs = rx2.recv().await.unwrap();
         for wc in wcs {
             match wc.left().as_str() {
@@ -410,8 +418,9 @@ mod group_count32_tests {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Count32>>, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(UnorderedGroupAddAggregatorConfig);
         let pipe = mapper!("group_count32");
-        let pipe = run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, channels);
+        let pipe = run_pipe!(pipe, config, channels);
         let f0 = populate_records(
             tx0,
             vec![vec![
@@ -515,6 +524,7 @@ mod test_ordered_group_aggregator {
         let (tx0, rx0) = channel!(Vec<String>, 1024);
         let (tx1, mut rx2) = channel!(Vec<Pair<String, Count32>>, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(OrderedGroupAddAggregatorConfig);
         let pipe = mapper!("ordered_word_count");
         let f0 = populate_records(
             tx0,
@@ -528,7 +538,7 @@ mod test_ordered_group_aggregator {
             ]],
         );
         f0.await;
-        join_pipes!([run_pipe!(pipe, OrderedGroupAddAggregatorConfig, channels)]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let wcs = rx2.recv().await.unwrap();
         let mut wcs_iter = wcs.into_iter();
         let bar = wcs_iter.next().unwrap();

@@ -121,18 +121,17 @@ mod top_aggregator_tests {
         let (tx0, rx0) = channel!(Vec<u32>, 1023);
         let (tx1, mut rx1) = channel!(Vec<u32>, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(
+            TopAggregatorConfig,
+            "resources/catalogs/top_aggregator_desc.yml"
+        );
         let pipe = mapper!("top");
         let f0 = populate_records(
             tx0,
             vec![vec![1, 2, 2, 3], vec![1, 1, 2, 1], vec![2, 2, 2, 2]],
         );
         f0.await;
-        join_pipes!([run_pipe!(
-            pipe,
-            TopAggregatorConfig,
-            "resources/catalogs/top_aggregator_desc.yml",
-            channels
-        )]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let r = rx1.recv().await.unwrap();
         assert_eq!(vec![3, 2, 2], r);
         let r = rx1.recv().await.unwrap();
@@ -164,6 +163,10 @@ mod top_aggregator_tests {
         let (tx0, rx0) = channel!(Vec<Record>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Record>, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(
+            TopAggregatorConfig,
+            "resources/catalogs/top_aggregator_asc.yml"
+        );
         let f0 = populate_records(
             tx0,
             vec![vec![
@@ -176,12 +179,7 @@ mod top_aggregator_tests {
         );
         f0.await;
         let pipe = mapper!("top_record");
-        let pipe = run_pipe!(
-            pipe,
-            TopAggregatorConfig,
-            "resources/catalogs/top_aggregator_asc.yml",
-            channels
-        );
+        let pipe = run_pipe!(pipe, config, channels);
         let _ = pipe.await;
         let mut sorted_records = rx1.recv().await.unwrap();
         assert_eq!(3, sorted_records.len());

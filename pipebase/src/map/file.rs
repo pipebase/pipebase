@@ -138,15 +138,12 @@ mod file_rw_tests {
         let (tx2, mut rx2) = channel!(Vec<u8>, 1024);
         let channels0 = pipe_channels!(rx0, [tx1]);
         let channels1 = pipe_channels!(rx1, [tx2]);
+        let config0 = config!(FileWriterConfig, "resources/catalogs/file_writer.yml");
+        let config1 = config!(FileReaderConfig);
         let wrt = mapper!("writer");
         let rdr = mapper!("reader");
-        let wrt = run_pipe!(
-            wrt,
-            FileWriterConfig,
-            "resources/catalogs/file_writer.yml",
-            channels0
-        );
-        let rdr = run_pipe!(rdr, FileReaderConfig, channels1);
+        let wrt = run_pipe!(wrt, config0, channels0);
+        let rdr = run_pipe!(rdr, config1, channels1);
         let content = String::from("test message for test_file_rw");
         let f0 = populate_records(tx0, vec![content.to_owned().into_bytes()]);
         f0.await;

@@ -70,16 +70,13 @@ mod tests {
         let (tx2, mut rx2) = channel!(u128, 1024);
         let channels0 = pipe_channels!([tx0]);
         let channels1 = pipe_channels!(rx0, [tx1, tx2]);
+        let config0 = config!(TimerConfig, "resources/catalogs/timer.yml");
+        let config1 = config!(RandomSelectorConfig);
         let source = poller!("timer");
         let selector = selector!("random_select");
         join_pipes!([
-            run_pipe!(
-                source,
-                TimerConfig,
-                "resources/catalogs/timer.yml",
-                channels0
-            ),
-            run_pipe!(selector, RandomSelectorConfig, channels1)
+            run_pipe!(source, config0, channels0),
+            run_pipe!(selector, config1, channels1)
         ]);
         let c1 = count_tick(&mut rx1, 0).await;
         let c2 = count_tick(&mut rx2, 1).await;

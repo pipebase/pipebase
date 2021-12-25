@@ -72,12 +72,13 @@ mod tests {
         let (tx1, mut rx1) = channel!((String, u32), 1024);
         let channels = pipe_channels!(rx0, [tx1]);
         let pipe = streamer!("tuple_streamer");
+        let config = config!(IteratorReaderConfig);
         let mut record: HashMap<String, u32> = HashMap::new();
         record.insert("one".to_owned(), 1);
         record.insert("two".to_owned(), 2);
         let f0 = populate_records(tx0, vec![record]);
         f0.await;
-        join_pipes!([run_pipe!(pipe, IteratorReaderConfig, channels)]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let mut records: HashMap<String, u32> = HashMap::new();
         let (left, right) = rx1.recv().await.unwrap();
         records.insert(left, right);

@@ -50,7 +50,7 @@ macro_rules! cstore {
 #[macro_export]
 macro_rules! run_cstore {
     (
-        $cstore:ident, $config:ty, $path:expr, [$( $pipe:expr ), *]
+        $cstore:ident, $config:ident, [$( $pipe:expr ), *]
     ) => {
         {
             let mut contexts = vec![];
@@ -58,8 +58,7 @@ macro_rules! run_cstore {
                 contexts.push(($pipe.get_name(), $pipe.get_context()));
             )*
             tokio::spawn(async move {
-                let config = <$config>::from_path($path).await.expect(&format!("invalid context store config file '{}' for '{}'", $path, $cstore.get_name()));
-                match $cstore.run(config, contexts).await {
+                match $cstore.run($config, contexts).await {
                     Ok(_) => Ok(()),
                     Err(err) => {
                         tracing::error!("context store exit with error '{:#?}'", err);

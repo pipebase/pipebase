@@ -1,10 +1,10 @@
 use super::meta::{ContextStoreMeta, ErrorHandlerMeta, PipeMeta};
 use crate::constants::{
-    BOOTSTRAP_PIPE_CHANNELS_SUFFIX, CHANNEL_RECEIVER_SUFFIX, CHANNEL_SENDER_SUFFIX,
+    BOOTSTRAP_PIPE_CHANNELS_SUFFIX, CHANNEL_RECEIVER_SUFFIX, CHANNEL_SENDER_SUFFIX, CONFIG_SUFFIX,
     ERROR_HANDLER_CHANNEL_DEFAULT_TYPE, ERROR_HANDLER_DEFAULT_IDENT, ERROR_HANDLER_DEFAULT_RX,
-    ERROR_HANDLER_DEFAULT_TX, MACRO_CHANNEL, MACRO_CONTEXT_STORE, MACRO_ERROR_HANDLER,
-    MACRO_JOIN_PIPES, MACRO_PIPE_CHANNELS, MACRO_RUN_CONTEXT_STORE, MACRO_RUN_ERROR_HANDLER,
-    MACRO_RUN_PIPE, MACRO_SUBSCRIBE_ERROR_HANDLER,
+    ERROR_HANDLER_DEFAULT_TX, MACRO_CHANNEL, MACRO_CONFIG, MACRO_CONTEXT_STORE,
+    MACRO_ERROR_HANDLER, MACRO_JOIN_PIPES, MACRO_PIPE_CHANNELS, MACRO_RUN_CONTEXT_STORE,
+    MACRO_RUN_ERROR_HANDLER, MACRO_RUN_PIPE, MACRO_SUBSCRIBE_ERROR_HANDLER,
 };
 
 pub trait VisitPipeMeta: Default {
@@ -43,9 +43,9 @@ impl VisitPipeMeta for ChannelExpr {
             Some(upstream_output_type_name) => upstream_output_type_name,
             None => return,
         };
-        let pipe_name = meta.get_name();
-        let tx_ident = Self::gen_sender_ident(pipe_name);
-        let rx_ident = Self::gen_receiver_ident(pipe_name);
+        let pipe_ident = meta.get_ident();
+        let tx_ident = Self::gen_sender_ident(pipe_ident);
+        let rx_ident = Self::gen_receiver_ident(pipe_ident);
         let buffer = meta.get_channel_buffer();
         self.lhs = Some(format!("({}, {})", tx_ident, rx_ident));
         self.rhs = Some(format!("{}({}, {})", MACRO_CHANNEL, channel_ty, buffer));
@@ -59,12 +59,12 @@ impl Expr for ChannelExpr {
 }
 
 impl ChannelExpr {
-    pub fn gen_sender_ident(pipe_name: &str) -> String {
-        format!("{}{}", pipe_name, CHANNEL_SENDER_SUFFIX)
+    pub fn gen_sender_ident(pipe_ident: &str) -> String {
+        format!("{}{}", pipe_ident, CHANNEL_SENDER_SUFFIX)
     }
 
-    pub fn gen_receiver_ident(pipe_name: &str) -> String {
-        format!("{}{}", pipe_name, CHANNEL_RECEIVER_SUFFIX)
+    pub fn gen_receiver_ident(pipe_ident: &str) -> String {
+        format!("{}{}", pipe_ident, CHANNEL_RECEIVER_SUFFIX)
     }
 }
 
@@ -76,12 +76,12 @@ pub struct PipeChannelsExpr {
 
 impl VisitPipeMeta for PipeChannelsExpr {
     fn visit(&mut self, meta: &PipeMeta) {
-        let pipe_name = meta.get_name();
+        let pipe_ident = meta.get_ident();
         let upstream_output_type_name = meta.get_upstream_output_type_name();
         let downstream_pipe_names = meta.get_downstream_names();
         let senders_expr = Self::gen_senders_expr(downstream_pipe_names);
         // note that, receiver is none for poller and listener
-        let receiver_expr = upstream_output_type_name.map(|_| Self::gen_recevier_ident(pipe_name));
+        let receiver_expr = upstream_output_type_name.map(|_| Self::gen_recevier_ident(pipe_ident));
         let rhs = match receiver_expr {
             Some(receiver_expr) => format!(
                 "{}({}, {})",
@@ -89,26 +89,28 @@ impl VisitPipeMeta for PipeChannelsExpr {
             ),
             None => format!("{}({})", MACRO_PIPE_CHANNELS, senders_expr),
         };
-        self.lhs = Some(Self::gen_channels_ident(pipe_name));
+        self.lhs = Some(Self::gen_channels_ident(pipe_ident));
         self.rhs = Some(rhs);
     }
 }
 
 impl PipeChannelsExpr {
-    fn gen_recevier_ident(pipe_name: &str) -> String {
-        ChannelExpr::gen_receiver_ident(pipe_name)
+    fn gen_recevier_ident(pipe_ident: &str) -> String {
+        ChannelExpr::gen_receiver_ident(pipe_ident)
     }
 
     fn gen_senders_expr(pipe_names: &[String]) -> String {
         let mut sender_exprs: Vec<String> = vec![];
         for pipe_name in pipe_names {
-            let sender_exp = ChannelExpr::gen_sender_ident(pipe_name);
+            let pipe_ident = PipeMeta::ident(pipe_name);
+            let sender_exp = ChannelExpr::gen_sender_ident(&pipe_ident);
             sender_exprs.push(Self::append_to_owned(&sender_exp))
         }
         format!("[{}]", sender_exprs.join(", "))
     }
-    fn gen_channels_ident(pipe_name: &str) -> String {
-        format!("{}{}", pipe_name, BOOTSTRAP_PIPE_CHANNELS_SUFFIX)
+
+    fn gen_channels_ident(pipe_ident: &str) -> String {
+        format!("{}{}", pipe_ident, BOOTSTRAP_PIPE_CHANNELS_SUFFIX)
     }
 }
 
@@ -148,6 +150,38 @@ impl PipeExpr {
 }
 
 #[derive(Default)]
+pub struct PipeConfigExpr {
+    pub lhs: Option<String>,
+    pub rhs: Option<String>,
+}
+
+impl VisitPipeMeta for PipeConfigExpr {
+    fn visit(&mut self, meta: &PipeMeta) {
+        let pipe_ident = meta.get_ident();
+        let config_meta = meta.get_config_meta();
+        let config_ty = config_meta.get_ty();
+        let config_path = config_meta.get_path();
+        self.lhs = Some(Self::gen_config_ident(pipe_ident));
+        self.rhs = Some(format!(
+            r#"{}({}, "{}")"#,
+            MACRO_CONFIG, config_ty, config_path
+        ));
+    }
+}
+
+impl Expr for PipeConfigExpr {
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
+    }
+}
+
+impl PipeConfigExpr {
+    fn gen_config_ident(pipe_ident: &str) -> String {
+        format!("{}{}", pipe_ident, CONFIG_SUFFIX)
+    }
+}
+
+#[derive(Default)]
 pub struct RunPipeExpr {
     pub lhs: Option<String>,
     pub rhs: Option<String>,
@@ -155,15 +189,12 @@ pub struct RunPipeExpr {
 
 impl VisitPipeMeta for RunPipeExpr {
     fn visit(&mut self, meta: &PipeMeta) {
-        let pipe_name = meta.get_name();
         let pipe_ident = meta.get_ident();
-        let config_meta = meta.get_config_meta();
-        let config_ty = config_meta.get_ty();
-        let config_path = config_meta.get_path();
-        let pipe_channels_ident = Self::gen_channels_ident(pipe_name);
+        let config_ident = PipeConfigExpr::gen_config_ident(pipe_ident);
+        let pipe_channels_ident = Self::gen_channels_ident(pipe_ident);
         let rhs = format!(
-            r#"{}({}, {}, "{}", {})"#,
-            MACRO_RUN_PIPE, pipe_ident, config_ty, config_path, pipe_channels_ident
+            "{}({}, {}, {})",
+            MACRO_RUN_PIPE, pipe_ident, config_ident, pipe_channels_ident
         );
         self.lhs = Some(pipe_ident.to_owned());
         self.rhs = Some(rhs);
@@ -177,8 +208,8 @@ impl Expr for RunPipeExpr {
 }
 
 impl RunPipeExpr {
-    fn gen_channels_ident(pipe_name: &str) -> String {
-        PipeChannelsExpr::gen_channels_ident(pipe_name)
+    fn gen_channels_ident(pipe_ident: &str) -> String {
+        PipeChannelsExpr::gen_channels_ident(pipe_ident)
     }
 }
 
@@ -247,6 +278,38 @@ impl Expr for ContextStoreExpr {
 }
 
 #[derive(Default)]
+pub struct ContextStoreConfigExpr {
+    pub lhs: Option<String>,
+    pub rhs: Option<String>,
+}
+
+impl VisitContextStoreMeta for ContextStoreConfigExpr {
+    fn visit(&mut self, meta: &ContextStoreMeta) {
+        let cstore_ident = meta.get_ident();
+        let config_meta = meta.get_config_meta();
+        let config_ty = config_meta.get_ty();
+        let config_path = config_meta.get_path();
+        self.lhs = Some(Self::gen_config_ident(cstore_ident));
+        self.rhs = Some(format!(
+            r#"{}({}, "{}")"#,
+            MACRO_CONFIG, config_ty, config_path
+        ));
+    }
+}
+
+impl Expr for ContextStoreConfigExpr {
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
+    }
+}
+
+impl ContextStoreConfigExpr {
+    fn gen_config_ident(cstore_ident: &str) -> String {
+        format!("{}{}", cstore_ident, CONFIG_SUFFIX)
+    }
+}
+
+#[derive(Default)]
 pub struct RunContextStoreExpr {
     pub lhs: Option<String>,
     pub rhs: Option<String>,
@@ -254,16 +317,14 @@ pub struct RunContextStoreExpr {
 
 impl VisitContextStoreMeta for RunContextStoreExpr {
     fn visit(&mut self, meta: &ContextStoreMeta) {
-        let ident = meta.get_ident();
+        let cstore_ident = meta.get_ident();
         let pipe_exprs = meta.get_pipes().join(",");
-        let config_meta = meta.get_config_meta();
-        let config_ty = config_meta.get_ty();
-        let config_path = config_meta.get_path();
+        let config_ident = ContextStoreConfigExpr::gen_config_ident(cstore_ident);
         let rhs = format!(
-            r#"{}({}, {}, "{}", [{}])"#,
-            MACRO_RUN_CONTEXT_STORE, ident, config_ty, config_path, pipe_exprs
+            r#"{}({}, {}, [{}])"#,
+            MACRO_RUN_CONTEXT_STORE, cstore_ident, config_ident, pipe_exprs
         );
-        self.lhs = Some(ident.to_owned());
+        self.lhs = Some(cstore_ident.to_owned());
         self.rhs = Some(rhs);
     }
 }
@@ -346,6 +407,37 @@ impl VisitErrorHandlerMeta for ErrorHandlerExpr {
 }
 
 #[derive(Default)]
+pub struct ErrorHandlerConfigExpr {
+    pub lhs: Option<String>,
+    pub rhs: Option<String>,
+}
+
+impl VisitErrorHandlerMeta for ErrorHandlerConfigExpr {
+    fn visit(&mut self, meta: &ErrorHandlerMeta) {
+        let config_meta = meta.get_config_meta();
+        let config_ty = config_meta.get_ty();
+        let config_path = config_meta.get_path();
+        self.lhs = Some(Self::gen_config_ident());
+        self.rhs = Some(format!(
+            r#"{}({}, "{}")"#,
+            MACRO_CONFIG, config_ty, config_path
+        ));
+    }
+}
+
+impl Expr for ErrorHandlerConfigExpr {
+    fn to_pair(self) -> (Option<String>, Option<String>) {
+        (self.lhs, self.rhs)
+    }
+}
+
+impl ErrorHandlerConfigExpr {
+    fn gen_config_ident() -> String {
+        format!("{}{}", ERROR_HANDLER_DEFAULT_IDENT, CONFIG_SUFFIX)
+    }
+}
+
+#[derive(Default)]
 pub struct RunErrorHandlerExpr {
     pub lhs: Option<String>,
     pub rhs: Option<String>,
@@ -358,16 +450,12 @@ impl Expr for RunErrorHandlerExpr {
 }
 
 impl VisitErrorHandlerMeta for RunErrorHandlerExpr {
-    fn visit(&mut self, meta: &ErrorHandlerMeta) {
-        let config_meta = meta.get_config_meta();
-        let config_ty = config_meta.get_ty();
-        let config_path = config_meta.get_path();
+    fn visit(&mut self, _: &ErrorHandlerMeta) {
         let rhs = format!(
-            r#"{}({}, {}, "{}", {})"#,
+            r#"{}({}, {}, {})"#,
             MACRO_RUN_ERROR_HANDLER,
             ERROR_HANDLER_DEFAULT_IDENT,
-            config_ty,
-            config_path,
+            ErrorHandlerConfigExpr::gen_config_ident(),
             ERROR_HANDLER_DEFAULT_RX
         );
         self.lhs = Some(ERROR_HANDLER_DEFAULT_IDENT.to_owned());

@@ -118,6 +118,10 @@ mod tests {
         let (tx0, rx0) = channel!(Record, 10);
         let (tx1, mut rx1) = channel!(Vec<Record>, 10);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(
+            InMemoryBagCollectorConfig,
+            "resources/catalogs/bag_collector.yml"
+        );
         let pipe = collector!("bag_collector");
         let context = pipe.get_context();
         let ph = populate_records(
@@ -138,12 +142,7 @@ mod tests {
             ],
         );
         ph.await;
-        join_pipes!([run_pipe!(
-            pipe,
-            InMemoryBagCollectorConfig,
-            "resources/catalogs/bag_collector.yml",
-            channels
-        )]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let records = receive_records(&mut rx1).await;
         assert_eq!(3, records.len());
         assert_eq!(0, records.get(0).unwrap().val);
@@ -158,20 +157,15 @@ mod tests {
         let (tx1, rx1) = channel!(Vec<u128>, 1024);
         let channels0 = pipe_channels!([tx0]);
         let channels1 = pipe_channels!(rx0, [tx1]);
+        let config0 = config!(TimerConfig, "resources/catalogs/timer.yml");
+        let config1 = config!(
+            InMemoryBagCollectorConfig,
+            "resources/catalogs/bag_collector.yml"
+        );
         let timer = poller!("timer");
         let collector = collector!("tick_collector");
-        let run_timer = run_pipe!(
-            timer,
-            TimerConfig,
-            "resources/catalogs/timer.yml",
-            channels0
-        );
-        let run_collector = run_pipe!(
-            collector,
-            InMemoryBagCollectorConfig,
-            "resources/catalogs/bag_collector.yml",
-            channels1
-        );
+        let run_timer = run_pipe!(timer, config0, channels0);
+        let run_collector = run_pipe!(collector, config1, channels1);
         let start_millis = std::time::SystemTime::now();
         drop(rx1);
         join_pipes!([run_timer, run_collector]);

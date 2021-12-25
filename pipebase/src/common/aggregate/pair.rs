@@ -215,6 +215,7 @@ mod pair_tests {
         let (tx0, rx0) = channel!(Vec<Pair<String, u32>>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, u32>>, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(UnorderedGroupAddAggregatorConfig);
         let pipe = mapper!("pair_group_summation");
         let f0 = populate_records(
             tx0,
@@ -225,7 +226,7 @@ mod pair_tests {
             ]],
         );
         f0.await;
-        join_pipes!([run_pipe!(pipe, UnorderedGroupAddAggregatorConfig, channels)]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let gs = rx1.recv().await.unwrap();
         for p in gs {
             match p.left().as_str() {
@@ -241,6 +242,10 @@ mod pair_tests {
         let (tx0, rx0) = channel!(Vec<Pair<String, Count32>>, 1024);
         let (tx1, mut rx1) = channel!(Vec<Pair<String, Count32>>, 1024);
         let channels = pipe_channels!(rx0, [tx1]);
+        let config = config!(
+            TopAggregatorConfig,
+            "resources/catalogs/top_aggregator_desc.yml"
+        );
         let pipe = Mapper::new("top_word");
         let f0 = populate_records(
             tx0,
@@ -253,12 +258,7 @@ mod pair_tests {
             ]],
         );
         f0.await;
-        join_pipes!([run_pipe!(
-            pipe,
-            TopAggregatorConfig,
-            "resources/catalogs/top_aggregator_desc.yml",
-            channels
-        )]);
+        join_pipes!([run_pipe!(pipe, config, channels)]);
         let top = rx1.recv().await.unwrap();
         assert_eq!(3, top.len());
         let top1 = top.get(0).unwrap();

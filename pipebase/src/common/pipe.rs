@@ -155,20 +155,11 @@ macro_rules! pipe_channels {
 #[macro_export]
 macro_rules! run_pipe {
     {
-        $pipe:ident, $config:ty, $channels:ident
-    } => {
-        run_pipe!($pipe, $config, "", $channels)
-    };
-    {
-        $pipe:ident, $config:ty, $path:expr, $channels:ident
+        $pipe:ident, $config:ident, $channels:ident
     } => {
         {
             tokio::spawn(async move {
-                let config = <$config>
-                            ::from_path($path)
-                            .await
-                            .expect(&format!("invalid pipe config file '{}' for '{}'", $path, $pipe.get_name()));
-                match $pipe.run(config, $channels).await {
+                match $pipe.run($config, $channels).await {
                     Ok(_) => Ok(()),
                     Err(err) => {
                         tracing::error!("pipe exit with error {:#?}", err);

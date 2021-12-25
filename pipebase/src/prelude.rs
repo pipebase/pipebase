@@ -9,7 +9,7 @@ pub use crate::poll::*;
 pub use crate::select::*;
 pub use crate::stream::*;
 pub use crate::{
-    channel, collector, cstore, error_handler, exporter, join_pipes, listener, mapper,
+    channel, collector, config, cstore, error_handler, exporter, join_pipes, listener, mapper,
     pipe_channels, poller, run_cstore, run_error_handler, run_pipe, selector, streamer,
     subscribe_error_handler,
 };

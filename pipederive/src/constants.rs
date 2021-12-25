@@ -19,6 +19,8 @@ pub const ORDER: &str = "order";
 pub const CHANNEL_SENDER_SUFFIX: &str = "_tx";
 pub const CHANNEL_RECEIVER_SUFFIX: &str = "_rx";
 
+pub const CONFIG_SUFFIX: &str = "_cfg";
+
 pub const CONTEXT_STORE: &str = "cstore";
 pub const CONTEXT_STORE_NAME: &str = "cstore.name";
 pub const CONTEXT_STORE_CONFIG_TYPE: &str = "cstore.config.ty";
@@ -61,6 +63,7 @@ pub const MACRO_SUBSCRIBE_ERROR_HANDLER: &str = "subscribe_error_handler!";
 pub const MACRO_RUN_ERROR_HANDLER: &str = "run_error_handler!";
 pub const MACRO_CONTEXT_STORE: &str = "cstore!";
 pub const MACRO_RUN_CONTEXT_STORE: &str = "run_cstore!";
+pub const MACRO_CONFIG: &str = "config!";
 
 pub const AGGREGATE_SUM: &str = "agg.sum";
 pub const AGGREGATE_TOP: &str = "agg.top";

@@ -115,20 +115,15 @@ mod tests {
         let (tx1, mut rx1) = channel!(Vec<u128>, 1024);
         let channels0 = pipe_channels!([tx0]);
         let channels1 = pipe_channels!(rx0, [tx1]);
+        let config0 = config!(TimerConfig, "resources/catalogs/timer.yml");
+        let config1 = config!(
+            InMemoryWindowCollectorConfig,
+            "resources/catalogs/window.yml"
+        );
         let timer = poller!("timer");
         let window = collector!("window");
-        let timer = run_pipe!(
-            timer,
-            TimerConfig,
-            "resources/catalogs/timer.yml",
-            channels0
-        );
-        let window = run_pipe!(
-            window,
-            InMemoryWindowCollectorConfig,
-            "resources/catalogs/window.yml",
-            channels1
-        );
+        let timer = run_pipe!(timer, config0, channels0);
+        let window = run_pipe!(window, config1, channels1);
         join_pipes!([timer, window]);
         let mut counts: HashMap<u128, usize> = HashMap::new();
         while let Some(ticks) = rx1.recv().await {
