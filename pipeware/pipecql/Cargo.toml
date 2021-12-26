@@ -1,6 +1,6 @@
 [package]
 name = "pipecql"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -15,7 +15,7 @@ keywords = ["pipebase", "pipeware", "cassandra", "scylla"]
 async-trait = "0.1.50"
 anyhow = "1.0"
 tracing = "0.1"
-pipebase = { version = "0.1.9", path = "../../pipebase" }
+pipebase = { version = "0.2.0", path = "../../pipebase" }
 openssl = "0.10.36"
 serde = { version = "1.0", features = ["derive"] }
 scylla = { version = "0.2.1", features = ["ssl"] }

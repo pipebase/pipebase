@@ -1,6 +1,6 @@
 [package]
 name = "pipecsv"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -15,6 +15,6 @@ keywords = ["pipebase", "pipeware", "csv", "serde"]
 async-trait = "0.1.50"
 anyhow = "1.0"
 tracing = "0.1"
-pipebase = { version = "0.1.9", path = "../../pipebase" }
+pipebase = { version = "0.2.0", path = "../../pipebase" }
 serde = { version = "1.0", features = ["derive"] }
 csv = "1.1"
