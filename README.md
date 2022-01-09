@@ -14,7 +14,7 @@
 * *cli tool*, build data integration app with manifest
 * *plugins*, customized pipes using third party SDK
 
-[Examples] | [Templates]
+[Quick Start] | [Examples] | [Templates]
 
 ## Overview
 `pipebase` is composed of three main components
@@ -30,3 +30,4 @@
 [Examples]: https://github.com/pipebase/pipebase/tree/main/examples
 [`schema`]: https://github.com/pipebase/schema
 [Templates]: https://github.com/pipebase/template
+[Quick Start]: https://github.com/pipebase/pipebase/blob/main/cargo-pipe/README.md
