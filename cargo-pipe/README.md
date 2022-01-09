@@ -15,27 +15,29 @@ cargo install cargo-pipe
 ```
 
 ## Usage
-```
+```sh
 cargo pipe --help
 ```
 
 ## Quick Start
-go to [`resources`] directory
-```
+clone repository and go to [`resources`] directory
+```sh
+git clone https://github.com/pipebase/pipebase.git && \
+cd pipebase/cargo-pipe/resources && \
 cargo pipe new && \
 cargo pipe validate -o -p && \
 cargo pipe generate && \
 cargo pipe build -o timer -r
 ```
 run app
-```
+```sh
 ./timer
 ```
 note that, any change to `pipe.yml` requires re-run `validate`, `generate`, `build` steps
 
 ## Validation & Debug
 validate manifest only
-```
+```sh
 cargo pipe validate -o -p
 ```
 build with debug flag
