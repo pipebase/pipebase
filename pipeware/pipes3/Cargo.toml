@@ -1,6 +1,6 @@
 [package]
 name = "pipes3"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -17,4 +17,4 @@ tracing = "0.1"
 pipebase = { version = "0.2.0" }
 rand = "0.8.4"
 serde = { version = "1.0", features = ["derive"] }
-s3 = { git = "https://github.com/awslabs/aws-sdk-rust", tag = "v0.0.12-alpha", package = "aws-sdk-s3" }
+s3 = { version = "0.4.0", package = "aws-sdk-s3" }
