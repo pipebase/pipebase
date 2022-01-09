@@ -1,6 +1,6 @@
 [package]
 name = "pipesqs"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Li Yu <li.yu.sh0211@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -17,4 +17,4 @@ tracing = "0.1"
 pipebase = { version = "0.2.0" }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.6.1", features = ["time"] }
-sqs = { git = "https://github.com/awslabs/aws-sdk-rust", tag = "v0.0.12-alpha", package = "aws-sdk-sqs" }
+sqs = { version = "0.4.0", package = "aws-sdk-sqs" }
