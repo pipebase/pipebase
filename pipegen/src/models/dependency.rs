@@ -261,8 +261,7 @@ pub(crate) fn default_warp_dependency() -> Dependency {
 pub(crate) fn default_dynamodb_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipedynamodb".to_owned())
-        .git("https://github.com/pipebase/pipebase.git".to_owned())
-        .package("pipedynamodb".to_owned())
+        .version("0.1.5".to_owned())
         .modules(vec!["pipedynamodb::*".to_owned()])
         .build()
 }
@@ -270,8 +269,7 @@ pub(crate) fn default_dynamodb_dependency() -> Dependency {
 pub(crate) fn default_s3_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipes3".to_owned())
-        .git("https://github.com/pipebase/pipebase.git".to_owned())
-        .package("pipes3".to_owned())
+        .version("0.1.5".to_owned())
         .modules(vec!["pipes3::*".to_owned()])
         .build()
 }
@@ -279,8 +277,7 @@ pub(crate) fn default_s3_dependency() -> Dependency {
 pub(crate) fn default_sns_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipesns".to_owned())
-        .git("https://github.com/pipebase/pipebase.git".to_owned())
-        .package("pipesns".to_owned())
+        .version("0.1.5".to_owned())
         .modules(vec!["pipesns::*".to_owned()])
         .build()
 }
@@ -288,8 +285,7 @@ pub(crate) fn default_sns_dependency() -> Dependency {
 pub(crate) fn default_sqs_dependency() -> Dependency {
     DependencyBuilder::new()
         .name("pipesqs".to_owned())
-        .git("https://github.com/pipebase/pipebase.git".to_owned())
-        .package("pipesqs".to_owned())
+        .version("0.1.5".to_owned())
         .modules(vec!["pipesqs::*".to_owned()])
         .build()
 }

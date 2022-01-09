@@ -1,6 +1,7 @@
 use crate::message::*;
 use serde::Deserialize;
 use sqs::{
+    config::Config,
     model::{Message, MessageAttributeValue},
     output::{DeleteMessageOutput, ReceiveMessageOutput},
 };
@@ -21,8 +22,9 @@ pub struct SqsClient {
 
 impl SqsClient {
     pub fn new(config: SqsClientConfig) -> Self {
+        let conf = Config::builder().build();
         SqsClient {
-            client: sqs::Client::from_env(),
+            client: sqs::Client::from_conf(conf),
             url: config.url,
             message_attribute_names: config.message_attribute_names.unwrap_or_default(),
         }
