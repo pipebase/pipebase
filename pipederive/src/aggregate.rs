@@ -49,11 +49,7 @@ fn is_avgf32_field(field: &Field) -> bool {
 }
 
 fn get_avgf32_ty(field: &Field, ident_location: &str) -> TokenStream {
-    let ident_location = format!(
-        "{}.{}",
-        field.ident.as_ref().unwrap().to_string(),
-        ident_location
-    );
+    let ident_location = format!("{}.{}", ident_location, field.ident.as_ref().unwrap(),);
     let attribute =
         &get_any_attribute_by_meta_prefix(AGGREGATE_AVG_F32, &field.attrs, true, &ident_location)
             .unwrap();
@@ -127,7 +123,7 @@ fn aggregate_for_avgf32(field: Option<Field>, ident: &Ident, generics: &Generics
         None => return quote! {},
     });
     let agg_field_ident = field.ident.as_ref().unwrap();
-    let ident_location = format!("{}.{}", ident.to_string(), agg_field_ident.to_string());
+    let ident_location = ident.to_string();
     let avgf32_ty = get_avgf32_ty(field, &ident_location);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     quote! {

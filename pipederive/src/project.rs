@@ -67,11 +67,7 @@ fn resolve_field_named(
         );
     }
     let meta_path = format!("{} or {}", PROJECT_FROM, PROJECT_EXPR);
-    let ident_location = format!(
-        "{}.{}",
-        ident_location,
-        field.ident.as_ref().unwrap().to_string()
-    );
+    let ident_location = format!("{}.{}", ident_location, field.ident.as_ref().unwrap());
     panic!(
         "error: {}",
         meta_value_not_found(&meta_path, &ident_location)

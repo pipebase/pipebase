@@ -58,11 +58,7 @@ fn sort_render_params(fields: &mut Vec<Field>, ident_location: &str) {
 }
 
 fn get_field_pos(field: &Field, ident_location: &str) -> usize {
-    let ident_location = format!(
-        "{}.{}",
-        ident_location,
-        field.ident.as_ref().unwrap().to_string()
-    );
+    let ident_location = format!("{}.{}", ident_location, field.ident.as_ref().unwrap(),);
     let attribute = get_pos_attribute(&field.attrs, &ident_location);
     let number = get_meta_number_value_by_meta_path(
         RENDER_POSITION,
@@ -123,7 +119,7 @@ fn get_any_render_expr(field: &Field, ident_location: &str) -> Option<String> {
     match attribute {
         Some(attribute) => {
             let ident_location = match field.ident {
-                Some(ref field_ident) => format!("{}.{}", ident_location, field_ident.to_string()),
+                Some(ref field_ident) => format!("{}.{}", ident_location, field_ident),
                 None => ident_location.to_owned(),
             };
             get_meta_string_value_by_meta_path(
