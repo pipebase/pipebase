@@ -11,7 +11,7 @@ Pipes
 | `Listener` | [`RedisSubscriber`] | [`pubsub_redis`] |
 | `Listener` | [`MqttSubscriber`] | [`pubsub_mqtt`] |
 | `Listener` | [`AmqpConsumer`] | [`pubsub_rabbitmq`] |
-| `Poller` | `SqsMessageReceiver` | [`consume_sqs`] |
+| `Poller` | [`SqsMessageReceiver`] | [`consume_sqs`] |
 | `Mapper` | [`JsonSer`] |  |
 | `Mapper` | [`JsonDeser`] | `ingest_*` |
 | `Mapper` | [`CsvSer`] | [`convert_csv`] |
@@ -30,11 +30,11 @@ Pipes
 | `Exporter` | [`RedisPublisher`] | [`pubsub_redis`] |
 | `Exporter` | [`ReqwestPoster`] | [`relay`], [`ingest_elasticsearch`] |
 | `Exporter` | [`KafkaProducer`] | [`ingest_kafka`] |
-| `Exporter` | `S3Writer` | [`upload_s3`] |
+| `Exporter` | [`S3Writer`] | [`upload_s3`] |
 | `Exporter` | [`MySQLWriter`] | [`ingest_mysql`] |
 | `Exporter` | [`MySQLPreparedWriter`] | [`batch_ingest_mysql`] |
-| `Exporter` | `DynamoDBWriter` | [`ingest_dynamodb`] |
-| `Exporter` | `SnsPublisher` | [`pubsub_sns`] |
+| `Exporter` | [`DynamoDBWriter`] | [`ingest_dynamodb`] |
+| `Exporter` | [`SnsPublisher`] | [`pubsub_sns`] |
 | `Exporter` | [`MqttPublisher`] | [`pubsub_mqtt`] |
 | `Exporter` | [`AmqpPublisher`] | [`pubsub_rabbitmq`] |
 
@@ -46,7 +46,7 @@ Context Stores
 Error Handlers
 | implementation | example |
 | -------------- | ------- |
-| SnsPipeErrorHandler | [`error_sns_publisher`] |
+| [`SnsPipeErrorHandler`] | [`error_sns_publisher`] |
 
 [`pipeware`]: https://github.com/pipebase/pipebase/tree/main/pipeware
 [`group_sum_redis`]: https://github.com/pipebase/pipebase/tree/main/examples/group_sum_redis
@@ -111,3 +111,8 @@ Error Handlers
 [`MqttSubscriber`]: https://docs.rs/pipemqtt/
 [`AmqpConsumer`]: https://docs.rs/pipeamqp
 [`AmqpPublisher`]: https://docs.rs/pipeamqp
+[`SqsMessageReceiver`]: https://docs.rs/pipesqs
+[`S3Writer`]: https://docs.rs/pipes3
+[`DynamoDBWriter`]: https://docs.rs/pipedynamodb
+[`SnsPublisher`]: https://docs.rs/pipesns
+[`SnsPipeErrorHandler`]: https://docs.rs/pipesns
