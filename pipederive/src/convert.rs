@@ -46,11 +46,7 @@ fn resolve_field_named(
 ) -> TokenStream {
     let attributes = &field.attrs;
     let field_ident = &field.ident;
-    let ident_location = format!(
-        "{}.{}",
-        ident_location,
-        field_ident.as_ref().unwrap().to_string()
-    );
+    let ident_location = format!("{}.{}", ident_location, field_ident.as_ref().unwrap(),);
     let convert_from_attribute = &get_any_convert_from_attribute(attributes, &ident_location);
     let convert_from = get_convert_from(convert_from_attribute, &ident_location);
     let field_path_ident = resolve_field_path_token(&convert_from);
