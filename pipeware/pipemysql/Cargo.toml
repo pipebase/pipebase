@@ -15,6 +15,6 @@ keywords = ["pipebase", "pipeware", "mysql"]
 async-trait = "0.1.50"
 anyhow = "1.0"
 tracing = "0.1"
-mysql_async = "0.28.0"
+mysql_async = "0.29.0"
 pipebase = { version = "0.2.0", path = "../../pipebase" }
 serde = { version = "1.0", features = ["derive"] }
