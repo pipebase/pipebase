@@ -1,8 +1,5 @@
-use mysql_async::{
-    chrono::{Datelike, Duration, Timelike},
-    prelude::*,
-    OptsBuilder, Params, SslOpts,
-};
+use chrono::{Datelike, Duration, Timelike};
+use mysql_async::{prelude::*, OptsBuilder, Params, SslOpts};
 use pipebase::common::{IntoAttributes, Render, Value};
 use serde::Deserialize;
 use std::collections::HashMap;

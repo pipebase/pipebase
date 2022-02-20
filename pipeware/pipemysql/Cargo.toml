@@ -14,6 +14,7 @@ keywords = ["pipebase", "pipeware", "mysql"]
 [dependencies]
 async-trait = "0.1.50"
 anyhow = "1.0"
+chrono = { version = "0.4" }
 tracing = "0.1"
 mysql_async = "0.29.0"
 pipebase = { version = "0.2.0", path = "../../pipebase" }
