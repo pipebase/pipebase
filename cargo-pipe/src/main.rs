@@ -30,7 +30,7 @@ fn run() -> CmdResult<()> {
     }
     cmd_and_args.extend(args);
     // setup args and subcommands (including subcommand args)
-    let matches = clap::App::new("cargo-pipe")
+    let matches = clap::Command::new("cargo-pipe")
         .args(vec![
             clap::Arg::new("directory")
                 .short('d')
