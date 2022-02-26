@@ -238,11 +238,7 @@ impl AppGenerator {
     }
 
     fn generate_module(module: &str, sections: &[String]) -> String {
-        let sections: Vec<String> = sections
-            .to_owned()
-            .into_iter()
-            .filter(|s| !s.is_empty())
-            .collect();
+        let sections: Vec<String> = sections.iter().cloned().filter(|s| !s.is_empty()).collect();
         format!("mod {} {{\n{}\n}}", module, sections.join("\n\n"))
     }
 

@@ -10,7 +10,7 @@
 
 `pipebase` is a data integration framework, provides:
 
-* *manifest*, specification of pipe / custom data object in YAML format
+* *manifest*, YAML specification of pipe / custom data object
 * *cli tool*, build data integration app with manifest
 * *plugins*, customized pipes using third party SDK
 

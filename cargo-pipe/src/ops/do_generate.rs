@@ -21,7 +21,7 @@ fn do_apply_additional_dependency(
     let toml_content = fs::read_to_string(toml_path)?;
     let mut manifest = toml::from_str::<PipeTomlManifest>(&toml_content)?;
     manifest.init();
-    for add in additionals.to_owned() {
+    for add in additionals.iter().cloned() {
         manifest.add_dependency(add.get_name(), add.into());
     }
     let toml_content = toml::to_string(&manifest)?;

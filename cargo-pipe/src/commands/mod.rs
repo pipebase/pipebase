@@ -9,7 +9,7 @@ pub(crate) mod new;
 pub(crate) mod remove;
 pub(crate) mod validate;
 
-pub type Cmd = clap::App<'static>;
+pub type Cmd = clap::Command<'static>;
 
 pub fn cmds() -> Vec<Cmd> {
     vec![

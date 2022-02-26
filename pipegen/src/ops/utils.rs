@@ -416,13 +416,13 @@ impl<T: Clone> PipeGraph<T> {
     pub fn search_pipelines(&self, pid: &str) -> Vec<GraphPath> {
         let vertics = &self.find_component(pid);
         let srcs: Vec<String> = vertics
-            .to_owned()
-            .into_iter()
+            .iter()
+            .cloned()
             .filter(|vid| !self.has_upstream_pipe(vid))
             .collect();
         let sinks: Vec<String> = vertics
-            .to_owned()
-            .into_iter()
+            .iter()
+            .cloned()
             .filter(|vid| !self.has_downstream_pipe(vid))
             .collect();
         let mut pipelines: Vec<GraphPath> = Vec::new();
