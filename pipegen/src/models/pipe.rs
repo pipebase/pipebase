@@ -221,8 +221,8 @@ impl Pipe {
         };
         self.upstreams = Some(
             upstreams
-                .to_owned()
-                .into_iter()
+                .iter()
+                .cloned()
                 .filter(|id| pipe_id_filter.contains(id))
                 .collect(),
         )

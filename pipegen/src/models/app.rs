@@ -40,8 +40,7 @@ impl Entity for App {
         let dependencies = self.get_dependencies();
         dependencies
             .iter()
-            .map(|dep| dep.get_modules().to_owned())
-            .flatten()
+            .flat_map(|dep| dep.get_modules().to_owned())
             .collect()
     }
 

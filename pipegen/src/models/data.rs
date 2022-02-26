@@ -411,8 +411,7 @@ impl Entity for Object {
     fn list_dependency(&self) -> Vec<String> {
         self.fields
             .iter()
-            .map(|field| field.list_dependency())
-            .flatten()
+            .flat_map(|field| field.list_dependency())
             .collect()
     }
 
