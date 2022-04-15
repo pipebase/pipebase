@@ -49,7 +49,7 @@ fn is_render_param(field: &Field) -> bool {
     get_any_attribute_by_meta_prefix(RENDER_POSITION, &field.attrs, false, "").is_some()
 }
 
-fn sort_render_params(fields: &mut Vec<Field>, ident_location: &str) {
+fn sort_render_params(fields: &mut [Field], ident_location: &str) {
     fields.sort_by(|f0, f1| {
         get_field_pos(f0, ident_location)
             .partial_cmp(&get_field_pos(f1, ident_location))
